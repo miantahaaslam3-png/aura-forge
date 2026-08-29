@@ -2338,13 +2338,26 @@ function Install-Repository {
             $backupDir = "$InstallDir.broken-" + (Get-Date -Format "yyyyMMdd-HHmmss")
             Write-Warn "Existing directory at $InstallDir is not a valid git repo."
             Write-Warn "Moving it aside to $backupDir before re-cloning."
-            try {
-                Move-Item -LiteralPath $InstallDir -Destination $backupDir -ErrorAction Stop
-            } catch {
-                Write-Err "Could not move $InstallDir aside : $_"
-                Write-Info "Close any programs that might be using files in $InstallDir (editors,"
-                Write-Info "terminals, running hermes processes) and try again."
-                throw
+            # Aura Forge fix: retry the move a few times -- a just-aborted
+            # bootstrap releases its file locks asynchronously, so the first
+            # attempt can fail while a second succeeds a moment later.
+            $moved = $false
+            foreach ($attempt in 1..5) {
+                try {
+                    Move-Item -LiteralPath $InstallDir -Destination $backupDir -ErrorAction Stop
+                    $moved = $true
+                    break
+                } catch {
+                    if ($attempt -lt 5) {
+                        Write-Warn "Move attempt $attempt failed (file in use); waiting 2s and retrying..."
+                        Start-Sleep -Seconds 2
+                    } else {
+                        Write-Err "Could not move $InstallDir aside : $_"
+                        Write-Info "Close any programs that might be using files in $InstallDir (editors,"
+                        Write-Info "terminals, running auraforge processes) and try again."
+                        throw
+                    }
+                }
             }
         }
     }

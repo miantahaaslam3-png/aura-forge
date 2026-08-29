@@ -482,10 +482,23 @@ function spawnPowerShell(scriptPath, args, { emit, stageName, abortSignal, herme
     const onAbort = () => {
       killed = true
 
+      // Aura Forge fix: on Windows, child.kill() only terminates the
+      // PowerShell host — its grandchildren (git clone, curl, uv, npm)
+      // keep running and hold file locks on the install dir, which made
+      // every Retry fail with "file is being used by another process".
+      // taskkill /T /F kills the whole process tree instead.
       try {
-        child.kill('SIGTERM')
+        if (process.platform === 'win32' && child.pid) {
+          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], hiddenWindowsChildOptions({ stdio: 'ignore' }))
+        } else {
+          child.kill('SIGTERM')
+        }
       } catch {
-        void 0
+        try {
+          child.kill('SIGTERM')
+        } catch {
+          void 0
+        }
       }
     }
 
