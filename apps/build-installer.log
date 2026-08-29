@@ -1,0 +1,11 @@
+npm notice run hermes-agent@1.0.0 npx
+npm notice run electron-builder --prepackaged release/win-unpacked --win nsis
+  • electron-builder  version=26.15.3 os=10.0.19045
+  • loaded configuration  file=package.json ("build" field)
+  • packageManager not detected by file, falling back to environment detection  resolvedPackageManager=npm detected=C:\Users\HP\Desktop\AuraForge\apps\desktop
+  • detected workspace root for project using lock file  pm=npm config=undefined resolved=C:\Users\HP\Desktop\AuraForge projectDir=C:\Users\HP\Desktop\AuraForge\apps\desktop
+  • building        target=nsis file=release\AuraForge-0.17.0-win-x64.exe archs=x64 oneClick=false perMachine=false
+  • skipped archiving  reason=Archive file is up to date outFile=C:\Users\HP\Desktop\AuraForge\apps\desktop\release\hermes-0.17.0-x64.nsis.7z
+  • signing with signtool.exe  path=release\AuraForge-0.17.0-win-x64.__uninstaller.exe
+  • signing with signtool.exe  path=release\AuraForge-0.17.0-win-x64.exe
+  • building block map  blockMapFile=release\AuraForge-0.17.0-win-x64.exe.blockmap
