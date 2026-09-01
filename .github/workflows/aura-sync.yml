@@ -1,0 +1,92 @@
+# Aura Forge auto-sync: pulls upstream Hermes changes and rebrands them.
+# Runs daily + manual dispatch. Uses GITHUB_TOKEN for push (same repo).
+
+name: Sync from upstream Hermes
+on:
+  schedule:
+    - cron: '0 14 * * *'   # daily 14:00 UTC = 7am PDT
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch upstream Hermes
+        run: |
+          git remote add upstream https://github.com/NousResearch/hermes-agent.git 2>/dev/null || true
+          git fetch upstream main --depth=1
+
+      - name: Check if upstream changed
+        id: check
+        run: |
+          UPSTREAM_SHA=$(git rev-parse upstream/main)
+          # Compare against our last sync (stored in commit message trailer)
+          LAST_SHA=$(git log -1 --format=%B | grep -oP 'upstream-sha: \K[a-f0-9]+' || echo "none")
+          echo "upstream_sha=$UPSTREAM_SHA" >> $GITHUB_OUTPUT
+          if [ "$LAST_SHA" = "$UPSTREAM_SHA" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Already up to date (upstream $UPSTREAM_SHA)"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Upstream changed: $LAST_SHA -> $UPSTREAM_SHA"
+          fi
+
+      - name: Overlay upstream tree
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          # Save our aura-specific files that upstream doesn't have
+          mkdir -p /tmp/aura_preserve
+          cp -r scripts/apply_aura_branding.py /tmp/aura_preserve/ 2>/dev/null || true
+          cp -r .github/workflows/aura-sync.yml /tmp/aura_preserve/ 2>/dev/null || true
+          cp -r scripts/sync_from_hermes.sh /tmp/aura_preserve/ 2>/dev/null || true
+
+          # Overlay: bring upstream content into working tree (preserving deletions)
+          git checkout upstream/main -- .
+          git clean -fd --exclude=.git 2>/dev/null || true
+
+          # Restore aura-specific files
+          mkdir -p scripts .github/workflows
+          cp /tmp/aura_preserve/apply_aura_branding.py scripts/ 2>/dev/null || true
+          cp /tmp/aura_preserve/aura-sync.yml .github/workflows/ 2>/dev/null || true
+          cp /tmp/aura_preserve/sync_from_hermes.sh scripts/ 2>/dev/null || true
+
+      - name: Apply Aura Forge branding
+        if: steps.check.outputs.changed == 'true'
+        run: python scripts/apply_aura_branding.py --apply
+
+      - name: Check for branding leaks
+        if: steps.check.outputs.changed == 'true'
+        run: python scripts/apply_aura_branding.py --check || true  # warn but don't fail
+
+      - name: Verify key files are correct
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          # Verify critical branding is intact
+          grep -q "Aura Forge" apps/desktop/electron/main.cjs || (echo "FAIL: APP_NAME not rebranded" && exit 1)
+          grep -q "com.auraforge.desktop" apps/desktop/electron/main.cjs || (echo "FAIL: AppUserModelId not rebranded" && exit 1)
+          grep -q "auraforge" pyproject.toml || (echo "FAIL: entry points not rebranded" && exit 1)
+          grep -q "aura-forge" scripts/install.ps1 || (echo "FAIL: install script not rebranded" && exit 1)
+          grep -q "miantahaaslam3-png" hermes_cli/main.py || (echo "FAIL: repo URL not rebranded" && exit 1)
+          echo "All branding checks passed"
+
+      - name: Commit and push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "Aura Forge Sync Bot"
+          git config user.email "actions@github.com"
+          git add -A
+          # Check if there are actual changes
+          if git diff --cached --quiet; then
+            echo "No changes after branding — skipping commit"
+          else
+            git commit -m "Aura Forge sync: upstream-sha: ${{ steps.check.outputs.upstream_sha }}"
+            git push origin main
+          fi

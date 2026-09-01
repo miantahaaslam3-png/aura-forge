@@ -63,6 +63,14 @@ except ModuleNotFoundError:
 
 import os
 import sys
+# Aura Forge bridge: installer sets AURA_FORGE_HOME; Python reads HERMES_HOME.
+# If HERMES_HOME is unset but AURA_FORGE_HOME exists, mirror it so every
+# direct os.environ.get("HERMES_HOME") site works transparently.
+if not os.environ.get("HERMES_HOME"):
+    _aura_home = os.environ.get("AURA_FORGE_HOME")
+    if _aura_home:
+        os.environ["HERMES_HOME"] = _aura_home
+
 
 
 def _set_process_title() -> None:

@@ -212,13 +212,13 @@ pub(crate) fn resolve_aura_forge_desktop_exe(install_root: &std::path::Path) -> 
     let release_dir = install_root.join("apps").join("desktop").join("release");
     let candidates: &[(&str, &str)] = if cfg!(target_os = "windows") {
         &[
-            ("win-unpacked", "Aura Forge.exe"),
-            ("win-arm64-unpacked", "Aura Forge.exe"),
+            ("win-unpacked", "AuraForge.exe"),
+            ("win-arm64-unpacked", "AuraForge.exe"),
         ]
     } else if cfg!(target_os = "macos") {
         &[
-            ("mac/Aura Forge.app/Contents/MacOS", "Aura Forge"),
-            ("mac-arm64/Aura Forge.app/Contents/MacOS", "Aura Forge"),
+            ("mac/AuraForge.app/Contents/MacOS", "AuraForge"),
+            ("mac-arm64/AuraForge.app/Contents/MacOS", "AuraForge"),
         ]
     } else {
         &[("linux-unpacked", "aura-forge")]
@@ -236,7 +236,7 @@ pub(crate) fn resolve_aura_forge_desktop_app(install_root: &std::path::Path) -> 
     let exe = resolve_aura_forge_desktop_exe(install_root)?;
     #[cfg(target_os = "macos")]
     {
-        // .../Aura Forge.app/Contents/MacOS/Aura Forge -> .../Aura Forge.app
+        // .../AuraForge.app/Contents/MacOS/Aura Forge -> .../AuraForge.app
         let app = exe.parent()?.parent()?.parent()?.to_path_buf();
         if app.extension().and_then(|e| e.to_str()) == Some("app") && app.is_dir() {
             return Some(app);
@@ -839,16 +839,16 @@ mod tests {
         if cfg!(target_os = "macos") {
             let macos_dir = release
                 .join("mac-arm64")
-                .join("Aura Forge.app")
+                .join("AuraForge.app")
                 .join("Contents")
                 .join("MacOS");
             std::fs::create_dir_all(&macos_dir).unwrap();
             std::fs::write(macos_dir.join("Aura Forge"), b"#!/bin/sh\n").unwrap();
-            macos_dir.parent().unwrap().parent().unwrap().to_path_buf() // .../Aura Forge.app
+            macos_dir.parent().unwrap().parent().unwrap().to_path_buf() // .../AuraForge.app
         } else if cfg!(target_os = "windows") {
             let dir = release.join("win-unpacked");
             std::fs::create_dir_all(&dir).unwrap();
-            let exe = dir.join("Aura Forge.exe");
+            let exe = dir.join("AuraForge.exe");
             std::fs::write(&exe, b"stub").unwrap();
             exe
         } else {
@@ -862,7 +862,7 @@ mod tests {
 
     // The relaunch / install target is derived from the rebuilt desktop app.
     // On macOS this MUST resolve to the .app bundle (what `open` relaunches and
-    // what the updater ditto's over /Applications/Aura Forge.app). A regression in
+    // what the updater ditto's over /Applications/AuraForge.app). A regression in
     // this derivation breaks the post-update auto-relaunch, so guard it.
     #[test]
     fn resolve_aura_forge_desktop_app_finds_built_bundle() {

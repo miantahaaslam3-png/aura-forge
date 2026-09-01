@@ -23,7 +23,7 @@ param(
     # exact ref.  Precedence: Commit > Tag > Branch.
     [string]$Commit = "",
     [string]$Tag = "",
-    [string]$Aura ForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
+    [string]$AuraForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
     [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }),
 
     # --- Stage protocol (additive; default invocation behaves as before) ----
@@ -339,10 +339,10 @@ function Find-SystemBrowser {
 
 function Write-BrowserEnv {
     param([string]$BrowserPath)
-    if (-not (Test-Path $Aura ForgeHome)) {
-        New-Item -ItemType Directory -Force -Path $Aura ForgeHome | Out-Null
+    if (-not (Test-Path $AuraForgeHome)) {
+        New-Item -ItemType Directory -Force -Path $AuraForgeHome | Out-Null
     }
-    $envFile = Join-Path $Aura ForgeHome ".env"
+    $envFile = Join-Path $AuraForgeHome ".env"
     if (-not (Test-Path $envFile)) {
         Set-Content -Path $envFile -Value "AGENT_BROWSER_EXECUTABLE_PATH=$BrowserPath" -Encoding UTF8
         return
@@ -361,7 +361,7 @@ function Install-AgentBrowser {
     }
 
     Write-Info "Installing agent-browser via npm -g --prefix..."
-    $prefixDir = Join-Path $Aura ForgeHome "node"
+    $prefixDir = Join-Path $AuraForgeHome "node"
     if (-not (Test-Path $prefixDir)) {
         New-Item -ItemType Directory -Path $prefixDir -Force | Out-Null
     }
@@ -443,11 +443,11 @@ function Get-PowerShellHostExe {
 }
 
 function Install-Uv {
-    # Aura Forge owns its own uv at $Aura ForgeHome\bin\uv.exe.  Always install there —
+    # Aura Forge owns its own uv at $AuraForgeHome\bin\uv.exe.  Always install there —
     # no PATH probing, no conda guards, no multi-location resolution chains.
     # The runtime update path (auraforge_cli/managed_uv.py) looks in the same
     # place, so install.ps1 and `auraforge update` stay in sync.
-    $managedUv = Join-Path $Aura ForgeHome "bin\uv.exe"
+    $managedUv = Join-Path $AuraForgeHome "bin\uv.exe"
 
     if (Test-Path $managedUv) {
         $script:UvCmd = $managedUv
@@ -456,15 +456,15 @@ function Install-Uv {
         return $true
     }
 
-    Write-Info "Installing managed uv into $Aura ForgeHome\bin ..."
-    New-Item -ItemType Directory -Path (Join-Path $Aura ForgeHome "bin") -Force | Out-Null
+    Write-Info "Installing managed uv into $AuraForgeHome\bin ..."
+    New-Item -ItemType Directory -Path (Join-Path $AuraForgeHome "bin") -Force | Out-Null
 
     # UV_INSTALL_DIR tells the astral installer to place the binary
-    # directly into $Aura ForgeHome\bin instead of ~/.local/bin.
+    # directly into $AuraForgeHome\bin instead of ~/.local/bin.
     $prevEAP = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
-        $env:UV_INSTALL_DIR = Join-Path $Aura ForgeHome "bin"
+        $env:UV_INSTALL_DIR = Join-Path $AuraForgeHome "bin"
         # Spawn via the resolved host exe (see Get-PowerShellHostExe) rather
         # than a bare `powershell`, which isn't guaranteed to be on PATH under
         # PowerShell 7 / pwsh-only setups.
@@ -525,7 +525,7 @@ function Resolve-UvCmd {
     }
 
     # Check the managed location first — this is where Install-Uv puts it.
-    $managedUv = Join-Path $Aura ForgeHome "bin\uv.exe"
+    $managedUv = Join-Path $AuraForgeHome "bin\uv.exe"
     if (Test-Path $managedUv) {
         $script:UvCmd = $managedUv
         return
@@ -726,10 +726,10 @@ function Install-Git {
         return $true
     }
 
-    # Download PortableGit into $Aura ForgeHome\git.  Always works as long as
+    # Download PortableGit into $AuraForgeHome\git.  Always works as long as
     # we can reach github.com -- no admin, no winget, no reliance on the
     # user's possibly-broken system Git install.
-    Write-Info "Git not found -- downloading PortableGit to $Aura ForgeHome\git\ ..."
+    Write-Info "Git not found -- downloading PortableGit to $AuraForgeHome\git\ ..."
     Write-Info "(no admin rights required; isolated from any system Git install)"
 
     try {
@@ -773,7 +773,7 @@ function Install-Git {
         $downloadUrl = "https://github.com/git-for-windows/git/releases/download/$gitTag/$assetName"
         $downloadExt = if ($downloadIsZip) { "zip" } else { "7z.exe" }
         $tmpFile = "$env:TEMP\$assetName"
-        $gitDir = "$Aura ForgeHome\git"
+        $gitDir = "$AuraForgeHome\git"
 
         Write-Info "Downloading $assetName (Git for Windows $gitVerTag)..."
         Invoke-WebRequest -Uri $downloadUrl -OutFile $tmpFile -UseBasicParsing
@@ -860,10 +860,10 @@ function Set-GitBashEnvVar {
     # this with a system-Git-only installation anyway.
     #
     # Layouts:
-    #   PortableGit (our default): $Aura ForgeHome\git\bin\bash.exe
-    #   MinGit (32-bit fallback):  $Aura ForgeHome\git\usr\bin\bash.exe
-    $candidates += "$Aura ForgeHome\git\bin\bash.exe"       # PortableGit layout (primary)
-    $candidates += "$Aura ForgeHome\git\usr\bin\bash.exe"   # MinGit / PortableGit usr\bin fallback
+    #   PortableGit (our default): $AuraForgeHome\git\bin\bash.exe
+    #   MinGit (32-bit fallback):  $AuraForgeHome\git\usr\bin\bash.exe
+    $candidates += "$AuraForgeHome\git\bin\bash.exe"       # PortableGit layout (primary)
+    $candidates += "$AuraForgeHome\git\usr\bin\bash.exe"   # MinGit / PortableGit usr\bin fallback
 
     # git.exe on PATH can tell us where the install root is
     $gitCmd = Get-Command git -ErrorAction SilentlyContinue
@@ -928,10 +928,10 @@ function Test-Node {
     }
 
     # Prefer a Aura Forge-managed Node from a previous run over a too-old system one.
-    $managedNode = "$Aura ForgeHome\node\node.exe"
+    $managedNode = "$AuraForgeHome\node\node.exe"
     if ((Test-Path $managedNode) -and (Test-NodeVersionOk (& $managedNode --version))) {
         $version = & $managedNode --version
-        $env:Path = "$Aura ForgeHome\node;$env:Path"
+        $env:Path = "$AuraForgeHome\node;$env:Path"
         Write-Success "Node.js $version found (Aura Forge-managed)"
         $script:HasNode = $true
         return $true
@@ -943,11 +943,11 @@ function Test-Node {
     # winget install OpenJS.NodeJS.LTS triggers a system-wide MSI install
     # which prompts UAC (the dialog often appears minimized in the taskbar
     # and the install silently waits for consent, looking like a hang).
-    # The portable zip path drops node.exe + npm into $Aura ForgeHome\node\
+    # The portable zip path drops node.exe + npm into $AuraForgeHome\node\
     # which is user-scoped and identical to how Install-Git handles
     # PortableGit.  Same UX guarantee: works on locked-down enterprise
     # machines with no admin rights.
-    Write-Info "Downloading portable Node.js $NodeVersion to $Aura ForgeHome\node\ ..."
+    Write-Info "Downloading portable Node.js $NodeVersion to $AuraForgeHome\node\ ..."
     Write-Info "(no admin rights required; isolated from any system Node install)"
     try {
         $arch = Get-WindowsArch
@@ -966,16 +966,16 @@ function Test-Node {
 
             $extractedDir = Get-ChildItem $tmpDir -Directory | Select-Object -First 1
             if ($extractedDir) {
-                if (Test-Path "$Aura ForgeHome\node") { Remove-Item -Recurse -Force "$Aura ForgeHome\node" }
-                Move-Item $extractedDir.FullName "$Aura ForgeHome\node"
+                if (Test-Path "$AuraForgeHome\node") { Remove-Item -Recurse -Force "$AuraForgeHome\node" }
+                Move-Item $extractedDir.FullName "$AuraForgeHome\node"
 
                 # Session PATH so the rest of this run sees node/npm.
-                $env:Path = "$Aura ForgeHome\node;$env:Path"
+                $env:Path = "$AuraForgeHome\node;$env:Path"
 
                 # Persist to User PATH so fresh shells (and future stages
                 # in cross-process driver mode) see it.  Matches the
                 # pattern Install-Git uses for PortableGit.
-                $nodeDir = "$Aura ForgeHome\node"
+                $nodeDir = "$AuraForgeHome\node"
                 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
                 $userPathItems = if ($userPath) { $userPath -split ";" } else { @() }
                 if ($userPathItems -notcontains $nodeDir) {
@@ -983,8 +983,8 @@ function Test-Node {
                     [Environment]::SetEnvironmentVariable("Path", ($userPathItems -join ";"), "User")
                 }
 
-                $version = & "$Aura ForgeHome\node\node.exe" --version
-                Write-Success "Node.js $version installed to $Aura ForgeHome\node\ (portable, user-scoped)"
+                $version = & "$AuraForgeHome\node\node.exe" --version
+                Write-Success "Node.js $version installed to $AuraForgeHome\node\ (portable, user-scoped)"
                 $script:HasNode = $true
 
                 Remove-Item -Force $tmpZip -ErrorAction SilentlyContinue
@@ -2051,11 +2051,11 @@ function Set-PathVariable {
     # Set AURA_FORGE_HOME so the Python code finds config/data in the right place.
     # Only needed on Windows where we install to %LOCALAPPDATA%\aura-forge.
     $currentAuraHome = [Environment]::GetEnvironmentVariable("AURA_FORGE_HOME", "User")
-    if (-not $currentAuraHome -or $currentAuraHome -ne $Aura ForgeHome) {
-        [Environment]::SetEnvironmentVariable("AURA_FORGE_HOME", $Aura ForgeHome, "User")
-        Write-Success "Set AURA_FORGE_HOME=$Aura ForgeHome"
+    if (-not $currentAuraHome -or $currentAuraHome -ne $AuraForgeHome) {
+        [Environment]::SetEnvironmentVariable("AURA_FORGE_HOME", $AuraForgeHome, "User")
+        Write-Success "Set AURA_FORGE_HOME=$AuraForgeHome"
     }
-    $env:AURA_FORGE_HOME = $Aura ForgeHome
+    $env:AURA_FORGE_HOME = $AuraForgeHome
 
     # Update current session
     $env:Path = "$auraBin;$env:Path"
@@ -2143,20 +2143,20 @@ function Write-BootstrapMarker {
 function Copy-ConfigTemplates {
     Write-Info "Setting up configuration files..."
     
-    # Create the AURA_FORGE_HOME directory structure ($Aura ForgeHome, default %LOCALAPPDATA%\auraforge)
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\cron" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\sessions" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\logs" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\pairing" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\hooks" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\image_cache" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\audio_cache" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\memories" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$Aura ForgeHome\skills" | Out-Null
+    # Create the AURA_FORGE_HOME directory structure ($AuraForgeHome, default %LOCALAPPDATA%\auraforge)
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\cron" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\sessions" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\logs" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\pairing" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\hooks" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\image_cache" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\audio_cache" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\memories" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$AuraForgeHome\skills" | Out-Null
 
     
     # Create .env
-    $envPath = "$Aura ForgeHome\.env"
+    $envPath = "$AuraForgeHome\.env"
     if (-not (Test-Path $envPath)) {
         $examplePath = "$InstallDir\.env.example"
         if (Test-Path $examplePath) {
@@ -2171,7 +2171,7 @@ function Copy-ConfigTemplates {
     }
     
     # Create config.yaml
-    $configPath = "$Aura ForgeHome\config.yaml"
+    $configPath = "$AuraForgeHome\config.yaml"
     if (-not (Test-Path $configPath)) {
         $examplePath = "$InstallDir\cli-config.yaml.example"
         if (Test-Path $examplePath) {
@@ -2191,7 +2191,7 @@ function Copy-ConfigTemplates {
     # don't control which PowerShell version the user has.  Go direct
     # to .NET with an explicit UTF8Encoding($false) -- BOM-free on every
     # PowerShell version.
-    $soulPath = "$Aura ForgeHome\SOUL.md"
+    $soulPath = "$AuraForgeHome\SOUL.md"
     if (-not (Test-Path $soulPath)) {
         # MUST match DEFAULT_SOUL_MD in auraforge_cli/default_soul.py. The runtime
         # upgrades the old comment-only scaffold to this text on next run, so
@@ -2204,22 +2204,22 @@ You are Aura Forge, an intelligent AI assistant created by Nous Research. You ar
         Write-Success "Created $soulPath (edit to customize personality)"
     }
     
-    Write-Success "Configuration directory ready: $Aura ForgeHome"
+    Write-Success "Configuration directory ready: $AuraForgeHome"
     
-    # Seed bundled skills into $Aura ForgeHome\skills (manifest-based, one-time per skill)
-    Write-Info "Syncing bundled skills to $Aura ForgeHome\skills ..."
+    # Seed bundled skills into $AuraForgeHome\skills (manifest-based, one-time per skill)
+    Write-Info "Syncing bundled skills to $AuraForgeHome\skills ..."
     $pythonExe = "$InstallDir\venv\Scripts\python.exe"
     if (Test-Path $pythonExe) {
         try {
             & $pythonExe "$InstallDir\tools\skills_sync.py" 2>$null
-            Write-Success "Skills synced to $Aura ForgeHome\skills"
+            Write-Success "Skills synced to $AuraForgeHome\skills"
         } catch {
             # Fallback: simple directory copy
             $bundledSkills = "$InstallDir\skills"
-            $userSkills = "$Aura ForgeHome\skills"
+            $userSkills = "$AuraForgeHome\skills"
             if ((Test-Path $bundledSkills) -and -not (Get-ChildItem $userSkills -Exclude '.bundled_manifest' -ErrorAction SilentlyContinue)) {
                 Copy-Item -Path "$bundledSkills\*" -Destination $userSkills -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Success "Skills copied to $Aura ForgeHome\skills"
+                Write-Success "Skills copied to $AuraForgeHome\skills"
             }
         }
     }
@@ -2897,7 +2897,7 @@ function Install-PlatformSdks {
         return
     }
 
-    $envPath = "$Aura ForgeHome\.env"
+    $envPath = "$AuraForgeHome\.env"
     if (-not (Test-Path $envPath)) { return }
     $envLines = Get-Content $envPath -ErrorAction SilentlyContinue
 
@@ -3010,7 +3010,7 @@ function Invoke-SetupWizard {
 }
 
 function Start-GatewayIfConfigured {
-    $envPath = "$Aura ForgeHome\.env"
+    $envPath = "$AuraForgeHome\.env"
     if (-not (Test-Path $envPath)) { return }
 
     $hasMessaging = $false
@@ -3029,7 +3029,7 @@ function Start-GatewayIfConfigured {
 
     # If WhatsApp is enabled but not yet paired, run foreground for QR scan
     $whatsappEnabled = $content | Where-Object { $_ -match "^WHATSAPP_ENABLED=true" }
-    $whatsappSession = "$Aura ForgeHome\whatsapp\session\creds.json"
+    $whatsappSession = "$AuraForgeHome\whatsapp\session\creds.json"
     if ($whatsappEnabled -and -not (Test-Path $whatsappSession)) {
         Write-Host ""
         Write-Info "WhatsApp is enabled but not yet paired."
@@ -3071,10 +3071,10 @@ function Start-GatewayIfConfigured {
     if ($response -eq "" -or $response -match "^[Yy]") {
         Write-Info "Starting gateway in background..."
         try {
-            $logFile = "$Aura ForgeHome\logs\gateway.log"
+            $logFile = "$AuraForgeHome\logs\gateway.log"
             Start-Process -FilePath $auraforgeCmd -ArgumentList "gateway" `
                 -RedirectStandardOutput $logFile `
-                -RedirectStandardError "$Aura ForgeHome\logs\gateway-error.log" `
+                -RedirectStandardError "$AuraForgeHome\logs\gateway-error.log" `
                 -WindowStyle Hidden
             Write-Success "Gateway started! Your bot is now online."
             Write-Info "Logs: $logFile"
@@ -3098,13 +3098,13 @@ function Write-Completion {
     Write-Host "* Your files:" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "   Config:    " -NoNewline -ForegroundColor Yellow
-    Write-Host "$Aura ForgeHome\config.yaml"
+    Write-Host "$AuraForgeHome\config.yaml"
     Write-Host "   API Keys:  " -NoNewline -ForegroundColor Yellow
-    Write-Host "$Aura ForgeHome\.env"
+    Write-Host "$AuraForgeHome\.env"
     Write-Host "   Data:      " -NoNewline -ForegroundColor Yellow
-    Write-Host "$Aura ForgeHome\cron\, sessions\, logs\"
+    Write-Host "$AuraForgeHome\cron\, sessions\, logs\"
     Write-Host "   Code:      " -NoNewline -ForegroundColor Yellow
-    Write-Host "$Aura ForgeHome\aura-forge-agent\"    Write-Host ""
+    Write-Host "$AuraForgeHome\aura-forge-agent\"    Write-Host ""
     
     Write-Host "---------------------------------------------------------" -ForegroundColor Cyan
     Write-Host ""
