@@ -4748,10 +4748,10 @@ def _build_compact_banner() -> str:
     dim_color = _skin.get_color("banner_dim", "#B8860B") if _skin else "#B8860B"
 
     if skin_name == "default":
-        line1 = "⚕ NOUS HERMES - AI Agent Framework"
-        tiny_line = "⚕ NOUS HERMES"
+        line1 = "⚡ AURA FORGE - AI Agent Framework"
+        tiny_line = "⚡ AURA FORGE"
     else:
-        agent_name = _skin.get_branding("agent_name", "Hermes Agent") if _skin else "Hermes Agent"
+        agent_name = _skin.get_branding("agent_name", "Aura Forge Agent") if _skin else "Aura Forge Agent"
         line1 = f"{agent_name} - AI Agent Framework"
         tiny_line = agent_name
 
