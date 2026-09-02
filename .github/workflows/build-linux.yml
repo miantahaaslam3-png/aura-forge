@@ -1,0 +1,52 @@
+# Aura Forge Linux build: AppImage + deb + rpm on every push to main.
+# Windows cross-build is impossible (node-pty native modules), so Linux
+# packages are built on a real ubuntu runner and attached to a "linux" tag.
+
+name: Build Linux packages
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build desktop (AppImage + deb + rpm)
+        working-directory: apps/desktop
+        run: |
+          npm ci || npm install
+          npm run build
+          npx electron-builder --linux AppImage deb rpm
+
+      - name: Rename artifacts
+        run: |
+          cd apps/desktop/release
+          for f in *.AppImage *.deb *.rpm; do
+            [ -f "$f" ] && cp "$f" "AuraForge-0.20.6-linux-${f##*.}" 2>/dev/null || true
+          done
+          ls -la
+
+      - name: Upload artifacts (release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: linux
+          name: Aura Forge Linux
+          files: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.rpm
+          overwrite_files: true
