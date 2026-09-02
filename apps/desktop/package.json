@@ -1,5 +1,5 @@
 {
-  "name": "hermes",
+  "name": "aura-forge",
   "productName": "Aura Forge",
   "private": true,
   "version": "0.17.0",
@@ -197,7 +197,7 @@
         ]
       }
     ],
-    "artifactName": "Hermes-${version}-${os}-${arch}.${ext}",
+    "artifactName": "AuraForge-${version}-${os}-${arch}.${ext}",
     "icon": "assets/icon",
     "directories": {
       "output": "release"

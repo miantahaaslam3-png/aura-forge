@@ -1449,8 +1449,8 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
     desktop.settings = {
       getDefaultProjectDir: vi.fn(async () => ({
         defaultLabel: 'C:\\Users\\sonny',
-        dir: 'C:\\Hermes',
-        resolvedCwd: 'C:\\Hermes'
+        dir: 'C:\\Aura Forge',
+        resolvedCwd: 'C:\\Aura Forge'
       })),
       pickDefaultProjectDir: vi.fn(async () => undefined),
       setDefaultProjectDir: vi.fn(async () => undefined)
@@ -1476,8 +1476,8 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
     render(<Harness />)
     await flushAsync()
 
-    expect(cwdAtConnect).toBe('C:\\Hermes')
-    expect($currentCwd.get()).toBe('C:\\Hermes')
+    expect(cwdAtConnect).toBe('C:\\Aura Forge')
+    expect($currentCwd.get()).toBe('C:\\Aura Forge')
   })
 
   it('FIX: primary sleep/wake reconnect dials the window backend, not the active secondary profile', async () => {
