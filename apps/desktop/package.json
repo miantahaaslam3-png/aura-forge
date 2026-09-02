@@ -3,8 +3,8 @@
   "productName": "Aura Forge",
   "private": true,
   "version": "0.17.0",
-  "description": "Native desktop shell for Aura Forge.",
-  "author": "Nous Research",
+  "description": "Aura Forge",
+  "author": "Aura Forge",
   "type": "module",
   "main": "electron/main.cjs",
   "engines": {
@@ -244,8 +244,8 @@
     },
     "linux": {
       "category": "Development",
-      "maintainer": "Aura Forge <support@auraforge.local> <support@nousresearch.com>",
-      "synopsis": "Native desktop shell for Aura Forge..",
+      "maintainer": "Aura Forge <support@auraforge.local>",
+      "synopsis": "Aura Forge",
       "target": [
         "AppImage",
         "deb",
