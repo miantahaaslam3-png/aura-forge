@@ -286,7 +286,7 @@
     },
     "linux": {
       "category": "Development",
-      "maintainer": "Aura Forge <support@auraforge.local>",
+      "maintainer": "Aura Forge <support@auraforge.local> <support@auraforge.local>",
       "synopsis": "Native desktop shell for Aura Forge Agent.",
       "target": [
         "AppImage",

@@ -30,23 +30,5 @@ jobs:
         run: |
           npm ci || npm install
           npm run build
-          npx electron-builder --linux AppImage deb rpm
+          GH_TOKEN=${{ github.token }} npx electron-builder --linux AppImage deb rpm --publish always
 
-      - name: Rename artifacts
-        run: |
-          cd apps/desktop/release
-          for f in *.AppImage *.deb *.rpm; do
-            [ -f "$f" ] && cp "$f" "AuraForge-0.20.6-linux-${f##*.}" 2>/dev/null || true
-          done
-          ls -la
-
-      - name: Upload artifacts (release)
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: linux
-          name: Aura Forge Linux
-          files: |
-            apps/desktop/release/*.AppImage
-            apps/desktop/release/*.deb
-            apps/desktop/release/*.rpm
-          overwrite_files: true
