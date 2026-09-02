@@ -2,7 +2,7 @@
 name = "hermes-bootstrap"
 version = "0.0.1"
 description = "Aura Forge Setup — signed installer that drives scripts/install.ps1"
-authors = ["Nous Research <info@nousresearch.com>"]
+authors = ["Aura Forge <support@auraforge.local>"]
 edition = "2021"
 rust-version = "1.77"
 
@@ -11,7 +11,7 @@ rust-version = "1.77"
 # what we hand her, period. Tauri honors [[bin]] over [package].name
 # for the produced executable name.
 [[bin]]
-name = "Hermes-Setup"
+name = "AuraForge-Setup"
 path = "src/main.rs"
 
 # The library target name MUST match the `withGlobalTauri` binding name that
