@@ -233,12 +233,12 @@ def main():
             continue
         applied, leaks = process_file(path, args.apply, args.check)
         scanned += 1
-            if applied:
-                relpath = str(path.relative_to(REPO))
-                for rule in applied:
-                    applied_all.append(f"  {relpath}: {rule}")
-            if leaks:
-                leaks_all.extend(leaks)
+        if applied:
+            relpath = str(path.relative_to(REPO))
+            for rule in applied:
+                applied_all.append(f"  {relpath}: {rule}")
+        if leaks:
+            leaks_all.extend(leaks)
 
     if args.apply:
         print(f"Scanned {scanned} files, applied {len(applied_all)} rules across files:")
