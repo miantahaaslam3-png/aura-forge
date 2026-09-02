@@ -7,7 +7,7 @@ Reads a plan.json describing the team + brief, expands templates from
 initial kanban task.
 
 Profile-config patching, SOUL.md-per-profile, TEAM.md task-graph convention,
-and the `aura kanban create --workspace dir:` initial-task pattern are
+and the `hermes kanban create --workspace dir:` initial-task pattern are
 adapted from alt-glitch's NousResearch/kanban-video-pipeline.
 
 Usage:
@@ -68,7 +68,7 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 
 
 def load_template(name: str) -> str:
-    return (ASSETS_DIR / name).read_text()
+    return (ASSETS_DIR / name).read_text(encoding="utf-8")
 
 
 PROFILE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
@@ -311,12 +311,12 @@ def render_team_md(plan: dict) -> str:
         "",
         "## Per-task workspace requirement",
         "",
-        f"All `kanban_create` calls MUST pass:",
-        f"```",
-        f'workspace_kind="dir"',
+        "All `kanban_create` calls MUST pass:",
+        "```",
+        'workspace_kind="dir"',
         f'workspace_path="$HOME/projects/video-pipeline/{plan["slug"]}"',
         f'tenant="{plan["tenant"]}"',
-        f"```",
+        "```",
     ])
     return "\n".join(lines)
 
@@ -328,7 +328,7 @@ def render_setup_sh(plan: dict, brief_md: str, team_md: str) -> str:
     # API key checks
     key_checks = []
     for key in plan.get("api_keys_required", []):
-        key_checks.append(f'check_key {key} aura {key} || exit 1')
+        key_checks.append(f'check_key {key} hermes {key} || exit 1')
     key_checks_str = "\n".join(key_checks) if key_checks else "# (no API keys required)"
 
     # Scene dirs
@@ -342,7 +342,7 @@ def render_setup_sh(plan: dict, brief_md: str, team_md: str) -> str:
     profile_creates = []
     for t in plan["team"]:
         profile_creates.append(
-            f'aura profile create {t["profile"]} --clone 2>/dev/null || true'
+            f'hermes profile create {t["profile"]} --clone 2>/dev/null || true'
         )
 
     # Profile config — emit JSON arrays so the bash function can pass them
@@ -471,7 +471,7 @@ def main():
                     help="Write TEAM.md alongside (default: skipped)")
     args = ap.parse_args()
 
-    plan = json.loads(Path(args.plan_json).read_text())
+    plan = json.loads(Path(args.plan_json).read_text(encoding="utf-8"))
     errors = validate_plan(plan)
     if errors:
         print("Plan validation failed:", file=sys.stderr)
@@ -483,15 +483,15 @@ def main():
     team = render_team_md(plan)
     setup = render_setup_sh(plan, brief, team)
 
-    Path(args.out).write_text(setup)
+    Path(args.out).write_text(setup, encoding="utf-8")
     os.chmod(args.out, 0o755)
     print(f"Wrote {args.out}")
 
     if args.brief_out:
-        Path(args.brief_out).write_text(brief)
+        Path(args.brief_out).write_text(brief, encoding="utf-8")
         print(f"Wrote {args.brief_out}")
     if args.team_out:
-        Path(args.team_out).write_text(team)
+        Path(args.team_out).write_text(team, encoding="utf-8")
         print(f"Wrote {args.team_out}")
 
 

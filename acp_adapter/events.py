@@ -37,7 +37,7 @@ def _json_loads_maybe_prefix(value: str) -> Any:
 
 
 def _build_plan_update_from_todo_result(result: Any) -> AgentPlanUpdate | None:
-    """Translate Hermes' todo tool result into ACP's native plan update.
+    """Translate Aura Forge' todo tool result into ACP's native plan update.
 
     Zed renders ``sessionUpdate: plan`` as its first-class task/todo panel. The
     Aura Forge agent already maintains task state through the ``todo`` tool, so the

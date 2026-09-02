@@ -38,7 +38,7 @@ _LOGIN_HTML_TEMPLATE = """\
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in — Aura Forge</title>
+<title>Sign in — Aura Forge Agent</title>
 <style>
   /* Brand fonts shipped by @nous-research/ui — same files the SPA loads. */
   @font-face {{
@@ -305,7 +305,7 @@ _LOGIN_HTML_TEMPLATE = """\
   <div class="brand">Nous<span class="dot"></span>Research</div>
   <div class="card">
     <h1>Sign in</h1>
-    <p class="subtitle">Choose a sign-in method to continue to the Aura Forge dashboard.</p>
+    <p class="subtitle">Choose a sign-in method to continue to the Aura Forge Agent dashboard.</p>
     <div class="provider-list">
 {provider_buttons}
     </div>
@@ -325,7 +325,7 @@ _EMPTY_HTML = """\
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign-in unavailable — Aura Forge</title>
+<title>Sign-in unavailable — Aura Forge Agent</title>
 <style>
   @font-face {
     font-family: 'Collapse';
@@ -385,16 +385,19 @@ _EMPTY_HTML = """\
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
   }
+  a { color: var(--midground); }
 </style>
 </head>
 <body>
 <main>
 <h1>Sign-in unavailable</h1>
 <p>This dashboard is bound to a non-loopback host but no authentication
-providers are installed.</p>
-<p>Install <code>plugins/dashboard-auth-nous</code> (default) or another
-auth provider, or restart with <code>--insecure</code> to bypass the
-auth gate (not recommended on untrusted networks).</p>
+providers are available.</p>
+<p>Configure the bundled username/password provider or an OAuth provider.
+See the <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard#authentication-gated-mode">dashboard
+authentication documentation</a> for setup instructions.</p>
+<p>For auth-free local use, bind to <code>127.0.0.1</code> and connect through
+an SSH tunnel or Tailscale.</p>
 </main>
 </body>
 </html>
@@ -456,10 +459,6 @@ _PASSWORD_FORM_SCRIPT = """\
 
 
 def render_login_html(*, next_path: str = "") -> str:
-    """Return the full HTML for GET /login. DISABLED for Aura Forge — accounts not linked to Nous."""
-    return _EMPTY_HTML
-
-def _render_login_html_DISABLED(*, next_path: str = "") -> str:
     """Return the full HTML for ``GET /login``.
 
     ``next_path`` — when set, the post-login landing path the user

@@ -1,5 +1,5 @@
 """
-Cron job scheduling system for Hermes Agent.
+Cron job scheduling system for Aura Forge Agent.
 
 This module provides scheduled task execution, allowing the agent to:
 - Run automated tasks on schedules (cron expressions, intervals, one-shot)
@@ -24,6 +24,7 @@ from cron.jobs import (
     pause_job,
     resume_job,
     trigger_job,
+    rearm_oneshot,
     JOBS_FILE,
 )
 from cron.scheduler import tick
@@ -37,6 +38,7 @@ __all__ = [
     "pause_job",
     "resume_job",
     "trigger_job",
+    "rearm_oneshot",
     "tick",
     "JOBS_FILE",
 ]

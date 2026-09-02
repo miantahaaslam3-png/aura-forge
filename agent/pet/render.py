@@ -11,7 +11,7 @@ Supported output modes, in fidelity order:
 - ``sixel``   — DEC sixel (xterm -ti vt340, foot, mlterm, WezTerm, …).
 - ``unicode`` — 24-bit half-block downscale; works in any truecolor terminal.
 
-Frame decoding requires Pillow (a core Hermes dependency).  If Pillow or the
+Frame decoding requires Pillow (a core Aura Forge dependency).  If Pillow or the
 spritesheet is unavailable the renderer degrades to ``unicode`` text or an
 empty string rather than raising.
 """
@@ -88,6 +88,22 @@ def detect_terminal_graphics() -> str:
         return "sixel"
 
     return "unicode"
+
+
+def supports_kitty_placeholders() -> bool:
+    """True when the terminal can paint kitty Unicode placeholders (U+10EEEE).
+
+    Narrower than ``detect_terminal_graphics() == "kitty"``. WezTerm speaks
+    kitty APC transmits but does not implement the placeholder grid, so those
+    cells render as tofu. Ghostty and kitty do. VS Code already falls out of
+    ``detect_terminal_graphics`` as ``unicode``.
+    """
+    if detect_terminal_graphics() != "kitty":
+        return False
+    term_program = os.environ.get("TERM_PROGRAM", "").lower()
+    if term_program == "wezterm" or os.environ.get("WEZTERM_PANE"):
+        return False
+    return True
 
 
 def resolve_mode(configured: str | None, *, stream=None) -> str:
@@ -423,7 +439,7 @@ def _encode_iterm(frame, *, cell_cols: int | None = None, cell_rows: int | None 
     """Encode one frame as an iTerm2 inline image (OSC 1337 File)."""
     payload = base64.standard_b64encode(_png_bytes(frame)).decode("ascii")
     size = len(payload)
-    args = [f"inline=1", f"size={size}", "preserveAspectRatio=1"]
+    args = ["inline=1", f"size={size}", "preserveAspectRatio=1"]
     if cell_cols:
         args.append(f"width={cell_cols}")
     if cell_rows:

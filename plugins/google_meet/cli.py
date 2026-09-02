@@ -1,6 +1,6 @@
 """CLI commands for the google_meet plugin.
 
-Wires ``aura meet <subcommand>``:
+Wires ``hermes meet <subcommand>``:
   setup       — preflight playwright, chromium, auth file, print fixes
   auth        — open a browser to sign into Google, save storage state
   join <url>  — join a Meet URL synchronously (also callable from the agent)
@@ -32,7 +32,7 @@ def _auth_state_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def register_cli(subparser: argparse.ArgumentParser) -> None:
-    """Build the ``aura meet`` argparse tree.
+    """Build the ``hermes meet`` argparse tree.
 
     Called by :func:`_register_cli_commands` at plugin load time.
     """
@@ -93,7 +93,7 @@ def register_cli(subparser: argparse.ArgumentParser) -> None:
         # missing at import time etc.), leave the subparser present but
         # flag it. The argparse dispatch will surface a clear error.
         def _node_unavailable(args):
-            print(f"aura meet node: module unavailable ({e})")
+            print(f"hermes meet node: module unavailable ({e})")
             return 1
         node_p.set_defaults(func=_node_unavailable)
 
@@ -107,7 +107,7 @@ def register_cli(subparser: argparse.ArgumentParser) -> None:
 def meet_command(args: argparse.Namespace) -> int:
     sub = getattr(args, "meet_command", None)
     if not sub:
-        print("usage: aura meet {setup,auth,join,status,transcript,say,stop,node}")
+        print("usage: hermes meet {setup,auth,join,status,transcript,say,stop,node}")
         return 2
     if sub == "setup":
         return _cmd_setup()
@@ -140,7 +140,7 @@ def meet_command(args: argparse.Namespace) -> int:
         # whatever its subparsers wired.
         fn = getattr(args, "func", None)
         if fn is None or fn is meet_command:
-            print("usage: aura meet node {run,list,approve,remove,status,ping}")
+            print("usage: hermes meet node {run,list,approve,remove,status,ping}")
             return 2
         return fn(args)
     print(f"unknown subcommand: {sub}")
@@ -196,7 +196,7 @@ def _cmd_setup() -> int:
     auth_ok = auth_path.is_file()
     print(
         "  google auth    : "
-        + (f"ok ({auth_path})" if auth_ok else "not saved — run: aura meet auth")
+        + (f"ok ({auth_path})" if auth_ok else "not saved — run: hermes meet auth")
     )
 
     print()
@@ -204,7 +204,7 @@ def _cmd_setup() -> int:
     if all_ok:
         print(
             "ready. Join a meeting:  "
-            "aura meet join https://meet.google.com/abc-defg-hij"
+            "hermes meet join https://meet.google.com/abc-defg-hij"
         )
     else:
         print("not ready yet — fix the items above.")
@@ -250,10 +250,9 @@ def _cmd_install(*, realtime: bool, assume_yes: bool) -> int:
     pip_pkgs = ["playwright", "websockets"]
     print(f"\n[1/3] pip install: {' '.join(pip_pkgs)}")
     try:
-        res = _sp.run(
-            [sys.executable, "-m", "pip", "install", "--upgrade", *pip_pkgs],
-            check=False,
-        )
+        from hermes_cli.tools_config import _pip_install
+
+        res = _pip_install(["--upgrade", *pip_pkgs], capture_output=False)
         if res.returncode != 0:
             print("  pip install failed")
             return 1
@@ -294,7 +293,7 @@ def _cmd_install(*, realtime: bool, assume_yes: bool) -> int:
         elif system == "Darwin":
             have_bh = False
             try:
-                out = _sp.check_output(["system_profiler", "SPAudioDataType"], text=True)
+                out = _sp.check_output(["system_profiler", "SPAudioDataType"], text=True, encoding='utf-8', errors='replace')
                 have_bh = "BlackHole" in out
             except Exception:
                 pass
@@ -324,12 +323,12 @@ def _cmd_install(*, realtime: bool, assume_yes: bool) -> int:
                 "\n  NOTE: macOS does not auto-route audio. Open\n"
                 "    System Settings → Sound → Input\n"
                 "  and select 'BlackHole 2ch' before starting a realtime meeting.\n"
-                "  aura will not switch your default input for you."
+                "  hermes will not switch your default input for you."
             )
     else:
         print("\n[3/3] skipped (pass --realtime to install audio tooling too)")
 
-    print("\ndone. verify with: aura meet setup")
+    print("\ndone. verify with: hermes meet setup")
     return 0
 
 
@@ -347,7 +346,7 @@ def _cmd_auth() -> int:
     path = _auth_state_path()
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"opening Chromium — sign in to Google, then return here and press Enter.")
+    print("opening Chromium — sign in to Google, then return here and press Enter.")
     print(f"saving storage state to: {path}")
     try:
         with sync_playwright() as pw:
@@ -364,7 +363,7 @@ def _cmd_auth() -> int:
     except Exception as e:
         print(f"auth failed: {e}")
         return 1
-    print("saved. you can now run: aura meet join <url>")
+    print("saved. you can now run: hermes meet join <url>")
     return 0
 
 
@@ -465,13 +464,13 @@ def _cmd_transcript(last: Optional[int]) -> int:
 
 
 def _cmd_stop() -> int:
-    res = pm.stop(reason="aura meet stop")
+    res = pm.stop(reason="hermes meet stop")
     print(json.dumps(res, indent=2))
     return 0 if res.get("ok") else 1
 
 
 if __name__ == "__main__":  # pragma: no cover
-    parser = argparse.ArgumentParser(prog="aura meet")
+    parser = argparse.ArgumentParser(prog="hermes meet")
     register_cli(parser)
     ns = parser.parse_args()
     sys.exit(meet_command(ns))

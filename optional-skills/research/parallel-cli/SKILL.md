@@ -1,6 +1,6 @@
 ---
 name: parallel-cli
-description: Optional vendor skill for Parallel CLI — agent-native web search, extraction, deep research, enrichment, FindAll, and monitoring. Prefer JSON output and non-interactive flows.
+description: Agent-native web search, deep research, and enrichment.
 version: 1.1.0
 author: Aura Forge Agent
 license: MIT
@@ -15,7 +15,7 @@ metadata:
 
 Use `parallel-cli` when the user explicitly wants Parallel, or when a terminal-native workflow would benefit from Parallel's vendor-specific stack for web search, extraction, deep research, enrichment, entity discovery, or monitoring.
 
-This is an optional third-party workflow, not an Aura Forge core capability.
+This is an optional third-party workflow, not a Aura Forge core capability.
 
 Important expectations:
 - Parallel is a paid service with a free tier, not a fully free local tool.

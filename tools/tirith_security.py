@@ -74,8 +74,8 @@ def _load_security_config() -> dict:
         "tirith_fail_open": True,
     }
     try:
-        from hermes_cli.config import load_config
-        cfg = load_config().get("security", {}) or {}
+        from hermes_cli.config import load_config_readonly
+        cfg = load_config_readonly().get("security", {}) or {}
     except Exception:
         cfg = {}
 
@@ -163,7 +163,7 @@ _MARKER_TTL = 86400  # 24 hours
 
 
 def _get_hermes_home() -> str:
-    """Return the Hermes home directory, respecting HERMES_HOME env var."""
+    """Return the Aura Forge home directory, respecting HERMES_HOME env var."""
     return str(get_hermes_home())
 
 
@@ -283,7 +283,8 @@ def is_platform_supported() -> bool:
 def _download_file(url: str, dest: str, timeout: int = 10):
     """Download a URL to a local file."""
     req = urllib.request.Request(url)
-    token = os.getenv("GITHUB_TOKEN")
+    from agent.secret_scope import get_secret
+    token = get_secret("GITHUB_TOKEN")
     if token:
         req.add_header("Authorization", f"token {token}")
     with urllib.request.urlopen(req, timeout=timeout) as resp, open(dest, "wb") as f:
@@ -315,7 +316,7 @@ def _verify_cosign(checksums_path: str, sig_path: str, cert_path: str) -> bool |
              "--certificate-oidc-issuer", _COSIGN_ISSUER,
              checksums_path],
             capture_output=True,
-            text=True,
+            text=True, encoding='utf-8', errors='replace',
             timeout=15,
             stdin=subprocess.DEVNULL,
         )
@@ -776,7 +777,7 @@ def check_command_security(command: str) -> dict:
             [tirith_path, "check", "--json", "--non-interactive",
              "--shell", "posix", "--", command],
             capture_output=True,
-            text=True,
+            text=True, encoding='utf-8', errors='replace',
             timeout=timeout,
             stdin=subprocess.DEVNULL,
         )

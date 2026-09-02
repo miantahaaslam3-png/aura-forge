@@ -50,7 +50,7 @@ export const uk: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Aura Forge Agent",
     brandShort: "HA",
     closeNavigation: "Закрити навігацію",
     closeModelTools: "Закрити модель та інструменти",
@@ -120,8 +120,8 @@ export const uk: Translations = {
     starting: "Запускається",
     startedInBackground: "Запущено у фоні — перевірте журнали для прогресу",
     stopped: "Зупинено",
-    updateHermes: "Оновити Hermes",
-    updatingHermes: "Оновлення Hermes…",
+    updateHermes: "Оновити Aura Forge",
+    updatingHermes: "Оновлення Aura Forge…",
     waitingForOutput: "Очікування виводу…",
   },
 
@@ -129,8 +129,14 @@ export const uk: Translations = {
     title: "Сесії",
     history: "Історія",
     overview: "Огляд",
+    filterChats: "Чати",
+    filterAutomation: "Автоматизація",
+    filterAll: "Усі",
+    sourceFilter: "Джерело сесії",
+    anySource: "Будь-яке джерело",
     searchPlaceholder: "Пошук у вмісті повідомлень...",
     noSessions: "Поки немає сесій",
+    noSessionsInFilter: "У цьому фільтрі немає сесій",
     noMatch: "Жодна сесія не відповідає вашому пошуку",
     startConversation: "Почніть розмову, щоб побачити її тут",
     noMessages: "Немає повідомлень",
@@ -321,7 +327,7 @@ export const uk: Translations = {
     enableRuntime: "Увімкнути",
     forceReinstall: "Примусово перевстановити (спершу видалити наявну теку)",
     headline:
-      "Знаходьте, встановлюйте, вмикайте та оновлюйте плагіни Hermes (паритет з `hermes plugins`).",
+      "Знаходьте, встановлюйте, вмикайте та оновлюйте плагіни Aura Forge (паритет з `hermes plugins`).",
     identifierLabel: "Git URL або owner/repo",
     inactive: "неактивний",
     installBtn: "Встановити",
@@ -387,7 +393,7 @@ export const uk: Translations = {
     rawYaml: "Сирий YAML-конфіг",
     searchResults: "Результати пошуку",
     fields: "поле(ів)",
-    noFieldsMatch: 'Немає полів, що відповідають \"{query}\"',
+    noFieldsMatch: 'Немає полів, що відповідають "{query}"',
     configSaved: "Конфігурацію збережено",
     yamlConfigSaved: "YAML-конфігурацію збережено",
     failedToSave: "Не вдалося зберегти",
@@ -435,7 +441,7 @@ export const uk: Translations = {
     showValue: "Показати справжнє значення",
     hideValue: "Сховати значення",
     customTitle: "Власні ключі",
-    customHint: "Довільні змінні середовища, збережені у вашому .env, які Hermes не розпізнає. Використовуйте їх для впровадження змінних середовища для навичок, серверів MCP або власних інструментів.",
+    customHint: "Довільні змінні середовища, збережені у вашому .env, які Aura Forge не розпізнає. Використовуйте їх для впровадження змінних середовища для навичок, серверів MCP або власних інструментів.",
     customConfigured: "Задано власних ключів: {count}",
     addCustomKey: "Додати власний ключ",
     customKeyName: "Назва змінної",
@@ -447,16 +453,19 @@ export const uk: Translations = {
   oauth: {
     title: "Входи постачальників (OAuth)",
     providerLogins: "Входи постачальників (OAuth)",
-    description: "Підключено {connected} з {total} постачальників OAuth. Процеси входу наразі виконуються через CLI; натисніть «Скопіювати команду» та вставте у термінал, щоб налаштувати.",
+    description:
+      "Підключено {connected} з {total} постачальників OAuth. Використовуйте «Увійти» для процесів, підтримуваних панеллю; команди CLI залишаються доступними для зовнішнього або резервного налаштування.",
     connected: "Підключено",
     expired: "Прострочено",
-    notConnected: "Не підключено. Виконайте {command} у терміналі.",
+    notConnected: "Не підключено. Використовуйте «Увійти», якщо доступно, або виконайте {command} у терміналі.",
     runInTerminal: "у терміналі.",
     noProviders: "Не виявлено постачальників із підтримкою OAuth.",
     login: "Увійти",
     disconnect: "Відключити",
     managedExternally: "Керується ззовні",
     copied: "Скопійовано ✓",
+    copyCode: "Скопіювати код",
+    copyFailed: "Не вдалося скопіювати автоматично. Виділіть код і скопіюйте його вручну.",
     cli: "Копіювати",
     copyCliCommand: "Скопіювати CLI-команду (для зовнішнього / резервного варіанту)",
     connect: "Підключити",
@@ -495,11 +504,11 @@ export const uk: Translations = {
   achievements: {
     hero: {
       kicker: "Agentic Gamerscore",
-      title: "Hermes Achievements",
+      title: "Aura Forge Achievements",
       subtitle:
-        "Колекційні значки Hermes, отримані з реальної історії сеансів. Відомі, але ще не виконані досягнення показані як Виявлені; Секретні досягнення залишаються прихованими, доки не з'явиться перший відповідний сигнал.",
+        "Колекційні значки Aura Forge, отримані з реальної історії сеансів. Відомі, але ще не виконані досягнення показані як Виявлені; Секретні досягнення залишаються прихованими, доки не з'явиться перший відповідний сигнал.",
       scan_subtitle:
-        "Сканування історії сеансів Hermes. Перше сканування на великих історіях може тривати 5–10 секунд.",
+        "Сканування історії сеансів Aura Forge. Перше сканування на великих історіях може тривати 5–10 секунд.",
     },
     actions: {
       rescan: "Повторне сканування",
@@ -514,7 +523,7 @@ export const uk: Translations = {
       highest_tier: "Найвищий рівень",
       highest_tier_hint: "Copper → Silver → Gold → Diamond → Olympian",
       latest: "Останнє",
-      latest_hint_empty: "запускайте Hermes частіше",
+      latest_hint_empty: "запускайте Aura Forge частіше",
       none_yet: "Поки немає",
     },
     state: {
@@ -545,10 +554,10 @@ export const uk: Translations = {
       tiers_header: "Рівні",
       secret_header: "Секретні досягнення",
       secret_body:
-        "Секрети приховують свій точний тригер. Щойно Hermes побачить пов'язаний сигнал, картка стає Виявленою та показує свою умову.",
+        "Секрети приховують свій точний тригер. Щойно Aura Forge побачить пов'язаний сигнал, картка стає Виявленою та показує свою умову.",
       scan_status_header: "Стан сканування",
       scan_status_body:
-        "Hermes одноразово сканує локальну історію, а потім картки з'являться автоматично. Якщо це триває кілька секунд — нічого не зависло.",
+        "Aura Forge одноразово сканує локальну історію, а потім картки з'являться автоматично. Якщо це триває кілька секунд — нічого не зависло.",
       what_scanned_header: "Що сканується",
       what_scanned_body:
         "Сеанси, виклики інструментів, метадані моделей, помилки, досягнення та локальний стан розблокування.",
@@ -595,7 +604,7 @@ export const uk: Translations = {
         "«Поділитися в X» відкриває попередньо заповнений допис у новій вкладці. Якщо хочете прикріпити значок 1200×630 — спочатку натисніть «Копіювати зображення»: X дозволить вставити його прямо в редактор твіта. «Завантажити PNG» збереже файл для використання будь-де.",
       clipboard_unsupported:
         "Цей браузер не підтримує копіювання зображень у буфер обміну — використайте «Завантажити».",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Aura Forge Agent ☤",
     },
   },
   kanban: {
@@ -610,6 +619,12 @@ export const uk: Translations = {
       "Дошки дозволяють розділяти непов'язані потоки роботи — по одній на проєкт, репозиторій або домен. Воркери на одній дошці ніколи не бачать задач іншої дошки.",
     slug: "Slug",
     slugHint: "— рядкові літери, дефіси, напр. atm10-server",
+    confirmDoneMany:
+      "Mark {n} tasks as done? The workers' claims are released and dependent children become ready.",
+    confirmArchiveMany:
+      "Archive {n} tasks? They disappear from the default board view.",
+    confirmBlockedMany:
+      "Mark {n} tasks as blocked? The workers' claims are released.",
     displayName: "Відображувана назва",
     displayNameHint: "(необов'язково)",
     description: "Опис",

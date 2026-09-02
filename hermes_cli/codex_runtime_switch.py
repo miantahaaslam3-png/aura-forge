@@ -1,6 +1,6 @@
 """Shared logic for the /codex-runtime slash command.
 
-Toggles `model.openai_runtime` between "auto" (= chat_completions, Hermes'
+Toggles `model.openai_runtime` between "auto" (= chat_completions, Aura Forge'
 default) and "codex_app_server" (= hand turns to a codex subprocess).
 
 Both CLI (cli.py) and gateway (gateway/run.py) call into this module so the
@@ -205,9 +205,9 @@ def apply(
         ok, ver = _check_binary_cached()
         if ok:
             msg_lines.append(f"codex CLI: {ver}")
-        # Auto-migrate Hermes' MCP servers + Codex's installed curated
+        # Auto-migrate Aura Forge' MCP servers + Codex's installed curated
         # plugins into ~/.codex/config.toml so the spawned codex subprocess
-        # sees the same tool surface AND can call back into Hermes for
+        # sees the same tool surface AND can call back into Aura Forge for
         # browser/web/delegate_task/vision/memory tools (#7 fix).
         # Failures are non-fatal — the runtime change still proceeds.
         try:
@@ -234,7 +234,7 @@ def apply(
                     f"Codex plugin discovery skipped: "
                     f"{mig_report.plugin_query_error}"
                 )
-            # Permissions + Hermes tool callback are always-on production
+            # Permissions + Aura Forge tool callback are always-on production
             # bits the user benefits from knowing about.
             if mig_report.wrote_permissions_default:
                 msg_lines.append(
@@ -250,7 +250,7 @@ def apply(
                 )
                 msg_lines.append(
                     "  (delegate_task, memory, session_search, todo run "
-                    "only on the default Hermes runtime — they need the "
+                    "only on the default Aura Forge runtime — they need the "
                     "agent loop context.)"
                 )
             msg_lines.append(f"  (config: {mig_report.target_path})")
@@ -268,7 +268,7 @@ def apply(
             "the prior runtime to preserve prompt cache."
         )
     else:
-        msg_lines.append("OpenAI/Codex turns will use the default Hermes runtime.")
+        msg_lines.append("OpenAI/Codex turns will use the default Aura Forge runtime.")
         msg_lines.append("Effective on next session.")
     return CodexRuntimeStatus(
         success=True,

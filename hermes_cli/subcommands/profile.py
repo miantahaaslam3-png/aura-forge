@@ -120,9 +120,15 @@ def build_profile_parser(subparsers, *, cmd_profile: Callable) -> None:
         help="Custom alias name (default: profile name)",
     )
 
-    profile_rename = profile_subparsers.add_parser("rename", help="Rename a profile")
+    profile_rename = profile_subparsers.add_parser(
+        "rename",
+        help="Rename a profile ('default': sets a display name; id unchanged)",
+    )
     profile_rename.add_argument("old_name", help="Current profile name")
-    profile_rename.add_argument("new_name", help="New profile name")
+    profile_rename.add_argument(
+        "new_name",
+        help="New profile name (for 'default': a display name — the canonical id stays 'default')",
+    )
 
     profile_export = profile_subparsers.add_parser(
         "export", help="Export a profile to archive"
@@ -148,7 +154,7 @@ def build_profile_parser(subparsers, *, cmd_profile: Callable) -> None:
         "install",
         help="Install a profile distribution from a git URL or local directory",
         description=(
-            "Install a Hermes profile distribution. SOURCE can be a git URL "
+            "Install a Aura Forge profile distribution. SOURCE can be a git URL "
             "(github.com/user/repo, https://..., git@...) or a local "
             "directory containing distribution.yaml at its root."
         ),

@@ -56,7 +56,7 @@ TIPS = [
     # --- Keybindings ---
     "Alt+Enter inserts a newline for multi-line input. (Windows Terminal intercepts Alt+Enter — use Ctrl+Enter instead.)",
     "Ctrl+C interrupts the agent. Double-press within 2 seconds to force exit.",
-    "Ctrl+Z suspends Hermes to the background — run fg in your shell to resume.",
+    "Ctrl+Z suspends Aura Forge to the background — run fg in your shell to resume.",
     "Tab accepts auto-suggestion ghost text or autocompletes slash commands.",
     "Type a new message while the agent is working to interrupt and redirect it.",
     "Alt+V pastes an image from your clipboard into the conversation.",
@@ -69,7 +69,7 @@ TIPS = [
     "hermes chat -t web,terminal enables only specific toolsets for a focused session.",
     "hermes chat -s github-pr-workflow preloads a skill at launch.",
     "hermes chat -q \"query\" runs a single non-interactive query and exits.",
-    "hermes chat --max-turns 200 overrides the default 90-iteration limit per turn.",
+    "hermes chat --max-turns 1000 overrides the default 500-iteration limit per turn.",
     "hermes chat --checkpoints enables filesystem snapshots before every destructive file change.",
     "hermes --yolo bypasses all dangerous command approval prompts for the entire session.",
     "hermes chat --source telegram tags the session for filtering in hermes sessions list.",
@@ -89,15 +89,15 @@ TIPS = [
     "hermes skills tap add myorg/skills-repo adds a custom GitHub skill source.",
     "hermes skills snapshot export setup.json exports your skill configuration for backup or sharing.",
     "hermes mcp add github --command npx adds MCP servers from the command line.",
-    "hermes mcp serve runs Hermes itself as an MCP server for other agents.",
+    "hermes mcp serve runs Aura Forge itself as an MCP server for other agents.",
     "hermes auth add lets you add multiple API keys for credential pool rotation.",
     "hermes completion bash >> ~/.bashrc enables tab completion for all commands and profiles.",
     "hermes logs -f follows agent.log in real time. --level WARNING --since 1h filters output.",
-    "hermes backup creates a zip backup of your entire Hermes home directory.",
+    "hermes backup creates a zip backup of your entire Aura Forge home directory.",
     "hermes profile create coder creates an isolated profile that becomes its own command.",
     "hermes profile create work --clone copies your current config and keys to a new profile.",
     "hermes update syncs new bundled skills to ALL profiles automatically.",
-    "hermes gateway install sets up Hermes as a system service (systemd/launchd).",
+    "hermes gateway install sets up Aura Forge as a system service (systemd/launchd).",
     "hermes memory setup lets you configure an external memory provider (Honcho, Mem0, etc.).",
     "hermes webhook subscribe creates event-driven webhook routes with HMAC validation.",
     "Save money: hermes tools disables unused tools, hermes skills config trims skills down.",
@@ -112,7 +112,7 @@ TIPS = [
     "Set display.busy_input_mode: queue to queue messages instead of interrupting the agent, or steer to inject them mid-run via /steer.",
     "Set display.resume_display: minimal to skip the full conversation recap on session resume.",
     "Set compression.threshold: 0.50 to control when auto-compression fires (default: 50% of context).",
-    "Set agent.max_turns: 200 to let the agent take more tool-calling steps per turn.",
+    "Set agent.max_turns: 1000 to let the agent take more tool-calling steps per turn.",
     "Set file_read_max_chars: 200000 to increase the max content per read_file call.",
     "Set approvals.mode: smart to let an LLM auto-approve safe commands and auto-deny dangerous ones.",
     "Set fallback_model in config.yaml to automatically fail over to a backup provider.",
@@ -128,7 +128,7 @@ TIPS = [
     "provider_routing controls OpenRouter provider sorting, whitelisting, and blacklisting.",
 
     # --- Tools & Capabilities ---
-    "execute_code runs Python scripts that call Hermes tools programmatically — results stay out of context.",
+    "execute_code runs Python scripts that call Aura Forge tools programmatically — results stay out of context.",
     "delegate_task spawns up to 3 concurrent sub-agents by default (delegation.max_concurrent_children) with isolated contexts for parallel work.",
     "web_extract works on PDF URLs — pass any PDF link and it converts to markdown.",
     "search_files is ripgrep-backed and faster than grep — use it instead of terminal grep.",
@@ -195,7 +195,7 @@ TIPS = [
     "Aura Forge runs on 21 messaging platforms: Telegram, Discord, Slack, WhatsApp, Signal, Matrix, IRC, Microsoft Teams, email, and more.",
     "hermes gateway install sets it up as a system service that starts on boot.",
     "DingTalk uses Stream Mode — no webhooks or public URL needed.",
-    "BlueBubbles brings iMessage to Hermes via a local macOS server.",
+    "BlueBubbles brings iMessage to Aura Forge via a local macOS server.",
     "Webhook routes support HMAC validation, rate limiting, and event filtering.",
     "The API server exposes an OpenAI-compatible endpoint compatible with Open WebUI and LibreChat.",
     "Discord voice channel mode: the bot joins VC, transcribes speech, and talks back.",
@@ -259,7 +259,7 @@ TIPS = [
     "Slash commands support prefix matching: /h resolves to /help, /mod to /model.",
     "Dragging a file path into the terminal auto-attaches images or sends as context.",
     ".worktreeinclude in your repo root lists gitignored files to copy into worktrees.",
-    "hermes acp runs Hermes as an ACP server for VS Code, Zed, and JetBrains integration.",
+    "hermes acp runs Aura Forge as an ACP server for VS Code, Zed, and JetBrains integration.",
     "Custom providers: save named endpoints in config.yaml under custom_providers.",
     "HERMES_EPHEMERAL_SYSTEM_PROMPT injects a system prompt that's never persisted to history.",
     "credential_pool_strategies supports fill_first, round_robin, least_used, and random rotation.",
@@ -272,11 +272,11 @@ TIPS = [
     "Cron jobs can attach a Python script (--script) whose stdout is injected into the prompt as context.",
     "Cron scripts live in ~/.hermes/scripts/ and run before the agent — perfect for data collection pipelines.",
     "prefill_messages_file in config.yaml injects few-shot examples into every API call, never saved to history.",
-    "SOUL.md completely replaces the agent's default identity — rewrite it to make Hermes your own.",
+    "SOUL.md completely replaces the agent's default identity — rewrite it to make Aura Forge your own.",
     "SOUL.md is auto-seeded with a default personality on first run. Edit it to customize.",
     "/compress <focus topic> allocates 60-70% of the summary budget to your topic and aggressively trims the rest.",
     "On second+ compression, the compressor updates the previous summary instead of starting from scratch.",
-    "Before a gateway session reset, Hermes auto-flushes important facts to memory in the background.",
+    "Before a gateway session reset, Aura Forge auto-flushes important facts to memory in the background.",
     "network.force_ipv4: true in config.yaml fixes hangs on servers with broken IPv6 — monkey-patches socket.",
     "The terminal tool annotates common exit codes: grep returning 1 = 'No matches found (not an error)'.",
     "Failed foreground terminal commands auto-retry up to 3 times with exponential backoff (2s, 4s, 8s).",
@@ -292,13 +292,13 @@ TIPS = [
     "Delegation has a heartbeat thread — child activity propagates to the parent, preventing gateway timeouts.",
     "When a provider returns HTTP 402 (payment required), the auxiliary client auto-falls back to the next one.",
     "agent.tool_use_enforcement steers models that describe actions instead of calling tools — auto for GPT/Codex.",
-    "agent.restart_drain_timeout (default 60s) lets running agents finish before a gateway restart takes effect.",
+    "agent.restart_after_turn_timeout lets in-flight turns finish before /restart enters stop(); restart_drain_timeout is only the force-interrupt budget once stop() begins.",
     "agent.api_max_retries (default 3) controls how many times the agent retries a failed API call before surfacing the error — lower it for fast fallback.",
     "The gateway caches AIAgent instances per session — destroying this cache breaks Anthropic prompt caching.",
     "Any website can expose skills via /.well-known/skills/index.json — the skills hub discovers them automatically.",
     "The skills audit log at ~/.hermes/skills/.hub/audit.log tracks every install and removal operation.",
-    "Stale git worktrees are auto-cleaned: 24-72h old with no unpushed commits get pruned on startup.",
-    "Profiles scope Hermes state via HERMES_HOME; host tool subprocesses keep your real HOME unless terminal.home_mode is profile.",
+    "Stale git worktrees are auto-cleaned on startup: clean, fully-merged trees get pruned; dirty or unpushed work is always preserved.",
+    "Profiles scope Aura Forge state via HERMES_HOME; host tool subprocesses keep your real HOME unless terminal.home_mode is profile.",
     "HERMES_HOME_MODE env var (octal, e.g. 0701) sets custom directory permissions for web server traversal.",
     "Container mode: place .container-mode in HERMES_HOME and the host CLI auto-execs into the container.",
     "Ctrl+C has 5 priority tiers: cancel recording → cancel prompts → cancel picker → interrupt agent → exit.",
@@ -315,7 +315,7 @@ TIPS = [
     "GPT and Codex models get special system prompt guidance for tool discipline and mandatory tool use.",
     "Gemini models get tailored directives for absolute paths, parallel tool calls, and non-interactive commands.",
     "context.engine in config.yaml can be set to a plugin name for alternative context management strategies.",
-    "Browser pages over 8000 tokens are auto-summarized by the auxiliary LLM before returning to the agent.",
+    "Browser page snapshots over 15,000 characters are truncated or auto-summarized; the full snapshot is saved to cache/web for read_file paging.",
     "The compressor does a cheap pre-pass: tool outputs over 200 chars are replaced with placeholders before the LLM runs.",
     "When compression fails, further attempts are paused for 10 minutes to avoid API hammering.",
     "Long dangerous commands (>70 chars) get a 'view' option in the approval prompt to see the full text first.",
@@ -340,13 +340,13 @@ TIPS = [
 
     # --- Advanced Slash Commands ---
     '/steer <prompt> injects a note after the next tool call — nudge direction mid-task without interrupting.',
-    '/goal <text> sets a standing Ralph-loop objective — Hermes auto-continues turn after turn until a judge says done.',
-    '/snapshot create [label] saves a full state snapshot of Hermes config; /snapshot restore <id> reverts later.',
+    '/goal <text> sets a standing Ralph-loop objective — Aura Forge auto-continues turn after turn until a judge says done.',
+    '/snapshot create [label] saves a full state snapshot of Aura Forge config; /snapshot restore <id> reverts later.',
     '/copy [N] copies the last assistant response to your clipboard, or the Nth-from-last with a number.',
     '/redraw forces a full UI repaint, fixing terminal drift after tmux resize or mouse selection artifacts.',
     '/agents (alias /tasks) shows active agents and running background tasks across the current session.',
     '/footer toggles the gateway footer on final replies showing model, context %, and cwd.',
-    '/busy queue|steer|interrupt controls what pressing Enter does while Hermes is working.',
+    '/busy queue|steer|interrupt controls what pressing Enter does while Aura Forge is working.',
     '/topic in Telegram DMs enables user-managed multi-session topic mode — /topic <id> restores past sessions inline.',
     '/approve session|always runs a pending dangerous command with your chosen trust scope; /deny rejects it.',
     '/restart gracefully restarts the gateway after draining active runs, then pings the requester when back up.',
@@ -381,14 +381,14 @@ TIPS = [
     'Ctrl+G or Ctrl+X Ctrl+E in the TUI opens the input buffer in $EDITOR for long multi-line prompts.',
     'The TUI renders LaTeX inline — $E=mc^2$ becomes Unicode math instead of raw TeX.',
     'hermes dashboard launches a local web UI at 127.0.0.1:9119 — zero data leaves localhost.',
-    'hermes dashboard embeds the full Hermes TUI in your browser via xterm.js and a WebSocket PTY.',
+    'hermes dashboard embeds the full Aura Forge TUI in your browser via xterm.js and a WebSocket PTY.',
     'Drop a YAML in ~/.hermes/dashboard-themes/ with two palette colors to reskin the entire dashboard.',
     'Dashboard plugins are drop-in: manifest.json + JS bundle in ~/.hermes/dashboard-plugins/ — no npm build required.',
     'layoutVariant: cockpit in a dashboard theme adds a 260px left rail that plugins can populate via the sidebar slot.',
 
     # --- Env Vars & Config Gates ---
     "display.tool_progress_command: true exposes /verbose on messaging platforms; it's CLI-only by default.",
-    'HERMES_BACKGROUND_NOTIFICATIONS=result only pings when background tasks finish (vs all/error/off).',
+    'HERMES_BACKGROUND_NOTIFICATIONS=result only pings when background tasks finish (vs concise/all/error/off).',
     'HERMES_WRITE_SAFE_ROOT restricts write_file/patch to directory prefixes; multiple paths via os.pathsep (: or ;).',
     'HERMES_IGNORE_RULES skips auto-injection of AGENTS.md, SOUL.md, .cursorrules, memory, and preloaded skills.',
     'HERMES_ACCEPT_HOOKS auto-approves unseen shell hooks declared in config.yaml without a TTY prompt.',
@@ -433,7 +433,7 @@ TIPS = [
     "hermes chat --source tool tags programmatic chats so they don't clutter hermes sessions list.",
     'hermes dump --show-keys includes redacted API key fingerprints for deeper support debugging.',
     'hermes sessions rename <ID> "new title" renames any past session; hermes sessions delete <ID> removes one.',
-    'hermes import restores a session export or profile archive produced by sessions export or profile export.',
+    'hermes import restores a full Aura Forge backup zip; session JSON/JSONL exports import from the dashboard Sessions page.',
     'hermes fallback manages the fallback_model chain interactively — no hand-editing config.yaml.',
     'hermes pairing rotates the DM pairing token — the first messager after rotation claims access to the bot.',
     'hermes setup walks first-time users through provider, keys, and platform wiring in one interactive flow.',
@@ -462,7 +462,7 @@ TIPS = [
     'AUXILIARY_VISION_BASE_URL + AUXILIARY_VISION_API_KEY point vision analysis at any OpenAI-compatible endpoint.',
 
     # --- Security ---
-    'security.tirith_fail_open: false makes Hermes block commands when the tirith scanner itself errors out.',
+    'security.tirith_fail_open: false makes Aura Forge block commands when the tirith scanner itself errors out.',
     'TIRITH_FAIL_OPEN env var overrides the tirith_fail_open config — a quick toggle without editing config.yaml.',
 
     # --- Sessions & Source Tags ---
@@ -483,3 +483,30 @@ def get_random_tip(exclude_recent: int = 0) -> str:
             deduplication across sessions.
     """
     return random.choice(TIPS)
+
+
+# ---------------------------------------------------------------------------
+# Composer placeholders — short, task-oriented example prompts shown in the
+# empty input box to nudge new users toward high-value first actions (C-09,
+# inspired by opencode/codex rotating placeholders). Kept generic so they fit
+# any project or none — Aura Forge is not a coding-only agent.
+# ---------------------------------------------------------------------------
+
+COMPOSER_PLACEHOLDERS = [
+    "Ask anything, or type / for commands…",
+    "Summarize what's in this folder",
+    "Draft a reply to the last email in my inbox",
+    "Plan a feature, then build it step by step",
+    "Find and fix a failing test",
+    "Research this topic and write me a brief",
+    "What changed in this repo recently?",
+    "Turn these notes into a to-do list",
+    "Explain this error and how to fix it",
+    "Set a reminder or schedule a recurring task",
+    "Type / to browse commands, or Ctrl+P for the palette",
+]
+
+
+def get_random_composer_placeholder() -> str:
+    """Return a rotating task-oriented placeholder for the empty composer."""
+    return random.choice(COMPOSER_PLACEHOLDERS)

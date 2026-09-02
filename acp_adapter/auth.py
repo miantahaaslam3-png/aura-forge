@@ -69,7 +69,7 @@ def build_auth_methods() -> list[Any]:
             id=TERMINAL_SETUP_AUTH_METHOD_ID,
             name="Configure Aura Forge provider",
             description=(
-                "Open Hermes' interactive model/provider setup in a terminal. "
+                "Open Aura Forge' interactive model/provider setup in a terminal. "
                 "Use this when Aura Forge has not been configured on this machine yet."
             ),
             type="terminal",

@@ -17,7 +17,7 @@ def build_gui_parser(subparsers, *, cmd_gui: Callable) -> None:
         aliases=["gui"],
         help="Build and launch the native desktop app",
         description=(
-            "Launch the Hermes Electron desktop app. By default this installs "
+            "Launch the Aura Forge Electron desktop app. By default this installs "
             "workspace Node dependencies, builds the current OS's unpacked "
             "Electron app, then launches that packaged artifact."
         ),
@@ -59,5 +59,22 @@ def build_gui_parser(subparsers, *, cmd_gui: Callable) -> None:
         "--force-build",
         action="store_true",
         help="Force a full rebuild even if the content stamp matches",
+    )
+    gui_parser.add_argument(
+        "--setup-tcc-identity",
+        action="store_true",
+        help=(
+            "macOS only: create/import a self-signed code-signing certificate "
+            "in the login keychain and point desktop.macos_signing_identity at "
+            "it, then re-sign the packaged app. Makes macOS TCC grants (Full "
+            "Disk Access, Accessibility, Files and Folders, microphone) survive "
+            "rebuilds with a certificate-anchored identity. Idempotent — safe "
+            "to re-run after updates."
+        ),
+    )
+    gui_parser.add_argument(
+        "--identity",
+        default="Aura Forge Local Signing",
+        help="Certificate name to create/use for --setup-tcc-identity (default: Aura Forge Local Signing)",
     )
     gui_parser.set_defaults(func=cmd_gui)

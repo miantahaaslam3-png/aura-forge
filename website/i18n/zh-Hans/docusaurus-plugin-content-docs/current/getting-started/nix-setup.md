@@ -1,12 +1,12 @@
 ---
 sidebar_position: 3
 title: "Nix & NixOS 安装配置"
-description: "使用 Nix 安装和部署 Hermes Agent——从快速 `nix run` 到完全声明式的 NixOS 模块（含容器模式）"
+description: "使用 Nix 安装和部署 Aura Forge Agent——从快速 `nix run` 到完全声明式的 NixOS 模块（含容器模式）"
 ---
 
 # Nix & NixOS 安装配置
 
-Hermes Agent 提供了一个 Nix flake，支持三个层级的集成：
+Aura Forge Agent 提供了一个 Nix flake，支持三个层级的集成：
 
 | 层级 | 适用对象 | 提供内容 |
 |-------|-------------|--------------|
@@ -127,7 +127,7 @@ services.hermes-agent.environmentFiles = [ "/var/lib/hermes/env" ];
 :::info
 当 `container.enable = true` 且 `addToSystemPackages = true` 时，主机上的**所有** `hermes` 命令都会自动路由到托管容器中执行。这意味着你的交互式 CLI 会话在与 gateway 服务相同的环境中运行——可以访问所有容器内安装的包和工具。
 
-- 路由是透明的：`hermes chat`、`hermes sessions list`、`hermes version` 等命令都会在底层 exec 进容器
+- 路由是透明的：`hermes chat`、`hermes sessions list`、`hermes --version` 等命令都会在底层 exec 进容器
 - 所有 CLI 参数原样转发
 - 如果容器未运行，CLI 会短暂重试（交互式使用时显示 5 秒 spinner，脚本中静默等待 10 秒），然后以明确的错误退出——不会静默回退
 - 对于在 hermes 代码库上工作的开发者，设置 `HERMES_DEV=1` 可绕过容器路由，直接运行本地检出版本
@@ -171,7 +171,7 @@ systemctl status hermes-agent
 journalctl -u hermes-agent -f
 
 # 如果 addToSystemPackages 为 true，测试 CLI
-hermes version
+hermes --version
 hermes config       # 显示生成的配置
 ```
 
@@ -229,7 +229,7 @@ services.hermes-agent.settings = {
 两者在求值时深度合并。Nix 声明的键始终优先于磁盘上现有 `config.yaml` 中的键，但 **Nix 未涉及的用户添加键会被保留**。这意味着如果 Agent 或手动编辑添加了 `skills.disabled` 或 `streaming.enabled` 等键，它们在 `nixos-rebuild switch` 后仍会保留。
 
 :::note 模型命名
-`settings.model.default` 使用你的提供商所期望的模型标识符。使用 [OpenRouter](https://openrouter.ai)（默认）时，格式如 `"anthropic/claude-sonnet-4"` 或 `"google/gemini-3-flash"`。如果直接使用提供商（Anthropic、OpenAI），请将 `settings.model.base_url` 指向其 API，并使用其原生模型 ID（例如 `"claude-sonnet-4-20250514"`）。未设置 `base_url` 时，Hermes 默认使用 OpenRouter。
+`settings.model.default` 使用你的提供商所期望的模型标识符。使用 [OpenRouter](https://openrouter.ai)（默认）时，格式如 `"anthropic/claude-sonnet-4"` 或 `"google/gemini-3-flash"`。如果直接使用提供商（Anthropic、OpenAI），请将 `settings.model.base_url` 指向其 API，并使用其原生模型 ID（例如 `"claude-sonnet-4-20250514"`）。未设置 `base_url` 时，Aura Forge 默认使用 OpenRouter。
 :::
 
 :::tip 查找可用配置键
@@ -337,7 +337,7 @@ Nix 用户最常见自定义需求的快速参考：
 Nix 表达式中的值会进入 `/nix/store`，该目录是全局可读的。请始终使用带有密钥管理器的 `environmentFiles`。
 :::
 
-`environment`（非密钥变量）和 `environmentFiles`（密钥文件）在激活时（`nixos-rebuild switch`）都会合并到 `$HERMES_HOME/.env` 中。Hermes 在每次启动时读取此文件，因此更改在 `systemctl restart hermes-agent` 后生效——无需重建容器。
+`environment`（非密钥变量）和 `environmentFiles`（密钥文件）在激活时（`nixos-rebuild switch`）都会合并到 `$HERMES_HOME/.env` 中。Aura Forge 在每次启动时读取此文件，因此更改在 `systemctl restart hermes-agent` 后生效——无需重建容器。
 
 ### sops-nix
 
@@ -396,12 +396,12 @@ hermes-env: |
 
 ## 文档
 
-`documents` 选项将文件安装到 Agent 的工作目录（即 `workingDirectory`，Agent 将其作为工作区读取）。Hermes 按约定查找特定文件名：
+`documents` 选项将文件安装到 Agent 的工作目录（即 `workingDirectory`，Agent 将其作为工作区读取）。Aura Forge 按约定查找特定文件名：
 
 - **`USER.md`** — 关于 Agent 正在交互的用户的上下文信息。
 - 你放置在此处的任何其他文件对 Agent 都可见，作为工作区文件。
 
-Agent 身份文件是独立的：Hermes 从 `$HERMES_HOME/SOUL.md` 加载其主要 `SOUL.md`，在 NixOS 模块中对应 `${services.hermes-agent.stateDir}/.hermes/SOUL.md`。将 `SOUL.md` 放入 `documents` 只会创建一个工作区文件，不会替换主角色文件。
+Agent 身份文件是独立的：Aura Forge 从 `$HERMES_HOME/SOUL.md` 加载其主要 `SOUL.md`，在 NixOS 模块中对应 `${services.hermes-agent.stateDir}/.hermes/SOUL.md`。将 `SOUL.md` 放入 `documents` 只会创建一个工作区文件，不会替换主角色文件。
 
 ```nix
 {
@@ -455,7 +455,7 @@ Agent 身份文件是独立的：Hermes 从 `$HERMES_HOME/SOUL.md` 加载其主�
 
 ### 带 OAuth 的 HTTP 传输
 
-对于使用 OAuth 2.1 的服务器，设置 `auth = "oauth"`。Hermes 实现了完整的 PKCE 流程——元数据发现、动态客户端注册、token 交换和自动刷新。
+对于使用 OAuth 2.1 的服务器，设置 `auth = "oauth"`。Aura Forge 实现了完整的 PKCE 流程——元数据发现、动态客户端注册、token 交换和自动刷新。
 
 ```nix
 {
@@ -471,7 +471,7 @@ Token 存储在 `$HERMES_HOME/mcp-tokens/<server-name>.json` 中，在重启和�
 <details>
 <summary><strong>无头服务器上的初始 OAuth 授权</strong></summary>
 
-首次 OAuth 授权需要基于浏览器的同意流程。在无头部署中，Hermes 将授权 URL 打印到 stdout/日志，而不是打开浏览器。
+首次 OAuth 授权需要基于浏览器的同意流程。在无头部署中，Aura Forge 将授权 URL 打印到 stdout/日志，而不是打开浏览器。
 
 **方案 A：交互式引导** — 通过 `docker exec`（容器）或 `sudo -u hermes`（原生）运行一次流程：
 
@@ -620,7 +620,7 @@ services.hermes-agent.extraPlugins = [
 ];
 ```
 
-插件在激活时以符号链接方式安装到 `$HERMES_HOME/plugins/`。Hermes 通过其正常的目录扫描发现它们。从列表中移除插件并运行 `nixos-rebuild switch` 会删除符号链接。
+插件在激活时以符号链接方式安装到 `$HERMES_HOME/plugins/`。Aura Forge 通过其正常的目录扫描发现它们。从列表中移除插件并运行 `nixos-rebuild switch` 会删除符号链接。
 
 ### 入口点插件（`extraPythonPackages`）
 
@@ -763,7 +763,7 @@ nix build .#checks.x86_64-linux.config-roundtrip    # 合并脚本保留用户�
 
 | 检查 | 测试内容 |
 |---|---|
-| `package-contents` | `hermes` 和 `hermes-agent` 二进制文件存在且 `hermes version` 可运行 |
+| `package-contents` | `hermes` 和 `hermes-agent` 二进制文件存在且 `hermes --version` 可运行 |
 | `entry-points-sync` | `pyproject.toml` 中 `[project.scripts]` 的每个条目在 Nix 包中都有对应的封装二进制文件 |
 | `cli-commands` | `hermes --help` 暴露 `gateway` 和 `config` 子命令 |
 | `managed-guard` | `HERMES_MANAGED=true hermes config set ...` 打印 NixOS 错误 |
@@ -884,7 +884,7 @@ nix build .#checks.x86_64-linux.config-roundtrip    # 合并脚本保留用户�
 
 | 容器路径 | 主机路径 | 模式 | 说明 |
 |---|---|---|---|
-| `/nix/store` | `/nix/store` | `ro` | Hermes 二进制文件 + 所有 Nix 依赖 |
+| `/nix/store` | `/nix/store` | `ro` | Aura Forge 二进制文件 + 所有 Nix 依赖 |
 | `/data` | `/var/lib/hermes` | `rw` | 所有状态、配置、工作区 |
 | `/home/hermes` | `${stateDir}/home` | `rw` | 持久化 Agent home——`pip install --user`、工具缓存 |
 | `/usr`、`/usr/local`、`/tmp` | （可写层） | `rw` | `apt`/`pip`/`npm` 安装——重启后持久，重建后丢失 |
@@ -967,7 +967,7 @@ nix-store --query --roots $(docker exec hermes-agent readlink /data/current-pack
 |---|---|---|
 | `Cannot save configuration: managed by NixOS` | CLI 守卫已激活 | 编辑 `configuration.nix` 并执行 `nixos-rebuild switch` |
 | 容器意外重建 | `extraVolumes`、`extraOptions` 或 `image` 发生变更 | 预期行为——可写层重置。重新安装包或使用自定义镜像 |
-| `hermes version` 显示旧版本 | 容器未重启 | `systemctl restart hermes-agent` |
+| `hermes --version` 显示旧版本 | 容器未重启 | `systemctl restart hermes-agent` |
 | `/var/lib/hermes` 权限拒绝 | 状态目录为 `0750 hermes:hermes` | 使用 `docker exec` 或 `sudo -u hermes` |
 | `nix-collect-garbage` 删除了 hermes | GC root 缺失 | 重启服务（preStart 会重新创建 GC root） |
 | `no container with name or ID "hermes-agent"`（Podman） | Podman rootful 容器对普通用户不可见 | 为 podman 添加免密 sudo（参见[容器模式](#container-mode)章节） |

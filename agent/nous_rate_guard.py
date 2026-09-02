@@ -5,7 +5,7 @@ cron, auxiliary) can check whether Nous Portal is currently rate-limited
 before making requests.  Prevents retry amplification when RPH is tapped.
 
 Each 429 from Nous triggers up to 9 API calls per conversation turn
-(3 SDK retries x 3 Hermes retries), and every one of those calls counts
+(3 SDK retries x 3 Aura Forge retries), and every one of those calls counts
 against RPH.  By recording the rate limit state on first 429 and checking
 it before subsequent attempts, we eliminate the amplification effect.
 """
@@ -117,7 +117,7 @@ def record_nous_rate_limit(
         # Atomic write: write to temp file + rename
         fd, tmp_path = tempfile.mkstemp(dir=state_dir, suffix=".tmp")
         try:
-            with os.fdopen(fd, "w") as f:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
                 json.dump(state, f)
             atomic_replace(tmp_path, path)
         except Exception:
@@ -197,7 +197,7 @@ def is_genuine_nous_rate_limit(
     """Decide whether a 429 from Nous Portal is a real account rate limit.
 
     Nous Portal multiplexes multiple upstream providers (DeepSeek, Kimi,
-    MiMo, Hermes, ...) behind one endpoint.  A 429 can mean either:
+    MiMo, Aura Forge, ...) behind one endpoint.  A 429 can mean either:
 
       (a) The caller's own RPM / RPH / TPM / TPH bucket on Nous is
           exhausted — a genuine rate limit that will last until the

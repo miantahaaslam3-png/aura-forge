@@ -29,7 +29,7 @@
 
 /* Installer-only additions: a fade-in animation and a warm radial glow
    for the welcome screen. Everything else inherits from the desktop. */
-@keyframes aura-fade-in {
+@keyframes hermes-fade-in {
   from {
     opacity: 0;
     transform: translateY(4px);
@@ -40,11 +40,11 @@
   }
 }
 
-.aura-fade-in {
-  animation: aura-fade-in 0.45s ease-out both;
+.hermes-fade-in {
+  animation: hermes-fade-in 0.45s ease-out both;
 }
 
-.aura-glow {
+.hermes-glow {
   background: radial-gradient(
     ellipse at center,
     color-mix(in srgb, var(--ui-warm) 18%, transparent) 0%,

@@ -1,6 +1,6 @@
 ---
 name: fastmcp
-description: Build, test, inspect, install, and deploy MCP servers with FastMCP in Python. Use when creating a new MCP server, wrapping an API or database as MCP tools, exposing resources or prompts, or preparing a FastMCP server for Claude Code, Cursor, or HTTP deployment.
+description: Build, test, and deploy Python MCP servers.
 version: 1.0.0
 author: Aura Forge Agent
 license: MIT
@@ -9,9 +9,9 @@ metadata:
   hermes:
     tags: [MCP, FastMCP, Python, Tools, Resources, Prompts, Deployment]
     homepage: https://gofastmcp.com
-    related_skills: [native-mcp, mcporter]
+    related_skills: [hermes-agent, mcporter]
 prerequisites:
-  commands: [python3]
+  commands: [python]
 ---
 
 # FastMCP
@@ -293,7 +293,7 @@ This usually exposes naming mismatches, missing required arguments, or non-seria
 
 ### Aura Forge cannot see the deployed server
 
-The server-building part may be correct while the Aura Forge config is not. Load the `native-mcp` skill and configure the server in `~/.hermes/config.yaml`, then restart Hermes.
+The server-building part may be correct while the Aura Forge config is not. Load the `native-mcp` skill and configure the server in `~/.hermes/config.yaml`, then restart Aura Forge.
 
 ## References
 

@@ -1,6 +1,6 @@
-# Aura Forge Observer Hooks
+# Hermes Observer Hooks
 
-Aura Forge observer hooks are the read-only telemetry contract for plugins that
+Hermes observer hooks are the read-only telemetry contract for plugins that
 need to reconstruct agent execution without changing runtime behavior. This
 contract supports trace, metrics, audit, replay, and export integrations such
 as Langfuse, OpenTelemetry-style collectors, and NeMo Relay.
@@ -13,6 +13,10 @@ approval UX, CLI, gateway behavior, or execution semantics.
 Behavior-changing request or execution wrappers are outside this observer
 contract. Observer hooks should report what happened; they should not replace
 provider requests, tool arguments, or execution callbacks.
+
+Hermes also has a first-party NeMo Relay shared-metrics path. It uses these
+lifecycle boundaries directly and does not require enabling an observability
+plugin. See [Relay shared metrics](relay-shared-metrics.md).
 
 ## Contract
 
@@ -42,7 +46,7 @@ The plugin manager injects this field into every hook payload:
 telemetry_schema_version = "hermes.observer.v1"
 ```
 
-Hook callbacks are fail-open. Aura Forge catches callback exceptions, logs a
+Hook callbacks are fail-open. Hermes catches callback exceptions, logs a
 warning, and keeps the agent loop running.
 
 Most observer hook return values are ignored. The exceptions are older
@@ -51,7 +55,7 @@ behavior-affecting hooks:
 | Hook | Return behavior |
 | --- | --- |
 | `pre_llm_call` | May return a string or `{"context": "..."}` to inject ephemeral context into the current user message. |
-| `pre_tool_call` | May return `{"action": "block", "message": "..."}` to block a tool before execution. |
+| `pre_tool_call` | May return `{"action": "block", "message": "..."}` to block a tool before execution, or `{"action": "modify", "args": {...}}` to transform the tool's input arguments. |
 | `transform_tool_result` | May return a replacement tool result string after `post_tool_call`. |
 | `transform_llm_output` | May return a replacement final assistant text string. |
 
@@ -217,7 +221,11 @@ Subagent hooks describe delegated child-agent work:
 and `child_goal`.
 
 `subagent_stop` fields include parent/child session IDs, role/status fields,
-`child_summary`, and `duration_ms`.
+`child_summary`, `duration_ms`, and a metadata-only `tool_call_history`. Each
+history entry contains the tool name, argument names, bounded side-effect
+targets, input/output byte counts, and outcome. URL query strings and fragments
+are removed; raw arguments, prompts, commands, contents, headers, and results
+are intentionally excluded.
 
 Observers can use these hooks to model nested trajectories while keeping child
 agent execution linked to the parent turn that spawned it.
@@ -243,7 +251,7 @@ observability consumers should prefer the sanitized payloads.
 ## Performance
 
 The default uninstrumented path should stay cheap. Expensive request/response
-payload construction is gated behind `has_hook(...)`, so Aura Forge only builds
+payload construction is gated behind `has_hook(...)`, so Hermes only builds
 sanitized API telemetry payloads when at least one plugin registered the
 relevant hook.
 
@@ -310,7 +318,8 @@ nested agent work or security lifecycle events.
 The bundled Langfuse plugin demonstrates direct hook-based observability for
 turns, provider requests, and tool calls.
 
-The bundled NeMo Relay plugin maps the same generic observer contract to NeMo
-Relay scopes, LLM spans, tool spans, marks, ATOF streams, and ATIF exports.
-NeMo Relay-specific configuration and examples live in
-[`plugins/observability/nemo_relay/README.md`](../../plugins/observability/nemo_relay/README.md).
+The native NeMo Relay SDK integration maps Hermes session, turn, LLM, and tool
+lifecycles to Relay. Explicit Relay plugin configuration can add
+[ATOF, ATIF, or OTEL](https://docs.nvidia.com/nemo/relay/configure-plugins/observability/about)
+exporters and execution middleware; see
+[Relay shared metrics](relay-shared-metrics.md).

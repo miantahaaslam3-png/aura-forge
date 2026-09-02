@@ -25,11 +25,13 @@ Context dict passed to ``agent:start`` / ``agent:end`` handlers:
   thread_id    -- Telegram forum-topic id / thread root id (string; empty
                   when not in a thread / topic)
   chat_type    -- "dm" | "group" | "forum" (empty if unknown)
-  session_id   -- Hermes session id
+  session_id   -- Aura Forge session id
   message      -- inbound message text (truncated to 500 chars)
 
 ``agent:end`` adds:
   response     -- agent response text (truncated to 500 chars)
+  model        -- model name that handled the turn
+  provider     -- provider that handled the turn
 
 Handlers posting a follow-up into the same Telegram forum-topic should
 include ``message_thread_id=int(thread_id)`` when ``chat_type == "forum"``

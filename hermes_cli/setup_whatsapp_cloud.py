@@ -25,7 +25,7 @@ in Meta's App Dashboard, with a one-line description and the field's
 expected shape ("starts with EAA", "15-17 digits", "32 hex chars", etc.).
 
 The wizard intentionally does NOT smoke-test the webhook itself — the
-Hermes gateway and the cloudflared tunnel both run in separate
+Aura Forge gateway and the cloudflared tunnel both run in separate
 processes the user starts AFTER this wizard exits, so any in-wizard
 probe would fail by design. Instead the final SETUP COMPLETE block
 prints the exact curl command the user can run from a third terminal
@@ -33,6 +33,7 @@ to verify the loop end-to-end once everything's running.
 """
 
 from __future__ import annotations
+from hermes_cli.cli_output import line_input
 
 import re
 import secrets
@@ -180,7 +181,7 @@ def _prompt(message: str, default: Optional[str] = None, secret: bool = False) -
 
             raw = getpass.getpass(f"{message}{suffix} (input hidden): ").strip()
         else:
-            raw = input(f"{message}{suffix}: ").strip()
+            raw = line_input(f"{message}{suffix}: ").strip()
     except (EOFError, KeyboardInterrupt):
         print()
         return ""
@@ -444,7 +445,7 @@ def run_whatsapp_cloud_setup() -> int:
     current_allow = get_env_value("WHATSAPP_CLOUD_ALLOWED_USERS") or None
     allow_default = current_allow if current_allow else None
     try:
-        allowed = input(
+        allowed = line_input(
             f"  → Allowed users{' [' + allow_default + ']' if allow_default else ''}: "
         ).strip() or (allow_default or "")
     except (EOFError, KeyboardInterrupt):

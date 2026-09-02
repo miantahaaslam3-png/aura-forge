@@ -50,7 +50,7 @@ export const ga: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Aura Forge Agent",
     brandShort: "HA",
     closeNavigation: "Dún an nascleanúint",
     closeModelTools: "Dún an samhail agus na huirlisí",
@@ -120,8 +120,8 @@ export const ga: Translations = {
     starting: "Ag tosú",
     startedInBackground: "Tosaithe sa chúlra — seiceáil na logaí le haghaidh dul chun cinn",
     stopped: "Stoptha",
-    updateHermes: "Nuashonraigh Hermes",
-    updatingHermes: "Ag nuashonrú Hermes…",
+    updateHermes: "Nuashonraigh Aura Forge",
+    updatingHermes: "Ag nuashonrú Aura Forge…",
     waitingForOutput: "Ag fanacht le haschur…",
   },
 
@@ -129,8 +129,14 @@ export const ga: Translations = {
     title: "Seisiúin",
     history: "Stair",
     overview: "Forbhreathnú",
+    filterChats: "Comhráite",
+    filterAutomation: "Uathoibriú",
+    filterAll: "Uile",
+    sourceFilter: "Foinse an tseisiúin",
+    anySource: "Foinse ar bith",
     searchPlaceholder: "Cuardaigh ábhar teachtaireachta...",
     noSessions: "Gan seisiúin go fóill",
+    noSessionsInFilter: "Níl aon seisiún sa scagaire seo",
     noMatch: "Níl seisiún ar bith ag teacht le do chuardach",
     startConversation: "Tosaigh comhrá chun é a fheiceáil anseo",
     noMessages: "Gan teachtaireachtaí",
@@ -328,7 +334,7 @@ export const ga: Translations = {
     enableRuntime: "Cumasaigh",
     forceReinstall: "Cuir iallach ar athshuiteáil (scrios an fillteán atá ann ar dtús)",
     headline:
-      "Faigh, suiteáil, cumasaigh agus nuashonraigh plugins Hermes (paireacht le `hermes plugins`).",
+      "Faigh, suiteáil, cumasaigh agus nuashonraigh plugins Aura Forge (paireacht le `hermes plugins`).",
     identifierLabel: "URL Git nó owner/repo",
     inactive: "neamhghníomhach",
     installBtn: "Suiteáil",
@@ -442,7 +448,7 @@ export const ga: Translations = {
     showValue: "Taispeáin an fíorluach",
     hideValue: "Folaigh an luach",
     customTitle: "Eochracha Saincheaptha",
-    customHint: "Athróga timpeallachta treallach atá stóráilte i do .env nach n-aithníonn Hermes. Úsáid iad chun athróga timpeallachta a instealladh do scileanna, freastalaithe MCP, nó d'uirlisí féin.",
+    customHint: "Athróga timpeallachta treallach atá stóráilte i do .env nach n-aithníonn Aura Forge. Úsáid iad chun athróga timpeallachta a instealladh do scileanna, freastalaithe MCP, nó d'uirlisí féin.",
     customConfigured: "{count} eochair shaincheaptha socraithe",
     addCustomKey: "Cuir eochair shaincheaptha leis",
     customKeyName: "Ainm na hathróige",
@@ -454,16 +460,19 @@ export const ga: Translations = {
   oauth: {
     title: "Logálacha isteach soláthraí (OAuth)",
     providerLogins: "Logálacha isteach soláthraí (OAuth)",
-    description: "{connected} as {total} soláthraí OAuth ceangailte. Reáchtáiltear sreabha logála isteach faoi láthair tríd an CLI; cliceáil Cóipeáil ordú agus greamaigh i dteirminéal chun é a shocrú.",
+    description:
+      "{connected} as {total} soláthraí OAuth ceangailte. Úsáid Logáil isteach le haghaidh sreabha a dtacaíonn an deais leo; tá orduithe CLI ar fáil i gcónaí do shocrú seachtrach nó cúltaca.",
     connected: "Ceangailte",
     expired: "As feidhm",
-    notConnected: "Gan cheangal. Rith {command} i dteirminéal.",
+    notConnected: "Gan cheangal. Úsáid Logáil isteach má tá sé ar fáil, nó rith {command} i dteirminéal.",
     runInTerminal: "i dteirminéal.",
     noProviders: "Níor aimsíodh soláthraithe a thacaíonn le OAuth.",
     login: "Logáil isteach",
     disconnect: "Dícheangail",
     managedExternally: "Bainistithe go seachtrach",
     copied: "Cóipeáilte ✓",
+    copyCode: "Cóipeáil an cód",
+    copyFailed: "Níorbh fhéidir cóipeáil go huathoibríoch. Roghnaigh an cód agus cóipeáil de láimh é.",
     cli: "Cóipeáil",
     copyCliCommand: "Cóipeáil ordú CLI (le haghaidh úsáide seachtraí / cúltaca)",
     connect: "Ceangail",
@@ -502,11 +511,11 @@ export const ga: Translations = {
   achievements: {
     hero: {
       kicker: "Agentic Gamerscore",
-      title: "Hermes Achievements",
+      title: "Aura Forge Achievements",
       subtitle:
-        "Suaitheantais Hermes inbhailithe a thuilltear ó stair fíor-session. Léirítear gnóthachtálacha aitheanta neamhchríochnaithe mar Discovered; fanann gnóthachtálacha Secret i bhfolach go dtí go bhfeictear an chéad iompar comhoiriúnach.",
+        "Suaitheantais Aura Forge inbhailithe a thuilltear ó stair fíor-session. Léirítear gnóthachtálacha aitheanta neamhchríochnaithe mar Discovered; fanann gnóthachtálacha Secret i bhfolach go dtí go bhfeictear an chéad iompar comhoiriúnach.",
       scan_subtitle:
-        "Stair session Hermes á scanadh. Is féidir leis an gcéad scan 5–10 soicind a thógáil ar staireanna móra.",
+        "Stair session Aura Forge á scanadh. Is féidir leis an gcéad scan 5–10 soicind a thógáil ar staireanna móra.",
     },
     actions: {
       rescan: "Athscan",
@@ -521,7 +530,7 @@ export const ga: Translations = {
       highest_tier: "An leibhéal is airde",
       highest_tier_hint: "Copper → Silver → Gold → Diamond → Olympian",
       latest: "An ceann is déanaí",
-      latest_hint_empty: "rith Hermes níos mó",
+      latest_hint_empty: "rith Aura Forge níos mó",
       none_yet: "Aon cheann fós",
     },
     state: {
@@ -552,10 +561,10 @@ export const ga: Translations = {
       tiers_header: "Leibhéil",
       secret_header: "Gnóthachtálacha rúnda",
       secret_body:
-        "Coinníonn rúin a dtruicear cruinn faoi cheilt. Nuair a fheiceann Hermes comhartha gaolmhar, athraíonn an cárta go Aimsithe agus taispeánann sé a riachtanas.",
+        "Coinníonn rúin a dtruicear cruinn faoi cheilt. Nuair a fheiceann Aura Forge comhartha gaolmhar, athraíonn an cárta go Aimsithe agus taispeánann sé a riachtanas.",
       scan_status_header: "Stádas an scanta",
       scan_status_body:
-        "Scanann Hermes an stair logánta uair amháin, ansin feicfear cártaí go huathoibríoch. Níl aon rud sáinnithe má thógann sé cúpla soicind.",
+        "Scanann Aura Forge an stair logánta uair amháin, ansin feicfear cártaí go huathoibríoch. Níl aon rud sáinnithe má thógann sé cúpla soicind.",
       what_scanned_header: "Cad a scantar",
       what_scanned_body:
         "Sessions, glaonna ar uirlisí, meiteashonraí samhla, earráidí, gnóthachtálacha agus staid díghlasála logánta.",
@@ -602,7 +611,7 @@ export const ga: Translations = {
         "Osclaíonn Comhroinn ar X post réamhlíonta i gcluaisín nua. Cliceáil Cóipeáil íomhá ar dtús más mian leat an suaitheantas 1200×630 a bheith ceangailte — ligeann X duit é a ghreamú díreach isteach i scríbhneoir an tweet. Sábhálann Íoslódáil PNG an comhad le húsáid áit ar bith.",
       clipboard_unsupported:
         "Ní thacaítear le cóipeáil íomhá chuig an ngearrthaisce sa bhrabhsálaí seo — úsáid Íoslódáil ina ionad sin.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Aura Forge Agent ☤",
     },
   },
   kanban: {
@@ -617,6 +626,12 @@ export const ga: Translations = {
       "Ligeann boards duit sruthanna oibre neamhghaolmhara a scaradh — ceann amháin in aghaidh an tionscadail, an repo nó an fhearainn. Ní fheiceann workers ar bhord amháin tascanna board eile riamh.",
     slug: "Slug",
     slugHint: "— litreacha beaga, fleiscíní, m.sh. atm10-server",
+    confirmDoneMany:
+      "Mark {n} tasks as done? The workers' claims are released and dependent children become ready.",
+    confirmArchiveMany:
+      "Archive {n} tasks? They disappear from the default board view.",
+    confirmBlockedMany:
+      "Mark {n} tasks as blocked? The workers' claims are released.",
     displayName: "Ainm taispeána",
     displayNameHint: "(roghnach)",
     description: "Cur síos",

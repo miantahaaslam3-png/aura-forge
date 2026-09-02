@@ -3,7 +3,7 @@
 //
 // The windows_subsystem attribute MUST live here on the binary crate
 // (not lib.rs) — placing it on the lib was the bug that left a stray
-// cmd window behind Aura Forge-Setup.exe on release builds.
+// cmd window behind AuraForge-Setup.exe on release builds.
 //
 // `windows_subsystem = "windows"` strips the console allocation that
 // the default `windows_subsystem = "console"` would do, so double-clicking
@@ -15,5 +15,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    aura_forge_bootstrap_lib::run()
+    hermes_bootstrap_lib::run()
 }

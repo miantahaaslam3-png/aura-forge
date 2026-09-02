@@ -50,7 +50,7 @@ export const pt: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Aura Forge Agent",
     brandShort: "HA",
     closeNavigation: "Fechar navegação",
     closeModelTools: "Fechar modelo e ferramentas",
@@ -120,8 +120,8 @@ export const pt: Translations = {
     starting: "A iniciar",
     startedInBackground: "Iniciado em segundo plano — verifique os registos para acompanhar",
     stopped: "Parado",
-    updateHermes: "Atualizar Hermes",
-    updatingHermes: "A atualizar Hermes…",
+    updateHermes: "Atualizar Aura Forge",
+    updatingHermes: "A atualizar Aura Forge…",
     waitingForOutput: "À espera de saída…",
   },
 
@@ -129,8 +129,14 @@ export const pt: Translations = {
     title: "Sessões",
     history: "Histórico",
     overview: "Visão geral",
+    filterChats: "Conversas",
+    filterAutomation: "Automação",
+    filterAll: "Todas",
+    sourceFilter: "Origem da sessão",
+    anySource: "Qualquer origem",
     searchPlaceholder: "Pesquisar conteúdo das mensagens...",
     noSessions: "Ainda não há sessões",
+    noSessionsInFilter: "Nenhuma sessão neste filtro",
     noMatch: "Nenhuma sessão corresponde à pesquisa",
     startConversation: "Inicie uma conversa para a ver aqui",
     noMessages: "Sem mensagens",
@@ -321,7 +327,7 @@ export const pt: Translations = {
     enableRuntime: "Ativar",
     forceReinstall: "Forçar reinstalação (eliminar pasta existente primeiro)",
     headline:
-      "Descobrir, instalar, ativar e atualizar plugins Hermes (paridade com `hermes plugins`).",
+      "Descobrir, instalar, ativar e atualizar plugins Aura Forge (paridade com `hermes plugins`).",
     identifierLabel: "URL Git ou owner/repo",
     inactive: "inativo",
     installBtn: "Instalar",
@@ -435,7 +441,7 @@ export const pt: Translations = {
     showValue: "Mostrar valor real",
     hideValue: "Ocultar valor",
     customTitle: "Chaves personalizadas",
-    customHint: "Variáveis de ambiente arbitrárias armazenadas no seu .env que o Hermes não reconhece. Use-as para injetar variáveis de ambiente para skills, servidores MCP ou suas próprias ferramentas.",
+    customHint: "Variáveis de ambiente arbitrárias armazenadas no seu .env que o Aura Forge não reconhece. Use-as para injetar variáveis de ambiente para skills, servidores MCP ou suas próprias ferramentas.",
     customConfigured: "{count} chave(s) personalizada(s) definida(s)",
     addCustomKey: "Adicionar uma chave personalizada",
     customKeyName: "Nome da variável",
@@ -447,16 +453,19 @@ export const pt: Translations = {
   oauth: {
     title: "Inícios de sessão de fornecedor (OAuth)",
     providerLogins: "Inícios de sessão de fornecedor (OAuth)",
-    description: "{connected} de {total} fornecedores OAuth ligados. Os fluxos de início de sessão são executados via CLI; clique em Copiar comando e cole num terminal para configurar.",
+    description:
+      "{connected} de {total} fornecedores OAuth ligados. Use Iniciar sessão para fluxos suportados pelo painel; os comandos CLI continuam disponíveis para configuração externa ou de recurso.",
     connected: "Ligado",
     expired: "Expirado",
-    notConnected: "Não ligado. Execute {command} num terminal.",
+    notConnected: "Não ligado. Use Iniciar sessão quando disponível, ou execute {command} num terminal.",
     runInTerminal: "num terminal.",
     noProviders: "Não foram detetados fornecedores compatíveis com OAuth.",
     login: "Iniciar sessão",
     disconnect: "Desligar",
     managedExternally: "Gerido externamente",
     copied: "Copiado ✓",
+    copyCode: "Copiar código",
+    copyFailed: "Não foi possível copiar automaticamente. Selecione o código e copie-o manualmente.",
     cli: "Copiar",
     copyCliCommand: "Copiar comando CLI (para externo / fallback)",
     connect: "Ligar",
@@ -495,11 +504,11 @@ export const pt: Translations = {
   achievements: {
     hero: {
       kicker: "Agentic Gamerscore",
-      title: "Hermes Achievements",
+      title: "Aura Forge Achievements",
       subtitle:
-        "Distintivos colecionáveis do Hermes obtidos a partir do histórico real de sessões. Conquistas conhecidas mas ainda não obtidas aparecem como Descobertas; conquistas Secretas permanecem ocultas até surgir o primeiro comportamento correspondente.",
+        "Distintivos colecionáveis do Aura Forge obtidos a partir do histórico real de sessões. Conquistas conhecidas mas ainda não obtidas aparecem como Descobertas; conquistas Secretas permanecem ocultas até surgir o primeiro comportamento correspondente.",
       scan_subtitle:
-        "A analisar o histórico de sessões do Hermes. A primeira análise pode demorar 5–10 segundos em históricos extensos.",
+        "A analisar o histórico de sessões do Aura Forge. A primeira análise pode demorar 5–10 segundos em históricos extensos.",
     },
     actions: {
       rescan: "Voltar a analisar",
@@ -514,7 +523,7 @@ export const pt: Translations = {
       highest_tier: "Nível mais alto",
       highest_tier_hint: "Copper → Silver → Gold → Diamond → Olympian",
       latest: "Mais recente",
-      latest_hint_empty: "execute mais o Hermes",
+      latest_hint_empty: "execute mais o Aura Forge",
       none_yet: "Ainda nenhuma",
     },
     state: {
@@ -545,10 +554,10 @@ export const pt: Translations = {
       tiers_header: "Níveis",
       secret_header: "Conquistas secretas",
       secret_body:
-        "As secretas escondem o seu acionador exato. Assim que o Hermes detetar um sinal relacionado, o cartão passa a Descoberta e mostra o requisito.",
+        "As secretas escondem o seu acionador exato. Assim que o Aura Forge detetar um sinal relacionado, o cartão passa a Descoberta e mostra o requisito.",
       scan_status_header: "Estado da análise",
       scan_status_body:
-        "O Hermes analisa o histórico local uma vez e depois os cartões aparecem automaticamente. Nada está bloqueado se isto demorar alguns segundos.",
+        "O Aura Forge analisa o histórico local uma vez e depois os cartões aparecem automaticamente. Nada está bloqueado se isto demorar alguns segundos.",
       what_scanned_header: "O que é analisado",
       what_scanned_body:
         "Sessões, chamadas de ferramentas, metadados de modelos, erros, conquistas e estado de desbloqueio local.",
@@ -595,7 +604,7 @@ export const pt: Translations = {
         "Partilhar no X abre uma publicação pré-preenchida num novo separador. Clique primeiro em Copiar imagem se quiser anexar o distintivo 1200×630 — o X permite colá-lo diretamente no compositor da publicação. Transferir PNG guarda o ficheiro para utilização em qualquer lado.",
       clipboard_unsupported:
         "A cópia de imagens para a área de transferência não é suportada neste navegador — utilize Transferir.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Aura Forge Agent ☤",
     },
   },
   kanban: {
@@ -610,6 +619,12 @@ export const pt: Translations = {
       "Os quadros permitem-lhe separar fluxos de trabalho não relacionados — um por projeto, repositório ou domínio. Os workers de um quadro nunca veem as tarefas de outro quadro.",
     slug: "Slug",
     slugHint: "— minúsculas, hífenes, p. ex. atm10-server",
+    confirmDoneMany:
+      "Mark {n} tasks as done? The workers' claims are released and dependent children become ready.",
+    confirmArchiveMany:
+      "Archive {n} tasks? They disappear from the default board view.",
+    confirmBlockedMany:
+      "Mark {n} tasks as blocked? The workers' claims are released.",
     displayName: "Nome a apresentar",
     displayNameHint: "(opcional)",
     description: "Descrição",

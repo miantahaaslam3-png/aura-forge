@@ -85,6 +85,16 @@ def build_gateway_parser(
             "gateway's exit code. No effect outside an s6 container."
         ),
     )
+    gateway_run.add_argument(
+        "--external-supervisor",
+        action="store_true",
+        help=(
+            "Declare that an external process manager owns this foreground "
+            "gateway. In-chat restarts and updates exit back to that manager "
+            "instead of spawning a detached replacement. Use this when a "
+            "launchd/systemd wrapper strips its native environment markers."
+        ),
+    )
     add_accept_hooks_flag(gateway_run)
     add_accept_hooks_flag(gateway_parser)
 
@@ -218,7 +228,7 @@ def build_gateway_parser(
         "migrate-legacy",
         help="Remove legacy hermes.service units from pre-rename installs",
         description=(
-            "Stop, disable, and remove legacy Hermes gateway unit files "
+            "Stop, disable, and remove legacy Aura Forge gateway unit files "
             "(e.g. hermes.service) left over from older installs. Profile "
             "units (hermes-gateway-<profile>.service) and unrelated "
             "third-party services are never touched."

@@ -69,7 +69,7 @@ link-cli auth status
 If not authenticated, log in with a clear client name (this label shows in the user's Link app):
 
 ```
-link-cli auth login --client-name "Hermes" --interval 5 --timeout 300
+link-cli auth login --client-name "Aura Forge" --interval 5 --timeout 300
 ```
 
 The `--interval`/`--timeout` form polls inline so the agent doesn't need to manage a `_next` step. Print the verification URL + phrase to the user and wait for the CLI to return.
@@ -161,10 +161,10 @@ rm -f /tmp/link-card.json
 `@stripe/link-cli --mcp` exposes the same commands as MCP tools over stdio. To register it with Aura Forge' native MCP:
 
 ```
-aura mcp add stripe-link --command "npx" --args "@stripe/link-cli --mcp"
+hermes mcp add stripe-link --command "npx" --args "@stripe/link-cli --mcp"
 ```
 
-Then `aura mcp list` should show `stripe-link`. The same approval rules apply — MCP doesn't bypass the Link app approval step.
+Then `hermes mcp list` should show `stripe-link`. The same approval rules apply — MCP doesn't bypass the Link app approval step.
 
 ## Pitfalls
 

@@ -20,8 +20,8 @@ set -eu
 HERMES_HOME="${HERMES_HOME:-/opt/data}"
 INSTALL_DIR="/opt/hermes"
 
-# Drop to aura via s6-setuidgid, but skip it when already non-root.
-as_hermes() { [ "$(id -u)" = 0 ] || { "$@"; return; }; s6-setuidgid aura "$@"; }
+# Drop to hermes via s6-setuidgid, but skip it when already non-root.
+as_hermes() { [ "$(id -u)" = 0 ] || { "$@"; return; }; s6-setuidgid hermes "$@"; }
 
 # --- Reject the unsupported `docker run --user <uid>:<gid>` start ---
 # Detect the case where the container was launched with `--user` pinned to an
@@ -30,7 +30,7 @@ as_hermes() { [ "$(id -u)" = 0 ] || { "$@"; return; }; s6-setuidgid aura "$@"; }
 #
 # Under s6-overlay this no longer works: the bootstrap (UID remap, data-volume
 # ownership, config seeding) requires root, and it is skipped when the container
-# starts non-root. The baked install tree under /opt/aura is intentionally
+# starts non-root. The baked install tree under /opt/hermes is intentionally
 # root-owned and non-writable; mutable runtime state must live under
 # $HERMES_HOME. An arbitrary `--user` UID therefore cannot repair or populate
 # the data volume, and startup fails with EACCES. See #34837 for the
@@ -45,15 +45,15 @@ as_hermes() { [ "$(id -u)" = 0 ] || { "$@"; return; }; s6-setuidgid aura "$@"; }
 # the container was started as, so `id -u` here is the host UID (e.g. 1000), and
 # `id -u hermes` is the unremapped build UID (10000) because no root-only remap
 # could run. root starts (id -u = 0) and the normal supervised drop to the
-# aura UID are both unaffected.
+# hermes UID are both unaffected.
 cur_uid="$(id -u)"
 if [ "$cur_uid" != 0 ] && [ "$cur_uid" != "$(id -u hermes)" ]; then
     cat >&2 <<EOF
-[stage2] ERROR: container started with --user $cur_uid (an arbitrary, non-aura UID).
+[stage2] ERROR: container started with --user $cur_uid (an arbitrary, non-hermes UID).
 
 This is not supported under the s6-overlay image. The container bootstrap
 (UID remap, data-volume ownership, config seeding) needs to start as root,
-and the baked /opt/aura install tree is intentionally root-owned and
+and the baked /opt/hermes install tree is intentionally root-owned and
 non-writable, so a pinned --user UID cannot repair startup state — startup
 will fail.
 
@@ -66,7 +66,7 @@ NAS users (Synology / unRAID / UGOS) can use the PUID/PGID aliases:
 
     docker run -e PUID=\$(id -u) -e PGID=\$(id -g) ...
 
-The image remaps the aura user to that UID/GID at boot and chowns the data
+The image remaps the hermes user to that UID/GID at boot and chowns the data
 volume accordingly, so files land owned by your host user — the same outcome
 --user was being used for, without breaking the supervision tree.
 EOF
@@ -76,7 +76,7 @@ fi
 # --- Bootstrap HERMES_HOME as root ---
 # Create the directory (and any missing parents) while we still have root
 # privileges so the chown checks below see real metadata and the later
-# `s6-setuidgid aura mkdir -p` block doesn't EACCES on root-owned
+# `s6-setuidgid hermes mkdir -p` block doesn't EACCES on root-owned
 # ancestors. Without this, custom HERMES_HOME paths whose parents only
 # root can create (e.g. `HERMES_HOME=/home/hermes/.hermes` in a Compose
 # file, or any path under a fresh / not pre-populated by the image)
@@ -105,21 +105,21 @@ HERMES_UID="${HERMES_UID:-${PUID:-}}"
 HERMES_GID="${HERMES_GID:-${PGID:-}}"
 
 if [ -n "${HERMES_UID:-}" ] && validate_uid_gid "$HERMES_UID" && [ "$HERMES_UID" != "$(id -u hermes)" ]; then
-    echo "[stage2] Changing aura UID to $HERMES_UID"
+    echo "[stage2] Changing hermes UID to $HERMES_UID"
     usermod -u "$HERMES_UID" hermes
 fi
 if [ -n "${HERMES_GID:-}" ] && validate_uid_gid "$HERMES_GID" && [ "$HERMES_GID" != "$(id -g hermes)" ]; then
-    echo "[stage2] Changing aura GID to $HERMES_GID"
+    echo "[stage2] Changing hermes GID to $HERMES_GID"
     # -o allows non-unique GID (e.g. macOS GID 20 "staff" may already
     # exist as "dialout" in the Debian-based container image).
-    groupmod -o -g "$HERMES_GID" aura 2>/dev/null || true
+    groupmod -o -g "$HERMES_GID" hermes 2>/dev/null || true
 fi
 
 # --- Docker socket group membership (docker-in-docker / DooD) ---
 # When the user bind-mounts the host Docker daemon socket
 # (`-v /var/run/docker.sock:/var/run/docker.sock`) to use the `docker`
 # terminal backend from inside the container, the socket is owned by the
-# host's `docker` group (or root). The supervised aura user (UID 10000)
+# host's `docker` group (or root). The supervised hermes user (UID 10000)
 # is not a member of any group that matches the socket's GID, so every
 # `docker` invocation EACCES'es and `check_terminal_requirements()` fails.
 # See #16703.
@@ -131,7 +131,7 @@ fi
 # /etc/group entry whose GID matches the socket, the kernel-granted
 # supp group is silently wiped between PID 1 and the dropped process.
 # Confirmed empirically: `--group-add 998` alone leaves the dropped
-# aura process with `Groups: 10000` (998 gone); after this hook adds
+# hermes process with `Groups: 10000` (998 gone); after this hook adds
 # the entry, the dropped process has `Groups: 998 10000` as expected.
 #
 # Fix: detect the socket's GID at boot and ensure /etc/group has a
@@ -142,15 +142,15 @@ fi
 #   - socket owned by GID 0 (root) — some Podman setups; usermod -aG root
 #   - socket GID already used by a known container group (e.g. tty=5):
 #     reuse that group's name rather than creating a duplicate
-#   - aura is already a member of the right group (idempotent restart)
+#   - hermes is already a member of the right group (idempotent restart)
 #   - chown/groupadd failures under rootless containers — non-fatal
 for sock in /var/run/docker.sock /run/docker.sock; do
     [ -S "$sock" ] || continue
     sock_gid=$(stat -c '%g' "$sock" 2>/dev/null) || continue
     [ -n "$sock_gid" ] || continue
     # Already a member? Nothing to do.
-    if id -G aura 2>/dev/null | tr ' ' '\n' | grep -qx "$sock_gid"; then
-        echo "[stage2] aura already in group $sock_gid for $sock"
+    if id -G hermes 2>/dev/null | tr ' ' '\n' | grep -qx "$sock_gid"; then
+        echo "[stage2] hermes already in group $sock_gid for $sock"
         break
     fi
     # Resolve or create a group name for this GID.
@@ -163,18 +163,18 @@ for sock in /var/run/docker.sock /run/docker.sock; do
         fi
         echo "[stage2] Created group $sock_group (GID $sock_gid) for Docker socket"
     fi
-    if usermod -aG "$sock_group" aura 2>/dev/null; then
-        echo "[stage2] Added aura to group $sock_group (GID $sock_gid) for $sock"
+    if usermod -aG "$sock_group" hermes 2>/dev/null; then
+        echo "[stage2] Added hermes to group $sock_group (GID $sock_gid) for $sock"
     else
-        echo "[stage2] Warning: usermod -aG $sock_group aura failed; docker backend may fail with EACCES"
+        echo "[stage2] Warning: usermod -aG $sock_group hermes failed; docker backend may fail with EACCES"
     fi
     break
 done
 
 # --- Fix ownership of data volume ---
 # When HERMES_UID is remapped or the top-level $HERMES_HOME isn't owned by
-# the runtime aura UID, restore ownership to aura — but ONLY for the
-# directories aura actually writes to. The full $HERMES_HOME may be a
+# the runtime hermes UID, restore ownership to hermes — but ONLY for the
+# directories hermes actually writes to. The full $HERMES_HOME may be a
 # host-mounted bind containing unrelated user files; `chown -R` would
 # silently destroy host ownership of those (see issue #19788).
 #
@@ -216,8 +216,13 @@ chown_hermes_tree() {
     if refuse_symlinked_path "recursive chown" "$target"; then
         return 0
     fi
-    chown -R hermes:aura "$target" 2>/dev/null || \
+    chown -R hermes:hermes "$target" 2>/dev/null || \
         echo "[stage2] Warning: chown $target failed (rootless container?) — continuing"
+}
+
+tree_has_non_hermes_owner() {
+    target="$1"
+    find "$target" \( ! -user hermes -o ! -group hermes \) -print -quit 2>/dev/null | grep -q .
 }
 
 needs_chown=false
@@ -225,25 +230,25 @@ if [ "$(stat -c %u "$HERMES_HOME" 2>/dev/null)" != "$actual_hermes_uid" ]; then
     needs_chown=true
 fi
 if [ "$needs_chown" = true ]; then
-    echo "[stage2] Fixing ownership of $HERMES_HOME (targeted) to aura ($actual_hermes_uid)"
+    echo "[stage2] Fixing ownership of $HERMES_HOME (targeted) to hermes ($actual_hermes_uid)"
     # In rootless Podman the container's "root" is mapped to an
     # unprivileged host UID — chown will fail. That's fine: the volume
     # is already owned by the mapped user on the host side.
     #
     # Top-level $HERMES_HOME: chown the directory itself (not its contents)
-    # so aura can mkdir new subdirs but bind-mounted host files keep
+    # so hermes can mkdir new subdirs but bind-mounted host files keep
     # their existing ownership.
     if refuse_symlinked_path "chown" "$HERMES_HOME"; then
         :
     else
-        chown hermes:aura "$HERMES_HOME" 2>/dev/null || \
+        chown hermes:hermes "$HERMES_HOME" 2>/dev/null || \
             echo "[stage2] Warning: chown $HERMES_HOME failed (rootless container?) — continuing"
     fi
     # Hermes-owned subdirs: recursive chown is safe here because these are
-    # created and managed exclusively by aura (see the s6-setuidgid mkdir
+    # created and managed exclusively by hermes (see the s6-setuidgid mkdir
     # -p block below for the canonical list).
     for sub in cron sessions logs hooks memories skills skins plans workspace home profiles pairing platforms/pairing lazy-packages; do
-        if [ -e "$HERMES_HOME/$sub" ]; then
+        if [ -e "$HERMES_HOME/$sub" ] && tree_has_non_hermes_owner "$HERMES_HOME/$sub"; then
             chown_hermes_tree "$HERMES_HOME/$sub"
         fi
     done
@@ -251,9 +256,9 @@ fi
 
 # --- Immutable install tree ---
 # Do not chown runtime code or dependency trees under $INSTALL_DIR back to the
-# aura user. Hosted/container instances keep mutable state under
+# hermes user. Hosted/container instances keep mutable state under
 # $HERMES_HOME (/opt/data) and run with PYTHONDONTWRITEBYTECODE plus
-# HERMES_DISABLE_LAZY_INSTALLS=1. Keeping /opt/aura root-owned and
+# HERMES_DISABLE_LAZY_INSTALLS=1. Keeping /opt/hermes root-owned and
 # non-writable prevents an agent session from self-modifying the installed
 # source, venv, TUI bundle, or node_modules and bricking the gateway.
 #
@@ -268,31 +273,67 @@ fi
 # unprivileged runtime user, and it persists across container recreates /
 # image updates (an ABI stamp wipes it if a rebuild bumps the interpreter).
 
-# Always reset ownership of $HERMES_HOME/profiles to aura on every
+# Always reset ownership of $HERMES_HOME/profiles to hermes on every
 # boot. Profile dirs and files can land owned by root when commands
-# are invoked via `docker exec <container> aura …` (which defaults
+# are invoked via `docker exec <container> hermes …` (which defaults
 # to root unless `-u` is passed), and that breaks the cont-init
-# reconciler (02-reconcile-profiles) which runs as aura and walks
-# the profiles dir. Idempotent; skipped on rootless containers where
-# chown would fail.
-if [ -d "$HERMES_HOME/profiles" ]; then
+# reconciler (02-reconcile-profiles) which runs as hermes and walks
+# the profiles dir. Skip the recursive walk when the tree is already
+# owned correctly so warm boots do not rescan huge profile caches.
+# Idempotent; skipped on rootless containers where chown would fail.
+if [ -d "$HERMES_HOME/profiles" ] && tree_has_non_hermes_owner "$HERMES_HOME/profiles"; then
     chown_hermes_tree "$HERMES_HOME/profiles"
 fi
 
 # Always reset ownership of $HERMES_HOME/cron on every boot for the same
 # docker-exec/root-write reason as profiles/. The cron scheduler state
-# (jobs.json) must stay readable by the unprivileged aura runtime even
-# after root-context maintenance commands or scheduler writes.
-if [ -d "$HERMES_HOME/cron" ]; then
+# (jobs.json) must stay readable by the unprivileged hermes runtime even
+# after root-context maintenance commands or scheduler writes. Skip the
+# recursive walk when the tree is already owned correctly (same warm-boot
+# gate as profiles/).
+if [ -d "$HERMES_HOME/cron" ] && tree_has_non_hermes_owner "$HERMES_HOME/cron"; then
     chown_hermes_tree "$HERMES_HOME/cron"
+fi
+
+# Always ensure logs/gateways is hermes-owned (#45258). Formerly healed by
+# restartable gateway log/run chown — removed due to symlink TOCTOU
+# (CWE-59/367). The targeted data-volume chown above only runs when the
+# top-level $HERMES_HOME is mis-owned, so a warm volume with hermes-owned
+# HERMES_HOME but root-owned logs/gateways would otherwise leave
+# s6-setuidgid hermes mkdir failing with Permission denied. Non-recursive:
+# profile leaf dirs are each created/owned by their own log/run as hermes.
+if [ -d "$HERMES_HOME/logs/gateways" ]; then
+    if refuse_symlinked_path "chown" "$HERMES_HOME/logs/gateways"; then
+        :
+    else
+        chown hermes:hermes "$HERMES_HOME/logs/gateways" 2>/dev/null || true
+    fi
+fi
+
+# Always reset ownership of pairing data on every boot, same docker-exec/
+# root-write reason as profiles/ and cron/. `docker exec <container>
+# hermes pairing approve …` defaults to uid=0 and writes 0600 root-owned
+# approval files that the unprivileged hermes gateway cannot read,
+# silently leaving the approved user unauthorized (#10270). The targeted
+# data-volume chown above only runs when the top-level $HERMES_HOME is
+# mis-owned, so warm boots skip it — this block makes a container restart
+# self-heal. Tiny directory (a handful of small JSON files), so even the
+# ownership pre-scan is negligible; gated for consistency with profiles/
+# and cron/.
+if [ -d "$HERMES_HOME/platforms/pairing" ] && tree_has_non_hermes_owner "$HERMES_HOME/platforms/pairing"; then
+    chown_hermes_tree "$HERMES_HOME/platforms/pairing"
+fi
+# Legacy location (pre-consolidated layout).
+if [ -d "$HERMES_HOME/pairing" ] && tree_has_non_hermes_owner "$HERMES_HOME/pairing"; then
+    chown_hermes_tree "$HERMES_HOME/pairing"
 fi
 
 # Reset ownership of hermes-owned top-level state files on every boot.
 # The targeted data-volume chown above only covers hermes-owned
 # *subdirectories*; loose state files living directly under $HERMES_HOME
 # are missed. When those files are created or rewritten by
-# `docker exec <container> aura …` (root unless `-u` is passed) they
-# land root-owned, and the unprivileged aura runtime then hits
+# `docker exec <container> hermes …` (root unless `-u` is passed) they
+# land root-owned, and the unprivileged hermes runtime then hits
 # PermissionError on next startup (e.g. gateway.lock / state.db /
 # auth.json), producing a gateway restart loop.
 #
@@ -313,31 +354,31 @@ for f in \
         if refuse_symlinked_path "chown" "$HERMES_HOME/$f"; then
             :
         else
-            chown hermes:aura "$HERMES_HOME/$f" 2>/dev/null || true
+            chown hermes:hermes "$HERMES_HOME/$f" 2>/dev/null || true
         fi
     fi
 done
 
 # --- config.yaml permissions ---
-# Ensure config.yaml is readable by the aura runtime user even if it
+# Ensure config.yaml is readable by the hermes runtime user even if it
 # was edited on the host after initial ownership setup.
 if [ -f "$HERMES_HOME/config.yaml" ]; then
     if refuse_symlinked_path "chown/chmod" "$HERMES_HOME/config.yaml"; then
         :
     else
-        chown hermes:aura "$HERMES_HOME/config.yaml" 2>/dev/null || true
+        chown hermes:hermes "$HERMES_HOME/config.yaml" 2>/dev/null || true
         chmod 640 "$HERMES_HOME/config.yaml" 2>/dev/null || true
     fi
 fi
 
-# --- Seed directory structure as aura user ---
-# Run as aura via s6-setuidgid so dirs end up owned correctly (matters
+# --- Seed directory structure as hermes user ---
+# Run as hermes via s6-setuidgid so dirs end up owned correctly (matters
 # under rootless Podman where chown back to root would fail).
 #
 # Use direct `mkdir -p` invocation (no `sh -c "..."` wrapper) so the
 # shell isn't a second interpreter — defends against $HERMES_HOME values
 # containing shell metacharacters. PR #30136 review item O2.
-as_aura mkdir -p \
+as_hermes mkdir -p \
     "$HERMES_HOME/backups" \
     "$HERMES_HOME/cron" \
     "$HERMES_HOME/sessions" \
@@ -363,10 +404,10 @@ as_aura mkdir -p \
 # bind-mounted from the host (~/.hermes:/opt/data) and sometimes shared with a
 # host-side Desktop/CLI install. Stamping 'docker' here clobbered that host
 # install's marker, so its in-app updater read 'docker' and refused to run
-# 'aura update'. To heal homes already poisoned by older images, remove a
+# 'hermes update'. To heal homes already poisoned by older images, remove a
 # stale 'docker' stamp from $HERMES_HOME if one is present (the host install's
 # own installer re-creates its code-scoped stamp; a genuine container relies on
-# the baked /opt/aura stamp, so deleting the data-dir copy is safe).
+# the baked /opt/hermes stamp, so deleting the data-dir copy is safe).
 if [ -f "$HERMES_HOME/.install_method" ]; then
     stamped="$(tr -d '[:space:]' < "$HERMES_HOME/.install_method" 2>/dev/null || true)"
     if [ "$stamped" = "docker" ]; then
@@ -382,13 +423,96 @@ seed_one() {
         if refuse_symlinked_path "seed" "$HERMES_HOME/$dest"; then
             :
         else
-            as_aura cp "$INSTALL_DIR/$src" "$HERMES_HOME/$dest"
+            as_hermes cp "$INSTALL_DIR/$src" "$HERMES_HOME/$dest"
         fi
     fi
 }
 seed_one ".env" ".env.example"
 seed_one "config.yaml" "cli-config.yaml.example"
 seed_one "SOUL.md" "docker/SOUL.md"
+
+# --- Ensure a gateway api_server key exists (loopback control plane) ---
+# The gateway's aiohttp api_server refuses to start without a strong
+# API_SERVER_KEY (>=16 chars; startup guard in gateway/platforms/api_server.py).
+# Hosted deployments need that listener on loopback so the dashboard — the
+# container's only public HTTP door — can forward Chronos cron fires into the
+# GATEWAY process, where the live platform adapters (relay, E2EE) live. The
+# cron-fire route itself is NAS-JWT-authed, not key-authed; the key gates the
+# rest of the api_server surface. Generate once, persist in .env (mounted
+# volume), never overwrite an operator-provided value. Loopback-only: the
+# default bind host is 127.0.0.1 and the Fly service only exposes the
+# dashboard's port, so this listener is never publicly reachable.
+#
+# CREATE .env when it is missing rather than requiring it to exist (OOF-285):
+# the first-boot seed above depends on /opt/hermes/.env.example being present
+# in the image, and when it isn't (the .dockerignore excluded it for a long
+# stretch of releases) seed_one is a silent no-op, no .env ever exists, this
+# keygen never ran, the api_server never started, and every scheduled cron
+# fire on the instance was silently lost. The key must not depend on the
+# example-file seed having worked.
+#
+# OPERATOR-PROVIDED KEYS WIN: if the container environment already carries
+# API_SERVER_KEY (documented `docker run -e API_SERVER_KEY=...` flow), do
+# not generate one. Aura Forge loads $HERMES_HOME/.env with override=True, so
+# a generated key written here would silently SHADOW the operator's env
+# key and 401 every client still using the supplied credential.
+if [ -n "${API_SERVER_KEY:-}" ]; then
+    if [ -f "$HERMES_HOME/.env" ] && grep -q '^API_SERVER_KEY=..*' "$HERMES_HOME/.env" 2>/dev/null; then
+        echo "[stage2] Warning: API_SERVER_KEY is set in both the container environment and $HERMES_HOME/.env — the .env value wins at runtime (loaded with override=True)"
+    else
+        # The env key is the effective key on this boot (no .env key wins
+        # over it). The api_server startup guard refuses keys shorter than
+        # 16 chars; since this branch skips generation, a weak operator key
+        # means the server stays DOWN (cron fires lost), not just 401s.
+        # Warn where the operator will look — the boot log. Checked only in
+        # this branch: when a strong .env key wins at runtime, the warning
+        # would be false (the server does start).
+        if [ "${#API_SERVER_KEY}" -lt 16 ]; then
+            echo "[stage2] Warning: container-provided API_SERVER_KEY is shorter than 16 characters — the gateway api_server will refuse to start (cron fires unavailable). Generate a strong secret, e.g. \`openssl rand -hex 32\`."
+        fi
+        # A stale empty `API_SERVER_KEY=` line (left by an old seed) would
+        # clobber the container-provided key at runtime: .env is loaded with
+        # override=True and python-dotenv sets the empty string, which fails
+        # the api_server's startup guard — the exact silent-cron-loss symptom
+        # this hook exists to prevent. Drop it so the operator key wins.
+        if [ -f "$HERMES_HOME/.env" ] && ! refuse_symlinked_path "clean" "$HERMES_HOME/.env"; then
+            sed -i '/^API_SERVER_KEY=$/d' "$HERMES_HOME/.env" 2>/dev/null || true
+        fi
+        echo "[stage2] API_SERVER_KEY provided via container environment — skipping generation"
+    fi
+elif ! grep -q '^API_SERVER_KEY=..*' "$HERMES_HOME/.env" 2>/dev/null; then
+    if refuse_symlinked_path "append" "$HERMES_HOME/.env"; then
+        :
+    else
+        if [ ! -f "$HERMES_HOME/.env" ]; then
+            # Create an empty, owner-only .env so the append below (and any
+            # later runtime save_env_value writes) have a durable target.
+            # Created under a restrictive umask so the file is 0600 from the
+            # first instant — no touch→chmod window, and no dependence on a
+            # silenced chmod succeeding. The chown/chmod block below still
+            # re-tightens perms every boot.
+            (umask 077 && as_hermes touch "$HERMES_HOME/.env") 2>/dev/null || true
+        fi
+        if [ -f "$HERMES_HOME/.env" ]; then
+            _gen_key=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+            if [ -n "$_gen_key" ]; then
+                # Drop an empty assignment line if the seed left one behind,
+                # then append the generated key. The append is guarded: on a
+                # read-only volume / full disk it must degrade to the warning
+                # below, not abort the whole stage2 hook under `set -e`.
+                sed -i '/^API_SERVER_KEY=$/d' "$HERMES_HOME/.env" 2>/dev/null || true
+                if printf 'API_SERVER_KEY=%s\n' "$_gen_key" >> "$HERMES_HOME/.env" 2>/dev/null; then
+                    echo "[stage2] Generated API_SERVER_KEY for the loopback gateway api_server"
+                else
+                    echo "[stage2] Warning: could not write API_SERVER_KEY to $HERMES_HOME/.env (read-only volume?) — gateway api_server (cron fires) will be unavailable"
+                fi
+            fi
+            unset _gen_key
+        else
+            echo "[stage2] Warning: could not create $HERMES_HOME/.env — gateway api_server (cron fires) will be unavailable"
+        fi
+    fi
+fi
 
 # .env holds API keys and secrets — restrict to owner-only access. Applied
 # unconditionally (not only on first-seed) so a host-mounted .env that was
@@ -397,19 +521,42 @@ if [ -f "$HERMES_HOME/.env" ]; then
     if refuse_symlinked_path "chown/chmod" "$HERMES_HOME/.env"; then
         :
     else
-        chown hermes:aura "$HERMES_HOME/.env" 2>/dev/null || true
+        chown hermes:hermes "$HERMES_HOME/.env" 2>/dev/null || true
         chmod 600 "$HERMES_HOME/.env" 2>/dev/null || true
+    fi
+fi
+
+# --- Grant the gateway access to the Fly Machines API socket (scale-to-zero) ---
+# On Fly, flyd mounts the local Machines API ("flaps") unix socket at /.fly/api
+# owned root:root 0755. The gateway's scale-to-zero self-suspend
+# (gateway/scale_to_zero.py suspend_self) must POST to it, but the gateway runs
+# as the unprivileged `hermes` user — without this it gets EACCES on every
+# suspend attempt and the machine can never sleep (fail-awake; verified live on
+# staging 2026-08-20: "flaps suspend request failed: [Errno 13]"). This hook
+# runs as root before user services (the gateway) start, so grant group access
+# here. Scope note: group-write exposes the WHOLE local Machines API to the
+# hermes group (any group member could e.g. stop/suspend this machine), not
+# just the suspend endpoint — accepted because the agent already executes
+# arbitrary user code as that same principal and the socket only controls THIS
+# machine. No-op off Fly (socket absent).
+if [ -S /.fly/api ]; then
+    if refuse_symlinked_path "chgrp/chmod" /.fly/api; then
+        :
+    elif chgrp hermes /.fly/api 2>/dev/null && chmod g+w /.fly/api 2>/dev/null; then
+        echo "[stage2] Granted hermes group access to the Fly Machines API socket"
+    else
+        echo "[stage2] Warning: could not grant group access to /.fly/api — scale-to-zero self-suspend will fail EACCES (fail-awake)"
     fi
 fi
 
 # --- Migrate persisted config schema ---
 # Docker image upgrades replace the code under $INSTALL_DIR but preserve
 # $HERMES_HOME on the mounted volume. Run the same safe, non-interactive
-# config-schema migrations that `aura update` runs for non-Docker installs,
+# config-schema migrations that `hermes update` runs for non-Docker installs,
 # after first-boot seeding and before supervised gateway services start.
 # Set HERMES_SKIP_CONFIG_MIGRATION=1 for controlled/manual migrations.
 if [ -f "$HERMES_HOME/config.yaml" ]; then
-    s6-setuidgid aura "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/scripts/docker_config_migrate.py" \
+    s6-setuidgid hermes "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/scripts/docker_config_migrate.py" \
         || echo "[stage2] Warning: docker_config_migrate.py failed; continuing"
 fi
 
@@ -421,8 +568,34 @@ if [ ! -f "$HERMES_HOME/auth.json" ] && [ -n "${HERMES_AUTH_JSON_BOOTSTRAP:-}" ]
         :
     else
         printf '%s' "$HERMES_AUTH_JSON_BOOTSTRAP" > "$HERMES_HOME/auth.json"
-        chown hermes:aura "$HERMES_HOME/auth.json" 2>/dev/null || true
+        chown hermes:hermes "$HERMES_HOME/auth.json" 2>/dev/null || true
         chmod 600 "$HERMES_HOME/auth.json"
+    fi
+fi
+
+# auth.json: re-seed a TERMINALLY-DEAD Nous bootstrap session (self-heal).
+#
+# The [ ! -f ] guard above deliberately refuses to clobber an existing
+# auth.json, so a container whose Nous bootstrap session took a terminal
+# invalid_grant (tokens cleared, providers.nous.last_auth_error.relogin_required
+# stamped) can NOT recover from a plain restart — it stays unauthenticated until
+# the credential is replaced. An orchestrator that manages the container can
+# supply a freshly-issued session via HERMES_AUTH_JSON_REBOOTSTRAP (distinct
+# from the create-only *_BOOTSTRAP var); this helper swaps ONLY the
+# providers.nous entry when the on-disk entry is provably terminal OR the
+# orchestrator seed has a later obtained_at timestamp. The latter covers the
+# stop/update/start sequence where NAS already revoked the still-healthy-looking
+# local session. Older/incomparable seeds remain no-ops, so leaving the env set
+# cannot roll a healthy rotated token backward. Runs as its own stdlib-only
+# subprocess (no app imports) and always exits 0.
+if [ -f "$HERMES_HOME/auth.json" ] && [ -n "${HERMES_AUTH_JSON_REBOOTSTRAP:-}" ]; then
+    if refuse_symlinked_path "reseed" "$HERMES_HOME/auth.json"; then
+        :
+    else
+        s6-setuidgid hermes "$INSTALL_DIR/.venv/bin/python" \
+            "$INSTALL_DIR/scripts/docker_rebootstrap_nous_session.py" \
+            "$HERMES_HOME/auth.json" \
+            || echo "[stage2] Warning: docker_rebootstrap_nous_session.py failed; continuing"
     fi
 fi
 
@@ -457,7 +630,7 @@ if [ ! -f "$HERMES_HOME/gateway_state.json" ] && \
         :
     else
         printf '{"gateway_state":"running"}\n' > "$HERMES_HOME/gateway_state.json"
-        chown hermes:aura "$HERMES_HOME/gateway_state.json" 2>/dev/null || true
+        chown hermes:hermes "$HERMES_HOME/gateway_state.json" 2>/dev/null || true
         chmod 644 "$HERMES_HOME/gateway_state.json"
     fi
 fi
@@ -469,7 +642,7 @@ fi
 # the python binary's own bin-stub already sets up (sys.path is rooted
 # at the venv's site-packages by virtue of running .venv/bin/python).
 if [ -d "$INSTALL_DIR/skills" ]; then
-    as_aura "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/tools/skills_sync.py" \
+    as_hermes "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/tools/skills_sync.py" \
         || echo "[stage2] Warning: skills_sync.py failed; continuing"
 fi
 

@@ -1,5 +1,5 @@
 """
-Hermes CLI - Unified command-line interface for Hermes Agent.
+Aura Forge CLI - Unified command-line interface for Aura Forge Agent.
 
 Provides subcommands for:
 - hermes chat          - Interactive chat (same as ./hermes)
@@ -14,8 +14,8 @@ Provides subcommands for:
 import os
 import sys
 
-__version__ = "0.18.0"
-__release_date__ = "2026.7.1"
+__version__ = "0.20.6"
+__release_date__ = "2026.8.27"
 
 
 def _ensure_utf8():

@@ -163,7 +163,7 @@ ORDER BY event_count DESC
 
 ---
 
-## Accessing vian Aura Forge
+## Accessing via Aura Forge
 
 **Option A: BigQuery CLI** (if `gcloud` is installed)
 ```bash

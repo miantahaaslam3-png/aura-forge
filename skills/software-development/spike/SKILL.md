@@ -118,7 +118,7 @@ spikes/
 terminal("mkdir -p spikes/001-websocket-streaming")
 write_file("spikes/001-websocket-streaming/README.md", "# 001: websocket-streaming\n\n...")
 write_file("spikes/001-websocket-streaming/main.py", "...")
-terminal("cd spikes/001-websocket-streaming && python3 main.py")
+terminal("cd spikes/001-websocket-streaming && python main.py")
 # Observe output, iterate.
 ```
 
@@ -194,4 +194,4 @@ Propose 2-4 candidates as Given/When/Then. Let the user pick.
 
 ## Attribution
 
-Adapted from the GSD (Get Shit Done) project's `/gsd-spike` workflow — MIT © 2025 Lex Christopherson ([gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)). The full GSD system offers persistent spike state, MANIFEST tracking, and integration with a broader spec-driven development pipeline; install with `npx get-shit-done-cc --aura --global`.
+Adapted from the GSD (Get Shit Done) project's `/gsd-spike` workflow — MIT © 2025 Lex Christopherson ([gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)). The full GSD system offers persistent spike state, MANIFEST tracking, and integration with a broader spec-driven development pipeline; install with `npx get-shit-done-cc --hermes --global`.

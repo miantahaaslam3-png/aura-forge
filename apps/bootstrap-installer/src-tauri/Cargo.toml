@@ -1,24 +1,24 @@
 [package]
-name = "aura-forge-bootstrap"
+name = "hermes-bootstrap"
 version = "0.0.1"
 description = "Aura Forge Setup — signed installer that drives scripts/install.ps1"
-authors = ["Aura Forge <info@nousresearch.com>"]
+authors = ["Nous Research <info@nousresearch.com>"]
 edition = "2021"
 rust-version = "1.77"
 
 # Rename the output binary so the distributed artifact is literally
-# `AuraForge-Setup.exe` on disk — not `aura-forge-bootstrap.exe`. Grandma sees
+# `AuraForge-Setup.exe` on disk — not `hermes-bootstrap.exe`. Grandma sees
 # what we hand her, period. Tauri honors [[bin]] over [package].name
 # for the produced executable name.
 [[bin]]
-name = "AuraForge-Setup"
+name = "Hermes-Setup"
 path = "src/main.rs"
 
 # The library target name MUST match the `withGlobalTauri` binding name that
 # tauri.conf.json's `app.windows[].label` references. We don't ship a separate
 # lib for now; everything is in src/.
 [lib]
-name = "aura_forge_bootstrap_lib"
+name = "hermes_bootstrap_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -61,10 +61,15 @@ uuid = { version = "1", features = ["v4"] }
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
+    "Win32_System_Diagnostics_ToolHelp",
     "Win32_System_Threading",
     "Win32_System_Console",
     "Win32_UI_WindowsAndMessaging",
 ] }
+
+# Signal-0 liveness probe for the update-lock marker owner (update.rs).
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [profile.release]
 # A 5-10MB signed installer is the goal. LTO + size-opt + single codegen unit.

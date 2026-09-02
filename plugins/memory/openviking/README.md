@@ -4,14 +4,31 @@ Context database by Volcengine (ByteDance) with filesystem-style knowledge hiera
 
 ## Requirements
 
-- `pip install openviking`
-- OpenViking server running (`openviking-server`)
-- Embedding + VLM model configured in `~/.openviking/ov.conf`
+- OpenViking installed with the `openviking-server` command available
+- OpenViking server config initialized and validated (`openviking-server init`,
+  then `openviking-server doctor`)
+- OpenViking server running and reachable from Aura Forge
+
+OpenViking 0.2.10 or newer is recommended. For backward compatibility,
+Aura Forge can identify older servers that expose the legacy status-only health
+response, but only when anonymous OpenAPI metadata also identifies the service
+as OpenViking. OpenViking 0.2.6 and earlier are deprecated for this integration;
+upgrade them to receive the current health contract and compatibility fixes.
 
 ## Setup
 
+Prepare OpenViking first:
+
 ```bash
-aura memory setup    # select "openviking"
+openviking-server init
+openviking-server doctor
+openviking-server
+```
+
+Then configure Aura Forge:
+
+```bash
+hermes memory setup    # select "openviking"
 ```
 
 The setup can link to an existing `~/.openviking/ovcli.conf`, copy its current
@@ -19,14 +36,36 @@ connection values into Aura Forge, or create a minimal `ovcli.conf` when one doe
 not exist.
 
 Or manually:
+
 ```bash
-aura config set memory.provider openviking
-echo "OPENVIKING_ENDPOINT=http://localhost:1933" >> ~/.hermes/.env
+hermes config set memory.provider openviking
+```
+
+Add the connection settings to the active profile's `.env` file. For the
+default profile that is `~/.hermes/.env`; for a named profile use
+`~/.hermes/profiles/<profile>/.env`.
+
+```text
+OPENVIKING_ENDPOINT=http://127.0.0.1:1933
+# OPENVIKING_API_KEY=...
+# OPENVIKING_ACCOUNT=default
+# OPENVIKING_USER=default
+# OPENVIKING_AGENT=hermes
 ```
 
 ## Config
 
-All config via environment variables in `.env`:
+OpenViking's server config is separate from Aura Forge:
+
+- `ov.conf` configures OpenViking storage, embedding/VLM models, auth, and
+  server behavior. OpenViking reads it from `--config`,
+  `OPENVIKING_CONFIG_FILE`, or `~/.openviking/ov.conf`.
+- `ovcli.conf` stores client/CLI connection values such as `url`, `api_key`,
+  `account`, and `user`. It is read from `OPENVIKING_CLI_CONFIG_FILE` or
+  `~/.openviking/ovcli.conf`.
+
+Hermes-side provider config is read from environment variables in the active
+profile's `.env`:
 
 | Env Var | Default | Description |
 |---------|---------|-------------|
@@ -39,6 +78,9 @@ All config via environment variables in `.env`:
 When `OPENVIKING_API_KEY` is set, Aura Forge lets OpenViking derive account/user
 identity from the key. In local or trusted deployments without an API key,
 Aura Forge sends `OPENVIKING_ACCOUNT` and `OPENVIKING_USER` as identity headers.
+Aura Forge also sends `User-Agent: openviking-memory-hermes/<version>` on
+OpenViking requests. This standard harness identifier contains the Aura Forge
+version, but no per-user identifier, and does not add a separate request.
 
 ## Tools
 
@@ -54,10 +96,14 @@ Aura Forge sends `OPENVIKING_ACCOUNT` and `OPENVIKING_USER` as identity headers.
 ## Memory Writes And Deletes
 
 `viking_remember` writes directly to OpenViking with `POST /api/v1/content/write`
-and `mode=create`. It creates peer-scoped memory files under
-`viking://user/peers/${OPENVIKING_AGENT}/memories/...`; OpenViking may return a
-canonical user-scoped form such as
-`viking://user/default/peers/${OPENVIKING_AGENT}/memories/...` in API-key mode.
+and `mode=create`. It creates peer-scoped memory files under explicit-uid
+`viking://user/<user>/peers/${OPENVIKING_AGENT}/memories/...` URIs, where
+`<user>` is resolved client-side from `/api/v1/system/status` (server-asserted
+current user). Aura Forge caches a confirmed user only for the active connection.
+If the probe fails, Aura Forge uses the configured user, or `default`, for that
+operation and retries the probe later. Explicit-uid URIs are canonical and
+work under every OpenViking auth mode and version; the `viking://~` alias only
+expands for USER/ADMIN roles, not the default dev mode.
 Explicit remembers do not depend on session commit extraction.
 
 Aura Forge built-in `memory` tool additions are mirrored to OpenViking after the
@@ -67,15 +113,16 @@ local memory operation succeeds:
 |---------------|----------------------|
 | `add` | `content/write` with `mode=create` under the configured peer memory namespace |
 
-Built-in `replace` and `remove` operations are not mirrored because Hermes
+Built-in `replace` and `remove` operations are not mirrored because Aura Forge
 native memory entries do not yet carry stable OpenViking file URIs. Use
 `viking_forget` when the user explicitly asks to delete a specific OpenViking
 memory URI.
 
 `viking_forget` is intentionally narrow. It only accepts concrete user memory
 file URIs, such as
-`viking://user/peers/hermes/memories/preferences/mem_abc123.md` or the canonical
-`viking://user/default/peers/hermes/memories/preferences/mem_abc123.md`. Files
+`viking://user/default/peers/hermes/memories/preferences/mem_abc123.md` (any
+explicit user id works; `viking://~/...` input is passed through untouched for
+deployments where the server expands the home alias). Files
 directly under `memories/`, such as `viking://user/default/memories/profile.md`,
 are also allowed because OpenViking supports them. The tool rejects directories,
 resources, skills, sessions, generated summary files, and URIs with query

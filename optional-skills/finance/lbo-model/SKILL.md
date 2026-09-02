@@ -1,6 +1,6 @@
 ---
 name: lbo-model
-description: Build leveraged buyout models in Excel — sources & uses, debt schedule, cash sweep, exit multiple, IRR/MOIC sensitivity. Pairs with excel-author. Use for PE screening, sponsor-case valuation, or illustrative LBO in a pitch.
+description: Build leveraged buyout workbooks with IRR/MOIC in Excel.
 version: 1.0.0
 author: Anthropic (adapted by Nous Research)
 license: Apache-2.0
@@ -276,7 +276,7 @@ Must return success with zero errors.
 
 ## Data sources — MCP first, web fallback
 
-Many passages below say "use the S&P Kensho MCP / Daloopa MCP / FactSet MCP". Those are commercial financial-data MCPs from the original Cowork plugin context. In Hermes:
+Many passages below say "use the S&P Kensho MCP / Daloopa MCP / FactSet MCP". Those are commercial financial-data MCPs from the original Cowork plugin context. In Aura Forge:
 
 - **If you have any structured financial-data MCP configured** (Aura Forge supports MCP — see `native-mcp` skill), prefer it for point-in-time comps, precedent transactions, and filings.
 - **Otherwise**, fall back to:

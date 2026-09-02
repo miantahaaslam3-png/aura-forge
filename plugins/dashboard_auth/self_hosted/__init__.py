@@ -1,6 +1,6 @@
 """SelfHostedOIDCProvider — generic self-hosted OpenID Connect dashboard auth.
 
-A standards-compliant OpenID Connect Relying Party for the ``aura dashboard``
+A standards-compliant OpenID Connect Relying Party for the ``hermes dashboard``
 OAuth gate. Unlike the bundled ``nous`` provider (which encodes Nous Portal's
 bespoke contract — ``agent:{instance_id}`` client ids, a custom access-token
 JWT, the ``x-nous-refresh-token`` header, an ``oauth_contract_version`` claim),
@@ -601,6 +601,10 @@ class SelfHostedOIDCProvider(DashboardAuthProvider):
                 disco["jwks_uri"],
                 cache_keys=True,
                 lifespan=_JWKS_CACHE_SECONDS,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "HermesAgent/1.0",
+                },
             )
         return self._jwks_client
 

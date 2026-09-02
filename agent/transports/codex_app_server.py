@@ -6,11 +6,11 @@ do an `initialize` handshake, then drive `thread/start` + `turn/start` and
 consume streaming `item/*` notifications until `turn/completed`.
 
 This module is the wire-level speaker only. Higher-level concerns (event
-projection into Hermes' display, approval bridging, transcript projection into
+projection into Aura Forge' display, approval bridging, transcript projection into
 AIAgent.messages, plugin migration) live in sibling modules.
 
 Status: optional opt-in runtime gated behind `model.openai_runtime ==
-"codex_app_server"`. Hermes' default tool dispatch is unchanged when this
+"codex_app_server"`. Aura Forge' default tool dispatch is unchanged when this
 runtime is not selected.
 """
 
@@ -80,7 +80,7 @@ class CodexAppServerClient:
         # model-chosen agentic loop that executes shell commands, so it
         # legitimately needs LLM provider credentials (inherit_credentials=True)
         # to authenticate against the model endpoint. But the previous
-        # `os.environ.copy()` also handed it every Tier-1 Hermes secret — gateway
+        # `os.environ.copy()` also handed it every Tier-1 Aura Forge secret — gateway
         # bot tokens, GitHub auth, Modal/Daytona infra tokens, the dashboard
         # session token, AUXILIARY_* side-LLM keys, GATEWAY_RELAY_* auth — none
         # of which a coding subprocess has any use for. Route through the
@@ -127,6 +127,10 @@ class CodexAppServerClient:
         # Codex emits tracing to stderr; default WARN keeps it quiet for users.
         spawn_env.setdefault("RUST_LOG", "warn")
 
+        # Hide the console the codex child would otherwise flash on Windows
+        # (#56747). Hide-only — stdio pipes stay intact for the app-server wire.
+        from hermes_cli._subprocess_compat import windows_hide_flags
+
         self._proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
@@ -134,6 +138,7 @@ class CodexAppServerClient:
             stderr=subprocess.PIPE,
             bufsize=0,
             env=spawn_env,
+            creationflags=windows_hide_flags(),
         )
         self._next_id = 1
         self._pending: dict[int, _Pending] = {}
@@ -155,7 +160,7 @@ class CodexAppServerClient:
     def initialize(
         self,
         client_name: str = "hermes",
-        client_title: str = "Hermes Agent",
+        client_title: str = "Aura Forge Agent",
         client_version: str = "0.1",
         capabilities: Optional[dict] = None,
         timeout: float = 10.0,
@@ -389,7 +394,7 @@ def check_codex_binary(
         proc = subprocess.run(
             [codex_bin, "--version"],
             capture_output=True,
-            text=True,
+            text=True, encoding='utf-8', errors='replace',
             timeout=10,
             stdin=subprocess.DEVNULL,
         )

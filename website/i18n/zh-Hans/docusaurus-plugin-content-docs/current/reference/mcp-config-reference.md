@@ -1,7 +1,7 @@
 ---
 sidebar_position: 8
 title: "MCP 配置参考"
-description: "Hermes Agent MCP 配置键、过滤语义及工具策略参考"
+description: "Aura Forge Agent MCP 配置键、过滤语义及工具策略参考"
 ---
 
 # MCP 配置参考
@@ -10,7 +10,7 @@ description: "Hermes Agent MCP 配置键、过滤语义及工具策略参考"
 
 概念说明请参阅：
 - [MCP（Model Context Protocol）](/user-guide/features/mcp)
-- [在 Hermes 中使用 MCP](/guides/use-mcp-with-hermes)
+- [在 Aura Forge 中使用 MCP](/guides/use-mcp-with-hermes)
 
 ## 根配置结构
 
@@ -52,6 +52,7 @@ mcp_servers:
 | `tools` | mapping | 两者 | 过滤及工具策略 |
 | `auth` | string | HTTP | 认证方式。设为 `oauth` 可启用带 PKCE 的 OAuth 2.1 |
 | `sampling` | mapping | 两者 | 服务器发起的 LLM 请求策略（参见 MCP 指南） |
+| `trust` | string | 两者 | 信任层级：`full`（默认）或 `untrusted`。在 `untrusted` 服务器上，所有具备写能力的工具调用（即没有 `readOnlyHint: true` 注解的工具）在执行前都需要通过标准审批界面获得用户批准。`readOnlyHint` 是服务器自报的*提示* —— 恶意服务器最多只能让自称只读的工具跳过审批，绝不会因此获得额外权限，因此对不完全受控的服务器请标记为 `untrusted`。无法识别的值按 `untrusted` 处理（失败即关闭） |
 
 ## `tools` 策略键
 
@@ -98,7 +99,7 @@ tools:
 
 ## 工具策略
 
-Hermes 可为每个 MCP 服务器注册以下工具包装器：
+Aura Forge 可为每个 MCP 服务器注册以下工具包装器：
 
 Resources（资源）：
 - `list_resources`
@@ -124,7 +125,7 @@ tools:
 
 ### 能力感知注册
 
-即使设置了 `resources: true` 或 `prompts: true`，Hermes 也只在 MCP 会话实际暴露对应能力时才注册相应工具。
+即使设置了 `resources: true` 或 `prompts: true`，Aura Forge 也只在 MCP 会话实际暴露对应能力时才注册相应工具。
 
 因此以下情况属于正常现象：
 - 你启用了 prompts
@@ -148,7 +149,7 @@ mcp_servers:
 
 ## 空结果行为
 
-若过滤后服务器原生工具全部被移除，且没有工具被注册，Hermes 不会为该服务器创建空的 MCP 运行时工具集。
+若过滤后服务器原生工具全部被移除，且没有工具被注册，Aura Forge 不会为该服务器创建空的 MCP 运行时工具集。
 
 ## 配置示例
 
@@ -242,7 +243,7 @@ mcp_servers:
 ```
 
 行为：
-- Hermes 使用 MCP SDK 的 OAuth 2.1 PKCE 流程（元数据发现、动态客户端注册、token 交换及刷新）
+- Aura Forge 使用 MCP SDK 的 OAuth 2.1 PKCE 流程（元数据发现、动态客户端注册、token 交换及刷新）
 - 首次连接时，浏览器窗口将打开以完成授权
 - Token 持久化至 `~/.hermes/mcp-tokens/<server>.json`，跨会话复用
 - Token 刷新自动进行；仅在刷新失败时才需重新授权

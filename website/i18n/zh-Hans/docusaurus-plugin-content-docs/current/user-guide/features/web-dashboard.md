@@ -6,7 +6,7 @@ description: "基于浏览器的仪表板，用于管理配置、API 密钥、�
 
 # Web Dashboard
 
-Web Dashboard 是一个基于浏览器的 UI，用于管理你的 Hermes Agent 安装。无需编辑 YAML 文件或运行 CLI 命令，即可通过简洁的 Web 界面配置设置、管理 API 密钥并监控会话。
+Web Dashboard 是一个基于浏览器的 UI，用于管理你的 Aura Forge Agent 安装。无需编辑 YAML 文件或运行 CLI 命令，即可通过简洁的 Web 界面配置设置、管理 API 密钥并监控会话。
 
 ## 快速开始
 
@@ -23,7 +23,7 @@ hermes dashboard
 | `--port` | `9119` | Web 服务器运行端口 |
 | `--host` | `127.0.0.1` | 绑定地址 |
 | `--no-open` | — | 不自动打开浏览器 |
-| `--insecure` | 关闭 | 允许绑定到非 localhost 主机（**危险**——会在网络上暴露 API 密钥；请配合防火墙和强认证使用） |
+| `--insecure` | 关闭 | **已弃用 / 无实际作用。** 此参数曾用于在非回环绑定上绕过鉴权；自 2026 年 6 月安全加固后，公网绑定始终需要用户名/密码或 OAuth 鉴权提供方。若需保持仅本地访问，请绑定 `127.0.0.1` 并通过隧道连接。 |
 
 ```bash
 # 自定义端口
@@ -65,7 +65,7 @@ Chat 标签页是每次 `hermes dashboard` 启动的一部分——内嵌的浏�
 
 ### Chat（聊天）
 
-**Chat** 标签页将完整的 Hermes TUI（与 `hermes --tui` 相同的界面）直接嵌入浏览器。你在终端 TUI 中能做的一切——斜杠命令、模型选择器、工具调用卡片、Markdown 流式输出、clarify/sudo/approval 提示、皮肤主题——在这里都完全一致，因为 Dashboard 运行的是真实的 TUI 二进制文件，并通过 [xterm.js](https://xtermjs.org/) 的 WebGL 渲染器以像素级精度渲染其 ANSI 输出。
+**Chat** 标签页将完整的 Aura Forge TUI（与 `hermes --tui` 相同的界面）直接嵌入浏览器。你在终端 TUI 中能做的一切——斜杠命令、模型选择器、工具调用卡片、Markdown 流式输出、clarify/sudo/approval 提示、皮肤主题——在这里都完全一致，因为 Dashboard 运行的是真实的 TUI 二进制文件，并通过 [xterm.js](https://xtermjs.org/) 的 WebGL 渲染器以像素级精度渲染其 ANSI 输出。
 
 **工作原理：**
 
@@ -95,7 +95,7 @@ Chat 标签页是每次 `hermes dashboard` 启动的一部分——内嵌的浏�
 - **agent** — 最大迭代次数、gateway 超时、服务层级
 - **delegation** — 子 agent 限制、推理力度
 - **memory** — 提供商选择、上下文注入设置
-- **approvals** — 危险命令审批模式（ask/yolo/deny）
+- **approvals** — 危险命令审批模式（smart/manual/off）
 - 更多——config.yaml 的每个部分都有对应的表单字段
 
 具有已知有效值的字段（terminal 后端、皮肤、审批模式等）渲染为下拉菜单。布尔值渲染为开关。其余均为文本输入框。
@@ -238,7 +238,7 @@ Web Dashboard 暴露了一个供前端使用的 REST API。你也可以直接调
 
 ### GET /api/sessions/\{session_id\}/messages
 
-返回会话的完整消息历史，包含工具调用和时间戳。
+返回有上限的会话消息页，包含工具调用和时间戳。默认按时间升序返回最近 500 条；可用 `limit`（最大 500）、`offset` 和 `order=oldest|latest` 显式分页。
 
 ### GET /api/sessions/search
 
@@ -334,8 +334,8 @@ Dashboard 内置六个主题，并可通过用户自定义主题、插件标签�
 
 | 主题 | 特点 |
 |-------|-----------|
-| **Hermes Teal** (`default`) | 深青色 + 奶油色，系统字体，舒适间距 |
-| **Hermes Teal (Large)** (`default-large`) | 与 default 相同，但使用 18px 文字和更宽松的间距 |
+| **Aura Forge Teal** (`default`) | 深青色 + 奶油色，系统字体，舒适间距 |
+| **Aura Forge Teal (Large)** (`default-large`) | 与 default 相同，但使用 18px 文字和更宽松的间距 |
 | **Midnight** (`midnight`) | 深蓝紫色，Inter + JetBrains Mono |
 | **Ember** (`ember`) | 暖深红 + 古铜色，Spectral 衬线体 + IBM Plex Mono |
 | **Mono** (`mono`) | 灰度，IBM Plex，紧凑 |

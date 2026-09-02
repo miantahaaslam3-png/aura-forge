@@ -20,7 +20,7 @@ Architecture mirrors `agent/bedrock_adapter.py`:
   purpose prevents accidental token-minting in logging paths or token
   leakage into cache keys / dashboard JSON.
 * No persisted JWT. ``azure-identity`` caches in-process and (where
-  available) in the OS keychain or ``~/.IdentityService``. Hermes does
+  available) in the OS keychain or ``~/.IdentityService``. Aura Forge does
   not duplicate that storage in ``auth.json``.
 
 Reference: https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id
@@ -194,7 +194,7 @@ def _build_default_credential(config: EntraIdentityConfig) -> Any:
 def build_credential(config: EntraIdentityConfig) -> Any:
     """Return the cached ``DefaultAzureCredential`` for ``config``.
 
-    Hermes processes use exactly one Entra config at a time (the
+    Aura Forge processes use exactly one Entra config at a time (the
     ``model.entra.*`` block in config.yaml drives every aux task,
     subagent, and credential probe in the session). ``maxsize=1`` is
     intentional: it reflects the actual usage pattern and keeps the
@@ -367,11 +367,27 @@ def describe_active_credential(config: Optional[EntraIdentityConfig] = None,
         info["tenant_id_env"] = os.environ["AZURE_TENANT_ID"].strip()
 
     # Surface which env-var sources are present without minting yet.
+    # Credential-bearing vars (AZURE_CLIENT_SECRET, AZURE_FEDERATED_TOKEN_FILE)
+    # are read through the profile secret scope so a multiplexed profile's
+    # diagnostics don't report another profile's env-bridged credentials;
+    # unscoped CLI probes keep the legacy env read (Slack pattern).
+    def _scoped_env(name: str) -> str:
+        try:
+            from agent.secret_scope import UnscopedSecretError, get_secret
+
+            try:
+                return (get_secret(name) or "").strip()
+            except UnscopedSecretError:
+                pass
+        except Exception:
+            pass
+        return os.environ.get(name, "").strip()
+
     env_sources = []
-    if os.environ.get("AZURE_FEDERATED_TOKEN_FILE", "").strip():
+    if _scoped_env("AZURE_FEDERATED_TOKEN_FILE"):
         env_sources.append("WorkloadIdentityCredential (AZURE_FEDERATED_TOKEN_FILE)")
     if (os.environ.get("AZURE_CLIENT_ID", "").strip()
-            and os.environ.get("AZURE_CLIENT_SECRET", "").strip()
+            and _scoped_env("AZURE_CLIENT_SECRET")
             and os.environ.get("AZURE_TENANT_ID", "").strip()):
         env_sources.append("EnvironmentCredential (client secret)")
     if os.environ.get("IDENTITY_ENDPOINT", "").strip() or os.environ.get("MSI_ENDPOINT", "").strip():

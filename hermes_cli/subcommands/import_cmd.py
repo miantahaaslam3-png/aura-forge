@@ -16,7 +16,7 @@ def build_import_cmd_parser(subparsers, *, cmd_import: Callable) -> None:
     # =========================================================================
     import_parser = subparsers.add_parser(
         "import",
-        help="Restore an Aura Forge backup from a zip file",
+        help="Restore a Aura Forge backup from a zip file",
         description="Extract a previously created Aura Forge backup into your "
         "Aura Forge home directory, restoring configuration, skills, "
         "sessions, and data",

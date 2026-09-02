@@ -1,6 +1,6 @@
 ---
 name: merger-model
-description: Build accretion/dilution (merger) models in Excel — pro-forma P&L, synergies, financing mix, EPS impact. Pairs with excel-author. Use for M&A pitches, board materials, or deal evaluation.
+description: Build M&A accretion/dilution workbooks in Excel.
 version: 1.0.0
 author: Anthropic (adapted by Nous Research)
 license: Apache-2.0
@@ -129,7 +129,7 @@ Calculate the minimum synergies needed for the deal to be EPS-neutral in Year 1.
 
 ## Data sources — MCP first, web fallback
 
-Many passages below say "use the S&P Kensho MCP / Daloopa MCP / FactSet MCP". Those are commercial financial-data MCPs from the original Cowork plugin context. In Hermes:
+Many passages below say "use the S&P Kensho MCP / Daloopa MCP / FactSet MCP". Those are commercial financial-data MCPs from the original Cowork plugin context. In Aura Forge:
 
 - **If you have any structured financial-data MCP configured** (Aura Forge supports MCP — see `native-mcp` skill), prefer it for point-in-time comps, precedent transactions, and filings.
 - **Otherwise**, fall back to:

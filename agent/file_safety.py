@@ -17,7 +17,7 @@ def _hermes_home_path() -> Path:
 
 
 def _hermes_root_path() -> Path:
-    """Resolve the Hermes root dir (always the parent of any profile, never per-profile)."""
+    """Resolve the Aura Forge root dir (always the parent of any profile, never per-profile)."""
     try:
         from hermes_constants import get_default_hermes_root  # local import to avoid cycles
         return get_default_hermes_root()
@@ -35,7 +35,17 @@ def build_write_denied_paths(home: str) -> set[str]:
             os.path.join(home, ".ssh", "authorized_keys"),
             os.path.join(home, ".ssh", "id_rsa"),
             os.path.join(home, ".ssh", "id_ed25519"),
-            os.path.join(home, ".ssh", "config"),
+            # NOTE: ``~/.ssh/config`` is deliberately NOT hard-denied here.
+            # It carries no private-key bytes and editing it (host aliases,
+            # ProxyJump, VS Code Remote-SSH targets) is a routine, expected
+            # task. Free-writing it is still wrong -- it can carry
+            # ProxyCommand / Match exec directives -- so it is routed through
+            # an approval gate in tools/file_tools.py instead (the same
+            # approve-once/session/always flow the terminal tool already uses
+            # for ~/.ssh writes). See build_write_approval_paths() below and
+            # _check_ssh_config_write() in tools/file_tools.py. Hard-denying
+            # it while the terminal only *asked* was an inconsistency that
+            # made writes look like they flip-flopped between denied and OK.
             # Active profile .env (or top-level .env when not in profile mode).
             str(hermes_home / ".env"),
             # Top-level .env, even when running under a profile — overwriting it
@@ -46,6 +56,9 @@ def build_write_denied_paths(home: str) -> set[str]:
             # Top-level Anthropic PKCE credential store remains sensitive even
             # when a profile is active; default/non-profile sessions still read it.
             str(hermes_root / ".anthropic_oauth.json"),
+            # Bitwarden Secrets Manager encrypted disk cache.
+            str(hermes_home / "cache" / "bws_cache.enc.json"),
+            str(hermes_root / "cache" / "bws_cache.enc.json"),
             os.path.join(home, ".netrc"),
             os.path.join(home, ".pgpass"),
             os.path.join(home, ".npmrc"),
@@ -95,16 +108,45 @@ def get_safe_write_roots() -> set[str]:
     return roots
 
 
-def is_write_denied(path: str) -> bool:
-    """Return True if path is blocked by the write denylist or safe root."""
+def build_write_approval_paths(home: str) -> set[str]:
+    """Return paths that require human APPROVAL to write, but are not
+    hard-denied credentials.
+
+    ``~/.ssh/config`` lives here: it is routine to edit (host aliases,
+    ProxyJump, VS Code Remote-SSH targets) and holds no private-key bytes,
+    but it CAN carry ``ProxyCommand`` / ``Match exec`` directives, so a
+    free write is inappropriate. The interactive file tools gate these
+    through an approve-once/session/always prompt (mirroring the terminal
+    tool's existing ``~/.ssh`` write approval); non-interactive callers
+    that cannot prompt (ACP shims, background jobs) treat an
+    approval-required path as denied and fail closed.
+    """
+    return {
+        os.path.realpath(p)
+        for p in [
+            os.path.join(home, ".ssh", "config"),
+        ]
+    }
+
+
+def _classify_write_denial(path: str) -> Optional[str]:
+    """Return ``'credential'``, ``'safe_root'``, or ``None`` if writes are allowed."""
     home = os.path.realpath(os.path.expanduser("~"))
     resolved = os.path.realpath(os.path.expanduser(str(path)))
 
+    # Approval-gated paths (e.g. ~/.ssh/config) are NOT hard-denied here:
+    # they are allowed at this layer so the interactive file tools can run
+    # their approval prompt, and only blocked for non-interactive callers
+    # via get_write_approval_error(). Checked before the credential deny so
+    # the ``.ssh/`` directory prefix below doesn't swallow the config file.
+    if resolved in build_write_approval_paths(home):
+        return None
+
     if resolved in build_write_denied_paths(home):
-        return True
+        return "credential"
     for prefix in build_write_denied_prefixes(home):
         if resolved.startswith(prefix):
-            return True
+            return "credential"
 
     mcp_tokens_dir_name = "mcp-tokens"
 
@@ -118,16 +160,27 @@ def is_write_denied(path: str) -> bool:
             continue
 
     for base_real in hermes_dirs:
+        # Session transcripts are application-owned state.  Letting the agent's
+        # generic file tools rewrite state.db or legacy JSON snapshots can
+        # falsify conversation history and invalidate resume/compression state.
+        try:
+            if resolved == os.path.realpath(os.path.join(base_real, "state.db")):
+                return True
+            sessions_real = os.path.realpath(os.path.join(base_real, "sessions"))
+            if resolved == sessions_real or resolved.startswith(sessions_real + os.sep):
+                return True
+        except Exception:
+            pass
         try:
             mcp_real = os.path.realpath(os.path.join(base_real, mcp_tokens_dir_name))
             if resolved == mcp_real or resolved.startswith(mcp_real + os.sep):
-                return True
+                return "credential"
         except Exception:
             pass
         try:
             pairing_real = os.path.realpath(os.path.join(base_real, "pairing"))
             if resolved == pairing_real or resolved.startswith(pairing_real + os.sep):
-                return True
+                return "credential"
         except Exception:
             pass
 
@@ -139,9 +192,42 @@ def is_write_denied(path: str) -> bool:
                 allowed = True
                 break
         if not allowed:
-            return True
+            return "safe_root"
 
-    return False
+    return None
+
+
+def is_write_denied(path: str) -> bool:
+    """Return True if path is blocked by the write denylist or safe root."""
+    return _classify_write_denial(path) is not None
+
+
+def get_write_denied_error(path: str, *, verb: str = "Write") -> Optional[str]:
+    """Return a user/model-facing error when writes to ``path`` are blocked."""
+    denial = _classify_write_denial(path)
+    if denial is None:
+        return None
+    if denial == "safe_root":
+        roots_display = os.pathsep.join(sorted(get_safe_write_roots()))
+        return (
+            f"{verb} denied: '{path}' is outside HERMES_WRITE_SAFE_ROOT "
+            f"({roots_display}). Unset the variable or add this path's directory prefix."
+        )
+    return f"{verb} denied: '{path}' is a protected system/credential file."
+
+
+def is_write_approval_required(path: str) -> bool:
+    """Return True if ``path`` is an approval-gated write target.
+
+    These paths (currently ``~/.ssh/config``) are not credentials and are
+    not hard-denied, but a write to them must be confirmed by a human
+    because they can influence process execution (e.g. an SSH
+    ``ProxyCommand``). Callers with an interactive/gateway channel should
+    prompt; callers without one should treat this as a block (fail closed).
+    """
+    home = os.path.realpath(os.path.expanduser("~"))
+    resolved = os.path.realpath(os.path.expanduser(str(path)))
+    return resolved in build_write_approval_paths(home)
 
 
 # Common secret-bearing project-local environment file basenames.
@@ -159,14 +245,14 @@ _BLOCKED_PROJECT_ENV_BASENAMES: set[str] = {
 
 
 def get_read_block_error(path: str) -> Optional[str]:
-    """Return an error message when a read targets a denied Hermes path.
+    """Return an error message when a read targets a denied Aura Forge path.
 
     Three categories are blocked:
 
-      * Internal Hermes cache files under ``HERMES_HOME/skills/.hub`` —
+      * Internal Aura Forge cache files under ``HERMES_HOME/skills/.hub`` —
         readable metadata that an attacker could use as a prompt-injection
         carrier.
-      * Credential / secret stores under HERMES_HOME and the global Hermes
+      * Credential / secret stores under HERMES_HOME and the global Aura Forge
         root: ``auth.json``, ``auth.lock``, ``.anthropic_oauth.json``,
         ``.env``, ``webhook_subscriptions.json``, ``auth/google_oauth.json``,
         and anything under ``mcp-tokens/``. These hold plaintext provider keys,
@@ -206,7 +292,7 @@ def get_read_block_error(path: str) -> Optional[str]:
     resolved = Path(path).expanduser().resolve()
 
     # Resolve BOTH the active HERMES_HOME (profile-aware) AND the global
-    # Hermes root so credential stores at <root>/auth.json etc. are also
+    # Aura Forge root so credential stores at <root>/auth.json etc. are also
     # blocked when running under a profile (HERMES_HOME points at
     # <root>/profiles/<name> in profile mode). Same shape as the write
     # deny widening (#15981, #14157).
@@ -231,7 +317,7 @@ def get_read_block_error(path: str) -> Optional[str]:
             except ValueError:
                 continue
             return (
-                f"Access denied: {path} is an internal Hermes cache file "
+                f"Access denied: {path} is an internal Aura Forge cache file "
                 "and cannot be read directly to prevent prompt injection. "
                 "Use the skills_list or skill_view tools instead."
             )
@@ -258,7 +344,7 @@ def get_read_block_error(path: str) -> Optional[str]:
                 continue
             if resolved == blocked:
                 return (
-                    f"Access denied: {path} is a Hermes credential store "
+                    f"Access denied: {path} is a Aura Forge credential store "
                     "and cannot be read directly. Provider tools consume "
                     "these credentials through internal channels. "
                     "(Defense-in-depth — not a security boundary; the "
@@ -274,7 +360,7 @@ def get_read_block_error(path: str) -> Optional[str]:
             continue
         if resolved == mcp_tokens:
             return (
-                f"Access denied: {path} is the Hermes MCP token directory "
+                f"Access denied: {path} is the Aura Forge MCP token directory "
                 "and cannot be read directly. (Defense-in-depth — not a "
                 "security boundary; the terminal tool can still bypass.)"
             )
@@ -283,9 +369,37 @@ def get_read_block_error(path: str) -> Optional[str]:
         except ValueError:
             continue
         return (
-            f"Access denied: {path} is a Hermes MCP token file "
+            f"Access denied: {path} is a Aura Forge MCP token file "
             "and cannot be read directly. (Defense-in-depth — not a "
             "security boundary; the terminal tool can still bypass.)"
+        )
+
+    # browser-profile/: real-profile browsing snapshot (browser.use_real_profile).
+    # A copy of the user's Cookies / Login Data / Web Data lives here — the same
+    # credential class as auth.json, so it gets the same directory-prefix read
+    # deny. Prefix (not a finite filename list) so future Chromium files are
+    # covered too.
+    for hd in hermes_dirs:
+        try:
+            browser_profile = (hd / "browser-profile").resolve()
+        except Exception:
+            continue
+        if resolved == browser_profile:
+            return (
+                f"Access denied: {path} is the Aura Forge real-profile browser "
+                "snapshot directory (copied cookies/logins) and cannot be read "
+                "directly. (Defense-in-depth — not a security boundary; the "
+                "terminal tool can still bypass.)"
+            )
+        try:
+            resolved.relative_to(browser_profile)
+        except ValueError:
+            continue
+        return (
+            f"Access denied: {path} is inside the Aura Forge real-profile browser "
+            "snapshot (copied cookies/logins) and cannot be read directly. "
+            "(Defense-in-depth — not a security boundary; the terminal tool "
+            "can still bypass.)"
         )
 
     # Block common secret-bearing project-local .env files anywhere on disk.
@@ -304,10 +418,34 @@ def get_read_block_error(path: str) -> Optional[str]:
     return None
 
 
+def raise_if_read_blocked(path: str) -> None:
+    """Raise ``ValueError`` if ``path`` is a denied Aura Forge read (see
+    :func:`get_read_block_error`), else return.
+
+    Shared chokepoint for provider input-loading sites that read a local
+    file the model/tool supplied (e.g. image-gen ``image_url`` /
+    ``reference_image_urls`` paths). Centralizes the guard so every provider
+    enforces the same read boundary with identical semantics instead of each
+    open-coding the try/except block (#57698).
+
+    Best-effort by design: if ``agent.file_safety`` machinery is somehow
+    unavailable at the call site the guard no-ops rather than breaking local
+    image loading — consistent with the defense-in-depth (not security
+    boundary) framing of the denylist itself. The blocking ``ValueError`` from
+    a real hit still propagates; only unexpected internal errors are swallowed.
+    """
+    try:
+        blocked = get_read_block_error(path)
+    except Exception:  # noqa: BLE001 - guard must never break local-file loading
+        return
+    if blocked:
+        raise ValueError(blocked)
+
+
 # ---------------------------------------------------------------------------
 # Cross-profile write guard (#TBD)
 #
-# Hermes profiles are separate HERMES_HOME dirs under
+# Aura Forge profiles are separate HERMES_HOME dirs under
 # ``<root>/profiles/<name>/``. Each profile has its own skills/, plugins/,
 # cron/, memories/. When an agent runs under one profile, writing into
 # ANOTHER profile's directories is almost always wrong — those skills /
@@ -361,7 +499,7 @@ def classify_cross_profile_target(path: str) -> Optional[dict]:
     """Classify a write target as cross-profile if it lands in another
     profile's scoped area (skills/plugins/cron/memories).
 
-    Returns ``None`` when the target is outside Hermes scope, or is inside
+    Returns ``None`` when the target is outside Aura Forge scope, or is inside
     the ACTIVE profile, or doesn't hit a profile-scoped area. Otherwise
     returns a dict with:
 
@@ -421,32 +559,16 @@ def classify_cross_profile_target(path: str) -> Optional[dict]:
 
 
 def get_cross_profile_warning(path: str) -> Optional[str]:
-    """Return a model-facing warning string when ``path`` is cross-profile.
+    """RETIRED (maintainer decision): always returns ``None``.
 
-    Returns ``None`` when the write is in-scope (same profile) or outside
-    Hermes entirely. Caller is expected to surface the warning to the
-    agent as a tool-result error, NOT to silently allow the write — the
-    agent must either get explicit user direction to proceed, or pass
-    ``cross_profile=True`` to its write tool.
-
-    This is defense-in-depth: the terminal tool runs as the same OS user
-    and can write any of these paths without going through this guard.
-    Treat the guard as a confusion-reducer, not a security boundary.
+    The cross-profile write guard was removed — profiles were never
+    isolated (same OS user; the terminal tool writes anywhere), so the
+    block was ceremony that cost every schema real tokens and taught a
+    bypass arg. The system prompt's active-profile hint remains the only
+    steering; the classifier below survives for that hint and for
+    diagnostics. Kept as a stub so external callers/plugins fail soft.
     """
-    info = classify_cross_profile_target(path)
-    if info is None:
-        return None
-    return (
-        f"Cross-profile write blocked by soft guard: {info['target_path']} "
-        f"belongs to Hermes profile {info['target_profile']!r}, but the "
-        f"agent is running under profile {info['active_profile']!r}. "
-        f"Editing another profile's {info['area']}/ will affect that "
-        f"profile's future sessions, not the one you are currently in. "
-        f"Confirm with the user before proceeding. To bypass this guard "
-        f"after explicit user direction, retry the call with "
-        f"``cross_profile=True``. (Defense-in-depth — not a security "
-        f"boundary; the terminal tool can still bypass.)"
-    )
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -465,7 +587,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
 #
 # This guard is path-shape-only: it detects the
 # ``…/sandboxes/<backend>/<task>/home/.hermes/…`` segment and warns
-# regardless of which Hermes profile is active. It does NOT cover the
+# regardless of which Aura Forge profile is active. It does NOT cover the
 # inner-container case where the bind mount strips the ``sandboxes/`` prefix
 # (the agent's view inside the container is plain ``/root/.hermes/...``);
 # that case needs a separate dispatch-layer or host-side ``profile_state``
@@ -492,7 +614,7 @@ def _find_sandbox_mirror_segments(parts: tuple) -> Optional[int]:
 
 
 def classify_sandbox_mirror_target(path: str) -> Optional[dict]:
-    """Classify a write target as a sandbox-mirror of authoritative Hermes state.
+    """Classify a write target as a sandbox-mirror of authoritative Aura Forge state.
 
     Returns ``None`` when the path does not match the sandbox-mirror shape.
     Otherwise returns a dict with:
@@ -503,7 +625,7 @@ def classify_sandbox_mirror_target(path: str) -> Optional[dict]:
       * ``inner_path``: the portion under the mirror's ``.hermes`` (what the
         agent likely meant to address on the host)
 
-    Detection is path-shape-only — does not require any Hermes resolver to
+    Detection is path-shape-only — does not require any Aura Forge resolver to
     succeed, so it works correctly even when called from contexts where
     HERMES_HOME resolution would be ambiguous.
     """
@@ -548,7 +670,7 @@ def get_sandbox_mirror_warning(path: str) -> Optional[str]:
         f"Sandbox-mirror write blocked by soft guard: {info['target_path']} "
         f"sits under {info['mirror_root']!r}, which is a per-task mirror "
         f"created by a non-local terminal backend (docker/daytona/etc.). "
-        f"Writes here land on a copy that the host Hermes process never "
+        f"Writes here land on a copy that the host Aura Forge process never "
         f"reads — the authoritative file is likely {info['inner_path']!r} "
         f"under the real HERMES_HOME. Use the host-side tool for "
         f"authoritative state (e.g. ``memory`` for memories), or address "
@@ -611,7 +733,7 @@ def get_container_mirror_warning(
     mirror_prefix: str | None = None,
 ) -> Optional[str]:
     """Return a model-facing warning when *path* lands in the container's
-    sandbox mirror of authoritative Hermes state.
+    sandbox mirror of authoritative Aura Forge state.
 
     The caller supplies ``mirror_prefix`` only when the current file-tool
     backend is known to execute inside a Docker sandbox. Same contract as
@@ -625,7 +747,7 @@ def get_container_mirror_warning(
     return (
         f"Sandbox-mirror write blocked by soft guard: {info['target_path']} "
         f"sits under {info['mirror_root']!r}, which is the container's "
-        f"bind-mounted home — a per-task mirror that the host Hermes "
+        f"bind-mounted home — a per-task mirror that the host Aura Forge "
         f"process never reads. The authoritative file is "
         f"{info['inner_path']!r} under the real HERMES_HOME. Use the "
         f"host-side tool for authoritative state (e.g. ``memory`` for "

@@ -1,7 +1,7 @@
-# Aura Forge auto-sync: pulls upstream Hermes changes and rebrands them.
+# Aura Forge auto-sync: pulls upstream Aura Forge changes and rebrands them.
 # Runs daily + manual dispatch. Uses GITHUB_TOKEN for push (same repo).
 
-name: Sync from upstream Hermes
+name: Sync from upstream Aura Forge
 on:
   schedule:
     - cron: '0 14 * * *'   # daily 14:00 UTC = 7am PDT
@@ -19,9 +19,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Fetch upstream Hermes
+      - name: Fetch upstream Aura Forge
         run: |
-          git remote add upstream https://github.com/NousResearch/hermes-agent.git 2>/dev/null || true
+          git remote add upstream https://github.com/miantahaaslam3-png/aura-forge.git 2>/dev/null || true
           git fetch upstream main --depth=1
 
       - name: Check if upstream changed

@@ -1,8 +1,9 @@
 """``hermes dashboard`` / ``hermes serve`` subcommand parsers.
 
 ``dashboard`` is the browser web UI; ``serve`` is the same gateway, headless —
-what the desktop app and remote backends run. Both share one handler
-(``cmd_dashboard`` → ``start_server``). Extracted from
+what the desktop app and remote backends run. ``serve`` also skips the web UI
+build (``headless_backend=True``): pure JSON-RPC/WS clients never load the SPA.
+Both share one handler (``cmd_dashboard`` → ``start_server``). Extracted from
 ``hermes_cli/main.py:main()`` (god-file Phase 2); handler injected to avoid
 importing ``main``.
 """
@@ -100,13 +101,13 @@ def build_dashboard_parser(
     dashboard_parser = subparsers.add_parser(
         "dashboard",
         help="Start the web UI dashboard",
-        description="Launch the Aura Forge web dashboard for managing config, API keys, and sessions",
+        description="Launch the Aura Forge Agent web dashboard for managing config, API keys, and sessions",
     )
     _add_server_runtime_args(dashboard_parser)
     dashboard_parser.add_argument(
         "--no-open", action="store_true", help="Don't open browser automatically"
     )
-    # Backward-compat shim: older Hermes desktop app shells (<= 0.15.x) spawn the
+    # Backward-compat shim: older Aura Forge desktop app shells (<= 0.15.x) spawn the
     # backend as `hermes dashboard --no-open --tui --host ... --port ...`. The
     # `--tui` flag was removed from this subcommand in cae6b5486 (embedded chat is
     # always on now). When a user's CLI updates past that commit but their desktop
@@ -127,7 +128,7 @@ def build_dashboard_parser(
     # serve command — the headless backend server
     #
     # `serve` boots the exact same gateway as `dashboard` but never opens a
-    # browser. It exists so the Hermes Desktop app (and headless remote
+    # browser. It exists so the Aura Forge Desktop app (and headless remote
     # backends) can launch a backend WITHOUT invoking `dashboard`: the desktop
     # app and the web dashboard are independent surfaces that merely share this
     # server, and neither should appear to launch the other.
@@ -136,7 +137,7 @@ def build_dashboard_parser(
         "serve",
         help="Start the Aura Forge backend server (headless; powers the desktop app and remote backends)",
         description=(
-            "Run the Hermes backend server — the JSON-RPC/WebSocket gateway the "
+            "Run the Aura Forge backend server — the JSON-RPC/WebSocket gateway the "
             "desktop app and remote clients connect to. Headless: it never opens "
             "a browser UI."
         ),
@@ -148,7 +149,25 @@ def build_dashboard_parser(
     serve_parser.add_argument(
         "--no-open", action="store_true", help=argparse.SUPPRESS
     )
-    serve_parser.set_defaults(func=cmd_dashboard, no_open=True)
+    serve_parser.add_argument(
+        "--ssh-session-token-file",
+        dest="ssh_session_token_file",
+        metavar="PATH",
+        default=None,
+        help="Read a one-shot Desktop SSH session token from PATH",
+    )
+    serve_parser.add_argument(
+        "--ssh-owner-nonce",
+        dest="ssh_owner_nonce",
+        metavar="NONCE",
+        default=None,
+        help="Identify a Desktop-owned SSH backend process",
+    )
+    # `headless_backend` marks the lean path: desktop/remote clients speak pure
+    # JSON-RPC/WS, so `serve` skips the web UI build AND never serves the SPA
+    # (cmd_dashboard exports HERMES_SERVE_HEADLESS=1). `dashboard` leaves it
+    # unset and serves the browser UI as before.
+    serve_parser.set_defaults(func=cmd_dashboard, no_open=True, headless_backend=True)
 
     # `hermes dashboard register` — register a self-hosted dashboard OAuth
     # client with Nous Portal and write the client_id into ~/.hermes/.env.

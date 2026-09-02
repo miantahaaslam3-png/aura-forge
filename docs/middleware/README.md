@@ -1,6 +1,6 @@
-# Aura Forge Middleware
+# Hermes Middleware
 
-Aura Forge middleware is the behavior-changing companion to observer hooks.
+Hermes middleware is the behavior-changing companion to observer hooks.
 Observer hooks report what happened. Middleware can change what happens by
 rewriting a request before execution or by wrapping the execution callback
 itself.
@@ -12,12 +12,12 @@ planner, model provider adapters, tool registry, memory, or CLI UX.
 
 With middleware enabled, plugins can:
 
-- Rewrite LLM provider request kwargs before Aura Forge calls the provider.
+- Rewrite LLM provider request kwargs before Hermes calls the provider.
 - Rewrite tool arguments before guardrails, approval checks, hooks, and tool
   execution see them.
-- Wrap the actual LLM execution callback while preserving Aura Forge retry,
+- Wrap the actual LLM execution callback while preserving Hermes retry,
   streaming, interrupt, and hook behavior.
-- Wrap the actual tool execution callback while preserving Aura Forge guardrails,
+- Wrap the actual tool execution callback while preserving Hermes guardrails,
   approval, post-tool hooks, and tool-result transformation.
 
 ## Contract
@@ -59,7 +59,7 @@ return {
 }
 ```
 
-Aura Forge stores those trace entries in later observer hook payloads as
+Hermes stores those trace entries in later observer hook payloads as
 `middleware_trace`.
 
 Execution middleware receives a `next_call` callback. Call it to continue the
@@ -71,16 +71,16 @@ def on_tool_execution(**kwargs):
     return result
 ```
 
-If multiple plugins register the same execution middleware kind, Aura Forge runs
+If multiple plugins register the same execution middleware kind, Hermes runs
 them as a nested chain in registration order. Middleware failures are fail-open:
-Aura Forge logs a warning and continues with the next middleware or the base
+Hermes logs a warning and continues with the next middleware or the base
 runtime path.
 
 ## Execution Order
 
 ### LLM Calls
 
-For each provider request, Aura Forge applies middleware in this order:
+For each provider request, Hermes applies middleware in this order:
 
 1. Build provider kwargs from the current conversation.
 2. Apply `llm_request` middleware.
@@ -95,11 +95,11 @@ request plus `next_call`.
 
 ### Tool Calls
 
-For each tool call, Aura Forge applies middleware in this order:
+For each tool call, Hermes applies middleware in this order:
 
 1. Parse and coerce model-provided tool arguments.
 2. Apply `tool_request` middleware.
-3. Run the normal Aura Forge pre-execution path against the effective arguments:
+3. Run the normal Hermes pre-execution path against the effective arguments:
    tool availability checks, observer block directives, guardrails, and
    approval checks.
 4. Run tool execution through `tool_execution` middleware.
@@ -115,7 +115,7 @@ rewritten path, command, or URL is the value downstream policy will evaluate.
 Middleware only runs for enabled plugins. For a bundled plugin:
 
 ```bash
-aura plugins enable <plugin-name>
+hermes plugins enable <plugin-name>
 ```
 
 For isolated local testing, use one `HERMES_HOME` for plugin enablement and the
@@ -124,8 +124,8 @@ agent run:
 ```bash
 export HERMES_HOME=/tmp/hermes-middleware-test
 mkdir -p "$HERMES_HOME"
-aura plugins enable <plugin-name>
-aura chat --query 'Reply exactly ok'
+hermes plugins enable <plugin-name>
+hermes chat --query 'Reply exactly ok'
 ```
 
 For source checkouts, prefer the source command so the runtime sees plugins and
@@ -133,8 +133,8 @@ middleware from the working tree:
 
 ```bash
 uv sync
-uv run aura plugins enable <plugin-name>
-uv run aura chat --query 'Reply exactly ok'
+uv run hermes plugins enable <plugin-name>
+uv run hermes chat --query 'Reply exactly ok'
 ```
 
 ## Generic Plugin Examples
@@ -210,7 +210,7 @@ def time_llm_execution(**kwargs):
     return response
 ```
 
-Return the same response shape Aura Forge expects from the provider adapter. Do not
+Return the same response shape Hermes expects from the provider adapter. Do not
 wrap the response in a plugin-specific envelope unless the rest of the runtime
 expects that envelope.
 
@@ -233,8 +233,9 @@ Execution middleware may call `next_call(modified_args)` to pass a changed
 payload to later middleware and the base tool dispatcher.
 
 Plugin-specific examples should live with the plugin that owns the behavior.
-For NeMo Relay adaptive execution middleware, see
-[`plugins/observability/nemo_relay/README.md`](../../plugins/observability/nemo_relay/README.md).
+NeMo Relay execution middleware is installed through an explicitly selected
+Relay `plugins.toml`; see
+[Relay shared metrics](../observability/relay-shared-metrics.md).
 
 ## Safety Notes
 
@@ -244,14 +245,14 @@ For NeMo Relay adaptive execution middleware, see
   patches.
 - Execution middleware should call `next_call(...)` exactly once unless it is
   intentionally short-circuiting execution.
-- If execution middleware raises before calling `next_call(...)`, Aura Forge treats
+- If execution middleware raises before calling `next_call(...)`, Hermes treats
   that as middleware failure and continues with the remaining middleware chain
   and base execution.
 - If execution middleware calls `next_call(...)` successfully and then raises
-  during post-processing, Aura Forge preserves the downstream result and does not
+  during post-processing, Hermes preserves the downstream result and does not
   run the provider or tool a second time.
 - If downstream provider or tool execution fails, middleware may let that error
-  propagate or translate it deliberately. Aura Forge does not convert downstream
+  propagate or translate it deliberately. Hermes does not convert downstream
   failure into a successful `None` result.
 - Tool request middleware runs before approvals. If it mutates file paths,
   commands, URLs, or arguments, the mutated values are what guardrails and

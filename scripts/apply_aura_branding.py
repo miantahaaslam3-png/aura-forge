@@ -35,11 +35,16 @@ RULES = [
      "full GitHub URL"),
 
     # 2. App identity (electron main.cjs)
-    (r"APP_NAME\s*=\s*'Hermes'", "APP_NAME = 'Aura Forge'", ["*.cjs"],
+    (r"APP_NAME\s*=\s*(process\.env\.[A-Z_]+\s*\|\|\s*)?'Hermes'", "APP_NAME = \\1'Aura Forge'", ["*.cjs", "*.ts"],
      "APP_NAME"),
     (r"setAppUserModelId\('com\.nousresearch\.hermes'\)",
      "setAppUserModelId('com.auraforge.desktop')", ["*.cjs"],
      "AppUserModelId"),
+
+    (r"WORDMARK\s*=\s*'HERMES AGENT'", "WORDMARK = 'AURA FORGE'", ["*.ts", "*.tsx"],
+     "wordmark"),
+    (r"const APP_NAME = 'Hermes'", "const APP_NAME = 'Aura Forge'", ["*.cjs", "*.ts"],
+     "APP_NAME (simple)"),
 
     # 3. Log prefix
     (r"\[hermes\]\s", "[aura-forge] ", None,
@@ -81,7 +86,7 @@ RULES = [
     # 7. PowerShell identifiers (before prose "Hermes" rule)
     (r"\$Hermes([A-Z]\w+)", r"$AuraForge\1", ["*.ps1"],
      "PS identifier"),
-    (r"HERMES_HOME", "AURA_FORGE_HOME", ["*.ps1", "*.sh"],
+    (r"HERMES_HOME", "HERMES_HOME", ["*.ps1", "*.sh"],
      "env var name in scripts"),
 
     # 8. Bootstrap exe/app names
@@ -156,10 +161,15 @@ def check_protected(content_before: str, content_after: str) -> list[str]:
     return issues
 
 
-def apply_rules(content: str) -> tuple[str, list[str]]:
-    """Apply all rebrand rules. Returns (new_content, list_of_rules_applied)."""
+def apply_rules(content: str, fname: str = "") -> tuple[str, list[str]]:
+    """Apply rebrand rules whose file_globs match fname (None/empty = all files)."""
+    import fnmatch
     applied = []
     for pattern, replacement, file_globs, desc in RULES:
+        if file_globs and fname:
+            base = fname.replace('\\', '/')
+            if not any(fnmatch.fnmatch(base, f"**/{g}") or fnmatch.fnmatch(base, g) for g in file_globs):
+                continue
         new_content = re.sub(pattern, replacement, content)
         if new_content != content:
             applied.append(desc)
@@ -198,7 +208,7 @@ def process_file(path: Path, apply: bool, check: bool) -> tuple[list[str], list[
     applied, leaks = [], []
 
     if apply:
-        content, applied = apply_rules(content)
+        content, applied = apply_rules(content, str(path))
         issues = check_protected(original, content)
         if issues:
             applied.extend(issues)

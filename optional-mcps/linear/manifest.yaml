@@ -30,9 +30,16 @@ auth:
 # tool names under `tools.default_enabled`. Probe failure would then apply
 # that list directly.
 
+# Composer-suggestion triggers (desktop brand pills).
+suggest:
+  keywords:
+    - linear
+  hosts:
+    - linear.app
+
 post_install: |
   On first connection, Aura Forge will open a browser to authenticate with Linear.
   After auth, restart your Aura Forge session so the Linear tools are loaded.
 
   You can re-run the tool checklist any time with:
-    aura mcp configure linear
+    hermes mcp configure linear

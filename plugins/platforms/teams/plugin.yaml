@@ -8,7 +8,7 @@ description: >
   between Teams chats (personal DMs, group chats, channel posts) and
   the Aura Forge agent. Supports Adaptive Card approval prompts.
 author: Aamir Jawaid
-# ``requires_env`` entries are surfaced in ``aura config`` UI via the
+# ``requires_env`` entries are surfaced in ``hermes config`` UI via the
 # platform-plugin env var injector in ``hermes_cli/config.py``.
 requires_env:
   - name: TEAMS_CLIENT_ID
@@ -29,6 +29,10 @@ optional_env:
   - name: TEAMS_PORT
     description: "Webhook listen port (Bot Framework default: 3978)"
     prompt: "Webhook port"
+    password: false
+  - name: TEAMS_HOST
+    description: "Webhook bind host (default: unset → dual-stack, all interfaces IPv4+IPv6)"
+    prompt: "Webhook host"
     password: false
   - name: TEAMS_ALLOWED_USERS
     description: "Comma-separated Teams user IDs / UPNs allowed to talk to the bot"

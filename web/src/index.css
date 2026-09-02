@@ -43,13 +43,13 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Hermes Agent — Nous DS with the LENS_0 (Hermes teal) palette applied
+/* Aura Forge Agent — Nous DS with the LENS_0 (Aura Forge teal) palette applied
    statically as the default dashboard theme. */
 /* ------------------------------------------------------------------ */
 
 :root {
   /* LENS_0 — from design-language/src/ui/components/overlays/index.tsx.
-     These are the defaults for the `default` (Hermes Teal) dashboard theme;
+     These are the defaults for the `default` (Aura Forge Teal) dashboard theme;
      ThemeProvider rewrites them as inline styles when a user switches themes. */
   --foreground: color-mix(in srgb, #ffffff 0%, transparent);
   --foreground-base: #ffffff;
@@ -243,5 +243,13 @@ code { font-size: 0.875rem; }
   pointer-events: none;
   background: repeating-conic-gradient(currentColor 0% 25%, #0000 0% 50%) 0 0 /
     2px 2px;
+}
+
+/* RTL support — Arabic and any future right-to-left locale. The i18n provider
+   sets `dir` on <html>; Tailwind v4's logical spacing utilities (ms-/me-,
+   ps-/pe-) and logical properties then flip automatically. Scoped so the
+   default LTR layout is untouched. */
+html[dir="rtl"] {
+  direction: rtl;
 }
 

@@ -66,6 +66,7 @@ class ProviderDescriptor:
     base_url_env_var: str          # base-URL override env var (may be "")
     signup_url: str                # signup / console URL (may be "")
     order: int                     # CANONICAL_PROVIDERS index — mirrors `hermes model`
+    keyless: bool = False          # served anonymously — no credential exists to configure
 
 
 def tab_for_auth_type(auth_type: str) -> str:
@@ -111,7 +112,7 @@ def provider_catalog() -> list[ProviderDescriptor]:
     except Exception:
         OPTIONAL_ENV_VARS = {}
 
-    # Hermes overlays carry auth_type for providers that have no registry/profile
+    # Aura Forge overlays carry auth_type for providers that have no registry/profile
     # entry of their own — notably the ``moa`` virtual provider (auth_type
     # "virtual"), which has no real credential and no network endpoint.
     try:
@@ -127,7 +128,7 @@ def provider_catalog() -> list[ProviderDescriptor]:
         overlay = HERMES_OVERLAYS.get(slug)
 
         # auth_type: registry is authoritative; fall back to profile, then the
-        # Hermes overlay (e.g. moa → "virtual"), then api_key.
+        # Aura Forge overlay (e.g. moa → "virtual"), then api_key.
         auth_type = (
             (getattr(cfg, "auth_type", "") if cfg else "")
             or (getattr(prof, "auth_type", "") if prof else "")
@@ -171,6 +172,10 @@ def provider_catalog() -> list[ProviderDescriptor]:
                 base_url_env_var=base_url_var,
                 signup_url=signup_url,
                 order=order,
+                # Keyless providers (e.g. opencode-free) are served
+                # anonymously: there is no credential to configure, so the
+                # GUI renders no key card and contract tests exempt them.
+                keyless=bool(getattr(overlay, "keyless", False)),
             )
         )
     return out

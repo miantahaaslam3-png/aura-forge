@@ -1,5 +1,5 @@
 """
-Hermes Desktop (Chat GUI) uninstaller.
+Aura Forge Desktop (Chat GUI) uninstaller.
 
 The desktop GUI ships in two shapes and this module knows how to find and
 remove the artifacts of both, on Linux, macOS, and Windows, WITHOUT touching
@@ -17,7 +17,7 @@ the Python agent or the user's config/data:
   2. Packaged distributable (DMG / NSIS / AppImage / deb / rpm)
      Installed by the OS to a standard application location and carrying its
      own bundled Electron + a per-user Electron ``userData`` directory:
-       - macOS:   ``/Applications/Hermes.app`` or ``~/Applications/Hermes.app``
+       - macOS:   ``/Applications/AuraForge.app`` or ``~/Applications/AuraForge.app``
        - Windows: ``%LOCALAPPDATA%\\Programs\\Hermes`` (NSIS per-user)
        - Linux:   ``~/.local/share/applications`` .desktop entry + AppImage
 
@@ -119,8 +119,8 @@ def packaged_gui_app_paths() -> "list[Path]":
     paths: list[Path] = []
     if sys.platform == "darwin":
         paths += [
-            Path("/Applications/Aura Forge.app"),
-            home / "Applications" / "Aura Forge.app",
+            Path("/Applications/AuraForge.app"),
+            home / "Applications" / "AuraForge.app",
         ]
     elif sys.platform == "win32":
         local = os.environ.get("LOCALAPPDATA")
@@ -142,10 +142,15 @@ def packaged_gui_app_paths() -> "list[Path]":
         # hint rather than guessing. deb/rpm installs are owned by the system
         # package manager and must be removed via apt/dnf — see the message in
         # ``uninstall_gui``.
+        from hermes_cli.linux_desktop_entry import desktop_entry_path
+
         data = os.environ.get("XDG_DATA_HOME")
         data_base = Path(data) if data else (home / ".local" / "share")
         paths += [
-            data_base / "applications" / "hermes.desktop",
+            # The launcher entry `hermes desktop` installs. Its icon lives
+            # in the checkout, not in the installed app.
+            desktop_entry_path(),
+            # Some packaged builds emit this casing.
             data_base / "applications" / "Aura Forge.desktop",
         ]
     return paths
@@ -275,6 +280,22 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
     # shouldn't) rmtree files under /usr. Surface the hint so the user can
     # finish the job. AppImages live wherever the user dropped them.
     if sys.platform.startswith("linux"):
+        # The desktop entry was removed above (it is in
+        # ``packaged_gui_app_paths``), but the menu caches still list it.
+        # Reindex so Aura Forge disappears from the launcher.
+        try:
+            from hermes_cli.linux_desktop_entry import (
+                desktop_entry_path,
+                refresh_desktop_databases,
+            )
+
+            entry = desktop_entry_path()
+            if entry in removed:
+                for tool in refresh_desktop_databases(entry.parent):
+                    log_success(f"Refreshed the application menu cache ({tool})")
+        except Exception as e:
+            log_warn(f"Could not refresh the application menu cache: {e}")
+
         log_info(
             "If you installed the desktop via a .deb / .rpm package, remove it "
             "with your package manager (e.g. 'sudo apt remove hermes' or "

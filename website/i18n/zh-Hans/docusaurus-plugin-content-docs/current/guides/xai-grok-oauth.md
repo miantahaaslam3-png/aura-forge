@@ -1,18 +1,18 @@
 ---
 sidebar_position: 16
 title: "xAI Grok OAuth（SuperGrok / X Premium+）"
-description: "使用 SuperGrok 或 X Premium+ 订阅登录，在 Hermes Agent 中使用 Grok 模型——无需 API 密钥"
+description: "使用 SuperGrok 或 X Premium+ 订阅登录，在 Aura Forge Agent 中使用 Grok 模型——无需 API 密钥"
 ---
 
 # xAI Grok OAuth（SuperGrok / X Premium+）
 
-Hermes Agent 通过基于浏览器的 OAuth 登录流程支持 xAI Grok，认证服务器为 [accounts.x.ai](https://accounts.x.ai)，支持 **SuperGrok 订阅**（[grok.com](https://x.ai/grok)）或 **X Premium+ 订阅**（已关联的 X 账号）。无需 `XAI_API_KEY`——登录一次后，Hermes 会在后台自动刷新会话。
+Aura Forge Agent 通过基于浏览器的 OAuth 登录流程支持 xAI Grok，认证服务器为 [accounts.x.ai](https://accounts.x.ai)，支持 **SuperGrok 订阅**（[grok.com](https://x.ai/grok)）或 **X Premium+ 订阅**（已关联的 X 账号）。无需 `XAI_API_KEY`——登录一次后，Aura Forge 会在后台自动刷新会话。
 
 当你使用拥有 Premium+ 的 X 账号登录时，xAI 会自动将订阅状态关联到你的 xAI 会话，因此 OAuth 流程与直接 SuperGrok 订阅者的体验完全相同。
 
 该传输层复用 `codex_responses` 适配器（xAI 暴露了 Responses 风格的端点），因此推理、工具调用、流式传输和 prompt（提示词）缓存无需任何适配器改动即可正常工作。
 
-同一 OAuth bearer token 也会被 Hermes 中所有直连 xAI 的功能复用——TTS、图像生成、视频生成和转录——因此单次登录即可覆盖全部四项功能。
+同一 OAuth bearer token 也会被 Aura Forge 中所有直连 xAI 的功能复用——TTS、图像生成、视频生成和转录——因此单次登录即可覆盖全部四项功能。
 
 ## 概览
 
@@ -22,7 +22,7 @@ Hermes Agent 通过基于浏览器的 OAuth 登录流程支持 xAI Grok，认证
 | 显示名称 | xAI Grok OAuth (SuperGrok / X Premium+) |
 | 认证类型 | 浏览器 OAuth 2.0 设备代码 |
 | 传输层 | xAI Responses API（`codex_responses`） |
-| 默认模型 | `grok-build-0.1` |
+| 默认模型 | `grok-4.6` |
 | 端点 | `https://api.x.ai/v1` |
 | 认证服务器 | `https://accounts.x.ai` |
 | 需要环境变量 | 否（此 provider 不使用 `XAI_API_KEY`） |
@@ -31,7 +31,7 @@ Hermes Agent 通过基于浏览器的 OAuth 登录流程支持 xAI Grok，认证
 ## 前提条件
 
 - Python 3.9+
-- 已安装 Hermes Agent
+- 已安装 Aura Forge Agent
 - 你的 xAI 账号拥有有效的 **SuperGrok** 订阅，**或**你登录所用的 X 账号拥有 **X Premium+** 订阅（xAI 会自动关联订阅）
 - 任意可打开打印出的验证 URL 的浏览器
 
@@ -45,9 +45,9 @@ xAI 的后端对 OAuth API 接口维护自己的白名单，已有记录显示�
 # 启动 provider 和模型选择器
 hermes model
 # → 从 provider 列表中选择 "xAI Grok OAuth (SuperGrok / X Premium+)"
-# → Hermes 打开或打印 accounts.x.ai 验证 URL
+# → Aura Forge 打开或打印 accounts.x.ai 验证 URL
 # → 如有提示，输入显示的代码，然后在浏览器中批准访问
-# → 选择模型（grok-build-0.1 在列表顶部）
+# → 选择模型（grok-4.6 在列表顶部）
 # → 开始对话
 
 hermes
@@ -65,7 +65,7 @@ hermes auth add xai-oauth
 
 ### 远程 / 无头会话
 
-在没有浏览器的服务器、容器、仅限浏览器的远程控制台（Cloud Shell、Codespaces、EC2 Instance Connect）或 SSH 会话中，Hermes 会打印 xAI 验证 URL 和用户代码。在笔记本电脑或云控制台的任意浏览器中打开该 URL，如有提示则输入代码，Hermes 会持续轮询直到 xAI 批准登录。无需 SSH 隧道或本地回调监听器。
+在没有浏览器的服务器、容器、仅限浏览器的远程控制台（Cloud Shell、Codespaces、EC2 Instance Connect）或 SSH 会话中，Aura Forge 会打印 xAI 验证 URL 和用户代码。在笔记本电脑或云控制台的任意浏览器中打开该 URL，如有提示则输入代码，Aura Forge 会持续轮询直到 xAI 批准登录。无需 SSH 隧道或本地回调监听器。
 
 ```bash
 hermes auth add xai-oauth --no-browser
@@ -76,10 +76,10 @@ Web 仪表盘和桌面应用使用相同的设备代码流程：显示验证 URL
 
 ## 登录流程说明
 
-1. Hermes 向 `auth.x.ai` 请求设备代码。
+1. Aura Forge 向 `auth.x.ai` 请求设备代码。
 2. 你打开验证 URL，登录，如有提示则输入显示的代码，并批准访问。
-3. Hermes 轮询 xAI 直到批准，然后将 token 保存到 `~/.hermes/auth.json`。
-4. 此后，Hermes 在后台刷新 access token——你将保持登录状态，直到执行 `hermes auth logout xai-oauth` 或在 xAI 账号设置中撤销访问。
+3. Aura Forge 轮询 xAI 直到批准，然后将 token 保存到 `~/.hermes/auth.json`。
+4. 此后，Aura Forge 在后台刷新 access token——你将保持登录状态，直到执行 `hermes auth logout xai-oauth` 或在 xAI 账号设置中撤销访问。
 
 ## 检查登录状态
 
@@ -94,13 +94,13 @@ hermes doctor
 ```bash
 hermes model
 # → 选择 "xAI Grok OAuth (SuperGrok / X Premium+)"
-# → 从模型列表中选择（grok-build-0.1 固定在顶部）
+# → 从模型列表中选择（grok-4.6 固定在顶部）
 ```
 
 或直接设置模型：
 
 ```bash
-hermes config set model.default grok-build-0.1
+hermes config set model.default grok-4.6
 hermes config set model.provider xai-oauth
 ```
 
@@ -110,7 +110,7 @@ hermes config set model.provider xai-oauth
 
 ```yaml
 model:
-  default: grok-build-0.1
+  default: grok-4.6
   provider: xai-oauth
   base_url: https://api.x.ai/v1
 ```
@@ -154,18 +154,20 @@ hermes tools
 
 | 工具 | 模型 | 说明 |
 |------|-------|-------|
-| 对话 | `grok-build-0.1` | 默认；通过 OAuth 登录时自动选择 |
+| 对话 | `grok-4.6` | 默认；固定在 OAuth 选择器顶部 |
+| 对话 | `grok-build-0.1` | 面向编程的 Grok Build 模型 |
 | 对话 | `grok-4.3` | 之前的默认 |
 | 对话 | `grok-4.20-0309-reasoning` | 推理变体 |
 | 对话 | `grok-4.20-0309-non-reasoning` | 非推理变体 |
 | 对话 | `grok-4.20-multi-agent-0309` | 多 agent 变体 |
 | 图像 | `grok-imagine-image` | 默认；约 5–10 秒 |
+| 图像 | `grok-imagine-image-2.0` | 版式/排版感知；最强画质；约 10–20 秒 |
 | 图像 | `grok-imagine-image-quality` | 更高保真度；约 10–20 秒 |
 | 视频 | `grok-imagine-video` | 文本转视频 |
 | 视频 | `grok-imagine-video-1.5-preview` | 图像转视频；日期别名 `grok-imagine-video-1.5-2026-05-30` |
 | TTS | （默认音色） | xAI `/v1/tts` 端点 |
 
-对话模型目录从磁盘上的 `models.dev` 缓存实时获取；缓存刷新后，新的 xAI 模型会自动出现。`grok-build-0.1` 始终固定在列表顶部。
+对话模型目录从磁盘上的 `models.dev` 缓存实时获取；缓存刷新后，新的 xAI 模型会自动出现。`grok-4.6` 始终固定在列表顶部。
 
 ## 环境变量
 
@@ -179,21 +181,21 @@ hermes tools
 
 ### Token 过期——未自动重新登录
 
-Hermes 在每次会话前刷新 token，并在收到 401 时响应式地再次刷新。如果刷新因 `invalid_grant` 失败（刷新 token 被撤销或账号已轮换），Hermes 会显示类型化的重新认证消息，而不是崩溃。
+Aura Forge 在每次会话前刷新 token，并在收到 401 时响应式地再次刷新。如果刷新因 `invalid_grant` 失败（刷新 token 被撤销或账号已轮换），Aura Forge 会显示类型化的重新认证消息，而不是崩溃。
 
-当刷新失败是终态时（HTTP 4xx、`invalid_grant`、授权被撤销等），Hermes 将刷新 token 标记为失效并在本地隔离——后续调用跳过注定失败的刷新尝试，而不是反复重放同一个 401。agent 显示一条"需要重新认证"消息，并在你再次登录前保持等待。
+当刷新失败是终态时（HTTP 4xx、`invalid_grant`、授权被撤销等），Aura Forge 将刷新 token 标记为失效并在本地隔离——后续调用跳过注定失败的刷新尝试，而不是反复重放同一个 401。agent 显示一条"需要重新认证"消息，并在你再次登录前保持等待。
 
 **修复方法：** 再次运行 `hermes auth add xai-oauth` 开始全新登录。下次成功交换后隔离状态自动清除。
 
 ### 授权超时
 
-设备代码批准有有限的过期窗口（xAI 在设备代码响应中设置 `expires_in`，通常为数十分钟量级）。如果你未在时限内批准登录，Hermes 会抛出超时错误。
+设备代码批准有有限的过期窗口（xAI 在设备代码响应中设置 `expires_in`，通常为数十分钟量级）。如果你未在时限内批准登录，Aura Forge 会抛出超时错误。
 
 **修复方法：** 重新运行 `hermes auth add xai-oauth`（或 `hermes model`）。流程重新开始。
 
 ### 从远程服务器登录
 
-在 SSH 或容器会话中，Hermes 打印验证 URL 和用户代码，而不是打开浏览器。在笔记本电脑或云控制台的浏览器中打开该 URL——xAI Grok OAuth 无需 SSH 端口转发。
+在 SSH 或容器会话中，Aura Forge 打印验证 URL 和用户代码，而不是打开浏览器。在笔记本电脑或云控制台的浏览器中打开该 URL——xAI Grok OAuth 无需 SSH 端口转发。
 
 ```bash
 hermes auth add xai-oauth --no-browser
@@ -234,7 +236,7 @@ hermes auth logout xai-oauth
 
 ## 另请参阅
 
-- [OAuth over SSH / Remote Hosts](./oauth-over-ssh.md) — 如果 Hermes 与浏览器不在同一台机器上，必读
+- [OAuth over SSH / Remote Hosts](./oauth-over-ssh.md) — 如果 Aura Forge 与浏览器不在同一台机器上，必读
 - [AI Providers 参考](../integrations/providers.md)
 - [环境变量](../reference/environment-variables.md)
 - [配置](../user-guide/configuration.md)

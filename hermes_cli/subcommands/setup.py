@@ -17,13 +17,22 @@ def build_setup_parser(subparsers, *, cmd_setup: Callable) -> None:
     setup_parser = subparsers.add_parser(
         "setup",
         help="Interactive setup wizard",
-        description="Configure Aura Forge with an interactive wizard. "
-        "Run a specific section: hermes setup model|tts|terminal|gateway|tools|agent",
+        description="Configure Aura Forge Agent with an interactive wizard. "
+        "Run a specific section: "
+        "hermes setup model|tts|terminal|gateway|tools|telemetry|agent",
     )
     setup_parser.add_argument(
         "section",
         nargs="?",
-        choices=["model", "tts", "terminal", "gateway", "tools", "agent"],
+        choices=[
+            "model",
+            "tts",
+            "terminal",
+            "gateway",
+            "tools",
+            "telemetry",
+            "agent",
+        ],
         default=None,
         help="Run a specific setup section instead of the full wizard",
     )

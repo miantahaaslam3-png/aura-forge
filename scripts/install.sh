@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# Aura Forge Installer
+# Aura Forge Agent Installer
 # ============================================================================
 # Installation script for Linux, macOS, and Android/Termux.
 # Uses uv for desktop/server installs and Python's stdlib venv + pip on Termux.
@@ -45,7 +45,7 @@ BOLD='\033[1m'
 # Configuration
 REPO_URL_SSH="git@github.com:miantahaaslam3-png/aura-forge.git"
 REPO_URL_HTTPS="https://github.com/miantahaaslam3-png/aura-forge.git"
-HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+AURA_FORGE_HOME="${AURA_FORGE_HOME:-$HOME/.hermes}"
 # INSTALL_DIR is resolved AFTER arg parsing and OS detection so we can pick an
 # FHS-style layout for root installs.  Track whether the user gave us an
 # explicit directory — if so we never override it.
@@ -57,11 +57,11 @@ else
     INSTALL_DIR_EXPLICIT=false
 fi
 PYTHON_VERSION="3.11"
-NODE_VERSION="22"
+NODE_VERSION="26"
 
 # FHS-style root install layout (set by resolve_install_layout when applicable):
 #   code at /usr/local/lib/hermes-agent, command at /usr/local/bin/hermes,
-#   data still at /root/.aura (HERMES_HOME).  Matches Claude Code / Codex CLI
+#   data still at /root/.hermes (AURA_FORGE_HOME).  Matches Claude Code / Codex CLI
 #   and keeps Docker bind-mounted /root/ volumes lean.
 ROOT_FHS_LAYOUT=false
 DETECTED_BROWSER_EXECUTABLE=""
@@ -70,11 +70,13 @@ DETECTED_BROWSER_EXECUTABLE=""
 USE_VENV=true
 RUN_SETUP=true
 SKIP_BROWSER=false
+SKIP_COMPUTER_USE=false
 NO_SKILLS=false
 BRANCH="main"
 INSTALL_COMMIT=""
+FORCE_COMMIT=false
 ENSURE_DEPS=""
-POSTINSTALL_MODE=false
+
 MANIFEST_MODE=false
 STAGE_NAME=""
 JSON_OUTPUT=false
@@ -105,6 +107,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_BROWSER=true
             shift
             ;;
+        --skip-computer-use)
+            SKIP_COMPUTER_USE=true
+            shift
+            ;;
         --no-skills)
             NO_SKILLS=true
             shift
@@ -116,6 +122,10 @@ while [[ $# -gt 0 ]]; do
         --commit|-Commit)
             INSTALL_COMMIT="$2"
             shift 2
+            ;;
+        --force-commit|-ForceCommit)
+            FORCE_COMMIT=true
+            shift
             ;;
         --manifest|-Manifest)
             MANIFEST_MODE=true
@@ -143,19 +153,16 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --hermes-home)
-            HERMES_HOME="$2"
+            AURA_FORGE_HOME="$2"
             shift 2
             ;;
         --ensure)
             ENSURE_DEPS="$2"
             shift 2
             ;;
-        --postinstall)
-            POSTINSTALL_MODE=true
-            shift
-            ;;
+
         -h|--help)
-            echo "Aura Forge Installer"
+            echo "Aura Forge Agent Installer"
             echo ""
             echo "Usage: install.sh [OPTIONS]"
             echo ""
@@ -163,11 +170,14 @@ while [[ $# -gt 0 ]]; do
             echo "  --no-venv      Don't create virtual environment"
             echo "  --skip-setup   Skip interactive setup wizard"
             echo "  --skip-browser Skip Playwright/Chromium install (browser tools won't work)"
+            echo "  --skip-computer-use  Skip the cua-driver (Computer Use) install"
             echo "  --no-skills    Start with a blank slate — seed no bundled skills, and"
-            echo "                   write \$HERMES_HOME/.no-bundled-skills so future"
-            echo "                   'aura update' runs never inject bundled skills either"
+            echo "                   write \$AURA_FORGE_HOME/.no-bundled-skills so future"
+            echo "                   'hermes update' runs never inject bundled skills either"
             echo "  --branch NAME  Git branch to install (default: main)"
             echo "  --commit SHA   Pin checkout to a specific commit after clone/update"
+            echo "                   (ignored when it would roll an existing install back)"
+            echo "  --force-commit Apply --commit even if it rolls the install backwards"
             echo "  --manifest     Print desktop bootstrap stage manifest as JSON"
             echo "  --stage NAME   Run one desktop bootstrap stage"
             echo "  --json         Print a JSON result frame for --stage"
@@ -176,23 +186,21 @@ while [[ $# -gt 0 ]]; do
             echo "  --dir PATH     Installation directory"
             echo "                   default (non-root):  ~/.hermes/hermes-agent"
             echo "                   default (root, Linux): /usr/local/lib/hermes-agent"
-            echo "  --hermes-home PATH  Data directory (default: ~/.hermes, or \$HERMES_HOME)"
+            echo "  --hermes-home PATH  Data directory (default: ~/.hermes, or \$AURA_FORGE_HOME)"
             echo "  -h, --help     Show this help"
             echo ""
             echo "Notes:"
             echo "  When running as root on Linux, Aura Forge installs the code under"
             echo "  /usr/local/lib/hermes-agent and links the command into"
-            echo "  /usr/local/bin/aura (FHS layout — matches Claude Code / Codex CLI)."
-            echo "  Data, config, sessions, and logs still live in \$HERMES_HOME"
+            echo "  /usr/local/bin/hermes (FHS layout — matches Claude Code / Codex CLI)."
+            echo "  Data, config, sessions, and logs still live in \$AURA_FORGE_HOME"
             echo "  (default /root/.hermes).  This keeps Docker bind-mounted volumes"
             echo "  small and ensures the command is on PATH for all shells."
-            echo "  Existing installs at \$HERMES_HOME/hermes-agent are preserved in-place."
+            echo "  Existing installs at \$AURA_FORGE_HOME/hermes-agent are preserved in-place."
             echo "  --ensure DEPS  Install only specified deps (comma-separated)"
             echo "                   Supported: node, browser, ripgrep, ffmpeg"
             echo "                   Does NOT clone repo or create venv"
-            echo "  --postinstall  Run post-install setup only (for pip users)"
-            echo "                   Installs optional deps + runs aura setup"
-            echo "                   Does NOT clone repo or create venv"
+
             exit 0
             ;;
         *)
@@ -210,7 +218,7 @@ print_banner() {
     echo ""
     echo -e "${MAGENTA}${BOLD}"
     echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│             ⚕ Aura Forge Installer                    │"
+    echo "│             ⚕ Aura Forge Agent Installer                    │"
     echo "├─────────────────────────────────────────────────────────┤"
     echo "│  An open source AI agent by Nous Research.              │"
     echo "└─────────────────────────────────────────────────────────┘"
@@ -243,7 +251,7 @@ json_escape() {
 
 # npm rewrites tracked package-lock.json files non-deterministically during
 # `npm install` / `npm run pack`. On a managed install those diffs are never
-# intentional, but they leave the checkout dirty — which forces `aura update`
+# intentional, but they leave the checkout dirty — which forces `hermes update`
 # to autostash on every run and makes branch switches fragile. Restore them so
 # a fresh install ends with a clean tree. Best-effort; only touches lockfiles.
 restore_dirty_lockfiles() {
@@ -312,7 +320,7 @@ EOF
 
 emit_manifest() {
     # Stage-Desktop is included only with --include-desktop, mirroring
-    # install.ps1: the signed bootstrap installer (AuraForge-Setup) passes it so
+    # install.ps1: the signed bootstrap installer (Hermes-Setup) passes it so
     # a GUI install ends up with a launchable app; the Electron app's own
     # first-launch bootstrap and the CLI one-liner omit it (building the
     # desktop from inside the already-running app would clobber it).
@@ -320,7 +328,7 @@ emit_manifest() {
     if [ "$INCLUDE_DESKTOP" = true ]; then
         desktop_stage='{"name":"desktop","title":"Build desktop app","category":"runtime","needs_user_input":false},'
     fi
-    printf '%s' '{"protocol_version":1,"stages":[{"name":"prerequisites","title":"System prerequisites","category":"runtime","needs_user_input":false},{"name":"repository","title":"Download Aura Forge","category":"runtime","needs_user_input":false},{"name":"venv","title":"Create Python virtual environment","category":"runtime","needs_user_input":false},{"name":"python-deps","title":"Install Python dependencies","category":"runtime","needs_user_input":false},{"name":"node-deps","title":"Install browser-tool dependencies","category":"runtime","needs_user_input":false},{"name":"path","title":"Install aura command","category":"runtime","needs_user_input":false},{"name":"config","title":"Prepare config and skills","category":"configuration","needs_user_input":false},{"name":"setup","title":"Configure API keys and settings","category":"configuration","needs_user_input":true},{"name":"gateway","title":"Configure gateway service","category":"configuration","needs_user_input":true},'"$desktop_stage"'{"name":"complete","title":"Finish install","category":"runtime","needs_user_input":false}]}'
+    printf '%s' '{"protocol_version":1,"stages":[{"name":"prerequisites","title":"System prerequisites","category":"runtime","needs_user_input":false},{"name":"repository","title":"Download Aura Forge Agent","category":"runtime","needs_user_input":false},{"name":"venv","title":"Create Python virtual environment","category":"runtime","needs_user_input":false},{"name":"python-deps","title":"Install Python dependencies","category":"runtime","needs_user_input":false},{"name":"node-deps","title":"Install browser-tool dependencies","category":"runtime","needs_user_input":false},{"name":"path","title":"Install hermes command","category":"runtime","needs_user_input":false},{"name":"config","title":"Prepare config and skills","category":"configuration","needs_user_input":false},{"name":"setup","title":"Configure API keys and settings","category":"configuration","needs_user_input":true},{"name":"gateway","title":"Configure gateway service","category":"configuration","needs_user_input":true},'"$desktop_stage"'{"name":"complete","title":"Finish install","category":"runtime","needs_user_input":false}]}'
     printf '\n'
 }
 
@@ -392,14 +400,14 @@ is_termux() {
 # symlink goes.  Called after detect_os so $OS/$DISTRO are known.
 #
 # Defaults:
-#   - Non-root, any OS:       INSTALL_DIR = $HERMES_HOME/hermes-agent
+#   - Non-root, any OS:       INSTALL_DIR = $AURA_FORGE_HOME/hermes-agent
 #                             command link in $HOME/.local/bin
-#   - Termux (any uid):       INSTALL_DIR = $HERMES_HOME/hermes-agent
+#   - Termux (any uid):       INSTALL_DIR = $AURA_FORGE_HOME/hermes-agent
 #                             command link in $PREFIX/bin (already on PATH)
 #   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/hermes-agent
 #                             command link in /usr/local/bin
 #                             (unless a legacy install already exists at
-#                              $HERMES_HOME/hermes-agent — then preserve it)
+#                              $AURA_FORGE_HOME/hermes-agent — then preserve it)
 #
 # Always no-op when the user set --dir or $HERMES_INSTALL_DIR.
 resolve_install_layout() {
@@ -408,9 +416,9 @@ resolve_install_layout() {
         return 0
     fi
 
-    # Termux: package manager manages /data/data/..., keep code in HERMES_HOME.
+    # Termux: package manager manages /data/data/..., keep code in AURA_FORGE_HOME.
     if is_termux; then
-        INSTALL_DIR="$HERMES_HOME/hermes-agent"
+        INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
         return 0
     fi
 
@@ -418,8 +426,8 @@ resolve_install_layout() {
     # macOS root installs keep the legacy layout because /usr/local/ on macOS
     # is Homebrew territory and we don't want to fight that.
     if [ "$OS" = "linux" ] && [ "$(id -u)" -eq 0 ]; then
-        if [ -d "$HERMES_HOME/hermes-agent/.git" ]; then
-            INSTALL_DIR="$HERMES_HOME/hermes-agent"
+        if [ -d "$AURA_FORGE_HOME/hermes-agent/.git" ]; then
+            INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
             log_info "Existing install detected at $INSTALL_DIR — keeping legacy layout"
             log_info "  (new root installs use /usr/local/lib/hermes-agent)"
             return 0
@@ -429,20 +437,20 @@ resolve_install_layout() {
         # Place uv-managed Python under /usr/local/share so the venv interpreter
         # is world-readable.  Default uv paths land in /root/.local/share/uv,
         # which non-root users can't traverse — leaving the shared
-        # /usr/local/bin/aura wrapper unable to exec the bad-interpreter venv
+        # /usr/local/bin/hermes wrapper unable to exec the bad-interpreter venv
         # python.  See #21457.
         export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-/usr/local/share/uv/python}"
         export UV_PYTHON_BIN_DIR="${UV_PYTHON_BIN_DIR:-/usr/local/share/uv/bin}"
         log_info "Root install on Linux — using FHS layout"
         log_info "  Code:    $INSTALL_DIR"
         log_info "  Command: /usr/local/bin/hermes"
-        log_info "  Data:    $HERMES_HOME (unchanged)"
+        log_info "  Data:    $AURA_FORGE_HOME (unchanged)"
         log_info "  uv Python: $UV_PYTHON_INSTALL_DIR (world-readable)"
         return 0
     fi
 
     # Default: non-root, non-Termux → legacy user-scoped layout.
-    INSTALL_DIR="$HERMES_HOME/hermes-agent"
+    INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
 }
 
 get_command_link_dir() {
@@ -465,9 +473,9 @@ get_command_link_display_dir() {
     fi
 }
 
-# Point an Aura Forge-managed Node's `npm install -g` at a directory that is on
+# Point a Hermes-managed Node's `npm install -g` at a directory that is on
 # PATH. npm's default global prefix for a bundled Node is the Node dir itself,
-# so global package binaries land in $HERMES_HOME/node/bin — which is NOT on
+# so global package binaries land in $AURA_FORGE_HOME/node/bin — which is NOT on
 # PATH (only the command link dir is) and is wiped on every Node upgrade.
 # Redirecting the prefix to the link dir's parent makes global bins resolve to
 # the command link dir (node/npm/npx live there too, already on PATH) and
@@ -477,11 +485,11 @@ get_command_link_display_dir() {
 # Idempotent and a no-op when there is no Hermes-managed npm, so calling it on
 # every install run repairs pre-existing installs, not just fresh ones.
 configure_managed_node_npm_prefix() {
-    [ -x "$HERMES_HOME/node/bin/npm" ] || return 0
+    [ -x "$AURA_FORGE_HOME/node/bin/npm" ] || return 0
     local link_dir
     link_dir="$(get_command_link_dir)"
-    mkdir -p "$HERMES_HOME/node/etc"
-    printf 'prefix=%s\n' "$(dirname "$link_dir")" > "$HERMES_HOME/node/etc/npmrc"
+    mkdir -p "$AURA_FORGE_HOME/node/etc"
+    printf 'prefix=%s\n' "$(dirname "$link_dir")" > "$AURA_FORGE_HOME/node/etc/npmrc"
 }
 
 get_hermes_command_path() {
@@ -551,11 +559,11 @@ install_uv() {
         return 0
     fi
 
-    # Aura Forge owns its own uv at $HERMES_HOME/bin/uv.  Always install there —
+    # Aura Forge owns its own uv at $AURA_FORGE_HOME/bin/uv.  Always install there —
     # no PATH probing, no conda guards, no multi-location resolution chains.
     # The runtime update path (hermes_cli/managed_uv.py) looks in the same
-    # place, so install.sh and `aura update` stay in sync.
-    local _managed_uv="$HERMES_HOME/bin/uv"
+    # place, so install.sh and `hermes update` stay in sync.
+    local _managed_uv="$AURA_FORGE_HOME/bin/uv"
 
     if [ -x "$_managed_uv" ]; then
         UV_CMD="$_managed_uv"
@@ -564,8 +572,8 @@ install_uv() {
         return 0
     fi
 
-    log_info "Installing managed uv into $HERMES_HOME/bin ..."
-    mkdir -p "$HERMES_HOME/bin"
+    log_info "Installing managed uv into $AURA_FORGE_HOME/bin ..."
+    mkdir -p "$AURA_FORGE_HOME/bin"
 
     # Two-stage: download the installer, then run it.  Piping
     # `curl | sh` masks curl failures (sh exits 0 on empty stdin)
@@ -582,8 +590,8 @@ install_uv() {
         exit 1
     fi
     # UV_UNMANAGED_INSTALL tells the astral installer to place the binary
-    # directly into $HERMES_HOME/bin instead of ~/.local/bin.
-    if UV_UNMANAGED_INSTALL="$HERMES_HOME/bin" sh "$_uv_installer" >>"$_uv_install_log" 2>&1; then
+    # directly into $AURA_FORGE_HOME/bin instead of ~/.local/bin.
+    if UV_UNMANAGED_INSTALL="$AURA_FORGE_HOME/bin" sh "$_uv_installer" >>"$_uv_install_log" 2>&1; then
         rm -f "$_uv_installer"
         if [ -x "$_managed_uv" ]; then
             UV_CMD="$_managed_uv"
@@ -778,21 +786,139 @@ check_git() {
     exit 1
 }
 
-# The desktop build runs Vite ^8, which refuses to start on Node outside
-# `^20.19 || >=22.12` — older Node lacks `node:util.styleText`, so `vite build`
-# crashes with a SyntaxError that surfaces only as the opaque "Build desktop
-# app … exit code 1" install failure. Returns 0 when the given `node --version`
-# string clears that floor; anything below it is replaced with the Aura Forge-
-# managed Node $NODE_VERSION LTS.
+# Node deps below (install_node_deps) build native addons — most notably
+# node-pty, which every install needs — via node-gyp. node-gyp needs a C/C++
+# toolchain (make + a compiler); Python and make are already covered by
+# check_python/check_node's prerequisites, but the compiler itself was never
+# checked, so a missing g++/clang++ only surfaced as a wall of node-gyp/make
+# output deep inside `npm install`, with no earlier, actionable warning.
+# Best-effort like install_system_packages: warns and lets the caller decide
+# whether to proceed rather than aborting the whole install (unlike git,
+# which is hard-required much earlier for clone_repo).
+check_cxx_compiler() {
+    log_info "Checking for a C++ compiler (needed to build native Node modules like node-pty)..."
+
+    if command -v g++ &> /dev/null || command -v clang++ &> /dev/null; then
+        log_success "C++ compiler found"
+        HAS_CXX_COMPILER=true
+        return 0
+    fi
+
+    HAS_CXX_COMPILER=false
+    log_warn "No C++ compiler found"
+
+    case "$OS" in
+        macos)
+            # Same Command Line Tools path as attempt_install_git — CLT provides
+            # git AND a compiler, so this is usually already satisfied by the
+            # check_git step above. Handles the case where git was present
+            # without CLT (e.g. installed via Homebrew) so CLT never triggered.
+            log_info "Attempting to install Xcode Command Line Tools (provides a C++ compiler)..."
+            log_info "If a macOS dialog appears, click \"Install\" and accept the license."
+            xcode-select --install >/dev/null 2>&1 || true
+            local waited=0
+            local timeout=900
+            while [ "$waited" -lt "$timeout" ]; do
+                if command -v g++ &> /dev/null || command -v clang++ &> /dev/null; then
+                    log_success "C++ compiler installed"
+                    HAS_CXX_COMPILER=true
+                    return 0
+                fi
+                sleep 5
+                waited=$((waited + 5))
+                if [ $((waited % 60)) -eq 0 ]; then
+                    log_info "Still waiting for Command Line Tools install ($((waited / 60))m)..."
+                fi
+            done
+            ;;
+        linux)
+            local sudo_cmd=""
+            if [ "$(id -u 2>/dev/null || echo 1000)" -ne 0 ]; then
+                command -v sudo >/dev/null 2>&1 && sudo_cmd="sudo"
+            fi
+            log_info "Attempting to install a C++ compiler automatically..."
+            case "$DISTRO" in
+                ubuntu|debian)
+                    log_info "Installing build-essential via apt..."
+                    $sudo_cmd env DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null 2>&1 || true
+                    $sudo_cmd env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential >/dev/null 2>&1 || true
+                    ;;
+                fedora)
+                    log_info "Installing gcc-c++ via dnf..."
+                    $sudo_cmd dnf install -y gcc-c++ >/dev/null 2>&1 || true
+                    ;;
+                arch)
+                    log_info "Installing base-devel via pacman..."
+                    $sudo_cmd pacman -S --noconfirm base-devel >/dev/null 2>&1 || true
+                    ;;
+            esac
+            if command -v g++ &> /dev/null || command -v clang++ &> /dev/null; then
+                log_success "C++ compiler installed"
+                HAS_CXX_COMPILER=true
+                return 0
+            fi
+            ;;
+    esac
+
+    log_warn "Could not install a C++ compiler automatically."
+    log_warn "Node steps that compile native modules (e.g. node-pty) will fail below until one is installed."
+    log_info "Install it manually, then re-run this installer:"
+    case "$OS" in
+        linux)
+            case "$DISTRO" in
+                ubuntu|debian) log_info "  sudo apt install build-essential" ;;
+                fedora)        log_info "  sudo dnf install gcc-c++" ;;
+                arch)          log_info "  sudo pacman -S base-devel" ;;
+                *)             log_info "  Install a C++ compiler (g++/gcc-c++) via your package manager" ;;
+            esac
+            ;;
+        android)
+            log_info "  pkg install clang"
+            ;;
+        macos)
+            log_info "  xcode-select --install"
+            ;;
+    esac
+    return 1
+}
+
+# The dependency tree supports Node 22.22+, 24.11+, and 26+. nanoid 6 excludes
+# Node 23 and 25 while its >=26 arm accepts later releases, and @babel/* 8.x
+# requires ^22.18.0 || >=24.11.0 — so accepting 23/25 or an early Node 24
+# here only defers the failure to `npm ci` under engine-strict. Keep this in
+# sync with the root package.json. Anything outside the supported lines is
+# replaced with the Hermes-managed Node $NODE_VERSION.
 node_satisfies_build() {
+    local ver="${1#v}"
+    case "$ver" in *-*) return 1 ;; esac
+    local major="${ver%%.*}"
+    local minor="${ver#*.}"; minor="${minor%%.*}"
+    case "$major" in ''|*[!0-9]*) return 1 ;; esac
+    case "$minor" in ''|*[!0-9]*) minor=0 ;; esac
+    if [ "$major" -eq 22 ] && [ "$minor" -ge 22 ]; then return 0; fi
+    if [ "$major" -eq 24 ] && [ "$minor" -ge 11 ]; then return 0; fi
+    if [ "$major" -ge 26 ]; then return 0; fi
+    return 1
+}
+
+# npm 11.10.0–11.16.x honor `min-release-age` but ignore
+# `min-release-age-exclude`, both of which `.npmrc` sets. That combination
+# applies the 14-day age gate to packages we deliberately exempted, so every
+# install fails ETARGET on a freshly published dependency. The root
+# package.json excludes that band via `engines.npm`, and `engine-strict=true`
+# makes it fatal — so a system npm in the band cannot install this repo, no
+# matter how new its Node is. Returns 0 when the npm is usable.
+npm_supports_npmrc() {
     local ver="${1#v}"
     local major="${ver%%.*}"
     local minor="${ver#*.}"; minor="${minor%%.*}"
     case "$major" in ''|*[!0-9]*) return 1 ;; esac
     case "$minor" in ''|*[!0-9]*) minor=0 ;; esac
-    if [ "$major" -eq 20 ] && [ "$minor" -ge 19 ]; then return 0; fi
-    if [ "$major" -ge 22 ] && { [ "$major" -gt 22 ] || [ "$minor" -ge 12 ]; }; then return 0; fi
-    return 1
+    # The bad band is 11.10.0 through 11.16.x.
+    if [ "$major" -eq 11 ] && [ "$minor" -ge 10 ] && [ "$minor" -le 16 ]; then
+        return 1
+    fi
+    return 0
 }
 
 check_node() {
@@ -803,22 +929,43 @@ check_node() {
     # every install — including re-runs that skip the Node (re)install below.
     configure_managed_node_npm_prefix
 
-    if command -v node &> /dev/null && node_satisfies_build "$(node --version)"; then
-        log_success "Node.js $(node --version) found"
+    # The system toolchain is only usable when BOTH halves work: a Node new
+    # enough for the desktop build AND an npm that can read our .npmrc. A
+    # bad-band npm (see npm_supports_npmrc) fails `npm ci` outright, and the
+    # managed Node we install instead bundles one that works.
+    #
+    # npm must actually be reachable, not just node: a stray `node` symlink
+    # without a sibling npm (leftover from a node version manager) makes
+    # `command -v node` succeed while every later `npm install` silently
+    # fails and the desktop build dies with an opaque "Node.js / npm
+    # unavailable" (#77003). Node only counts as found when npm resolves on
+    # the same PATH.
+    if command -v node &> /dev/null && command -v npm &> /dev/null \
+        && node_satisfies_build "$(node --version)"; then
+        if npm_supports_npmrc "$(npm --version 2>/dev/null)"; then
+            log_success "Node.js $(node --version) found"
+            HAS_NODE=true
+            return 0
+        fi
+        log_warn "npm $(npm --version) cannot honor this repo's .npmrc (npm 11.10-11.16 ignore"
+        log_warn "min-release-age-exclude) — installing Hermes-managed Node $NODE_VERSION instead..."
+        install_node
+        return
+    fi
+
+    # Prefer a Hermes-managed Node from a previous run over a too-old system one.
+    if [ -x "$AURA_FORGE_HOME/node/bin/node" ] && [ -x "$AURA_FORGE_HOME/node/bin/npm" ] \
+        && node_satisfies_build "$("$AURA_FORGE_HOME/node/bin/node" --version)"; then
+        export PATH="$AURA_FORGE_HOME/node/bin:$PATH"
+        log_success "Node.js $("$AURA_FORGE_HOME/node/bin/node" --version) found (Hermes-managed)"
         HAS_NODE=true
         return 0
     fi
 
-    # Prefer an Aura Forge-managed Node from a previous run over a too-old system one.
-    if [ -x "$HERMES_HOME/node/bin/node" ] && node_satisfies_build "$("$HERMES_HOME/node/bin/node" --version)"; then
-        export PATH="$HERMES_HOME/node/bin:$PATH"
-        log_success "Node.js $("$HERMES_HOME/node/bin/node" --version) found (Hermes-managed)"
-        HAS_NODE=true
-        return 0
-    fi
-
-    if command -v node &> /dev/null; then
-        log_warn "Node.js $(node --version) is too old for the desktop build (need ^20.19 or >=22.12) — installing Hermes-managed Node $NODE_VERSION LTS..."
+    if command -v node &> /dev/null && ! command -v npm &> /dev/null; then
+        log_warn "node found but npm is not on PATH (stray node symlink?) — installing Hermes-managed Node $NODE_VERSION LTS..."
+    elif command -v node &> /dev/null; then
+        log_warn "Node.js $(node --version) is unsupported (Aura Forge requires Node 22.22+, 24.11+, or 26+) — installing Hermes-managed Node $NODE_VERSION..."
     elif [ "$DISTRO" = "termux" ]; then
         log_info "Node.js not found — installing Node.js via pkg..."
     else
@@ -867,7 +1014,7 @@ install_node() {
             ;;
     esac
 
-    # Resolve the latest v22.x.x tarball name from the index page
+    # Resolve the latest v${NODE_VERSION}.x.x tarball name from the index page
     local index_url="https://nodejs.org/dist/latest-v${NODE_VERSION}.x/"
     local tarball_name
     tarball_name=$(curl -fsSL "$index_url" \
@@ -918,26 +1065,26 @@ install_node() {
     fi
 
     # Place into ~/.hermes/node/ and symlink binaries into the same bin dir
-    # the aura command uses (get_command_link_dir): /usr/local/bin for root
+    # the hermes command uses (get_command_link_dir): /usr/local/bin for root
     # FHS installs, $PREFIX/bin on Termux, ~/.local/bin otherwise.
-    rm -rf "$HERMES_HOME/node"
-    mkdir -p "$HERMES_HOME"
-    mv "$extracted_dir" "$HERMES_HOME/node"
+    rm -rf "$AURA_FORGE_HOME/node"
+    mkdir -p "$AURA_FORGE_HOME"
+    mv "$extracted_dir" "$AURA_FORGE_HOME/node"
     rm -rf "$tmp_dir"
 
     local node_link_dir
     node_link_dir="$(get_command_link_dir)"
     mkdir -p "$node_link_dir"
-    ln -sf "$HERMES_HOME/node/bin/node" "$node_link_dir/node"
-    ln -sf "$HERMES_HOME/node/bin/npm"  "$node_link_dir/npm"
-    ln -sf "$HERMES_HOME/node/bin/npx"  "$node_link_dir/npx"
+    ln -sf "$AURA_FORGE_HOME/node/bin/node" "$node_link_dir/node"
+    ln -sf "$AURA_FORGE_HOME/node/bin/npm"  "$node_link_dir/npm"
+    ln -sf "$AURA_FORGE_HOME/node/bin/npx"  "$node_link_dir/npx"
 
     configure_managed_node_npm_prefix
 
-    export PATH="$HERMES_HOME/node/bin:$PATH"
+    export PATH="$AURA_FORGE_HOME/node/bin:$PATH"
 
     local installed_ver
-    installed_ver=$("$HERMES_HOME/node/bin/node" --version 2>/dev/null)
+    installed_ver=$("$AURA_FORGE_HOME/node/bin/node" --version 2>/dev/null)
     log_success "Node.js $installed_ver installed to ~/.hermes/node/"
     HAS_NODE=true
 }
@@ -954,12 +1101,33 @@ check_network_prerequisites() {
         return 0
     fi
 
+    # Run the probes in parallel — serially, two blocked probes cost
+    # 2 × --max-time (16 s) before the user sees any useful error; in
+    # parallel the worst case is one --max-time (8 s).
+    local pids=()
+    local tmpdir
+    tmpdir=$(mktemp -d)
+    local i=0
     for url in "${checks[@]}"; do
-        if ! curl -fsSI --max-time 8 "$url" >/dev/null 2>&1; then
+        (
+            if curl -fsSI --max-time 8 "$url" >/dev/null 2>&1; then
+                : > "$tmpdir/ok_$i"
+            fi
+        ) &
+        pids+=($!)
+        i=$((i + 1))
+    done
+    wait "${pids[@]}" 2>/dev/null
+
+    i=0
+    for url in "${checks[@]}"; do
+        if [ ! -e "$tmpdir/ok_$i" ]; then
             failed=true
             log_warn "Could not reach $url"
         fi
+        i=$((i + 1))
     done
+    rm -rf "$tmpdir"
 
     if [ "$failed" = false ]; then
         log_success "Internet connectivity looks good"
@@ -1202,7 +1370,7 @@ clone_repo() {
                 # the whole install at the repository stage. Clear the conflict
                 # markers with `git reset` first -- this keeps working-tree
                 # changes (they're still stashed just below) and only drops the
-                # index-level conflict state. Mirrors the `aura update` path
+                # index-level conflict state. Mirrors the `hermes update` path
                 # (#4735).
                 if [ -n "$(git ls-files --unmerged)" ]; then
                     log_info "Clearing unmerged index entries from a previous conflict..."
@@ -1224,7 +1392,7 @@ clone_repo() {
             git checkout "$BRANCH"
             # Managed installs should follow origin/$BRANCH exactly. If the
             # checkout has diverged (or has local-only commits), ff-only pull
-            # cannot succeed — mirror ``aura update`` and reset to the
+            # cannot succeed — mirror ``hermes update`` and reset to the
             # fetched remote so bootstrap/install can recover.
             if ! git pull --ff-only origin "$BRANCH"; then
                 log_warn "Fast-forward not possible; resetting managed install to origin/$BRANCH..."
@@ -1247,14 +1415,38 @@ clone_repo() {
 
                 if [ "$restore_now" = "yes" ]; then
                     log_info "Restoring local changes..."
-                    if git stash apply "$autostash_ref"; then
+                    local restore_output=""
+                    local restore_ok="yes"
+                    if restore_output="$(git stash apply "$autostash_ref" 2>&1)"; then
+                        restore_ok="yes"
+                    else
+                        restore_ok="no"
+                    fi
+                    local conflicted_files=""
+                    conflicted_files="$(git diff --name-only --diff-filter=U || true)"
+                    if [ "$restore_ok" = "yes" ] && [ -z "$conflicted_files" ]; then
                         git stash drop "$autostash_ref" >/dev/null
                         log_warn "Local changes were restored on top of the updated codebase."
                         log_warn "Review git diff / git status if Aura Forge behaves unexpectedly."
                     else
-                        log_error "Update succeeded, but restoring local changes failed. Your changes are still preserved in git stash."
-                        log_info "Resolve manually with: git stash apply $autostash_ref"
-                        exit 1
+                        log_error "Update pulled new code, but restoring local changes hit conflicts."
+                        if [ -n "$restore_output" ]; then
+                            printf '%s\n' "$restore_output"
+                        fi
+                        if [ -n "$conflicted_files" ]; then
+                            printf '\nConflicted files:\n'
+                            while IFS= read -r file; do
+                                [ -n "$file" ] && printf '  • %s\n' "$file"
+                            done <<EOF
+$conflicted_files
+EOF
+                        fi
+                        printf '\n'
+                        log_info "Your stashed changes are preserved — nothing is lost."
+                        log_info "  Stash ref: $autostash_ref"
+                        git reset --hard HEAD >/dev/null 2>&1 || true
+                        log_info "Working tree reset to clean state."
+                        log_info "Restore your changes later with: git stash apply $autostash_ref"
                     fi
                 else
                     log_info "Skipped restoring local changes."
@@ -1290,11 +1482,49 @@ clone_repo() {
     cd "$INSTALL_DIR"
 
     if [ -n "$INSTALL_COMMIT" ]; then
-        log_info "Pinning checkout to commit $INSTALL_COMMIT..."
-        if ! git cat-file -e "$INSTALL_COMMIT^{commit}" 2>/dev/null; then
-            git fetch origin "$INSTALL_COMMIT" || true
+        # Validate the commit argument: must look like a hex SHA (full 40-char
+        # or abbreviated 7-39 char). Reject anything else early so the user
+        # gets a clear error instead of a misleading git message (#87268).
+        if ! printf '%s' "$INSTALL_COMMIT" | grep -qE '^[0-9a-fA-F]{7,40}$'; then
+            log_error "--commit expects a hex SHA (7-40 chars), got: $INSTALL_COMMIT"
+            return 1
         fi
-        git checkout --detach "$INSTALL_COMMIT"
+        # A commit pin must never move an existing install BACKWARDS. The
+        # bootstrap installer bakes its build-time commit into the binary
+        # (BUILD_PIN_COMMIT) and passes it as --commit on every install-mode
+        # run -- including the one the desktop's failure screen retries. An
+        # installer built months ago would otherwise rewind a current checkout
+        # to its build commit, stranding the user on ancient code with a
+        # current venv. Only pin when the target is not already an ancestor of
+        # HEAD; a fresh clone has no such ancestry and pins normally.
+        if ! git cat-file -e "$INSTALL_COMMIT^{commit}" 2>/dev/null; then
+            if ! git fetch origin "$INSTALL_COMMIT"; then
+                log_error "Could not fetch commit $INSTALL_COMMIT from origin."
+                log_error "Abbreviated SHAs are not supported — use the full 40-char hash."
+                log_error "Find it with: git ls-remote origin | grep <short-sha>"
+                return 1
+            fi
+        fi
+        if git rev-parse --verify --quiet HEAD >/dev/null 2>&1 \
+           && git merge-base --is-ancestor "$INSTALL_COMMIT" HEAD 2>/dev/null \
+           && [ "$(git rev-parse "$INSTALL_COMMIT^{commit}" 2>/dev/null)" != "$(git rev-parse HEAD)" ]; then
+            if [ "$FORCE_COMMIT" = true ]; then
+                log_warn "--force-commit: rolling this install back to $INSTALL_COMMIT."
+                if ! git checkout --detach "$INSTALL_COMMIT"; then
+                    log_error "Failed to detach at $INSTALL_COMMIT"
+                    return 1
+                fi
+            else
+                log_warn "Ignoring --commit $INSTALL_COMMIT: the checkout is already newer."
+                log_warn "Pinning to it would roll this install back. Pass --force-commit to override."
+            fi
+        else
+            log_info "Pinning checkout to commit $INSTALL_COMMIT..."
+            if ! git checkout --detach "$INSTALL_COMMIT"; then
+                log_error "Failed to detach at $INSTALL_COMMIT"
+                return 1
+            fi
+        fi
     fi
 
     log_success "Repository ready"
@@ -1341,6 +1571,30 @@ setup_venv() {
     fi
 
     log_success "Virtual environment ready (Python $PYTHON_VERSION)"
+}
+
+run_locked_uv_sync() {
+    # Bootstrap uv calls stay isolated from ambient config via UV_NO_CONFIG
+    # (#21269). A locked project sync is different: uv.lock records resolver
+    # settings from this checkout's [tool.uv], so hiding pyproject.toml makes
+    # uv 0.12+ reject the valid lock. Re-enable project discovery only for
+    # this subprocess while redirecting user/system config lookups to an empty
+    # directory. Keep HOME unchanged so caches, credentials, and git continue
+    # to work normally.
+    local project_env="$1"
+    local isolated_uv_config
+    local sync_rc
+    isolated_uv_config="$(mktemp -d)" || return 1
+
+    (
+        unset UV_NO_CONFIG UV_CONFIG_FILE
+        export XDG_CONFIG_HOME="$isolated_uv_config"
+        export XDG_CONFIG_DIRS="$isolated_uv_config"
+        UV_PROJECT_ENVIRONMENT="$project_env" $UV_CMD sync --extra all --locked
+    )
+    sync_rc=$?
+    rmdir "$isolated_uv_config" 2>/dev/null || true
+    return "$sync_rc"
 }
 
 install_deps() {
@@ -1481,7 +1735,20 @@ install_deps() {
         #                  This respects the curation in pyproject.toml.
         # uv's own progress UI handles TTY detection and downgrades
         # gracefully when stdout/stderr aren't terminals.
-        if UV_PROJECT_ENVIRONMENT="$INSTALL_DIR/venv" $UV_CMD sync --extra all --locked; then
+        #
+        # Run the Tier-0 locked sync via run_locked_uv_sync: the global
+        # UV_NO_CONFIG export at script start (the #21269 sudo -u hygiene
+        # guard) also hides the project's own [tool.uv] policy —
+        # exclude-newer, its package exemptions, and override-dependencies —
+        # from uv. The resolver then runs under a different policy than the
+        # one uv.lock was resolved under, and --locked turns that mismatch
+        # fatal, so every fresh install fell through to the non-hash-verified
+        # PyPI tiers. The helper re-enables project config discovery for this
+        # one subprocess while keeping ambient user/system uv config hidden
+        # (redirected to an empty XDG dir), preserving the #21269 guarantee.
+        # Runtime code does the same before its locked syncs
+        # (hermes_cli/managed_uv.py).
+        if run_locked_uv_sync "$INSTALL_DIR/venv"; then
             log_success "Main package installed (hash-verified via uv.lock)"
             log_success "All dependencies installed"
             return 0
@@ -1586,7 +1853,7 @@ PY
         exit 1
     fi
 
-    if [ "$_tier_name" != "all (with RL/matrix extras)" ]; then
+    if [ "$_tier_name" != "all" ]; then
         log_warn "Note: installed via fallback tier ($_tier_name)."
         log_info "Some optional features may be missing. After resolving any"
         log_info "PyPI/network issue, re-run: $UV_CMD pip install -e '.[all]'"
@@ -1598,22 +1865,23 @@ PY
 }
 
 setup_path() {
-    log_info "Setting up aura command..."
+    log_info "Setting up hermes command..."
 
     if [ "$USE_VENV" = true ]; then
-        HERMES_BIN="$INSTALL_DIR/venv/bin/hermes"
+        HERMES_BIN="$INSTALL_DIR/venv/bin/python"
+        HERMES_ENTRYPOINT="$INSTALL_DIR/hermes"
     else
-        HERMES_BIN="$(which aura 2>/dev/null || echo "")"
+        HERMES_BIN="$(which hermes 2>/dev/null || echo "")"
         if [ -z "$HERMES_BIN" ]; then
-            log_warn "aura not found on PATH after install"
+            log_warn "hermes not found on PATH after install"
             return 0
         fi
     fi
 
-    # Verify the entry point script was actually generated
-    if [ ! -x "$HERMES_BIN" ]; then
-        log_warn "aura entry point not found at $HERMES_BIN"
-        log_info "This usually means the pip install didn't complete successfully."
+    # Verify the interpreter and the checked-in entrypoint needed by the launcher.
+    if [ ! -x "$HERMES_BIN" ] || { [ "$USE_VENV" = true ] && [ ! -f "$HERMES_ENTRYPOINT" ]; }; then
+        log_warn "Aura Forge launcher prerequisites not found"
+        log_info "This usually means the Python package install didn't complete successfully."
         if [ "$DISTRO" = "termux" ]; then
             log_info "Try: cd $INSTALL_DIR && python -m pip install -e '.[termux-all]' -c constraints-termux.txt"
         else
@@ -1627,7 +1895,7 @@ setup_path() {
     command_link_dir="$(get_command_link_dir)"
     command_link_display_dir="$(get_command_link_display_dir)"
 
-    # Create a user-facing shim for the aura command.
+    # Create a user-facing shim for the hermes command.
     # We intentionally clear PYTHONPATH/PYTHONHOME here so inherited env vars
     # can't make this launcher import modules from another checkout.
     mkdir -p "$command_link_dir"
@@ -1635,19 +1903,80 @@ setup_path() {
     # the rm, `cat >` follows the symlink and overwrites the venv pip entry
     # point with this shim — making `exec "$HERMES_BIN"` self-recurse. (#21454)
     rm -f "$command_link_dir/hermes"
-    cat > "$command_link_dir/hermes" <<EOF
+    if [ "$USE_VENV" = true ]; then
+        # uv-generated console scripts resolve themselves through `realpath`,
+        # which stock macOS does not provide. Run the checked-in entrypoint
+        # with the venv interpreter instead, so the public launcher remains
+        # independent of non-standard shell utilities.
+        cat > "$command_link_dir/hermes" <<EOF
+#!/usr/bin/env bash
+unset PYTHONPATH
+unset PYTHONHOME
+exec "$HERMES_BIN" "$HERMES_ENTRYPOINT" "\$@"
+EOF
+    else
+        cat > "$command_link_dir/hermes" <<EOF
 #!/usr/bin/env bash
 unset PYTHONPATH
 unset PYTHONHOME
 exec "$HERMES_BIN" "\$@"
 EOF
+    fi
     chmod +x "$command_link_dir/hermes"
-    log_success "Installed aura launcher → $command_link_display_dir/hermes"
+    log_success "Installed hermes launcher → $command_link_display_dir/hermes"
+
+    # Also expose `hermes-agent`. The `hermes-agent` console script declared in
+    # pyproject.toml's [project.scripts] lives inside the venv, which is not on
+    # the login-shell PATH. Without this launcher users can't invoke the agent
+    # entrypoint directly from outside the venv. (#74819)
+    rm -f "$command_link_dir/hermes-agent"
+    if [ "$USE_VENV" = true ]; then
+        cat > "$command_link_dir/hermes-agent" <<EOF
+#!/usr/bin/env bash
+unset PYTHONPATH
+unset PYTHONHOME
+exec "$HERMES_BIN" "$INSTALL_DIR/run_agent.py" "\$@"
+EOF
+    else
+        cat > "$command_link_dir/hermes-agent" <<EOF
+#!/usr/bin/env bash
+unset PYTHONPATH
+unset PYTHONHOME
+exec "$HERMES_BIN" run_agent.py "\$@"
+EOF
+    fi
+    chmod +x "$command_link_dir/hermes-agent"
+    log_success "Installed hermes-agent launcher → $command_link_display_dir/hermes-agent"
+
+    # Also expose `hermes-acp`. ACP hosts (Zed, JetBrains, Buzz) resolve the
+    # agent by command name on the login-shell PATH, and the `hermes-acp`
+    # console script lives inside the venv, which is not on that PATH. Without
+    # this launcher those hosts report Aura Forge as not installed. (#21454 applies
+    # here too: clear the path first so `cat >` cannot follow an old symlink
+    # into the venv and overwrite the console script.)
+    rm -f "$command_link_dir/hermes-acp"
+    if [ "$USE_VENV" = true ]; then
+        cat > "$command_link_dir/hermes-acp" <<EOF
+#!/usr/bin/env bash
+unset PYTHONPATH
+unset PYTHONHOME
+exec "$HERMES_BIN" "$HERMES_ENTRYPOINT" acp "\$@"
+EOF
+    else
+        cat > "$command_link_dir/hermes-acp" <<EOF
+#!/usr/bin/env bash
+unset PYTHONPATH
+unset PYTHONHOME
+exec "$HERMES_BIN" acp "\$@"
+EOF
+    fi
+    chmod +x "$command_link_dir/hermes-acp"
+    log_success "Installed hermes-acp launcher → $command_link_display_dir/hermes-acp"
 
     if [ "$DISTRO" = "termux" ]; then
         export PATH="$command_link_dir:$PATH"
         log_info "$command_link_display_dir is the native Termux command path"
-        log_success "aura command ready"
+        log_success "hermes command ready"
         return 0
     fi
 
@@ -1665,11 +1994,11 @@ EOF
         if env -i HOME="$HOME" TERM="${TERM:-dumb}" bash -i -c 'command -v hermes' \
                 >/dev/null 2>&1; then
             log_info "/usr/local/bin is already on PATH for all shells"
-            log_success "aura command ready"
+            log_success "hermes command ready"
             return 0
         fi
 
-        log_info "aura not on PATH in non-login shells (common on RHEL-family)"
+        log_info "hermes not on PATH in non-login shells (common on RHEL-family)"
         PATH_LINE='export PATH="/usr/local/bin:$PATH"'
         PATH_COMMENT='# Aura Forge Agent — ensure /usr/local/bin is on PATH (RHEL non-login shells)'
         for SHELL_CONFIG in "$HOME/.bashrc" "$HOME/.bash_profile"; do
@@ -1682,7 +2011,7 @@ EOF
                 log_success "Added /usr/local/bin to PATH in $SHELL_CONFIG"
             fi
         done
-        log_success "aura command ready"
+        log_success "hermes command ready"
         return 0
     fi
 
@@ -1752,25 +2081,25 @@ EOF
         log_info "~/.local/bin already on PATH"
     fi
 
-    # Export for current session so aura works immediately
+    # Export for current session so hermes works immediately
     export PATH="$command_link_dir:$PATH"
 
-    log_success "aura command ready"
+    log_success "hermes command ready"
 }
 
 copy_config_templates() {
     log_info "Setting up configuration files..."
 
-    # Create ~/.aura directory structure (config at top level, code in subdir)
-    mkdir -p "$HERMES_HOME"/{cron,sessions,logs,pairing,hooks,image_cache,audio_cache,memories,skills}
+    # Create ~/.hermes directory structure (config at top level, code in subdir)
+    mkdir -p "$AURA_FORGE_HOME"/{cron,sessions,logs,pairing,hooks,image_cache,audio_cache,memories,skills}
 
     # Create .env at ~/.hermes/.env (top level, easy to find)
-    if [ ! -f "$HERMES_HOME/.env" ]; then
+    if [ ! -f "$AURA_FORGE_HOME/.env" ]; then
         if [ -f "$INSTALL_DIR/.env.example" ]; then
-            cp "$INSTALL_DIR/.env.example" "$HERMES_HOME/.env"
+            cp "$INSTALL_DIR/.env.example" "$AURA_FORGE_HOME/.env"
             log_success "Created ~/.hermes/.env from template"
         else
-            touch "$HERMES_HOME/.env"
+            touch "$AURA_FORGE_HOME/.env"
             log_success "Created ~/.hermes/.env"
         fi
     else
@@ -1779,13 +2108,13 @@ copy_config_templates() {
     # Restrict .env permissions — this file holds API keys and tokens.
     # 0600 ensures only the file owner can read/write, matching standard
     # practice for credential files (.netrc, .aws/credentials, .ssh/config).
-    chmod 600 "$HERMES_HOME/.env"
+    chmod 600 "$AURA_FORGE_HOME/.env"
     configure_browser_env_from_system_browser
 
     # Create config.yaml at ~/.hermes/config.yaml (top level, easy to find)
-    if [ ! -f "$HERMES_HOME/config.yaml" ]; then
+    if [ ! -f "$AURA_FORGE_HOME/config.yaml" ]; then
         if [ -f "$INSTALL_DIR/cli-config.yaml.example" ]; then
-            cp "$INSTALL_DIR/cli-config.yaml.example" "$HERMES_HOME/config.yaml"
+            cp "$INSTALL_DIR/cli-config.yaml.example" "$AURA_FORGE_HOME/config.yaml"
             log_success "Created ~/.hermes/config.yaml from template"
         fi
     else
@@ -1797,8 +2126,8 @@ copy_config_templates() {
     # runtime (_ensure_default_soul_md) treats the old comment-only scaffold as
     # "never customized" and upgrades it to this text on next run, so any drift
     # here is self-healing, but keep them in sync to avoid a churn on first run.
-    if [ ! -f "$HERMES_HOME/SOUL.md" ]; then
-        cat > "$HERMES_HOME/SOUL.md" << 'SOUL_EOF'
+    if [ ! -f "$AURA_FORGE_HOME/SOUL.md" ]; then
+        cat > "$AURA_FORGE_HOME/SOUL.md" << 'SOUL_EOF'
 You are Aura Forge Agent, an intelligent AI assistant created by Nous Research. You are helpful, knowledgeable, and direct. You assist users with a wide range of tasks including answering questions, writing and editing code, analyzing information, creative work, and executing actions via your tools. You communicate clearly, admit uncertainty when appropriate, and prioritize being genuinely useful over being verbose unless otherwise directed below. Be targeted and efficient in your exploration and investigations.
 SOUL_EOF
         log_success "Created ~/.hermes/SOUL.md (edit to customize personality)"
@@ -1809,22 +2138,22 @@ SOUL_EOF
     # Seed bundled skills into ~/.hermes/skills/ (manifest-based, one-time per skill)
     if [ "$NO_SKILLS" = true ]; then
         # Blank-slate install: write the opt-out marker and skip seeding.
-        # skills_sync.py and `aura update` both honor this marker, so the
+        # skills_sync.py and `hermes update` both honor this marker, so the
         # default profile stays empty across future updates too.
         printf '%s\n' \
             "This profile opted out of bundled-skill seeding (installed with --no-skills)." \
-            "Delete this file to re-enable sync on the next 'aura update'." \
-            > "$HERMES_HOME/.no-bundled-skills" 2>/dev/null || true
-        log_info "Skipping bundled skills (--no-skills). Wrote $HERMES_HOME/.no-bundled-skills"
-        log_info "  Future 'aura update' runs will not inject bundled skills. Delete the marker to opt back in."
+            "Delete this file to re-enable sync on the next 'hermes update'." \
+            > "$AURA_FORGE_HOME/.no-bundled-skills" 2>/dev/null || true
+        log_info "Skipping bundled skills (--no-skills). Wrote $AURA_FORGE_HOME/.no-bundled-skills"
+        log_info "  Future 'hermes update' runs will not inject bundled skills. Delete the marker to opt back in."
     else
         log_info "Syncing bundled skills to ~/.hermes/skills/ ..."
         if "$INSTALL_DIR/venv/bin/python" "$INSTALL_DIR/tools/skills_sync.py" 2>/dev/null; then
             log_success "Skills synced to ~/.hermes/skills/"
         else
             # Fallback: simple directory copy if Python sync fails
-            if [ -d "$INSTALL_DIR/skills" ] && [ ! "$(ls -A "$HERMES_HOME/skills/" 2>/dev/null | grep -v '.bundled_manifest')" ]; then
-                cp -r "$INSTALL_DIR/skills/"* "$HERMES_HOME/skills/" 2>/dev/null || true
+            if [ -d "$INSTALL_DIR/skills" ] && [ ! "$(ls -A "$AURA_FORGE_HOME/skills/" 2>/dev/null | grep -v '.bundled_manifest')" ]; then
+                cp -r "$INSTALL_DIR/skills/"* "$AURA_FORGE_HOME/skills/" 2>/dev/null || true
                 log_success "Skills copied to ~/.hermes/skills/"
             fi
         fi
@@ -1874,7 +2203,7 @@ strip_snap_browser_override() {
     # snap-pointing override here (and its auto-written comment) so the bundled
     # Chromium download runs and the agent stops using the broken binary. A
     # deliberately-set non-snap override is left untouched.
-    local env_file="$HERMES_HOME/.env"
+    local env_file="$AURA_FORGE_HOME/.env"
 
     [ -f "$env_file" ] || return 0
     grep -Eq '^AGENT_BROWSER_EXECUTABLE_PATH=/snap/' "$env_file" 2>/dev/null || return 0
@@ -2082,7 +2411,7 @@ run_playwright_install() {
 }
 
 configure_browser_env_from_system_browser() {
-    local env_file="$HERMES_HOME/.env"
+    local env_file="$AURA_FORGE_HOME/.env"
     local browser_path="${DETECTED_BROWSER_EXECUTABLE:-}"
 
     if [ -z "$browser_path" ]; then
@@ -2093,7 +2422,7 @@ configure_browser_env_from_system_browser() {
         return 0
     fi
 
-    mkdir -p "$HERMES_HOME"
+    mkdir -p "$AURA_FORGE_HOME"
     if [ ! -f "$env_file" ]; then
         touch "$env_file"
     fi
@@ -2129,9 +2458,24 @@ install_node_deps() {
         cd "$INSTALL_DIR"
         # Time-boxed: a stalled registry fetch would otherwise hang here with no
         # progress (same #39219 stall class as the desktop build below).
-        run_with_timeout "$NODE_DEPS_TIMEOUT" npm install --silent || {
-            log_warn "npm install failed or timed out (browser tools may not work)"
-        }
+        # A failed npm install used to still print "✓ Node.js dependencies
+        # installed", hiding the degradation from the user (#77003). Now it
+        # fails the install outright instead of burying the warning (#85297).
+        # Capture npm output so failures are diagnosable (#87340).
+        local npm_log
+        npm_log="$(mktemp)"
+        if ! run_with_timeout "$NODE_DEPS_TIMEOUT" npm install --silent \
+                >"$npm_log" 2>&1; then
+            log_error "npm install failed or timed out; Node.js dependencies were not installed"
+            if [ -s "$npm_log" ]; then
+                log_error "npm output:"
+                cat "$npm_log" >&2
+            fi
+            rm -f "$npm_log"
+            restore_dirty_lockfiles "$INSTALL_DIR"
+            return 1
+        fi
+        rm -f "$npm_log"
         log_success "Node.js dependencies installed"
 
         # Install Playwright browser + system dependencies.
@@ -2231,14 +2575,147 @@ install_node_deps() {
         log_info "Installing TUI dependencies..."
         cd "$INSTALL_DIR/ui-tui"
         # Time-boxed: a stalled registry fetch would otherwise hang here (#39219).
-        run_with_timeout "$NODE_DEPS_TIMEOUT" npm install --silent || {
-            log_warn "TUI npm install failed or timed out (aura --tui may not work)"
-        }
+        # Report success only on actual success, same as node-deps above
+        # (#77003) — and fail the install outright (#85297).
+        # Capture npm output so failures are diagnosable (#87340).
+        local tui_npm_log
+        tui_npm_log="$(mktemp)"
+        if ! run_with_timeout "$NODE_DEPS_TIMEOUT" npm install --silent \
+                >"$tui_npm_log" 2>&1; then
+            log_error "TUI npm install failed or timed out; TUI dependencies were not installed"
+            if [ -s "$tui_npm_log" ]; then
+                log_error "npm output:"
+                cat "$tui_npm_log" >&2
+            fi
+            rm -f "$tui_npm_log"
+            restore_dirty_lockfiles "$INSTALL_DIR"
+            return 1
+        fi
+        rm -f "$tui_npm_log"
         log_success "TUI dependencies installed"
     fi
 
-    # Keep the checkout clean so `aura update` doesn't autostash every run.
+    # Keep the checkout clean so `hermes update` doesn't autostash every run.
     restore_dirty_lockfiles "$INSTALL_DIR"
+}
+
+install_browser_use_cli() {
+    # The Browser Use CLI is the default browser backend when it is runnable
+    # (tools/browser_use_cli.py). Provision it here so fresh installs don't
+    # silently fall back to the built-in browser tools. Best-effort: any
+    # failure is non-fatal because browser_exec can still run via uvx and
+    # `hermes tools` can install it later.
+    if [ "$SKIP_BROWSER" = true ]; then
+        log_info "Skipping Browser Use CLI install (--skip-browser)"
+        return 0
+    fi
+    if [ "$DISTRO" = "termux" ]; then
+        return 0
+    fi
+    if [ -z "$UV_CMD" ]; then
+        log_info "Skipping Browser Use CLI install (uv unavailable)"
+        return 0
+    fi
+    # MANAGED-FIRST: only Aura Forge' managed copy short-circuits. A browser-use
+    # on the user's PATH is a side install — resolution prefers the managed
+    # copy, so it must be provisioned regardless.
+    if [ -x "$AURA_FORGE_HOME/bin/browser-use" ]; then
+        log_success "Browser Use CLI already installed"
+        return 0
+    fi
+
+    log_info "Installing Browser Use CLI (default browser backend)..."
+    # UV_TOOL_BIN_DIR keeps the binary inside Aura Forge' managed bin dir, where
+    # the browser tool resolves it — no reliance on the user's PATH.
+    if run_with_timeout 600 env UV_NO_CONFIG=1 UV_TOOL_BIN_DIR="$AURA_FORGE_HOME/bin" \
+        "$UV_CMD" tool install browser-use >/dev/null 2>&1; then
+        log_success "Browser Use CLI installed"
+    else
+        log_warn "Browser Use CLI install failed — browser automation falls back to built-in tools."
+        log_info "Install later with: $UV_CMD tool install browser-use  (or via 'hermes tools')"
+    fi
+}
+
+cua_driver_runtime_compatible() {
+    local driver_path version_output manifest_output
+    local major minor
+    driver_path="$(command -v cua-driver 2>/dev/null)" || return 1
+    version_output="$("$driver_path" --version 2>/dev/null)" || return 1
+    if [[ ! "$version_output" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+        return 1
+    fi
+    major="${BASH_REMATCH[1]}"
+    minor="${BASH_REMATCH[2]}"
+    if (( major == 0 && minor < 20 )); then
+        return 1
+    fi
+    manifest_output="$("$driver_path" manifest 2>/dev/null)" || return 1
+    local required
+    for required in \
+        '"mcp_invocation"' \
+        '"--socket"' \
+        '"--grant"' \
+        '"--permission-mode"' \
+        '"--capability-manifest"' \
+        '"--approve-capability-manifest"' \
+        '"--embedded"'; do
+        case "$manifest_output" in
+            *"$required"*) ;;
+            *) return 1 ;;
+        esac
+    done
+    return 0
+}
+
+install_computer_use_driver() {
+    # cua-driver powers the computer_use toolset (background desktop control).
+    # Provision it at install time so enabling the tool later — via
+    # `hermes tools`, the dashboard, or the desktop app — is a config flip,
+    # not a surprise multi-minute binary fetch (the confusion this fixes:
+    # users had to discover `hermes computer-use install` on their own).
+    # Best-effort and non-fatal: the enable paths still lazy-install via
+    # install_cua_driver() when this step was skipped or failed.
+    if [ "$SKIP_COMPUTER_USE" = true ]; then
+        log_info "Skipping Computer Use (cua-driver) install (--skip-computer-use)"
+        return 0
+    fi
+    case "$DISTRO" in
+        termux)
+            return 0
+            ;;
+    esac
+    if command -v cua-driver >/dev/null 2>&1; then
+        if cua_driver_runtime_compatible; then
+            log_success "Computer Use driver (cua-driver) already installed and compatible"
+            return 0
+        fi
+        log_warn "Existing cua-driver is old or incomplete; repairing it"
+    fi
+    # Non-admin macOS accounts can't receive the CuaDriver.app bundle in
+    # /Applications; skip cleanly instead of failing loudly (#47865 class).
+    if [ "$(uname -s)" = "Darwin" ] && [ -d /Applications ] && [ ! -w /Applications ]; then
+        log_info "Skipping Computer Use driver (cua-driver): /Applications is not writable"
+        return 0
+    fi
+
+    log_info "Installing Computer Use driver (cua-driver)..."
+    # Same upstream installer `hermes computer-use install` runs; time-boxed
+    # so a stalled GitHub download can't hang the Aura Forge install. The
+    # upstream installer serializes with its own lock (600s stale window),
+    # so give it a ceiling above that — matching Aura Forge'
+    # _CUA_INSTALLER_TIMEOUT (660s).
+    local cua_log
+    cua_log="$(mktemp)"
+    if run_with_timeout 660 /bin/bash -c \
+        'curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | /bin/bash' \
+        >"$cua_log" 2>&1; then
+        log_success "Computer Use driver installed (enable via 'hermes tools' → Computer Use)"
+    else
+        log_warn "Computer Use driver install failed — it will install on demand when you enable the tool."
+        log_info "Install later with: hermes computer-use install"
+        tail -n 5 "$cua_log" >&2 || true
+    fi
+    rm -f "$cua_log"
 }
 
 run_setup_wizard() {
@@ -2256,7 +2733,7 @@ run_setup_wizard() {
     # but opening fails with ENXIO, so the wizard would proceed and
     # then crash on `< /dev/tty` below.
     if ! (: </dev/tty) 2>/dev/null; then
-        log_info "Setup wizard skipped (no terminal available). Run 'aura setup' after install."
+        log_info "Setup wizard skipped (no terminal available). Run 'hermes setup' after install."
         return 0
     fi
 
@@ -2266,7 +2743,7 @@ run_setup_wizard() {
 
     cd "$INSTALL_DIR"
 
-    # Run aura setup using the venv Python directly (no activation needed).
+    # Run hermes setup using the venv Python directly (no activation needed).
     # Redirect stdin from /dev/tty so interactive prompts work when piped from curl.
     if [ "$USE_VENV" = true ]; then
         "$INSTALL_DIR/venv/bin/python" -m hermes_cli.main setup < /dev/tty
@@ -2277,7 +2754,7 @@ run_setup_wizard() {
 
 maybe_start_gateway() {
     # Check if any messaging platform tokens were configured
-    ENV_FILE="$HERMES_HOME/.env"
+    ENV_FILE="$AURA_FORGE_HOME/.env"
     if [ ! -f "$ENV_FILE" ]; then
         return 0
     fi
@@ -2301,19 +2778,19 @@ maybe_start_gateway() {
 
     # If WhatsApp is enabled and no session exists yet, run foreground first for QR scan
     WHATSAPP_VAL=$(grep "^WHATSAPP_ENABLED=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2-)
-    WHATSAPP_SESSION="$HERMES_HOME/whatsapp/session/creds.json"
+    WHATSAPP_SESSION="$AURA_FORGE_HOME/whatsapp/session/creds.json"
     if [ "$WHATSAPP_VAL" = "true" ] && [ ! -f "$WHATSAPP_SESSION" ]; then
         if [ "$IS_INTERACTIVE" = true ]; then
             echo ""
             log_info "WhatsApp is enabled but not yet paired."
-            log_info "Running 'aura whatsapp' to pair via QR code..."
+            log_info "Running 'hermes whatsapp' to pair via QR code..."
             echo ""
             if prompt_yes_no "Pair WhatsApp now?" "yes"; then
                 HERMES_CMD="$(get_hermes_command_path)"
                 $HERMES_CMD whatsapp || true
             fi
         else
-            log_info "WhatsApp pairing skipped (non-interactive). Run 'aura whatsapp' to pair."
+            log_info "WhatsApp pairing skipped (non-interactive). Run 'hermes whatsapp' to pair."
         fi
     fi
 
@@ -2321,7 +2798,7 @@ maybe_start_gateway() {
     # in Docker builds where the device node is in the mount namespace
     # but opening fails with ENXIO. See #16746.
     if ! (: </dev/tty) 2>/dev/null; then
-        log_info "Gateway setup skipped (no terminal available). Run 'aura gateway install' later."
+        log_info "Gateway setup skipped (no terminal available). Run 'hermes gateway install' later."
         return 0
     fi
 
@@ -2347,10 +2824,10 @@ maybe_start_gateway() {
                 if $HERMES_CMD gateway start 2>/dev/null; then
                     log_success "Gateway started! Your bot is now online."
                 else
-                    log_warn "Service installed but failed to start. Try: aura gateway start"
+                    log_warn "Service installed but failed to start. Try: hermes gateway start"
                 fi
             else
-                log_warn "Systemd install failed. You can start manually: aura gateway"
+                log_warn "Systemd install failed. You can start manually: hermes gateway"
             fi
         else
             if [ "$DISTRO" = "termux" ]; then
@@ -2358,18 +2835,60 @@ maybe_start_gateway() {
             else
                 log_info "systemd not available — starting gateway in background..."
             fi
-            nohup $HERMES_CMD gateway > "$HERMES_HOME/logs/gateway.log" 2>&1 &
+            nohup $HERMES_CMD gateway > "$AURA_FORGE_HOME/logs/gateway.log" 2>&1 &
             GATEWAY_PID=$!
             log_success "Gateway started (PID $GATEWAY_PID). Logs: ~/.hermes/logs/gateway.log"
             log_info "To stop: kill $GATEWAY_PID"
-            log_info "To restart later: aura gateway"
+            log_info "To restart later: hermes gateway"
             if [ "$DISTRO" = "termux" ]; then
                 log_warn "Android may stop background processes when Termux is suspended or the system reclaims resources."
             fi
         fi
     else
-        log_info "Skipped. Start the gateway later with: aura gateway"
+        log_info "Skipped. Start the gateway later with: hermes gateway"
     fi
+}
+
+write_bootstrap_marker() {
+    # Writes $INSTALL_DIR/.hermes-bootstrap-complete, which tells the Aura Forge
+    # desktop app (apps/desktop/electron/main.ts) and the macOS launcher fast
+    # path (apps/bootstrap-installer) "a real install finished here -- don't
+    # re-run first-run bootstrap."
+    #
+    # Schema mirrors install.ps1's Write-BootstrapMarker and main.ts's
+    # writeBootstrapMarker(). Keep the three in lockstep:
+    #   schemaVersion 1 + pinnedCommit (length >= 7) are what the desktop
+    #   validator requires; desktopVersion is omitted because only the desktop
+    #   app knows its own version.
+    if [ ! -d "$INSTALL_DIR" ]; then
+        log_warn "Skipping bootstrap marker: $INSTALL_DIR doesn't exist"
+        return 0
+    fi
+
+    # Explicit --commit wins; otherwise read HEAD from the checkout we just
+    # installed. If neither resolves, skip the marker entirely rather than
+    # write one the desktop will reject -- an absent marker is a clean
+    # "bootstrap needed", a malformed one is a confusing half-state.
+    local pinned_commit="$INSTALL_COMMIT"
+    if [ -z "$pinned_commit" ]; then
+        pinned_commit=$(git -C "$INSTALL_DIR" rev-parse HEAD 2>/dev/null) || pinned_commit=""
+    fi
+
+    if [ -z "$pinned_commit" ]; then
+        log_warn "Skipping bootstrap marker: could not resolve HEAD in $INSTALL_DIR"
+        return 0
+    fi
+
+    local marker_path="$INSTALL_DIR/.hermes-bootstrap-complete"
+    local tmp_path="$marker_path.tmp"
+
+    # Atomic publish: the macOS launcher predicate only checks existence, so a
+    # torn write would arm the fast path against a half-written marker.
+    printf '{\n  "schemaVersion": 1,\n  "pinnedCommit": "%s",\n  "pinnedBranch": "%s",\n  "completedAt": "%s"\n}\n' \
+        "$pinned_commit" \
+        "$BRANCH" \
+        "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" > "$tmp_path"
+    mv -f "$tmp_path" "$marker_path"
 }
 
 print_success() {
@@ -2384,9 +2903,9 @@ print_success() {
     # Show file locations
     echo -e "${CYAN}${BOLD}📁 Your files:${NC}"
     echo ""
-    echo -e "   ${YELLOW}Config:${NC}    $HERMES_HOME/config.yaml"
-    echo -e "   ${YELLOW}API Keys:${NC}  $HERMES_HOME/.env"
-    echo -e "   ${YELLOW}Data:${NC}      $HERMES_HOME/cron/, sessions/, logs/"
+    echo -e "   ${YELLOW}Config:${NC}    $AURA_FORGE_HOME/config.yaml"
+    echo -e "   ${YELLOW}API Keys:${NC}  $AURA_FORGE_HOME/.env"
+    echo -e "   ${YELLOW}Data:${NC}      $AURA_FORGE_HOME/cron/, sessions/, logs/"
     echo -e "   ${YELLOW}Code:${NC}      $INSTALL_DIR"
     echo ""
 
@@ -2395,11 +2914,11 @@ print_success() {
     echo -e "${CYAN}${BOLD}🚀 Commands:${NC}"
     echo ""
     echo -e "   ${GREEN}hermes${NC}              Start chatting"
-    echo -e "   ${GREEN}aura setup${NC}        Configure API keys & settings"
-    echo -e "   ${GREEN}aura config${NC}       View/edit configuration"
-    echo -e "   ${GREEN}aura config edit${NC}  Open config in editor"
-    echo -e "   ${GREEN}aura gateway install${NC} Install gateway service (messaging + cron)"
-    echo -e "   ${GREEN}aura update${NC}       Update to latest version"
+    echo -e "   ${GREEN}hermes setup${NC}        Configure API keys & settings"
+    echo -e "   ${GREEN}hermes config${NC}       View/edit configuration"
+    echo -e "   ${GREEN}hermes config edit${NC}  Open config in editor"
+    echo -e "   ${GREEN}hermes gateway install${NC} Install gateway service (messaging + cron)"
+    echo -e "   ${GREEN}hermes update${NC}       Update to latest version"
     echo ""
 
     echo -e "${CYAN}─────────────────────────────────────────────────────────${NC}"
@@ -2455,9 +2974,9 @@ print_success() {
 
 ensure_browser() {
     if ! command -v node >/dev/null 2>&1; then
-        local node_bin="$HERMES_HOME/node/bin/node"
+        local node_bin="$AURA_FORGE_HOME/node/bin/node"
         if [ -x "$node_bin" ]; then
-            export PATH="$HERMES_HOME/node/bin:$PATH"
+            export PATH="$AURA_FORGE_HOME/node/bin:$PATH"
         else
             log_error "Node.js not found. Run with --ensure node first."
             return 1
@@ -2465,19 +2984,26 @@ ensure_browser() {
     fi
 
     local npm_bin
-    npm_bin="$(command -v npm 2>/dev/null || echo "$HERMES_HOME/node/bin/npm")"
+    npm_bin="$(command -v npm 2>/dev/null || echo "$AURA_FORGE_HOME/node/bin/npm")"
     if [ ! -x "$npm_bin" ]; then
         log_error "npm not found"
         return 1
     fi
 
-    log_info "Installing agent-browser..."
+    # agent-browser itself is intentionally NOT installed here (#43564 /
+    # PR #44772 review): it resolves lazily via `npx agent-browser` instead,
+    # which every consumer (tools/browser_tool.py, `hermes update`'s npx
+    # cache warm) already goes through. Eagerly npm-installing a second,
+    # separately version-pinned copy here -- only reachable via this
+    # explicit --ensure browser fallback in the first place -- was redundant
+    # complexity and an extra credential/supply-chain surface for a path
+    # npx already covers.
+    log_info "Installing camofox browser server..."
     local log_file
     log_file="$(mktemp)"
     # Time-boxed (#39219): a stalled npm registry fetch here would otherwise
     # hang the installer with no progress, same class as the desktop build.
-    if ! run_with_timeout "$NODE_DEPS_TIMEOUT" "$npm_bin" install -g --prefix "$HERMES_HOME/node" --silent --ignore-scripts \
-        "agent-browser@^0.26.0" \
+    if ! run_with_timeout "$NODE_DEPS_TIMEOUT" "$npm_bin" install -g --prefix "$AURA_FORGE_HOME/node" --silent --ignore-scripts \
         "@askjo/camofox-browser@^1.5.2" \
         >"$log_file" 2>&1; then
         log_error "npm install failed or timed out:"
@@ -2486,38 +3012,14 @@ ensure_browser() {
         return 1
     fi
     rm -f "$log_file"
-    export PATH="$HERMES_HOME/node/bin:$PATH"
+    export PATH="$AURA_FORGE_HOME/node/bin:$PATH"
 
     strip_snap_browser_override
     local sys_browser
     sys_browser="$(find_system_browser 2>/dev/null || true)"
     if [ -n "$sys_browser" ]; then
         configure_browser_env_from_system_browser "$sys_browser"
-        log_info "Explicit browser override set -- skipping bundled Chromium download"
-        return 0
-    fi
-
-    log_info "Installing Chromium via agent-browser install..."
-    local ab_bin="$HERMES_HOME/node/bin/agent-browser"
-    if [ -x "$ab_bin" ]; then
-        "$ab_bin" install 2>/dev/null || {
-            log_warn "Chromium install failed. Browser tools may not work without a system browser."
-
-            # OS-specific hints (detect_os sets $DISTRO)
-            case "${DISTRO:-unknown}" in
-                ubuntu|debian)
-                    log_info "Try: sudo apt-get install -y chromium-browser"
-                    ;;
-                arch)
-                    log_info "Try: sudo pacman -S chromium"
-                    ;;
-                fedora|rhel|centos)
-                    log_info "Try: sudo dnf install -y chromium"
-                    ;;
-            esac
-        }
-    else
-        log_warn "agent-browser not found at $ab_bin"
+        log_info "Explicit browser override set -- Chromium download will be skipped when agent-browser installs on demand"
     fi
 
     return 0
@@ -2560,38 +3062,15 @@ ensure_mode() {
     done
 }
 
-postinstall_mode() {
-    print_banner
-    detect_os
-
-    log_info "Post-install mode: setting up Aura Forge for pip install"
-
-    check_node
-    check_network_prerequisites
-    install_system_packages
-
-    if [ "$HAS_NODE" = true ] && [ "$SKIP_BROWSER" = false ]; then
-        ensure_browser
-    fi
-
-    HERMES_CMD="$(command -v aura 2>/dev/null || echo "")"
-    if [ -n "$HERMES_CMD" ]; then
-        log_info "Running aura setup..."
-        "$HERMES_CMD" setup
-    else
-        log_warn "aura command not found on PATH"
-        log_info "Try: python -m hermes_cli.main setup"
-    fi
-}
 
 # Clear the cached Electron download + any half-written unpacked output so the
 # next `npm run pack` re-downloads and re-stages from scratch. A corrupt zip in
 # the per-user Electron download cache - most often a partial/resumed download
 # that leaves concatenated junk - makes electron-builder's `unpack-electron`
-# extract a tree MISSING the electron binary, so the `electron`->`Hermes` rename
+# extract a tree MISSING the electron binary, so the `electron`->`Aura Forge` rename
 # dies with ENOENT and every re-run repeats the broken extraction forever. This
 # is the bash sibling of install.ps1's Clear-ElectronBuildCache and the Python
-# _purge_electron_build_cache() used by `aura desktop`; install.sh was the only
+# _purge_electron_build_cache() used by `hermes desktop`; install.sh was the only
 # build path lacking it. Echoes the removed paths (one per line); best-effort.
 clear_electron_build_cache() {
     local desktop_dir="$1"
@@ -2687,7 +3166,7 @@ _electron_dir() {
     fi
 }
 
-# True when dist/ holds a usable Electron binary (#38673 / run-electron-builder.cjs).
+# True when dist/ holds a usable Electron binary (#38673 / run-electron-builder.mjs).
 _electron_dist_ok() {
     local install_dir="$1"
     local electron_dir
@@ -2740,6 +3219,37 @@ _restore_electron_dist_with_fallback() {
 # (electron-builder --dir) which emits an unpacked app for the current OS. Only invoked
 # via the 'desktop' stage / --include-desktop, which the Electron app's own
 # first-launch bootstrap never requests (it must not rebuild itself).
+install_desktop_voice_deps() {
+    # Desktop ships with working voice out of the box: eagerly install the
+    # wake-word + local-STT stacks ([wake] + [voice] extras) instead of
+    # leaving them to lazy first-use install. Policy change (Teknium, July
+    # 2026, #70509 testing): the first ear-click used to trigger a
+    # multi-minute onnxruntime pip install that froze the UI and blew RPC
+    # timeouts. Lazy install remains the fallback for CLI-only installs and
+    # for anything this best-effort step fails to fetch.
+    local _prev_venv="${VIRTUAL_ENV:-}"
+    if [ "$USE_VENV" = true ]; then
+        export VIRTUAL_ENV="$INSTALL_DIR/venv"
+    fi
+    if [ -z "${UV_CMD:-}" ]; then
+        install_uv || true
+    fi
+    if [ -z "${UV_CMD:-}" ]; then
+        log_warn "uv unavailable — voice/wake deps will lazy-install at first use instead"
+        return 0
+    fi
+    log_info "Installing voice + wake-word dependencies (onnxruntime, faster-whisper — 1-3min)..."
+    if (cd "$INSTALL_DIR" && $UV_CMD pip install -e ".[wake,voice]") ; then
+        log_success "Voice + wake-word dependencies installed"
+    else
+        log_warn "Voice/wake dependency install failed — they will lazy-install at first use"
+    fi
+    if [ "$USE_VENV" = true ] && [ -z "$_prev_venv" ]; then
+        unset VIRTUAL_ENV
+    fi
+    return 0
+}
+
 install_desktop() {
     local desktop_dir="$INSTALL_DIR/apps/desktop"
 
@@ -2748,8 +3258,8 @@ install_desktop() {
     # failure, not a silent skip — a silent skip yields a "complete" install
     # with no app and a confusing "couldn't find a built desktop" at launch.
     # Always re-resolve Node here. Stages run in separate processes, so we can't
-    # trust an earlier check; more importantly check_node now enforces the build
-    # floor (^20.19 || >=22.12) and prepends the Aura Forge-managed Node to PATH, so
+    # trust an earlier check; more importantly check_node now enforces the
+    # supported Node lines and prepends the Hermes-managed Node to PATH, so
     # the build never runs on a too-old system Node — the cause of the opaque
     # "Build desktop app … exit code 1" failure (Vite crashes on old Node).
     check_node
@@ -2819,7 +3329,7 @@ install_desktop() {
     #    Electron download self-heals instead of failing the whole install:
     #      a) plain `npm run pack` (downloads Electron from GitHub),
     #      b) on failure, purge a corrupt cached zip + stale unpacked dir and
-    #         retry (matches install.ps1 / `aura desktop`),
+    #         retry (matches install.ps1 / `hermes desktop`),
     #      c) on still-failing, fall back to a public Electron mirror — this is
     #         the GitHub-blocked/throttled case (the repeating "retrying" log).
     log_info "Building desktop app (this takes 1-3 minutes)..."
@@ -2867,16 +3377,16 @@ install_desktop() {
 
     local app=""
     if [ "$OS" = "linux" ]; then
-        if [ -x "$desktop_dir/release/linux-unpacked/Hermes" ]; then
-            app="$desktop_dir/release/linux-unpacked/Hermes"
+        if [ -x "$desktop_dir/release/linux-unpacked/Aura Forge" ]; then
+            app="$desktop_dir/release/linux-unpacked/Aura Forge"
         elif [ -x "$desktop_dir/release/linux-unpacked/hermes" ]; then
             app="$desktop_dir/release/linux-unpacked/hermes"
         fi
     else
         local cand
         for cand in \
-            "$desktop_dir/release/mac-arm64/Hermes.app" \
-            "$desktop_dir/release/mac/Hermes.app"; do
+            "$desktop_dir/release/mac-arm64/AuraForge.app" \
+            "$desktop_dir/release/mac/AuraForge.app"; do
             if [ -d "$cand" ]; then
                 app="$cand"
                 break
@@ -2913,20 +3423,45 @@ install_desktop() {
         fi
     fi
 
-    # macOS: make the locally-built (ad-hoc) app relaunchable after an in-place
-    # self-update. An ad-hoc bundle has no stable Designated Requirement, so a
-    # later in-place rebuild (new cdhash) plus the inherited quarantine flag
-    # trips Gatekeeper's tamper check ("Aura Forge is damaged and can't be opened").
-    # Strip quarantine + re-apply a clean deep ad-hoc signature (no
-    # hardened-runtime flag, which an ad-hoc build can't satisfy). Skipped when a
-    # real signing identity is configured so a signed build isn't clobbered.
+    # macOS: route through the same config-aware signing fixup as
+    # `hermes desktop`, so install/repair and self-update agree about the app's
+    # identity. The fixup preserves the Electron entitlement plists and signs
+    # with a stable Designated Requirement (configured keychain identity, else
+    # identifier-pinned ad-hoc), so macOS TCC grants — Full Disk Access,
+    # Desktop/Downloads/Documents, Accessibility, microphone — survive the
+    # rebuild instead of resetting on every update. The shell's
+    # publisher-signing decision governed the build and is passed explicitly so
+    # importing Python cannot reverse it by loading AURA_FORGE_HOME/.env. If the
+    # helper is unavailable or fails, branch into the historical quarantine
+    # strip + deep ad-hoc repair so a broken venv never leaves the bundle
+    # unsigned/unlaunchable.
     if [ "$OS" = "macos" ] && [ -z "${CSC_LINK:-}" ] && [ -z "${APPLE_SIGNING_IDENTITY:-}" ] && command -v codesign >/dev/null 2>&1; then
-        xattr -cr "$app" 2>/dev/null || true
-        codesign --force --deep --sign - "$app" >/dev/null 2>&1 || true
+        local config_python="$INSTALL_DIR/venv/bin/python"
+        local fixup_ok=""
+        if [ -x "$config_python" ]; then
+            if AURA_FORGE_HOME="$AURA_FORGE_HOME" "$config_python" - "$desktop_dir" <<'PYEOF'
+import sys
+from pathlib import Path
+from hermes_cli.main import _desktop_macos_relaunchable_fixup
+ok = _desktop_macos_relaunchable_fixup(
+    Path(sys.argv[1]), publisher_signing_configured=False
+)
+sys.exit(0 if ok else 1)
+PYEOF
+            then
+                fixup_ok=1
+            else
+                log_warn "Config-aware macOS signing fixup failed; applying the historical ad-hoc fallback."
+            fi
+        fi
+        if [ -z "$fixup_ok" ]; then
+            xattr -cr "$app" 2>/dev/null || true
+            codesign --force --deep --sign - "$app" >/dev/null 2>&1 || true
+        fi
     fi
 
     # `npm install` + `npm run pack` rewrite lockfiles; restore them so the
-    # checkout stays clean for the next `aura update`.
+    # checkout stays clean for the next `hermes update`.
     restore_dirty_lockfiles "$INSTALL_DIR"
 }
 
@@ -2957,6 +3492,7 @@ run_stage_body() {
             check_python
             check_git
             check_node
+            check_cxx_compiler
             check_network_prerequisites
             install_system_packages
             ;;
@@ -2987,7 +3523,10 @@ run_stage_body() {
             resolve_install_layout
             require_install_dir
             check_node
-            install_node_deps
+            install_node_deps || return
+            install_uv
+            install_browser_use_cli
+            install_computer_use_driver
             ;;
         path)
             detect_os
@@ -3017,22 +3556,24 @@ run_stage_body() {
             detect_os
             resolve_install_layout
             require_install_dir
-            # Each stage runs in its own process, so the Aura Forge-managed Node
-            # provisioned during prerequisites/node-deps (at $HERMES_HOME/node/bin)
+            # Each stage runs in its own process, so the Hermes-managed Node
+            # provisioned during prerequisites/node-deps (at $AURA_FORGE_HOME/node/bin)
             # isn't on PATH here. check_node re-adds it (or installs if missing)
             # so install_desktop can find npm instead of silently skipping.
             check_node
+            install_desktop_voice_deps
             install_desktop
             ;;
         complete)
             detect_os
             resolve_install_layout
             print_success
+            write_bootstrap_marker
             # Code-scoped stamp: write next to the install tree, not into
-            # $HERMES_HOME. $HERMES_HOME is a shared data dir (it can be
+            # $AURA_FORGE_HOME. $AURA_FORGE_HOME is a shared data dir (it can be
             # bind-mounted into a Docker gateway too), so a stamp there gets
             # clobbered by the container's 'docker' stamp and wrongly blocks
-            # 'aura update' on this host install. See detect_install_method().
+            # 'hermes update' on this host install. See detect_install_method().
             echo "git" > "$INSTALL_DIR/.install_method"
             ;;
         *)
@@ -3094,28 +3635,34 @@ main() {
     check_python
     check_git
     check_node
+    check_cxx_compiler
     check_network_prerequisites
     install_system_packages
 
     clone_repo
     setup_venv
     install_deps
-    install_node_deps
+    install_node_deps || return
+    install_browser_use_cli
+    install_computer_use_driver
     setup_path
     copy_config_templates
     run_setup_wizard
     maybe_start_gateway
 
     if [ "$INCLUDE_DESKTOP" = true ]; then
+        install_desktop_voice_deps
         install_desktop
     fi
 
     print_success
 
-    # Code-scoped stamp: write next to the install tree, not into $HERMES_HOME.
-    # $HERMES_HOME is a shared data dir (it can be bind-mounted into a Docker
+    write_bootstrap_marker
+
+    # Code-scoped stamp: write next to the install tree, not into $AURA_FORGE_HOME.
+    # $AURA_FORGE_HOME is a shared data dir (it can be bind-mounted into a Docker
     # gateway too), so a stamp there gets clobbered by the container's 'docker'
-    # stamp and wrongly blocks 'aura update' on this host install.
+    # stamp and wrongly blocks 'hermes update' on this host install.
     # See detect_install_method().
     echo "git" > "$INSTALL_DIR/.install_method"
 }
@@ -3126,8 +3673,6 @@ elif [ -n "$STAGE_NAME" ]; then
     run_stage_protocol "$STAGE_NAME"
 elif [ -n "$ENSURE_DEPS" ]; then
     ensure_mode
-elif [ "$POSTINSTALL_MODE" = true ]; then
-    postinstall_mode
 else
     main
 fi

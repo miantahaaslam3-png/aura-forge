@@ -4,7 +4,7 @@ Connects to a simplex-chat daemon running in WebSocket mode.
 Inbound messages arrive via a persistent WebSocket connection.
 Outbound messages use the same WebSocket with JSON commands.
 
-This adapter ships as an Aura Forge platform plugin under
+This adapter ships as a Aura Forge platform plugin under
 ``plugins/platforms/simplex/``. The Aura Forge plugin loader scans the
 directory at startup, calls ``register(ctx)``, and the platform
 becomes available to ``gateway/run.py`` and ``tools/send_message_tool``
@@ -39,7 +39,7 @@ Optional environment variables:
                                Telegram's text batching.
 
 The ``websockets`` Python package is imported lazily — the plugin is
-discoverable and ``aura setup`` can describe it even when websockets is
+discoverable and ``hermes setup`` can describe it even when websockets is
 not installed. ``check_requirements()`` returns False until the package
 is present, so the gateway will not attempt to instantiate the adapter.
 """
@@ -240,6 +240,8 @@ class SimplexAdapter(BasePlatformAdapter):
         if hasattr(self, "_mark_connected"):
             self._mark_connected()
         logger.info("SimpleX: connected to %s", self.ws_url)
+        # Plugin-registered native handlers (ctx.register_platform_handler).
+        self._wire_plugin_handlers(None)
         return True
 
     async def disconnect(self) -> None:
@@ -830,15 +832,17 @@ class SimplexAdapter(BasePlatformAdapter):
 
         if content:
             corr_id = self._make_corr_id()
+            # Structured form: addresses by ID, and json.dumps escapes
+            # newlines + special chars correctly.  The bare @id text
+            # syntax is unreliable for DMs — the daemon silently drops
+            # messages when it cannot resolve the display name.
+            composed = json.dumps(
+                [{"msgContent": {"type": "text", "text": content}}]
+            )
             if chat_id.startswith("group:"):
-                # Structured form: addresses by numeric ID, and json.dumps
-                # escapes newlines + special chars correctly.
-                composed = json.dumps(
-                    [{"msgContent": {"type": "text", "text": content}}]
-                )
                 cmd_str = f"/_send #{chat_id[6:]} json {composed}"
             else:
-                cmd_str = f"@{chat_id} {content}"
+                cmd_str = f"/_send @{chat_id} json {composed}"
 
             await self._send_ws({"corrId": corr_id, "cmd": cmd_str})
 
@@ -852,6 +856,75 @@ class SimplexAdapter(BasePlatformAdapter):
                 return media_result
 
         return SendResult(success=True)
+
+    # ------------------------------------------------------------------
+    # Channel directory enumeration
+    # ------------------------------------------------------------------
+
+    async def list_channels(self) -> Optional[List[Dict[str, Any]]]:
+        """Enumerate contacts and allowed groups for the channel directory.
+
+        Called by ``gateway.channel_directory.build_channel_directory()``
+        every refresh cycle. Uses the daemon's ``/contacts`` and ``/groups``
+        commands over the live WebSocket. Returns ``None`` (not ``[]``) when
+        the WebSocket is down so the directory falls back to session-history
+        discovery instead of wiping previously known targets.
+
+        Entry ``id`` values match the send-target formats the adapter
+        accepts: bare contact display name for DMs (``simplex:<name>``) and
+        ``group:<groupId>`` for groups (``simplex:group:<id>``).
+        """
+        if not self._ws:
+            return None
+
+        channels: List[Dict[str, Any]] = []
+
+        resp = await self._send_command("/contacts", timeout=10.0)
+        if resp is None:
+            # Daemon unresponsive — keep whatever the directory already has.
+            return None
+        for contact in resp.get("contacts") or []:
+            if not isinstance(contact, dict):
+                continue
+            contact_id = contact.get("contactId")
+            name = (
+                contact.get("localDisplayName", "")
+                or (contact.get("profile", {}) or {}).get("displayName", "")
+            )
+            if contact_id is None and not name:
+                continue
+            channels.append({
+                # Display name is what the DM send path (``@<name>``)
+                # actually addresses; fall back to the numeric contactId.
+                "id": str(name or contact_id),
+                "name": str(name or contact_id),
+                "type": "dm",
+            })
+
+        resp = await self._send_command("/groups", timeout=10.0)
+        if resp is not None:
+            for group in resp.get("groups") or []:
+                # The daemon returns each group as either a groupInfo dict
+                # or a [groupInfo, groupSummary] pair depending on version.
+                if isinstance(group, list) and group:
+                    group = group[0]
+                if not isinstance(group, dict):
+                    continue
+                group_id = group.get("groupId")
+                if group_id is None:
+                    continue
+                name = (
+                    group.get("localDisplayName", "")
+                    or (group.get("groupProfile", {}) or {}).get("displayName", "")
+                    or str(group_id)
+                )
+                channels.append({
+                    "id": f"group:{group_id}",
+                    "name": str(name),
+                    "type": "group",
+                })
+
+        return channels
 
     # ------------------------------------------------------------------
     # Outbound — media
@@ -1168,8 +1241,8 @@ async def _standalone_send(
     """Open an ephemeral WebSocket to the daemon, send, and close.
 
     Used by ``tools/send_message_tool._send_via_adapter`` when the gateway
-    runner is not in this process (e.g. ``aura cron`` running as a
-    separate process from ``aura gateway``). Without this hook,
+    runner is not in this process (e.g. ``hermes cron`` running as a
+    separate process from ``hermes gateway``). Without this hook,
     ``deliver=simplex`` cron jobs fail with "No live adapter for platform".
 
     ``thread_id`` and ``force_document`` are accepted for signature parity
@@ -1191,15 +1264,14 @@ async def _standalone_send(
         return {"error": "SimpleX standalone send: SIMPLEX_WS_URL is required"}
 
     try:
+        composed = json.dumps(
+            [{"msgContent": {"type": "text", "text": message}}]
+        )
         if chat_id.startswith("group:"):
             group_id = chat_id[6:]
-            composed = json.dumps(
-                [{"msgContent": {"type": "text", "text": message}}]
-            )
             cmd_str = f"/_send #{group_id} json {composed}"
         else:
-            # Direct contacts are addressed by display name without brackets.
-            cmd_str = f"@{chat_id} {message}"
+            cmd_str = f"/_send @{chat_id} json {composed}"
 
         payload = {
             "corrId": f"{_CORR_PREFIX}snd-{int(time.time() * 1000)}",
@@ -1219,7 +1291,7 @@ async def _standalone_send(
 
 
 def interactive_setup() -> None:
-    """Minimal stdin wizard for ``aura setup gateway`` → SimpleX.
+    """Minimal stdin wizard for ``hermes setup gateway`` → SimpleX.
 
     Prompts for the WebSocket URL and the optional allowlist / groups /
     auto-accept / home channel. Writes to ``~/.hermes/.env`` via

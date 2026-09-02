@@ -69,7 +69,7 @@ hermes
 Test with a simple command:
 
 ```
-Run: gh pr list --repo miantahaaslam3-png/aura-forge --state open --limit 3
+Run: gh pr list --repo NousResearch/hermes-agent --state open --limit 3
 ```
 
 You should see a list of open PRs. If this works, you're ready.
@@ -84,7 +84,7 @@ Still in the chat, ask Hermes to review a real PR:
 Review this pull request. Read the diff, check for bugs, security issues,
 and code quality. Be specific about line numbers and quote problematic code.
 
-Run: gh pr diff 3888 --repo miantahaaslam3-png/aura-forge
+Run: gh pr diff 3888 --repo NousResearch/hermes-agent
 ```
 
 Hermes will:
@@ -298,6 +298,6 @@ GitHub allows 5,000 API requests/hour for authenticated users. Each PR review us
 
 - **[Webhook-Based PR Reviews](./webhook-github-pr-review.md)** — get instant reviews when PRs are opened (requires a public endpoint)
 - **[Daily Briefing Bot](/guides/daily-briefing-bot)** — combine PR reviews with your morning news digest
-- **[Build a Plugin](/guides/build-a-hermes-plugin)** — wrap the review logic into a shareable plugin
+- **[Build a Plugin](/developer-guide/plugins)** — wrap the review logic into a shareable plugin
 - **[Profiles](/user-guide/profiles)** — run a dedicated reviewer profile with its own memory and config
 - **[Fallback Providers](/user-guide/features/fallback-providers)** — ensure reviews run even when one provider is down

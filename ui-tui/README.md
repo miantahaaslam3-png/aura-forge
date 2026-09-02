@@ -3,7 +3,7 @@
 React + Ink terminal UI for Aura Forge. TypeScript owns the screen. Python owns sessions, tools, model calls, and most command logic.
 
 ```bash
-aura --tui
+hermes --tui
 ```
 
 ## What runs
@@ -38,7 +38,7 @@ Malformed stdout lines are treated as protocol noise and surfaced as `gateway.pr
 From the repo root, the normal path is:
 
 ```bash
-aura --tui
+hermes --tui
 ```
 
 The CLI expects `ui-tui/dist/entry.js` to exist, or the whole source code available in which to run `npm install` and `npm run dev`.
@@ -87,7 +87,7 @@ npm run test:watch
 - `src/app/inputSelectionStore.ts` — nanostore exposing the active text-input selection handle
 - `src/app/gatewayContext.tsx` — React context for the gateway client
 - `src/app/gatewayRecovery.ts` — pure function that decides whether to respawn and resume after a gateway crash, with a 3-attempt / 60 s budget
-- `src/app/setupHandoff.ts` — launches external `aura setup`, suspends Ink while it runs, opens a new session on success
+- `src/app/setupHandoff.ts` — launches external `hermes setup`, suspends Ink while it runs, opens a new session on success
 - `src/app/scroll.ts` — scrolls the viewport while keeping the text selection anchor in sync
 - `src/app/interfaces.ts` — internal interfaces (ComposerActions, GatewayRpc, etc.)
 
@@ -96,7 +96,7 @@ npm run test:watch
 - `types.ts` — `SlashCommand` interface and `SlashRunCtx` execution context (gateway rpc, transcript helpers, session refs, stale-guard)
 - `registry.ts` — assembles `SLASH_COMMANDS` from all command files in registration order (core → billing → credits → session → ops → setup → debug) and exposes `findSlashCommand(name)` for case-insensitive lookup
 - `commands/core.ts` — general TUI commands
-- `commands/billing.ts` — `/billing`: manage Nous terminal billing — buy credits, auto-reload, limits
+- `commands/billing.ts` — `/billing`: manage Nous remote spending — buy credits, auto-reload, limits
 - `commands/credits.ts` — `/credits`
 - `commands/session.ts` — session and agent commands
 - `commands/ops.ts` — operations commands
@@ -225,13 +225,13 @@ The following commands are handled directly by the TUI client. Unrecognized comm
 
 ### Core (`core.ts`)
 `/help`, `/quit` (alias `/exit`), `/update`, `/clear` (alias `/new`),
-`/compact`, `/copy`, `/paste`, `/details` (alias `/detail`),
+`/density`, `/copy`, `/paste`, `/details` (alias `/detail`),
 `/statusbar` (alias `/sb`), `/queue` (alias `/q`), `/logs`, `/history`,
 `/save`, `/undo`, `/retry`, `/steer`, `/mouse` (alias `/scroll`),
 `/status`, `/title`, `/fortune`, `/redraw`, `/terminal-setup`
 
 ### Billing (`billing.ts`)
-`/billing` — manage Nous terminal billing — buy credits, auto-reload, limits
+`/billing` — manage Nous remote spending — buy credits, auto-reload, limits
 
 ### Session (`session.ts`)
 `/model`, `/sessions` (aliases `/switch`, `/session`, `/resume`),
@@ -248,7 +248,7 @@ The following commands are handled directly by the TUI client. Unrecognized comm
 `/credits` — Nous credit balance and browser top-up
 
 ### Setup (`setup.ts`)
-`/setup` — launches external `aura setup` wizard, suspends Ink while it runs
+`/setup` — launches external `hermes setup` wizard, suspends Ink while it runs
 
 ### Debug (`debug.ts`)
 `/heapdump`, `/mem` — V8 memory diagnostics
@@ -287,7 +287,9 @@ Primary event types the client handles today:
 | `clarify.request`          | `{ question, choices?, request_id }`                                        |
 | `approval.request`         | `{ command, description, allow_permanent? }`                                |
 | `sudo.request`             | `{ request_id }`                                                            |
+| `sudo.expire`              | `{ request_id }` clears a timed-out sudo prompt                             |
 | `secret.request`           | `{ prompt, env_var, request_id }`                                           |
+| `secret.expire`            | `{ request_id }` clears a timed-out secret prompt                           |
 | `background.complete`      | `{ task_id, text }`                                                         |
 | `billing.step_up.verification` | `{ verification_url, user_code }`                                       |
 | `review.summary`           | `{ text }`                                                                  |
@@ -347,7 +349,7 @@ ui-tui/
       interfaces.ts                 internal interfaces (ComposerActions, GatewayRpc, etc.)
       overlayStore.ts               nanostores for overlay state
       scroll.ts                     viewport scroll with text-selection anchor sync
-      setupHandoff.ts               launches external aura setup, suspends Ink while it runs
+      setupHandoff.ts               launches external hermes setup, suspends Ink while it runs
       spawnHistoryStore.ts          ring buffer of finished subagent fan-out snapshots
       turnController.ts             stateful turn lifecycle driver (streaming, tools, reasoning)
       turnStore.ts                  nanostore for turn state (streaming, tools, reasoning, subagents)
@@ -364,7 +366,7 @@ ui-tui/
         types.ts                    SlashCommand interface and SlashRunCtx execution context
         registry.ts                 SLASH_COMMANDS assembly and findSlashCommand lookup
         commands/
-          billing.ts                /billing — manage Nous terminal billing
+          billing.ts                /billing — manage Nous remote spending
           core.ts                   general TUI commands
           credits.ts                /credits
           debug.ts                  /heapdump, /mem

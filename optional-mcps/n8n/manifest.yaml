@@ -15,7 +15,7 @@ transport:
   type: stdio
   # For git-installed servers, ${INSTALL_DIR} is substituted at install time
   # with the path the catalog cloned the repo into. The catalog never
-  # auto-updates: the user re-runs `aura mcp install official/n8n` to
+  # auto-updates: the user re-runs `hermes mcp install official/n8n` to
   # refresh.
   command: "${INSTALL_DIR}/.venv/bin/python"
   args:
@@ -27,8 +27,12 @@ transport:
 install:
   type: git
   url: https://github.com/CyberSamuraiX/hermes-n8n-mcp.git
-  # Pin to a commit/tag. Required — manifests do not float HEAD.
-  ref: main
+  # Pinned per catalog dependency policy: full commit SHA (branches and tags
+  # can be moved; SHAs cannot), and the pinned commit must be at least
+  # 2 weeks old at pin time — same supply-chain rules as pyproject
+  # dependencies. This SHA is "feat: add local n8n MCP bridge for Aura Forge"
+  # (2026-05-23). Bumping the pin is a PR to this manifest.
+  ref: 7a9ae00795593aa1fdb4e61ecd640e8bfd0c3841
   # Bootstrap commands run inside the cloned directory after clone.
   bootstrap:
     - "python3 -m venv .venv"

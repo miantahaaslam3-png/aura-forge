@@ -1,13 +1,13 @@
 ---
 name: openclaw-migration
-description: Migrate a user's OpenClaw customization footprint into Aura Forge Agent. Imports Hermes-compatible memories, SOUL.md, command allowlists, user skills, and selected workspace assets from ~/.openclaw, then reports exactly what could not be migrated and why.
+description: Import an OpenClaw setup (memories, skills) into Aura Forge.
 version: 1.0.0
 author: Aura Forge Agent (Nous Research)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [Migration, OpenClaw, Hermes, Memory, Persona, Import]
+    tags: [Migration, OpenClaw, Aura Forge, Memory, Persona, Import]
     related_skills: [hermes-agent]
 ---
 
@@ -20,16 +20,16 @@ Use this skill when a user wants to move their OpenClaw setup into Aura Forge Ag
 For a quick, non-interactive migration, use the built-in CLI command:
 
 ```bash
-aura claw migrate              # Full interactive migration
-aura claw migrate --dry-run    # Preview what would be migrated
-aura claw migrate --preset user-data   # Migrate without secrets
-aura claw migrate --overwrite  # Overwrite existing conflicts
-aura claw migrate --source /custom/path/.openclaw  # Custom source
+hermes claw migrate              # Full interactive migration
+hermes claw migrate --dry-run    # Preview what would be migrated
+hermes claw migrate --preset user-data   # Migrate without secrets
+hermes claw migrate --overwrite  # Overwrite existing conflicts
+hermes claw migrate --source /custom/path/.openclaw  # Custom source
 ```
 
 The CLI command runs the same migration script described below. Use this skill (via the agent) when you want an interactive, guided migration with dry-run previews and per-item conflict resolution.
 
-**First-time setup:** The `aura setup` wizard automatically detects `~/.openclaw` and offers migration before configuration begins.
+**First-time setup:** The `hermes setup` wizard automatically detects `~/.openclaw` and offers migration before configuration begins.
 
 ## What this skill does
 
@@ -64,7 +64,7 @@ Before running the helper:
 3. Only use `find` as a fallback if the installed location is missing or the skill was moved manually.
 4. When calling the terminal tool, do not pass `workdir: "~"`. Use an absolute directory such as the user's home directory, or omit `workdir` entirely.
 
-With `--migrate-secrets`, it will also import a small allowlisted set of Aura Forge-compatible secrets, currently:
+With `--migrate-secrets`, it will also import a small allowlisted set of Hermes-compatible secrets, currently:
 
 - `TELEGRAM_BOT_TOKEN`
 
@@ -161,7 +161,7 @@ Use these exact `clarify` payload shapes as the default pattern:
 - `{"question":"Your existing SOUL.md conflicts with the imported one. What should I do?","choices":["keep existing","overwrite with backup","review first"]}`
 - `{"question":"One or more imported OpenClaw skills already exist in Aura Forge. How should I handle those skill conflicts?","choices":["keep existing skills","overwrite conflicting skills with backup","import conflicting skills under renamed folders"]}`
 - `{"question":"Choose migration mode: migrate only user data, or run the full compatible migration including allowlisted secrets?","choices":["user-data only","full compatible migration","cancel"]}`
-- `{"question":"Do you want to copy the OpenClaw workspace instructions file into an Aura Forge workspace?","choices":["skip workspace instructions","copy to a workspace path","decide later"]}`
+- `{"question":"Do you want to copy the OpenClaw workspace instructions file into a Aura Forge workspace?","choices":["skip workspace instructions","copy to a workspace path","decide later"]}`
 - `{"question":"Please provide an absolute path where the workspace instructions should be copied."}`
 
 ## Decision-to-command mapping
@@ -229,37 +229,37 @@ The helper script still supports category-level `--include` / `--exclude`, but t
 Dry run with full discovery:
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py
 ```
 
 When using the terminal tool, prefer an absolute invocation pattern such as:
 
 ```json
-{"command":"python3 /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py","workdir":"/home/USER"}
+{"command":"python /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py","workdir":"/home/USER"}
 ```
 
 Dry run with the user-data preset:
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --preset user-data
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --preset user-data
 ```
 
 Execute a user-data migration:
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict skip
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict skip
 ```
 
 Execute a full compatible migration:
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset full --migrate-secrets --skill-conflict skip
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset full --migrate-secrets --skill-conflict skip
 ```
 
 Execute with workspace instructions included:
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
 ```
 
 Do not use `$PWD` or the home directory as the workspace target by default. Ask for an explicit workspace path first.

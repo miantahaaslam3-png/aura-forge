@@ -18,10 +18,10 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
         "mcp",
         help="Manage MCP servers and run Aura Forge as an MCP server",
         description=(
-            "Manage MCP server connections and run Hermes as an MCP server.\n\n"
+            "Manage MCP server connections and run Aura Forge as an MCP server.\n\n"
             "MCP servers provide additional tools via the Model Context Protocol.\n"
             "Use 'hermes mcp add' to connect to a new server, or\n"
-            "'hermes mcp serve' to expose Hermes conversations over MCP."
+            "'hermes mcp serve' to expose Aura Forge conversations over MCP."
         ),
     )
     mcp_sub = mcp_parser.add_subparsers(dest="mcp_action")
@@ -60,6 +60,11 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
     )
     mcp_add_p.add_argument("--auth", choices=["oauth", "header"], help="Auth method")
     mcp_add_p.add_argument("--preset", help="Known MCP preset name")
+    mcp_add_p.add_argument(
+        "--connect-timeout",
+        type=float,
+        help="Timeout in seconds for initial connection and tool discovery",
+    )
     mcp_add_p.add_argument(
         "--env",
         nargs="*",

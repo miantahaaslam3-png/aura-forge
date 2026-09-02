@@ -1,6 +1,6 @@
 """Suggested cron jobs — proposed automations the user accepts with one tap.
 
-A *suggestion* is a ready-to-run cron job spec that Hermes surfaces to the
+A *suggestion* is a ready-to-run cron job spec that Aura Forge surfaces to the
 user, who accepts it (creates the real cron job) or dismisses it (latched so
 it is never re-offered). This is the single surface every automation proposal
 flows through, regardless of where it came from:
@@ -70,7 +70,9 @@ def _secure_file(path: Path) -> None:
 
 
 def _ensure_dir() -> None:
-    CRON_DIR.mkdir(parents=True, exist_ok=True)
+    from cron.jobs import _ensure_cron_dir
+
+    _ensure_cron_dir(CRON_DIR)
 
 
 def _load_raw() -> Dict[str, Any]:
@@ -232,13 +234,22 @@ def accept_suggestion(ref: str, *, origin: Optional[Dict[str, Any]] = None) -> O
     if not s or s.get("status") != _STATUS_PENDING:
         return None
 
-    from cron.jobs import create_job
+    from cron.scheduler import (
+        CronSchedulerRegistrationError,
+        create_job_with_scheduler_registration,
+    )
 
     spec = dict(s.get("job_spec") or {})
     if origin is not None and "origin" not in spec:
         spec["origin"] = origin
 
-    job = create_job(**spec)
+    try:
+        job = create_job_with_scheduler_registration(**spec)
+    except CronSchedulerRegistrationError:
+        # The job is already durable. Resolve the suggestion so retrying the
+        # same acceptance cannot create another local copy.
+        _set_status(s["id"], _STATUS_ACCEPTED)
+        raise
     _set_status(s["id"], _STATUS_ACCEPTED)
     return job
 

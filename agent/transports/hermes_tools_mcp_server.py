@@ -2,14 +2,14 @@
 
 When the user runs `openai/*` turns through the codex app-server, codex
 owns the loop and builds its own tool list. By default, that means
-Hermes' richer tool surface — web search, browser automation,
+Aura Forge' richer tool surface — web search, browser automation,
 delegate_task subagents, vision analysis, persistent memory, skills,
 cross-session search, image generation, TTS — is unreachable.
 
-This module exposes a curated subset of those Hermes tools to the
+This module exposes a curated subset of those Aura Forge tools to the
 spawned codex subprocess via stdio MCP. Codex registers it as a normal
 MCP server (per `~/.codex/config.toml [mcp_servers.hermes-tools]`) and
-the user gets full Hermes capability inside a Codex turn.
+the user gets full Aura Forge capability inside a Codex turn.
 
 Scope (what we expose):
   - web_search, web_extract              — Firecrawl, no codex equivalent
@@ -18,7 +18,7 @@ Scope (what we expose):
     _get_images / _console / _vision
   - vision_analyze                       — image inspection by vision model
   - image_generate                       — image generation
-  - skill_view, skills_list              — Hermes' skill library
+  - skill_view, skills_list              — Aura Forge' skill library
   - text_to_speech                       — TTS
   - kanban_* (complete/block/comment/    — kanban worker + orchestrator
     heartbeat/show/list/create/            handoff (stateless: read env var,
@@ -29,7 +29,7 @@ What we DO NOT expose:
   - read_file / write_file / patch       — codex's apply_patch + shell
   - search_files / process               — codex's shell
   - clarify                              — codex's own UX
-  - delegate_task / memory /             — `_AGENT_LOOP_TOOLS` in Hermes
+  - delegate_task / memory /             — `_AGENT_LOOP_TOOLS` in Aura Forge
     session_search / todo                  (model_tools.py). They require
                                            the running AIAgent context to
                                            dispatch (mid-loop state), so a
@@ -44,6 +44,7 @@ Spawned by: CodexAppServerSession.ensure_started() when the runtime is
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 import os
@@ -52,8 +53,51 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
+# JSON Schema type -> Python type mapping for signature generation
+_JSON_TO_PY = {
+    "string": str,
+    "integer": int,
+    "number": float,
+    "boolean": bool,
+    "array": list,
+    "object": dict,
+}
 
-# Tools we expose. Each name MUST match a registered Hermes tool that
+
+def _signature_from_schema(schema: dict | None) -> tuple[inspect.Signature, dict[str, type]]:
+    """Build a Python function signature and annotations from a JSON schema.
+
+    Args:
+        schema: JSON Schema dict with "properties" and "required" keys.
+
+    Returns:
+        (signature, annotations_dict) where signature has KEYWORD_ONLY params
+        and annotations maps param names to Python types.
+    """
+    props = (schema or {}).get("properties") or {}
+    required = set((schema or {}).get("required") or [])
+    params, annots = [], {}
+
+    for pname, pspec in props.items():
+        if pname.startswith("_"):
+            continue
+        py = _JSON_TO_PY.get((pspec or {}).get("type"), Any)
+        ann, default = (
+            (py, inspect.Parameter.empty)
+            if pname in required
+            else (Optional[py], None)
+        )
+        annots[pname] = ann
+        params.append(
+            inspect.Parameter(
+                pname, inspect.Parameter.KEYWORD_ONLY, annotation=ann, default=default
+            )
+        )
+
+    return inspect.Signature(params, return_annotation=str), annots
+
+
+# Tools we expose. Each name MUST match a registered Aura Forge tool that
 # `model_tools.handle_function_call()` can dispatch.
 #
 # What we deliberately DO NOT expose:
@@ -61,9 +105,9 @@ logger = logging.getLogger(__name__)
 #     process — codex's built-ins cover these and approval routes through
 #     codex's own UI.
 #   - delegate_task / memory / session_search / todo — these are
-#     `_AGENT_LOOP_TOOLS` in Hermes (model_tools.py:493). They require
+#     `_AGENT_LOOP_TOOLS` in Aura Forge (model_tools.py:493). They require
 #     the running AIAgent context to dispatch (mid-loop state), so a
-#     stateless MCP callback can't drive them. Hermes' default runtime
+#     stateless MCP callback can't drive them. Aura Forge' default runtime
 #     keeps these working; the codex_app_server runtime cannot.
 EXPOSED_TOOLS: tuple[str, ...] = (
     "web_search",
@@ -91,6 +135,8 @@ EXPOSED_TOOLS: tuple[str, ...] = (
     # the env var and write to ~/.hermes/kanban.db.
     "kanban_complete",
     "kanban_block",
+    "kanban_request_review",
+    "kanban_request_changes",
     "kanban_comment",
     "kanban_heartbeat",
     "kanban_show",
@@ -106,26 +152,28 @@ EXPOSED_TOOLS: tuple[str, ...] = (
 
 
 def _build_server() -> Any:
-    """Create the FastMCP server with Hermes tools attached. Lazy imports
+    """Create the MCP server with Aura Forge tools attached. Lazy imports
     so the module can be imported without the mcp package installed
     (we degrade to a clear error only when actually run)."""
     try:
-        from mcp.server.fastmcp import FastMCP
+        # mcp 2.0 removed `mcp.server.fastmcp`; `mcp.server.MCPServer` is the
+        # same decorator/add_tool surface under the new name.
+        from mcp.server import MCPServer
     except ImportError as exc:  # pragma: no cover - install hint
         raise ImportError(
             f"hermes-tools MCP server requires the 'mcp' package: {exc}"
         ) from exc
 
-    # Discover Hermes tools so dispatch works.
+    # Discover Aura Forge tools so dispatch works.
     from model_tools import (
         get_tool_definitions,
         handle_function_call,
     )
 
-    mcp = FastMCP(
+    mcp = MCPServer(
         "hermes-tools",
         instructions=(
-            "Hermes Agent's tool surface, exposed for use inside a Codex "
+            "Aura Forge Agent's tool surface, exposed for use inside a Codex "
             "session. Use these for capabilities Codex's built-in toolset "
             "doesn't cover: web search/extract, browser automation, "
             "subagent delegation, vision, image generation, persistent "
@@ -133,8 +181,8 @@ def _build_server() -> Any:
         ),
     )
 
-    # Pull authoritative Hermes tool schemas for the ones we expose, so
-    # MCP clients see the same parameter docs Hermes gives the model.
+    # Pull authoritative Aura Forge tool schemas for the ones we expose, so
+    # MCP clients see the same parameter docs Aura Forge gives the model.
     all_defs = {
         td["function"]["name"]: td["function"]
         for td in (get_tool_definitions(quiet_mode=True) or [])
@@ -147,41 +195,49 @@ def _build_server() -> Any:
         spec = all_defs.get(name)
         if spec is None:
             logger.debug(
-                "skipping %s — not registered in this Hermes process", name
+                "skipping %s — not registered in this Aura Forge process", name
             )
             continue
 
-        description = spec.get("description") or f"Hermes {name} tool"
+        description = spec.get("description") or f"Aura Forge {name} tool"
         params_schema = spec.get("parameters") or {"type": "object", "properties": {}}
 
-        # FastMCP wants a Python callable. Build a closure that takes the
-        # arguments dict, dispatches via handle_function_call, and returns
-        # the result string. We use add_tool() for full control over the
-        # input schema (FastMCP's @tool() decorator inspects type hints,
-        # which we can't get from a JSON schema at runtime).
-        def _make_handler(tool_name: str):
+        # The SDK wants a Python callable and derives the input schema from
+        # its signature — there is no inputSchema parameter on either the
+        # decorator or add_tool(). So build a closure that takes the arguments
+        # dict, dispatches via handle_function_call, returns the result
+        # string, and carries a __signature__ synthesized from the Aura Forge
+        # JSON Schema (see _signature_from_schema) for the SDK to read.
+        def _make_handler(tool_name: str, schema: dict | None):
+            sig, annots = _signature_from_schema(schema)
+
             def _dispatch(**kwargs: Any) -> str:
                 try:
-                    return handle_function_call(tool_name, kwargs or {})
+                    # Filter out None values before dispatch so unset optionals
+                    # aren't forwarded to the handler.
+                    args = {k: v for k, v in kwargs.items() if v is not None}
+                    return handle_function_call(tool_name, args or {})
                 except Exception as exc:
                     logger.exception("tool %s raised", tool_name)
                     return json.dumps({"error": str(exc), "tool": tool_name})
+
             _dispatch.__name__ = tool_name
             _dispatch.__doc__ = description
+            _dispatch.__signature__ = sig
+            _dispatch.__annotations__ = {**annots, "return": str}
             return _dispatch
 
         try:
             mcp.add_tool(
-                _make_handler(name),
+                _make_handler(name, params_schema),
                 name=name,
                 description=description,
-                # FastMCP accepts JSON schema directly via the
-                # input_schema parameter on newer versions; older
-                # versions use parameters_schema. Try both for compat.
             )
         except TypeError:
-            # Older mcp SDK signature — fall back to decorator-style.
-            handler = _make_handler(name)
+            # Older mcp SDK signature — fall back to decorator-style. The
+            # synthesized __signature__ on the handler still drives schema
+            # generation there.
+            handler = _make_handler(name, params_schema)
             handler = mcp.tool(name=name, description=description)(handler)
 
         exposed_count += 1
@@ -206,7 +262,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    # Quiet mode: keep Hermes' own banners off stdout (which is the MCP wire).
+    # Quiet mode: keep Aura Forge' own banners off stdout (which is the MCP wire).
     os.environ.setdefault("HERMES_QUIET", "1")
     os.environ.setdefault("HERMES_REDACT_SECRETS", "true")
 
@@ -216,8 +272,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         sys.stderr.write(f"hermes-tools MCP server cannot start: {exc}\n")
         return 2
 
-    # FastMCP runs with stdio transport by default when launched as a
-    # subprocess.
+    # MCPServer.run() defaults to stdio transport, which is what codex
+    # spawns us on.
     try:
         server.run()
     except KeyboardInterrupt:

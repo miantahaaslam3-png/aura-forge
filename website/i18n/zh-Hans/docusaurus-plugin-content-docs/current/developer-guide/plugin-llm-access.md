@@ -67,7 +67,7 @@ if result.parsed["urgency"] > 0.8:
 ## 此模式的优势
 
 * **一次调用，四种形态。** `complete()` 用于对话，`complete_structured()` 用于有类型的 JSON，`acomplete()` 和 `acomplete_structured()` 用于 asyncio。参数相同，结果对象相同。
-* **宿主持有凭据。** OAuth token、刷新流程、凭据池、每任务辅助覆盖——Hermes 已有的所有凭据概念均适用。Plugin 永远看不到 token；宿主通过 `result.audit` 将调用归因回溯。
+* **宿主持有凭据。** OAuth token、刷新流程、凭据池、每任务辅助覆盖——Aura Forge 已有的所有凭据概念均适用。Plugin 永远看不到 token；宿主通过 `result.audit` 将调用归因回溯。
 * **有界。** 单次同步或异步调用。无流式输出，无工具循环，无需管理对话状态。给定输入，获取结果，返回。
 * **失败关闭信任。** 从未配置过的 plugin 无法自行选择 provider、模型、agent 或存储的凭据。默认行为是"使用用户正在使用的"。运营人员在 `config.yaml` 中按 plugin 逐一选择开启特定覆盖。
 
@@ -185,7 +185,7 @@ def _paste_to_tasks(ctx, raw_args: str) -> str:
 ```python
 result = ctx.llm.complete(
     messages=[{"role": "user", "content": "Hi"}],
-    provider=None,         # 可选，受门控——Hermes provider id（如 "openrouter"）
+    provider=None,         # 可选，受门控——Aura Forge provider id（如 "openrouter"）
     model=None,            # 可选，受门控——该 provider 期望的任意字符串
     temperature=None,
     max_tokens=None,
@@ -193,6 +193,7 @@ result = ctx.llm.complete(
     agent_id=None,         # 可选，受门控
     profile=None,          # 可选，受门控——显式指定认证 profile 名称
     purpose="optional-audit-string",
+    task=None,             # 可选——plugin 注册的辅助槽位
 )
 # → PluginLlmCompleteResult(text, provider, model, agent_id, usage, audit)
 ```
@@ -223,6 +224,7 @@ result = ctx.llm.complete_structured(
     agent_id=None,
     profile=None,
     purpose=None,
+    task=None,             # 可选——plugin 注册的辅助槽位
 )
 # → PluginLlmStructuredResult(text, provider, model, agent_id,
 #                             usage, parsed, content_type, audit)
@@ -236,11 +238,37 @@ result = ctx.llm.complete_structured(
 ### 异步
 
 ```python
-result = await ctx.llm.acomplete(messages=...)
-result = await ctx.llm.acomplete_structured(instructions=..., input=...)
+result = await ctx.llm.acomplete(messages=..., task="classifier")
+result = await ctx.llm.acomplete_structured(
+    instructions=..., input=..., task="classifier"
+)
 ```
 
 参数和结果类型与对应的同步版本相同。在 gateway 适配器、异步 hook 或任何已运行在 asyncio 事件循环上的 plugin 代码中使用。
+
+### 通过任务路由的辅助调用
+
+当 plugin 需要使用自己配置的辅助路由时，可在四种调用形态中的任意一种传入 `task=`。在 plugin 初始化期间注册该任务；在运营人员通过 `auxiliary.<task>` 覆盖 provider 和模型之前，将使用 plugin 提供的默认值：
+
+```python
+def register(ctx):
+    ctx.register_auxiliary_task(
+        "classifier", display_name="Classifier", description="Classify input."
+    )
+
+
+result = ctx.llm.complete(messages=[...], task="classifier")
+result = ctx.llm.complete_structured(instructions=..., input=..., task="classifier")
+```
+
+```yaml
+auxiliary:
+  classifier:
+    provider: openrouter
+    model: vendor/model-id
+```
+
+Plugin 可以为自己注册的任务提供 provider/模型注册默认值。运营人员在 `auxiliary.<task>` 中的配置会覆盖这些默认值，并控制部署选择。Plugin 只能使用自己注册的任务；未知或属于其他 plugin 的任务名会在调用 provider 前失败。`allow_task_override: true` 是运营人员显式授予的权限，用于使用 Aura Forge 内置辅助任务；它不允许使用其他 plugin 的任务。省略 `task=`（或使用 `"auto"`）会继续使用当前主 provider/模型。
 
 ### 结果属性
 
@@ -271,6 +299,7 @@ class PluginLlmStructuredResult(PluginLlmCompleteResult):
 * 设置请求塑形参数（`temperature`、`max_tokens`、`timeout`、`system_prompt`、`purpose`、`messages`、`instructions`、`input`、`json_schema`），
 
 ……仅此而已。`provider=`、`model=`、`agent_id=` 和 `profile=` 参数在运营人员授权前均会抛出 `PluginLlmTrustError`。
+同样，`task=` 只能使用该 plugin 已注册的辅助任务，除非运营人员授予 `allow_task_override` 以使用内置任务。
 
 **大多数 plugin 永远不需要此部分。** 仅调用 `ctx.llm.complete(messages=...)` 且不带任何覆盖的 plugin，会针对用户当前激活的内容运行，零配置即可工作。以下配置块仅在 plugin 明确需要固定到与用户不同的模型或 provider 时才有意义。
 
@@ -279,8 +308,8 @@ plugins:
   entries:
     my-plugin:
       llm:
-        # 允许此 plugin 选择不同的 Hermes provider
-        # （必须是 Hermes 已知的 provider——与
+        # 允许此 plugin 选择不同的 Aura Forge provider
+        # （必须是 Aura Forge 已知的 provider——与
         # `hermes model` 和 config.yaml model.provider 中的名称相同）
         allow_provider_override: true
 
@@ -294,7 +323,7 @@ plugins:
 
         # 可选：限制允许的模型。使用 ["*"] 表示任意。
         # 模型与 plugin 发送的字符串进行字面匹配——
-        # Hermes 不做任何查找。
+        # Aura Forge 不做任何查找。
         allowed_models:
           - openai/gpt-4o-mini
           - anthropic/claude-3-5-haiku
@@ -319,6 +348,7 @@ Plugin id 对于扁平 plugin 是 manifest 中的 `name:` 字段，对于嵌套 
 | ↳ 允许列表      | —     | `allowed_models: [...]`          |
 | `agent_id=`     | 拒绝  | `allow_agent_id_override: true`  |
 | `profile=`      | 拒绝  | `allow_profile_override: true`   |
+| 内置 `task=`    | 拒绝  | `allow_task_override: true`      |
 
 每项覆盖独立门控。授予 `allow_model_override` **不会**同时授予 `allow_provider_override`——被信任可选择模型的 plugin，在未获得 provider 门控授权前仍固定在用户当前激活的 provider 上。
 
@@ -334,7 +364,7 @@ Plugin id 对于扁平 plugin 是 manifest 中的 `name:` 字段，对于嵌套 
 * **Provider 解析。** 从用户配置中读取 `model.provider` + `model.model`（或在受信任时读取显式覆盖值）。
 * **认证。** 从 `~/.hermes/auth.json` / 环境变量中提取 API 密钥、OAuth token 或刷新 token，包括配置了凭据池时的处理。Plugin 永远看不到这些内容。
 * **视觉路由。** 当提供图像输入而用户当前激活的文本模型仅支持文本时，宿主自动回退到已配置的视觉模型。
-* **回退链。** 若用户主 provider 返回 5xx 或 429，请求在向 plugin 返回错误前会经过 Hermes 常规的聚合器感知回退流程。
+* **回退链。** 若用户主 provider 返回 5xx 或 429，请求在向 plugin 返回错误前会经过 Aura Forge 常规的聚合器感知回退流程。
 * **超时。** 遵循你的 `timeout=` 参数，回退到 `auxiliary.<task>.timeout` 配置或全局辅助默认值。
 * **JSON 塑形。** 在你请求 JSON 时向 provider 发送 `response_format`，若 provider 返回了代码围栏格式的响应则在本地重新解析。
 * **Schema 验证。** 安装了 `jsonschema` 时对你的 `json_schema` 进行验证；否则记录一行 debug 日志并跳过严格验证。
@@ -349,7 +379,7 @@ Plugin id 对于扁平 plugin 是 manifest 中的 `name:` 字段，对于嵌套 
 
 ## 在 plugin 接口中的定位
 
-现有 `ctx.*` 方法各自扩展一个已有的 Hermes 子系统：
+现有 `ctx.*` 方法各自扩展一个已有的 Aura Forge 子系统：
 
 | `ctx.register_tool` | 添加 agent 可调用的工具 |
 | `ctx.register_platform` | 接入新的 gateway 适配器 |

@@ -6,14 +6,14 @@ Create dynamic webhook subscriptions so external services (GitHub, GitLab, Strip
 
 The webhook platform must be enabled before subscriptions can be created. Check with:
 ```bash
-aura webhook list
+hermes webhook list
 ```
 
 If it says "Webhook platform is not enabled", set it up:
 
 ### Option 1: Setup wizard
 ```bash
-aura gateway setup
+hermes gateway setup
 ```
 Follow the prompts to enable webhooks, set the port, and set a global HMAC secret.
 
@@ -24,22 +24,24 @@ platforms:
   webhook:
     enabled: true
     extra:
-      host: "0.0.0.0"
       port: 8644
-      secret: "generate-a-strong-secret-here"
+      secret: "your-webhook-secret-here"
 ```
+
+Omitting `host` uses the dual-stack default and listens on both IPv4 and IPv6.
+Set a specific address only when you intentionally want to restrict the bind.
 
 ### Option 3: Environment variables
 Add to `${HERMES_HOME:-~/.hermes}/.env`:
 ```bash
 WEBHOOK_ENABLED=true
 WEBHOOK_PORT=8644
-WEBHOOK_SECRET=generate-a-strong-secret-here
+WEBHOOK_SECRET=your-webhook-secret-here
 ```
 
 After configuration, start (or restart) the gateway:
 ```bash
-aura gateway run
+hermes gateway run
 # Or if using systemd:
 systemctl --user restart hermes-gateway
 ```
@@ -51,11 +53,11 @@ curl http://localhost:8644/health
 
 ## Commands
 
-All management is via the `aura webhook` CLI command:
+All management is via the `hermes webhook` CLI command:
 
 ### Create a subscription
 ```bash
-aura webhook subscribe <name> \
+hermes webhook subscribe <name> \
   --prompt "Prompt template with {payload.fields}" \
   --events "event1,event2" \
   --description "What this does" \
@@ -67,20 +69,36 @@ aura webhook subscribe <name> \
 
 Returns the webhook URL and HMAC secret. The user configures their service to POST to that URL.
 
+### Filter or transform payloads before the agent runs
+
+Two mechanisms narrow broad event streams (e.g. Todoist/GitHub fire on every update) so only relevant payloads wake the agent:
+
+- **Declarative `filters`** (config.yaml routes only): list of conditions on payload fields, event type, or headers — operators `equals`, `not_equals`, `contains`, `exists`, `missing`, `in`, `in_file`, `regex`, with `all`/`any`/`not` grouping. Non-matching events are ignored with HTTP 200.
+- **Route scripts** (`--script` on subscribe, or `script:` on a config route): a script under `~/.hermes/scripts/` receives the payload as JSON on stdin. JSON stdout replaces the payload before prompt templating; empty stdout, `[SILENT]`, or a nonzero exit ignores the webhook. `.sh`/`.bash` run with bash, everything else with Python. Scripts cannot live outside `~/.hermes/scripts/` (path traversal is blocked).
+
+```bash
+hermes webhook subscribe todoist-hermes \
+  --prompt "Task changed: {payload.content}" \
+  --script "todoist-hermes-label.py" \
+  --deliver telegram --deliver-chat-id "12345"
+```
+
+Full filter syntax: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks#payload-filters
+
 ### List subscriptions
 ```bash
-aura webhook list
+hermes webhook list
 ```
 
 ### Remove a subscription
 ```bash
-aura webhook remove <name>
+hermes webhook remove <name>
 ```
 
 ### Test a subscription
 ```bash
-aura webhook test <name>
-aura webhook test <name> --payload '{"key": "value"}'
+hermes webhook test <name>
+hermes webhook test <name> --payload '{"key": "value"}'
 ```
 
 ## Prompt Templates
@@ -98,7 +116,7 @@ If no prompt is specified, the full JSON payload is dumped into the agent prompt
 
 ### GitHub: new issues
 ```bash
-aura webhook subscribe github-issues \
+hermes webhook subscribe github-issues \
   --events "issues" \
   --prompt "New GitHub issue #{issue.number}: {issue.title}\n\nAction: {action}\nAuthor: {issue.user.login}\nBody:\n{issue.body}\n\nPlease triage this issue." \
   --deliver telegram \
@@ -113,7 +131,7 @@ Then in GitHub repo Settings → Webhooks → Add webhook:
 
 ### GitHub: PR reviews
 ```bash
-aura webhook subscribe github-prs \
+hermes webhook subscribe github-prs \
   --events "pull_request" \
   --prompt "PR #{pull_request.number} {action}: {pull_request.title}\nBy: {pull_request.user.login}\nBranch: {pull_request.head.ref}\n\n{pull_request.body}" \
   --skills "github-code-review" \
@@ -122,7 +140,7 @@ aura webhook subscribe github-prs \
 
 ### Stripe: payment events
 ```bash
-aura webhook subscribe stripe-payments \
+hermes webhook subscribe stripe-payments \
   --events "payment_intent.succeeded,payment_intent.payment_failed" \
   --prompt "Payment {data.object.status}: {data.object.amount} cents from {data.object.receipt_email}" \
   --deliver telegram \
@@ -131,7 +149,7 @@ aura webhook subscribe stripe-payments \
 
 ### CI/CD: build notifications
 ```bash
-aura webhook subscribe ci-builds \
+hermes webhook subscribe ci-builds \
   --events "pipeline" \
   --prompt "Build {object_attributes.status} on {project.name} branch {object_attributes.ref}\nCommit: {commit.message}" \
   --deliver discord \
@@ -140,7 +158,7 @@ aura webhook subscribe ci-builds \
 
 ### Generic monitoring alert
 ```bash
-aura webhook subscribe alerts \
+hermes webhook subscribe alerts \
   --prompt "Alert: {alert.name}\nSeverity: {alert.severity}\nMessage: {alert.message}\n\nPlease investigate and suggest remediation." \
   --deliver origin
 ```
@@ -156,7 +174,7 @@ Use this for:
 - Any webhook where an LLM round trip would be wasted effort
 
 ```bash
-aura webhook subscribe antenna-matches \
+hermes webhook subscribe antenna-matches \
   --deliver telegram \
   --deliver-chat-id "123456789" \
   --deliver-only \
@@ -177,7 +195,7 @@ Requires `--deliver` to be a real target (telegram, discord, slack, github_comme
 
 ## How It Works
 
-1. `aura webhook subscribe` writes to `~/.hermes/webhook_subscriptions.json`
+1. `hermes webhook subscribe` writes to `~/.hermes/webhook_subscriptions.json`
 2. The webhook adapter hot-reloads this file on each incoming request (mtime-gated, negligible overhead)
 3. When a POST arrives matching a route, the adapter formats the prompt and triggers an agent run
 4. The agent's response is delivered to the configured target (Telegram, Discord, GitHub comment, etc.)
@@ -189,6 +207,6 @@ If webhooks aren't working:
 1. **Is the gateway running?** Check with `systemctl --user status hermes-gateway` or `ps aux | grep gateway`
 2. **Is the webhook server listening?** `curl http://localhost:8644/health` should return `{"status": "ok"}`
 3. **Check gateway logs:** `grep webhook ~/.hermes/logs/gateway.log | tail -20`
-4. **Signature mismatch?** Verify the secret in your service matches the one from `aura webhook list`. GitHub sends `X-Hub-Signature-256`, GitLab sends `X-Gitlab-Token`.
+4. **Signature mismatch?** Verify the secret in your service matches the one from `hermes webhook list`. GitHub sends `X-Hub-Signature-256`, GitLab sends `X-Gitlab-Token`.
 5. **Firewall/NAT?** The webhook URL must be reachable from the service. For local development, use a tunnel (ngrok, cloudflared).
-6. **Wrong event type?** Check `--events` filter matches what the service sends. Use `aura webhook test <name>` to verify the route works.
+6. **Wrong event type?** Check `--events` filter matches what the service sends. Use `hermes webhook test <name>` to verify the route works.

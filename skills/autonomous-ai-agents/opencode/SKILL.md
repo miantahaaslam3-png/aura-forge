@@ -32,7 +32,7 @@ Use [OpenCode](https://opencode.ai) as an autonomous coding worker orchestrated 
 
 ## Binary Resolution (Important)
 
-Shell environments may resolve different OpenCode binaries. If behavior differs between your terminal and Hermes, check:
+Shell environments may resolve different OpenCode binaries. If behavior differs between your terminal and Aura Forge, check:
 
 ```
 terminal(command="which -a opencode")
