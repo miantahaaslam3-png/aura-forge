@@ -14493,6 +14493,20 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
   // reset connection state so the next startHermes() call restarts the
   // full backend flow (including a fresh runBootstrap pass).
   rememberLog('[bootstrap] reset requested by renderer; clearing latched failure')
+  // Aura Forge fix: abort any in-flight bootstrap BEFORE starting a new one.
+  // Without this, Retry spawns a second installer while the first is still
+  // running and the two fight over the same install dir ("file in use").
+  if (bootstrapAbortController) {
+    try {
+      rememberLog('[bootstrap] aborting in-flight bootstrap before retry')
+      bootstrapAbortController.abort()
+    } catch {
+      void 0
+    }
+    bootstrapAbortController = null
+    // Give the old install.ps1 child a moment to exit and release file locks.
+    await new Promise(resolve => setTimeout(resolve, 1500))
+  }
   await teardownPrimaryBackendAndWait()
   bootstrapFailure = null
   backendStartFailure = null

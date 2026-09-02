@@ -31,7 +31,7 @@ param(
     [switch]$ForceCommit,
     [string]$Tag = "",
     [string]$AuraForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
-    [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }),
+    [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\hermes-agent" } else { "$env:LOCALAPPDATA\aura-forge\hermes-agent" }),
 
     # --- Stage protocol (additive; default invocation behaves as before) ----
     # See the "Stage protocol" section near the bottom of the file for the
@@ -352,7 +352,7 @@ if ($PSBoundParameters.ContainsKey('InstallDir')) {
     $InstallDir = ConvertTo-LongPath $InstallDir
 } else {
     $InstallDir = ConvertTo-LongPath $(
-        if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }
+        if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\hermes-agent" } else { "$env:LOCALAPPDATA\aura-forge\hermes-agent" }
     )
 }
 if ($script:NormalizedProfilePaths) {
