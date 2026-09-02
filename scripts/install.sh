@@ -45,7 +45,7 @@ BOLD='\033[1m'
 # Configuration
 REPO_URL_SSH="git@github.com:miantahaaslam3-png/aura-forge.git"
 REPO_URL_HTTPS="https://github.com/miantahaaslam3-png/aura-forge.git"
-AURA_FORGE_HOME="${AURA_FORGE_HOME:-$HOME/.hermes}"
+AURA_FORGE_HOME="${AURA_FORGE_HOME:-$HOME/.aura-forge}"
 # INSTALL_DIR is resolved AFTER arg parsing and OS detection so we can pick an
 # FHS-style layout for root installs.  Track whether the user gave us an
 # explicit directory — if so we never override it.
@@ -60,7 +60,7 @@ PYTHON_VERSION="3.11"
 NODE_VERSION="26"
 
 # FHS-style root install layout (set by resolve_install_layout when applicable):
-#   code at /usr/local/lib/hermes-agent, command at /usr/local/bin/hermes,
+#   code at /usr/local/lib/aura-forge-agent, command at /usr/local/bin/auraforge,
 #   data still at /root/.hermes (AURA_FORGE_HOME).  Matches Claude Code / Codex CLI
 #   and keeps Docker bind-mounted /root/ volumes lean.
 ROOT_FHS_LAYOUT=false
@@ -184,15 +184,15 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive  Skip stages that require user input"
             echo "  --include-desktop  Also build the desktop app (apps/desktop -> AuraForge.app)"
             echo "  --dir PATH     Installation directory"
-            echo "                   default (non-root):  ~/.hermes/hermes-agent"
-            echo "                   default (root, Linux): /usr/local/lib/hermes-agent"
-            echo "  --hermes-home PATH  Data directory (default: ~/.hermes, or \$AURA_FORGE_HOME)"
+            echo "                   default (non-root):  ~/.aura-forge/hermes-agent"
+            echo "                   default (root, Linux): /usr/local/lib/aura-forge-agent"
+            echo "  --auraforge-home PATH  Data directory (default: ~/.aura-forge, or \$AURA_FORGE_HOME)"
             echo "  -h, --help     Show this help"
             echo ""
             echo "Notes:"
             echo "  When running as root on Linux, Aura Forge installs the code under"
-            echo "  /usr/local/lib/hermes-agent and links the command into"
-            echo "  /usr/local/bin/hermes (FHS layout — matches Claude Code / Codex CLI)."
+            echo "  /usr/local/lib/aura-forge-agent and links the command into"
+            echo "  /usr/local/bin/auraforge (FHS layout — matches Claude Code / Codex CLI)."
             echo "  Data, config, sessions, and logs still live in \$AURA_FORGE_HOME"
             echo "  (default /root/.hermes).  This keeps Docker bind-mounted volumes"
             echo "  small and ensures the command is on PATH for all shells."
@@ -404,7 +404,7 @@ is_termux() {
 #                             command link in $HOME/.local/bin
 #   - Termux (any uid):       INSTALL_DIR = $AURA_FORGE_HOME/hermes-agent
 #                             command link in $PREFIX/bin (already on PATH)
-#   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/hermes-agent
+#   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/aura-forge-agent
 #                             command link in /usr/local/bin
 #                             (unless a legacy install already exists at
 #                              $AURA_FORGE_HOME/hermes-agent — then preserve it)
@@ -429,21 +429,21 @@ resolve_install_layout() {
         if [ -d "$AURA_FORGE_HOME/hermes-agent/.git" ]; then
             INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
             log_info "Existing install detected at $INSTALL_DIR — keeping legacy layout"
-            log_info "  (new root installs use /usr/local/lib/hermes-agent)"
+            log_info "  (new root installs use /usr/local/lib/aura-forge-agent)"
             return 0
         fi
-        INSTALL_DIR="/usr/local/lib/hermes-agent"
+        INSTALL_DIR="/usr/local/lib/aura-forge-agent"
         ROOT_FHS_LAYOUT=true
         # Place uv-managed Python under /usr/local/share so the venv interpreter
         # is world-readable.  Default uv paths land in /root/.local/share/uv,
         # which non-root users can't traverse — leaving the shared
-        # /usr/local/bin/hermes wrapper unable to exec the bad-interpreter venv
+        # /usr/local/bin/auraforge wrapper unable to exec the bad-interpreter venv
         # python.  See #21457.
         export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-/usr/local/share/uv/python}"
         export UV_PYTHON_BIN_DIR="${UV_PYTHON_BIN_DIR:-/usr/local/share/uv/bin}"
         log_info "Root install on Linux — using FHS layout"
         log_info "  Code:    $INSTALL_DIR"
-        log_info "  Command: /usr/local/bin/hermes"
+        log_info "  Command: /usr/local/bin/auraforge"
         log_info "  Data:    $AURA_FORGE_HOME (unchanged)"
         log_info "  uv Python: $UV_PYTHON_INSTALL_DIR (world-readable)"
         return 0
