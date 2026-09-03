@@ -14528,15 +14528,16 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
   // reload re-attach to the running bootstrap's progress events instead.
   if (bootstrapAbortController) {
     const sinceLastEvent = Date.now() - bootstrapLastEventAt
-    if (sinceLastEvent < 90_000) {
-      // Healthy, actively-progressing install: never abort it. The reloaded
-      // renderer re-attaches to the running bootstrap via the snapshot +
-      // event replay, so Retry becomes a no-op that just refreshes the view.
+    // A git clone is legitimately SILENT for many minutes (no progress lines
+    // until it finishes) — aborting on short silence is what created locked
+    // partial clones and the file-in-use loop. Only treat as stalled after
+    // 20 minutes of total silence; otherwise just let it run and re-attach.
+    if (sinceLastEvent < 1_200_000) {
       rememberLog(`[bootstrap] reset ignored: bootstrap healthy (last event ${Math.round(sinceLastEvent / 1000)}s ago); renderer will re-attach on reload`)
       return { ok: true, running: true }
     }
-    // Stuck (no events for 90s+): abort the whole tree so the retry can
-    // re-clone cleanly instead of hitting the file-in-use lock.
+    // Genuinely wedged (20+ min with zero output): abort the whole tree so
+    // the retry can re-clone cleanly instead of hitting the file-in-use lock.
     rememberLog(`[bootstrap] bootstrap stalled ${Math.round(sinceLastEvent / 1000)}s; aborting tree before retry`)
     try {
       bootstrapAbortController.abort()

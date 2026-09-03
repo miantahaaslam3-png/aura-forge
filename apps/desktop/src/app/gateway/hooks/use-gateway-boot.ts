@@ -976,11 +976,31 @@ export function useGatewayBoot({
         // round-trip must not hang "Starting Aura Forge…" forever. Initial boot
         // rides out a full backend cold spawn, so it gets the shared 45s
         // backend-boot budget, not the 20s reconnect budget.
-        const conn = await withTimeout(
-          desktop.getConnection(windowProfileOverride() ?? undefined),
-          BACKEND_BOOT_WAIT_TIMEOUT_MS,
-          'Timed out connecting to Aura Forge backend'
-        )
+        // Aura Forge fix: while the first-launch bootstrap (install.ps1) is
+        // running, getConnection legitimately never resolves until the install
+        // finishes — a clone can take 10+ minutes. Wait it out instead of
+        // timing out at 45s and popping the failure overlay, which then
+        // tempted the user into Retry/Repair and cancelled a healthy install.
+        let conn
+        const BOOTSTRAP_WAIT_DEADLINE = Date.now() + 30 * 60_000
+        for (;;) {
+          try {
+            conn = await withTimeout(
+              desktop.getConnection(windowProfileOverride() ?? undefined),
+              BACKEND_BOOT_WAIT_TIMEOUT_MS,
+              'Timed out connecting to Aura Forge backend'
+            )
+            break
+          } catch (err) {
+            const bootState = await desktop.getBootstrapState?.().catch(() => null)
+            if (bootState?.active && Date.now() < BOOTSTRAP_WAIT_DEADLINE) {
+              // Installer still working — keep waiting quietly.
+              await new Promise(resolve => setTimeout(resolve, 3000))
+              continue
+            }
+            throw err
+          }
+        }
 
         if (cancelled) {
           return
