@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// set-exe-identity.mjs — stamp the Hermes icon + version metadata onto the
-// built Hermes.exe using rcedit, completely decoupled from electron-builder's
+// set-exe-identity.mjs — stamp the Aura Forge icon + version metadata onto the
+// built AuraForge.exe using rcedit, completely decoupled from electron-builder's
 // signing path.
 //
 // WHY THIS EXISTS
@@ -62,14 +62,14 @@ async function stampExeIdentity(exe, desktopRoot = resolve(import.meta.dirname, 
   await rcedit(exe, {
     icon,
     'version-string': {
-      ProductName: 'Hermes',
-      FileDescription: 'Hermes',
-      CompanyName: 'Nous Research',
-      LegalCopyright: 'Copyright (c) 2026 Nous Research'
+      ProductName: 'Aura Forge',
+      FileDescription: 'Aura Forge',
+      CompanyName: 'Aura Forge',
+      LegalCopyright: 'Copyright (c) 2026 Aura Forge'
     }
   })
 
-  console.log('[set-exe-identity] done — Hermes icon + identity stamped')
+  console.log('[set-exe-identity] done — Aura Forge icon + identity stamped')
 }
 
 export { stampExeIdentity }
