@@ -1470,6 +1470,7 @@ let remoteReauthFailure = null
 // can abort the in-flight install.sh/ps1 instead of leaving it running.
 let bootstrapAbortController = null
 let bootstrapLastEventAt = 0
+let bootstrapInFlight = null
 // Explicit "the user asked for a repair" flag. Repair used to signal intent by
 // deleting the bootstrap marker, which stranded healthy installs whose only
 // problem was a transient backend error (#72166). Intent now lives here, so
@@ -4837,6 +4838,25 @@ async function ensureRuntime(backend) {
   // will rewire startup to spawn the window first and route bootstrap events
   // to a renderer-side install overlay.
   if (backend.kind === 'bootstrap-needed') {
+    // Aura Forge fix: a bootstrap is already running (e.g. the renderer
+    // reloaded while install.ps1 was mid-flight). Join it instead of
+    // spawning a second installer that would fight the first for file locks.
+    if (bootstrapInFlight) {
+      rememberLog('[bootstrap] bootstrap already in flight; joining existing run instead of restarting')
+      const joined = await bootstrapInFlight
+      if (!joined.ok) {
+        const joinError = new Error(
+          `Aura Forge bootstrap failed${joined.failedStage ? ` at stage '${joined.failedStage}'` : ''}: ` +
+            `${joined.error || 'unknown error'}. ` +
+            `Check ${path.join(HERMES_HOME, 'logs', 'desktop.log')} for the full transcript.`
+        )
+        joinError.isBootstrapFailure = true
+        joinError.failedStage = joined.failedStage || null
+        bootstrapFailure = joinError
+        throw joinError
+      }
+      return backend
+    }
     rememberLog('[bootstrap] no Aura Forge install found; starting first-launch bootstrap')
 
     if (await handOffWindowsBootstrapRecovery('bootstrap-needed')) {
@@ -4873,7 +4893,7 @@ async function ensureRuntime(backend) {
     bootstrapRepairRequested = false
     bootstrapRepairAttempt = 0
 
-    const bootstrapResult = await runBootstrap({
+    bootstrapInFlight = runBootstrap({
       installStamp: backend.installStamp,
       activeRoot: backend.activeRoot,
       sourceRepoRoot: SOURCE_REPO_ROOT,
@@ -4900,6 +4920,12 @@ async function ensureRuntime(backend) {
       },
       writeMarker: writeBootstrapMarker
     })
+    let bootstrapResult
+    try {
+      bootstrapResult = await bootstrapInFlight
+    } finally {
+      bootstrapInFlight = null
+    }
 
     bootstrapAbortController = null
 
