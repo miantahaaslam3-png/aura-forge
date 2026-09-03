@@ -1828,6 +1828,13 @@ PY
     local _installed=false
     local _tier_name=""
 
+    # Aura Forge fix: pypi.org can be DNS-blocked/throttled on some networks
+    # (GitHub works, PyPI doesn't). Retry failed tiers against public mirrors.
+    PYPI_MIRRORS=(
+        "https://pypi.tuna.tsinghua.edu.cn/simple"
+        "https://mirrors.aliyun.com/pypi/simple"
+    )
+
     install_tier() {
         local name="$1"; local spec="$2"
         log_info "Trying tier: $name ..."
@@ -1839,6 +1846,15 @@ PY
         fi
         log_warn "Tier '$name' failed. Top of pip output:"
         head -5 "$ALL_INSTALL_LOG" | sed 's/^/    /' >&2
+        for mirror in "${PYPI_MIRRORS[@]}"; do
+            log_info "Retrying tier: $name via mirror $mirror ..."
+            if $UV_CMD pip install -e "$spec" --index-url "$mirror" 2>>"$ALL_INSTALL_LOG"; then
+                log_success "Main package installed ($name, mirror)"
+                _installed=true
+                _tier_name="$name via $mirror"
+                return 0
+            fi
+        done
         return 1
     }
 

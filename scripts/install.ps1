@@ -2911,7 +2911,7 @@ function Install-Dependencies {
             # complete, hash-verified install.
             $skipPipFallback = $true
         } else {
-            Write-Warn "uv.lock sync failed (lockfile may be stale), falling back to PyPI resolve..."
+            Write-Warn "uv.lock sync failed (lockfile may be stale or pypi.org unreachable), falling back to PyPI resolve..."
             $skipPipFallback = $false
         }
     } else {
@@ -2986,6 +2986,29 @@ except Exception:
             break
         }
         Write-Warn "Tier '$($tier.Name)' failed (exit $LASTEXITCODE). Trying next tier..."
+        }
+    }
+    # Aura Forge fix: pypi.org itself can be DNS-blocked or throttled on
+    # some networks (GitHub works, PyPI doesn't). Retry every tier against
+    # public PyPI mirrors before giving up.
+    if (-not $installed) {
+        $pypiMirrors = @(
+            "https://pypi.tuna.tsinghua.edu.cn/simple",
+            "https://mirrors.aliyun.com/pypi/simple",
+            "https://pypi.org/simple"
+        )
+        foreach ($mirror in $pypiMirrors) {
+            foreach ($tier in $installTiers) {
+                Write-Info "Trying tier: $($tier.Name) via mirror $mirror ..."
+                Invoke-NativeWithRelaxedErrorAction { & $UvCmd pip install -e $tier.Spec --index-url $mirror }
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Success "Main package installed ($($tier.Name), mirror)"
+                    $script:InstalledTier = "$($tier.Name) via $mirror"
+                    $installed = $true
+                    break
+                }
+            }
+            if ($installed) { break }
         }
     }
     if (-not $installed) {
@@ -3157,7 +3180,7 @@ function Install-HermesCommandLaunchers {
     if (Test-Path -LiteralPath $pyvenvCfg) {
         $venvRelocatable = [bool](Select-String -Path $pyvenvCfg -Pattern '^\s*relocatable\s*=\s*true\s*$' -Quiet)
     }
-    foreach ($launcher in @("hermes", "hermes-acp")) {
+    foreach ($launcher in @("hermes", "hermes-acp", "auraforge", "auraforge-agent", "auraforge-acp")) {
         $src = Join-Path $scriptsDir "$launcher.exe"
         if (-not (Test-Path -LiteralPath $src -PathType Leaf)) { continue }
         if ($venvRelocatable) {
