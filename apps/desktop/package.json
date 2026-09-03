@@ -188,7 +188,7 @@
     "electronVersion": "40.10.2",
     "appId": "com.auraforge.desktop",
     "productName": "Aura Forge",
-    "executableName": "Aura Forge",
+    "executableName": "AuraForge",
     "protocols": [
       {
         "name": "Aura Forge Protocol",
