@@ -1469,6 +1469,7 @@ let remoteReauthFailure = null
 // Active first-launch install, so the renderer's Cancel button (and app quit)
 // can abort the in-flight install.sh/ps1 instead of leaving it running.
 let bootstrapAbortController = null
+let bootstrapLastEventAt = 0
 // Explicit "the user asked for a repair" flag. Repair used to signal intent by
 // deleting the bootstrap marker, which stranded healthy installs whose only
 // problem was a transient backend error (#72166). Intent now lives here, so
@@ -4884,6 +4885,7 @@ async function ensureRuntime(backend) {
         // and (b) the renderer for live progress UI. Either may be absent;
         // tolerate both gracefully so a renderer crash doesn't stall the
         // bootstrap and a log-write failure doesn't suppress the UI signal.
+        bootstrapLastEventAt = Date.now()
         try {
           rememberLog(`[bootstrap] ${JSON.stringify(ev)}`)
         } catch {
@@ -14493,18 +14495,29 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
   // reset connection state so the next startHermes() call restarts the
   // full backend flow (including a fresh runBootstrap pass).
   rememberLog('[bootstrap] reset requested by renderer; clearing latched failure')
-  // Aura Forge fix: abort any in-flight bootstrap BEFORE starting a new one.
-  // Without this, Retry spawns a second installer while the first is still
-  // running and the two fight over the same install dir ("file in use").
+  // Aura Forge fix: if a bootstrap is CURRENTLY RUNNING, do not abort it —
+  // the renderer's failure overlay can be stale (latched from an earlier
+  // failure) while a healthy install is mid-flight. Aborting here cancelled
+  // working installs and left locked partial clones behind. Just let the
+  // reload re-attach to the running bootstrap's progress events instead.
   if (bootstrapAbortController) {
+    const sinceLastEvent = Date.now() - bootstrapLastEventAt
+    if (sinceLastEvent < 90_000) {
+      // Healthy, actively-progressing install: never abort it. The reloaded
+      // renderer re-attaches to the running bootstrap via the snapshot +
+      // event replay, so Retry becomes a no-op that just refreshes the view.
+      rememberLog(`[bootstrap] reset ignored: bootstrap healthy (last event ${Math.round(sinceLastEvent / 1000)}s ago); renderer will re-attach on reload`)
+      return { ok: true, running: true }
+    }
+    // Stuck (no events for 90s+): abort the whole tree so the retry can
+    // re-clone cleanly instead of hitting the file-in-use lock.
+    rememberLog(`[bootstrap] bootstrap stalled ${Math.round(sinceLastEvent / 1000)}s; aborting tree before retry`)
     try {
-      rememberLog('[bootstrap] aborting in-flight bootstrap before retry')
       bootstrapAbortController.abort()
     } catch {
       void 0
     }
     bootstrapAbortController = null
-    // Give the old install.ps1 child a moment to exit and release file locks.
     await new Promise(resolve => setTimeout(resolve, 1500))
   }
   await teardownPrimaryBackendAndWait()
