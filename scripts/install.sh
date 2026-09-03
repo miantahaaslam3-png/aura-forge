@@ -3379,7 +3379,9 @@ install_desktop() {
 
     local app=""
     if [ "$OS" = "linux" ]; then
-        if [ -x "$desktop_dir/release/linux-unpacked/Aura Forge" ]; then
+        if [ -x "$desktop_dir/release/linux-unpacked/AuraForge" ]; then
+            app="$desktop_dir/release/linux-unpacked/AuraForge"
+        elif [ -x "$desktop_dir/release/linux-unpacked/Aura Forge" ]; then
             app="$desktop_dir/release/linux-unpacked/Aura Forge"
         elif [ -x "$desktop_dir/release/linux-unpacked/hermes" ]; then
             app="$desktop_dir/release/linux-unpacked/hermes"

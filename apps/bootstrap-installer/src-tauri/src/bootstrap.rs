@@ -225,7 +225,7 @@ pub(crate) fn resolve_hermes_desktop_exe(install_root: &std::path::Path) -> Opti
             ("mac-arm64/Aura Forge.app/Contents/MacOS", "AuraForge"),
         ]
     } else {
-        &[("linux-unpacked", "hermes")]
+        &[("linux-unpacked", "AuraForge")]
     };
     for (subdir, exe) in candidates {
         let p = release_dir.join(subdir).join(exe);
