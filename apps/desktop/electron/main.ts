@@ -757,6 +757,7 @@ function resolveHermesHome() {
   if (process.env.AURA_FORGE_HOME) {
     return normalizeHermesHomeRoot(process.env.AURA_FORGE_HOME)
   }
+
   if (process.env.HERMES_HOME) {
     return normalizeHermesHomeRoot(process.env.HERMES_HOME)
   }
@@ -774,9 +775,11 @@ function resolveHermesHome() {
     // Consult the live User-scoped registry value before the default below.
     // Aura Forge: consult AURA_FORGE_HOME first, then HERMES_HOME
     const fromRegistryAura = readWindowsUserEnvVar('AURA_FORGE_HOME')
+
     if (fromRegistryAura) {
       return normalizeHermesHomeRoot(fromRegistryAura)
     }
+
     const fromRegistry = readWindowsUserEnvVar('HERMES_HOME')
 
     if (fromRegistry) {
@@ -4844,19 +4847,23 @@ async function ensureRuntime(backend) {
     if (bootstrapInFlight) {
       rememberLog('[bootstrap] bootstrap already in flight; joining existing run instead of restarting')
       const joined = await bootstrapInFlight
+
       if (!joined.ok) {
         const joinError = new Error(
           `Aura Forge bootstrap failed${joined.failedStage ? ` at stage '${joined.failedStage}'` : ''}: ` +
             `${joined.error || 'unknown error'}. ` +
             `Check ${path.join(HERMES_HOME, 'logs', 'desktop.log')} for the full transcript.`
         )
+
         joinError.isBootstrapFailure = true
         joinError.failedStage = joined.failedStage || null
         bootstrapFailure = joinError
         throw joinError
       }
+
       return backend
     }
+
     rememberLog('[bootstrap] no Aura Forge install found; starting first-launch bootstrap')
 
     if (await handOffWindowsBootstrapRecovery('bootstrap-needed')) {
@@ -4906,6 +4913,7 @@ async function ensureRuntime(backend) {
         // tolerate both gracefully so a renderer crash doesn't stall the
         // bootstrap and a log-write failure doesn't suppress the UI signal.
         bootstrapLastEventAt = Date.now()
+
         try {
           rememberLog(`[bootstrap] ${JSON.stringify(ev)}`)
         } catch {
@@ -4921,6 +4929,7 @@ async function ensureRuntime(backend) {
       writeMarker: writeBootstrapMarker
     })
     let bootstrapResult
+
     try {
       bootstrapResult = await bootstrapInFlight
     } finally {
@@ -4999,7 +5008,8 @@ async function ensureRuntime(backend) {
     // If we hit this, the user (or a deleted venv) broke the invariant; tell
     // them to re-run the install.
     throw new Error(
-      `Aura Forge venv missing at ${VENV_ROOT}. Re-run the desktop installer or ` + '`scripts/install.ps1` to rebuild it.'
+      `Aura Forge venv missing at ${VENV_ROOT}. Re-run the desktop installer or ` +
+        '`scripts/install.ps1` to rebuild it.'
     )
   }
 
@@ -14521,6 +14531,7 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
   // reset connection state so the next startHermes() call restarts the
   // full backend flow (including a fresh runBootstrap pass).
   rememberLog('[bootstrap] reset requested by renderer; clearing latched failure')
+
   // Aura Forge fix: if a bootstrap is CURRENTLY RUNNING, do not abort it —
   // the renderer's failure overlay can be stale (latched from an earlier
   // failure) while a healthy install is mid-flight. Aborting here cancelled
@@ -14528,25 +14539,33 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
   // reload re-attach to the running bootstrap's progress events instead.
   if (bootstrapAbortController) {
     const sinceLastEvent = Date.now() - bootstrapLastEventAt
+
     // A git clone is legitimately SILENT for many minutes (no progress lines
     // until it finishes) — aborting on short silence is what created locked
     // partial clones and the file-in-use loop. Only treat as stalled after
     // 20 minutes of total silence; otherwise just let it run and re-attach.
     if (sinceLastEvent < 1_200_000) {
-      rememberLog(`[bootstrap] reset ignored: bootstrap healthy (last event ${Math.round(sinceLastEvent / 1000)}s ago); renderer will re-attach on reload`)
+      rememberLog(
+        `[bootstrap] reset ignored: bootstrap healthy (last event ${Math.round(sinceLastEvent / 1000)}s ago); renderer will re-attach on reload`
+      )
+
       return { ok: true, running: true }
     }
+
     // Genuinely wedged (20+ min with zero output): abort the whole tree so
     // the retry can re-clone cleanly instead of hitting the file-in-use lock.
     rememberLog(`[bootstrap] bootstrap stalled ${Math.round(sinceLastEvent / 1000)}s; aborting tree before retry`)
+
     try {
       bootstrapAbortController.abort()
     } catch {
       void 0
     }
+
     bootstrapAbortController = null
     await new Promise(resolve => setTimeout(resolve, 1500))
   }
+
   await teardownPrimaryBackendAndWait()
   bootstrapFailure = null
   backendStartFailure = null

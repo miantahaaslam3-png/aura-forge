@@ -1861,7 +1861,8 @@ export const en: Translations = {
       menuItem: 'Connect to a remote host…',
       badge: (host: string) => `Runs on ${host}`,
       title: (profile: string) => `Connect ${profile} to a remote host`,
-      description: 'Sessions in this profile will run on the remote Aura Forge you point it at, instead of this computer.',
+      description:
+        'Sessions in this profile will run on the remote Aura Forge you point it at, instead of this computer.',
       urlLabel: 'Remote address',
       urlPlaceholder: 'https://hermes.example.com',
       urlInvalid: 'Enter a full address starting with http:// or https://',
@@ -2599,7 +2600,8 @@ export const en: Translations = {
     maybeLater: 'Maybe later',
     moreChanges: count => `+ ${count} more change${count === 1 ? '' : 's'} included.`,
     manualTitle: 'Update from your terminal',
-    manualBody: 'You installed Aura Forge from the command line, so updates run there too. Paste this into your terminal:',
+    manualBody:
+      'You installed Aura Forge from the command line, so updates run there too. Paste this into your terminal:',
     manualPickedUp: 'Aura Forge will pick up the new version next time you launch it.',
     guiSkewTitle: 'Update the desktop app',
     guiSkewBody:
@@ -2673,7 +2675,8 @@ export const en: Translations = {
     installLocalDesc: 'Download Aura Forge, create its Python environment, and run the backend on this computer.',
     localStartUnavailable: 'Local installation could not start. Restart Aura Forge Desktop and try again.',
     remoteSetupTitle: 'Connect to existing Aura Forge',
-    remoteSetupDesc: 'Enter your gateway URL. Aura Forge Desktop will detect whether it needs a token or browser sign-in.',
+    remoteSetupDesc:
+      'Enter your gateway URL. Aura Forge Desktop will detect whether it needs a token or browser sign-in.',
     remoteUrlTitle: 'Gateway URL',
     remoteUrlDesc: 'Use the base URL of the Aura Forge gateway, including https:// when remote.',
     remoteUrlPlaceholder: 'https://gateway.example.com/hermes',
@@ -2749,7 +2752,8 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description: 'Point Aura Forge at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description:
+          'Point Aura Forge at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -3077,7 +3081,8 @@ export const en: Translations = {
       address: 'Address',
       addressPlaceholder: 'Enter address',
       blankPageBody: 'Type an address above to browse, or ask Aura Forge to open a page.',
-      finishedRestarting: message => `Aura Forge finished restarting the preview server${message ? `: ${message}` : ''}`,
+      finishedRestarting: message =>
+        `Aura Forge finished restarting the preview server${message ? `: ${message}` : ''}`,
       failedRestarting: message => `Server restart failed: ${message}`,
       unknownError: 'unknown error',
       restartedTitle: 'Preview server restarted',

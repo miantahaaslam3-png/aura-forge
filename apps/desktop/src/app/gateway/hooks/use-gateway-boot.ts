@@ -983,6 +983,7 @@ export function useGatewayBoot({
         // tempted the user into Retry/Repair and cancelled a healthy install.
         let conn
         const BOOTSTRAP_WAIT_DEADLINE = Date.now() + 30 * 60_000
+
         for (;;) {
           try {
             conn = await withTimeout(
@@ -990,14 +991,18 @@ export function useGatewayBoot({
               BACKEND_BOOT_WAIT_TIMEOUT_MS,
               'Timed out connecting to Aura Forge backend'
             )
+
             break
           } catch (err) {
             const bootState = await desktop.getBootstrapState?.().catch(() => null)
+
             if (bootState?.active && Date.now() < BOOTSTRAP_WAIT_DEADLINE) {
               // Installer still working — keep waiting quietly.
               await new Promise(resolve => setTimeout(resolve, 3000))
+
               continue
             }
+
             throw err
           }
         }

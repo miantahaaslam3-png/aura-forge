@@ -140,11 +140,16 @@ test('recognizes missing-route shapes only', () => {
   assert.equal(isMissingHealthEndpointError(new Error('404: {"detail":"Not Found"}')), true)
   assert.equal(
     isMissingHealthEndpointError(
-      new Error('Expected JSON from /api/health but got HTML. The endpoint is likely missing on the Aura Forge backend.')
+      new Error(
+        'Expected JSON from /api/health but got HTML. The endpoint is likely missing on the Aura Forge backend.'
+      )
     ),
     true
   )
-  assert.equal(isMissingHealthEndpointError(new Error('Timed out connecting to Aura Forge backend after 15000ms')), false)
+  assert.equal(
+    isMissingHealthEndpointError(new Error('Timed out connecting to Aura Forge backend after 15000ms')),
+    false
+  )
   assert.equal(isMissingHealthEndpointError(new Error('500: boom')), false)
 })
 
