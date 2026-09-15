@@ -27,7 +27,6 @@ RULES = [
     # 1. Repo URLs (all files)
     (r"NousResearch/auraforge-agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL"),
-     "repo URL"),
     (r"NousResearch/hermes_agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL (underscore variant)"),
     (r"NousResearch/auraforge\.agent", "miantahaaslam3-png/aura-forge", None,

@@ -3874,3 +3874,6 @@ def _run_quick_setup(config: dict, aura_forge_home):
 
     # Jump to summary
     _print_setup_summary(config, aura_forge_home)
+
+# ── Aura Forge rebrand: backward-compatible alias ──
+_profile_name_from_hermes_home = _profile_name_from_aura_forge_home

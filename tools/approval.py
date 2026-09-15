@@ -5800,3 +5800,6 @@ def request_elicitation_consent(
 
 # Load permanent allowlist from config on module import
 load_permanent_allowlist()
+
+# ── Aura Forge rebrand: backward-compatible alias ──
+_rewrite_resolved_aura_forge_home = _rewrite_resolved_hermes_home

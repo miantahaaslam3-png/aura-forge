@@ -2508,3 +2508,7 @@ def resolve_profile_env(profile_name: str) -> str:
         )
 
     return str(profile_dir)
+
+
+# ── Aura Forge rebrand: backward-compatible alias ──
+_get_default_hermes_home = _get_default_aura_forge_home

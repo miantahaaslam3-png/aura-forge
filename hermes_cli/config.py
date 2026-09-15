@@ -6224,3 +6224,12 @@ def _inject_platform_plugin_env_vars() -> None:
 
 # Eagerly inject so that platform plugin env vars show up in the setup wizard.
 _inject_platform_plugin_env_vars()
+
+# ── Aura Forge rebrand: backward-compatible aliases ─────────────────────────
+# The rebrand renamed the canonical home helpers to get_aura_forge_home /
+# get_process_aura_forge_home / ensure_aura_forge_home, but many modules
+# (web_server.py, gateway/*, agent/*, tools/*) still import the legacy
+# Hermes names from this module. Re-expose them so both spellings bind.
+get_hermes_home = get_aura_forge_home
+get_process_hermes_home = get_process_aura_forge_home
+ensure_hermes_home = ensure_aura_forge_home

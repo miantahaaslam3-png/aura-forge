@@ -1708,3 +1708,6 @@ def restart() -> None:
             "Gateway restart did not produce a running gateway process. "
             "Check logs/gateway.log and run `auraforge gateway status`."
         )
+
+# ── Aura Forge rebrand: backward-compatible alias ──
+_preserve_hermes_home_path = _preserve_aura_forge_home_path

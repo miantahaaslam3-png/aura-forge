@@ -465,6 +465,8 @@ _NODE_BOOTSTRAP_SCRIPT = Path(__file__).resolve().parent / "scripts" / "lib" / "
 # Used by secure_parent_dir() to skip chmod on the install dir — chmodding it
 # 0700 breaks auraforge-user traversal in Docker (UID 10000). See #25821, #93050.
 _INSTALL_ROOT = Path(__file__).resolve().parent
+# Backward-compat alias (rebrand): importers use PROJECT_ROOT
+PROJECT_ROOT = _INSTALL_ROOT
 
 
 def node_tool_runnable(path: str | None) -> bool:
