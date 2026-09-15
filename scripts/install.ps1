@@ -31,7 +31,7 @@ param(
     [switch]$ForceCommit,
     [string]$Tag = "",
     [string]$AuraForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
-    [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\hermes-agent" } else { "$env:LOCALAPPDATA\aura-forge\hermes-agent" }),
+    [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }),
 
     # --- Stage protocol (additive; default invocation behaves as before) ----
     # See the "Stage protocol" section near the bottom of the file for the
@@ -352,7 +352,7 @@ if ($PSBoundParameters.ContainsKey('InstallDir')) {
     $InstallDir = ConvertTo-LongPath $InstallDir
 } else {
     $InstallDir = ConvertTo-LongPath $(
-        if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\hermes-agent" } else { "$env:LOCALAPPDATA\aura-forge\hermes-agent" }
+        if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }
     )
 }
 if ($script:NormalizedProfilePaths) {
@@ -2430,8 +2430,8 @@ function Install-Repository {
                     $zipUrl = "https://github.com/miantahaaslam3-png/aura-forge/archive/refs/heads/$Branch.zip"
                     $zipLabel = $Branch
                 }
-                $zipPath = "$env:TEMP\hermes-agent-$zipLabel.zip"
-                $extractPath = "$env:TEMP\hermes-agent-extract"
+                $zipPath = "$env:TEMP\aura-forge-agent-$zipLabel.zip"
+                $extractPath = "$env:TEMP\aura-forge-agent-extract"
 
                 Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
                 if (Test-Path $extractPath) { Remove-Item -Recurse -Force $extractPath }
@@ -3012,7 +3012,7 @@ except Exception:
         }
     }
     if (-not $installed) {
-        throw "Failed to install hermes-agent package even with no extras. Inspect the uv pip install output above."
+        throw "Failed to install aura-forge-agent package even with no extras. Inspect the uv pip install output above."
     }
 
     # Baseline-import gate. Even if a tier reported success above, the
@@ -3212,7 +3212,7 @@ function Set-PathVariable {
         # uv), OUTSIDE the git checkout: `hermes update`'s autostash
         # (git stash push --include-untracked) deletes untracked files from
         # the working tree, which silently removed the launchers an earlier
-        # installer staged under hermes-agent\bin. No git operation can ever
+        # installer staged under aura-forge-agent\bin. No git operation can ever
         # touch this dir. Staging and verification live in
         # Install-HermesCommandLaunchers, which throws BEFORE any PATH
         # mutation when the launchers cannot be staged.
@@ -3224,9 +3224,9 @@ function Set-PathVariable {
 
     # Migrate older layouts off the user PATH:
     #   venv\Scripts     -- shadowed the user's python (#83797)
-    #   hermes-agent\bin -- lived inside the git checkout, where the update
+    #   aura-forge-agent\bin -- lived inside the git checkout, where the update
     #                       autostash could sweep the launchers off disk
-    # The hermes-agent\bin FILES are left in place on purpose: editor/ACP
+    # The aura-forge-agent\bin FILES are left in place on purpose: editor/ACP
     # configs that captured absolute launcher paths keep working, and the
     # dir is git-ignored so it cannot dirty the checkout.
     if (-not $NoVenv) {
@@ -4626,7 +4626,7 @@ function Write-Completion {
     Write-Host "   Data:      " -NoNewline -ForegroundColor Yellow
     Write-Host "$AuraForgeHome\cron\, sessions\, logs\"
     Write-Host "   Code:      " -NoNewline -ForegroundColor Yellow
-    Write-Host "$AuraForgeHome\hermes-agent\"
+    Write-Host "$AuraForgeHome\aura-forge-agent\"
     Write-Host ""
     
     Write-Host "---------------------------------------------------------" -ForegroundColor Cyan

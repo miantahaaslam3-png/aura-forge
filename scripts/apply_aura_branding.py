@@ -27,6 +27,7 @@ RULES = [
     # 1. Repo URLs (all files)
     (r"NousResearch/hermes-agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL"),
+     "repo URL"),
     (r"NousResearch/hermes_agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL (underscore variant)"),
     (r"NousResearch/hermes\.agent", "miantahaaslam3-png/aura-forge", None,
@@ -72,7 +73,8 @@ RULES = [
      "APP_NAME (simple)"),
 
     # 3. Log prefix
-    (r"\[hermes\]\s", "[aura-forge] ", None,
+    (r"\[hermes\]\s", "[aura-forge] ", ["*.ts", "*.tsx", "*.cjs", "*.rs", "*.ps1", "*.sh"],
+     # Aura Forge: restricted to non-Python files to prevent breaking Python list literals like `cmd = [hermes]`
      "log prefix"),
 
     # 4. AppUserModelId (all forms)

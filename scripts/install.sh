@@ -184,7 +184,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive  Skip stages that require user input"
             echo "  --include-desktop  Also build the desktop app (apps/desktop -> AuraForge.app)"
             echo "  --dir PATH     Installation directory"
-            echo "                   default (non-root):  ~/.aura-forge/hermes-agent"
+            echo "                   default (non-root):  ~/.aura-forge/aura-forge-agent"
             echo "                   default (root, Linux): /usr/local/lib/aura-forge-agent"
             echo "  --auraforge-home PATH  Data directory (default: ~/.aura-forge, or \$AURA_FORGE_HOME)"
             echo "  -h, --help     Show this help"
@@ -196,7 +196,7 @@ while [[ $# -gt 0 ]]; do
             echo "  Data, config, sessions, and logs still live in \$AURA_FORGE_HOME"
             echo "  (default /root/.aura-forge).  This keeps Docker bind-mounted volumes"
             echo "  small and ensures the command is on PATH for all shells."
-            echo "  Existing installs at \$AURA_FORGE_HOME/hermes-agent are preserved in-place."
+            echo "  Existing installs at \$AURA_FORGE_HOME/aura-forge-agent are preserved in-place."
             echo "  --ensure DEPS  Install only specified deps (comma-separated)"
             echo "                   Supported: node, browser, ripgrep, ffmpeg"
             echo "                   Does NOT clone repo or create venv"
@@ -400,14 +400,14 @@ is_termux() {
 # symlink goes.  Called after detect_os so $OS/$DISTRO are known.
 #
 # Defaults:
-#   - Non-root, any OS:       INSTALL_DIR = $AURA_FORGE_HOME/hermes-agent
+#   - Non-root, any OS:       INSTALL_DIR = $AURA_FORGE_HOME/aura-forge-agent
 #                             command link in $HOME/.local/bin
-#   - Termux (any uid):       INSTALL_DIR = $AURA_FORGE_HOME/hermes-agent
+#   - Termux (any uid):       INSTALL_DIR = $AURA_FORGE_HOME/aura-forge-agent
 #                             command link in $PREFIX/bin (already on PATH)
 #   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/aura-forge-agent
 #                             command link in /usr/local/bin
 #                             (unless a legacy install already exists at
-#                              $AURA_FORGE_HOME/hermes-agent — then preserve it)
+#                              $AURA_FORGE_HOME/aura-forge-agent — then preserve it)
 #
 # Always no-op when the user set --dir or $HERMES_INSTALL_DIR.
 resolve_install_layout() {
@@ -418,7 +418,7 @@ resolve_install_layout() {
 
     # Termux: package manager manages /data/data/..., keep code in AURA_FORGE_HOME.
     if is_termux; then
-        INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
+        INSTALL_DIR="$AURA_FORGE_HOME/aura-forge-agent"
         return 0
     fi
 
@@ -426,8 +426,8 @@ resolve_install_layout() {
     # macOS root installs keep the legacy layout because /usr/local/ on macOS
     # is Homebrew territory and we don't want to fight that.
     if [ "$OS" = "linux" ] && [ "$(id -u)" -eq 0 ]; then
-        if [ -d "$AURA_FORGE_HOME/hermes-agent/.git" ]; then
-            INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
+        if [ -d "$AURA_FORGE_HOME/aura-forge-agent/.git" ]; then
+            INSTALL_DIR="$AURA_FORGE_HOME/aura-forge-agent"
             log_info "Existing install detected at $INSTALL_DIR — keeping legacy layout"
             log_info "  (new root installs use /usr/local/lib/aura-forge-agent)"
             return 0
@@ -450,7 +450,7 @@ resolve_install_layout() {
     fi
 
     # Default: non-root, non-Termux → legacy user-scoped layout.
-    INSTALL_DIR="$AURA_FORGE_HOME/hermes-agent"
+    INSTALL_DIR="$AURA_FORGE_HOME/aura-forge-agent"
 }
 
 get_command_link_dir() {
@@ -1947,7 +1947,7 @@ EOF
     # pyproject.toml's [project.scripts] lives inside the venv, which is not on
     # the login-shell PATH. Without this launcher users can't invoke the agent
     # entrypoint directly from outside the venv. (#74819)
-    rm -f "$command_link_dir/hermes-agent" "$command_link_dir/auraforge-agent"
+    rm -f "$command_link_dir/aura-forge-agent" "$command_link_dir/auraforge-agent"
     if [ "$USE_VENV" = true ]; then
         cat > "$command_link_dir/auraforge-agent" <<EOF
 #!/usr/bin/env bash

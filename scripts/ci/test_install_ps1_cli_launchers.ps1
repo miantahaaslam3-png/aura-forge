@@ -65,7 +65,7 @@ function Assert-BytesEqual {
 }
 
 try {
-    $installRoot = Join-Path $caseRoot 'hermes-agent'
+    $installRoot = Join-Path $caseRoot 'aura-forge-agent'
     $binDir = Join-Path $caseRoot 'bin'
     New-Item -ItemType Directory -Force -Path $installRoot | Out-Null
 

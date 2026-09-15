@@ -5289,7 +5289,8 @@ def _serve_relaunch_commands(entries: list[dict]) -> list[list[str]]:
         port = entry.get("port")
         if not isinstance(port, int) or port <= 0:
             continue
-        cmd = [aura-forge]         profile = str(entry.get("profile") or "")
+        cmd = [hermes]
+        profile = str(entry.get("profile") or "")
         if profile and profile != "default":
             cmd += ["--profile", profile]
         cmd.append(str(entry.get("purpose")))
