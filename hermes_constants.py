@@ -1854,3 +1854,15 @@ def partial_update_hint(exc: BaseException) -> list[str]:
         "    auraforge update",
         "If that also fails, reinstall: https://auraforge-agent.nousresearch.com",
     ]
+
+# Aura Forge backward-compatible aliases — re-exported by hermes_cli.config
+get_aura_forge_home = get_hermes_home
+get_process_aura_forge_home = get_process_hermes_home
+# Aura Forge backward-compatible aliases
+get_aura_forge_home = get_hermes_home
+get_process_aura_forge_home = get_process_hermes_home
+get_aura_forge_home_override = get_hermes_home_override
+set_aura_forge_home_override = set_hermes_home_override
+reset_aura_forge_home_override = reset_hermes_home_override
+display_aura_forge_home = display_hermes_home
+aura_forge_home_key = hermes_home_key
