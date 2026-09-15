@@ -110,7 +110,7 @@ def test_dotenv_loading_is_preserved_when_external_secrets_are_skipped(
     )
 
     loaded = env_loader.load_hermes_dotenv(
-        hermes_home=home,
+        aura_forge_home=home,
         load_external_secrets=external_secrets,
     )
 

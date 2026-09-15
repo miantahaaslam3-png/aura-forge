@@ -64,7 +64,7 @@ def test_op_env_autoloads_bootstrap_token_in_cron_context(tmp_path, monkeypatch)
 
     assert os.environ.get("OP_SERVICE_ACCOUNT_TOKEN") is None
 
-    env_loader.load_hermes_dotenv(hermes_home=home)
+    env_loader.load_hermes_dotenv(aura_forge_home=home)
 
     assert os.environ["OP_SERVICE_ACCOUNT_TOKEN"] == "test-token"
 

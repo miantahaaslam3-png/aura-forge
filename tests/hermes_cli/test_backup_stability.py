@@ -71,7 +71,7 @@ def test_quick_snapshot_is_published_with_manifest(tmp_path, monkeypatch) -> Non
         real_replace(source, destination)
 
     monkeypatch.setattr(backup.os, "replace", replace)
-    snapshot_id = create_quick_snapshot(hermes_home=home)
+    snapshot_id = create_quick_snapshot(aura_forge_home=home)
 
     assert snapshot_id is not None
     assert len(published) == 1
@@ -88,7 +88,7 @@ def test_quick_snapshot_listing_ignores_partial_directories(tmp_path) -> None:
     partial.mkdir(parents=True)
     (partial / "manifest.json").write_text('{"id":"unfinished"}', encoding="utf-8")
 
-    assert list_quick_snapshots(hermes_home=home) == []
+    assert list_quick_snapshots(aura_forge_home=home) == []
 
 
 def test_failed_automatic_backup_preserves_previous_archive(tmp_path, monkeypatch) -> None:

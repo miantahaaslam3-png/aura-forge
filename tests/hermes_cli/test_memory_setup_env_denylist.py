@@ -148,7 +148,7 @@ def test_explicit_hermes_home_writes_to_that_env_file(tmp_path):
     ``save_env_value`` validation instead of writing directly."""
     home = tmp_path / "plugin-home"
 
-    _write_env_vars({"MEM0_API_KEY": "m0-test-key-abc"}, hermes_home=home)
+    _write_env_vars({"MEM0_API_KEY": "m0-test-key-abc"}, aura_forge_home=home)
 
     assert "MEM0_API_KEY=m0-test-key-abc\n" in (home / ".env").read_text(
         encoding="utf-8"

@@ -114,7 +114,7 @@ def test_running_profile_is_registered_and_autostarted(tmp_path: Path) -> None:
     _make_profile(tmp_path, "coder", state="running")
 
     actions = reconcile_profile_gateways(
-        hermes_home=tmp_path, scandir=scandir, dry_run=False,
+        aura_forge_home=tmp_path, scandir=scandir, dry_run=False,
     )
 
     assert _named_actions(actions) == [ReconcileAction(
@@ -135,7 +135,7 @@ def test_registered_profile_has_finish_script(tmp_path: Path) -> None:
     _make_profile(tmp_path, "coder", state="running")
 
     reconcile_profile_gateways(
-        hermes_home=tmp_path, scandir=scandir, dry_run=False,
+        aura_forge_home=tmp_path, scandir=scandir, dry_run=False,
     )
 
     finish = scandir / "gateway-coder" / "finish"
@@ -166,7 +166,7 @@ def test_register_service_overwrites_existing_slot(tmp_path: Path) -> None:
 
     # First pass.
     reconcile_profile_gateways(
-        hermes_home=tmp_path, scandir=scandir, dry_run=False,
+        aura_forge_home=tmp_path, scandir=scandir, dry_run=False,
     )
     first_run = (scandir / "gateway-coder" / "run").read_text()
 
@@ -177,7 +177,7 @@ def test_register_service_overwrites_existing_slot(tmp_path: Path) -> None:
         '{"gateway_state": "stopped"}',
     )
     reconcile_profile_gateways(
-        hermes_home=tmp_path, scandir=scandir, dry_run=False,
+        aura_forge_home=tmp_path, scandir=scandir, dry_run=False,
     )
 
     # Slot still exists, no .tmp remnants (staging dir is dot-prefixed,
@@ -215,7 +215,7 @@ def test_profiles_default_subdir_is_skipped_with_warning(
     _make_profile(tmp_path, "default", state="running")
 
     actions = reconcile_profile_gateways(
-        hermes_home=tmp_path, scandir=scandir, dry_run=False,
+        aura_forge_home=tmp_path, scandir=scandir, dry_run=False,
     )
 
     # Only the root-profile default slot appears — not the colliding

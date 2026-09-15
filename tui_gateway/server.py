@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 _hermes_home = get_hermes_home()
 load_hermes_dotenv(
-    hermes_home=_hermes_home, project_env=Path(__file__).parent.parent / ".env"
+    aura_forge_home=_hermes_home, project_env=Path(__file__).parent.parent / ".env"
 )
 
 

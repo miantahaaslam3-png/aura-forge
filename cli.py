@@ -231,7 +231,7 @@ from utils import base_url_host_matches, base_url_hostname, fast_safe_load
 
 _hermes_home = get_hermes_home()
 _project_env = Path(__file__).parent / '.env'
-load_hermes_dotenv(hermes_home=_hermes_home, project_env=_project_env)
+load_hermes_dotenv(aura_forge_home=_hermes_home, project_env=_project_env)
 
 
 _REASONING_TAGS = (
