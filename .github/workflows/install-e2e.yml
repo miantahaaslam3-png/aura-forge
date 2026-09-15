@@ -37,9 +37,10 @@ on:
         required: false
         type: string
         default: '5'
-  schedule:
-    # Every 12 hours, off the hour to avoid the top-of-hour runner crunch.
-    - cron: '20 7,19 * * *'
+  # Aura Forge: schedule disabled — no release tags yet, so the E2E matrix
+  # is always empty. Re-enable once the first release tag is created.
+  # schedule:
+  #   - cron: '20 7,19 * * *'
   push:
     tags:
       # Release tags only: the repo also carries backup/* and one-off tags.

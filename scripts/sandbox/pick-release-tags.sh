@@ -74,10 +74,10 @@ mapfile -t tags < <(
 
 total="${#tags[@]}"
 if [ "$total" -eq 0 ]; then
-  echo "error: no release tags found in $REPO" >&2
-  echo '       A shallow clone has no tags: fetch with tags (actions/checkout' >&2
-  echo '       with fetch-depth: 0, or fetch-tags: true).' >&2
-  exit 1
+  # Aura Forge: no release tags yet — emit empty matrix so downstream
+  # jobs are skipped gracefully instead of failing the whole workflow.
+  echo "[]"
+  exit 0
 fi
 
 if [ "$total" -le "$COUNT" ]; then
