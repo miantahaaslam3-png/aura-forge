@@ -44,7 +44,7 @@ def cprint(text: str):
         _pt_print(_PT_ANSI(text))
     except Exception:
         # prompt_toolkit needs a real console. On Windows, a redirected or
-        # absent stdout (pythonw.exe, CI, `hermes ... > file`) raises
+        # absent stdout (pythonw.exe, CI, `auraforge ... > file`) raises
         # NoConsoleScreenBufferError from its Win32Output — display helpers
         # must never crash the caller over that, so degrade to plain print.
         print(text)
@@ -139,7 +139,7 @@ _UPDATE_CHECK_CACHE_SECONDS = 6 * 3600
 UPDATE_AVAILABLE_NO_COUNT = -1
 
 _UPSTREAM_REPO_URL = "https://github.com/miantahaaslam3-png/aura-forge.git"
-_OFFICIAL_REPO_CANONICAL = "github.com/nousresearch/hermes-agent"
+_OFFICIAL_REPO_CANONICAL = "github.com/nousresearch/aura-forge-agent"
 
 
 def _canonical_github_remote(url: str | None) -> str:
@@ -207,7 +207,7 @@ def _github_compare_behind(current_rev: str, target_rev: str) -> Optional[int]:
     if not (_is_full_sha(current_rev) and _is_full_sha(target_rev)):
         return None
     url = (
-        "https://api.github.com/repos/nousresearch/hermes-agent/"
+        "https://api.github.com/repos/nousresearch/aura-forge-agent/"
         f"compare/{current_rev}...{target_rev}"
     )
     try:
@@ -285,7 +285,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         # Passive probe via HTTPS ls-remote (never SSH — no hardware-key
         # prompts). Tip SHAs alone can't distinguish "behind" from a local
         # carried commit sitting AHEAD of origin/main, and misreporting an
-        # ahead checkout as behind nudges the user into `hermes update`,
+        # ahead checkout as behind nudges the user into `auraforge update`,
         # which can wipe their carried work.
         upstream_rev = _upstream_main_sha()
         if upstream_rev is None:
@@ -458,11 +458,11 @@ def check_for_updates() -> Optional[int]:
         behind = _check_via_rev(embedded_rev)
     else:
         # Prefer the running code's location over the profile-scoped path.
-        # $HERMES_HOME/hermes-agent/ may be a stale copy from --clone-all;
+        # $AURA_FORGE_HOME/aura-forge-agent/ may be a stale copy from --clone-all;
         # Path(__file__) always resolves to the actual installed checkout.
         repo_dir = Path(__file__).parent.parent.resolve()
         if not (repo_dir / ".git").exists():
-            repo_dir = hermes_home / "hermes-agent"
+            repo_dir = hermes_home / "aura-forge-agent"
         if not (repo_dir / ".git").exists():
             # No git checkout and no embedded revision — can't determine
             # update status. This is the Docker path (already short-circuited
@@ -492,13 +492,13 @@ def _resolve_repo_dir() -> Optional[Path]:
     """Return the active Aura Forge git checkout, or None if this isn't a git install.
 
     Prefers the running code's location over the profile-scoped path
-    because ``$HERMES_HOME/hermes-agent/`` may be a stale copy carried
+    because ``$AURA_FORGE_HOME/aura-forge-agent/`` may be a stale copy carried
     over by ``--clone-all``.
     """
     repo_dir = Path(__file__).parent.parent.resolve()
     if not (repo_dir / ".git").exists():
         hermes_home = get_hermes_home()
-        repo_dir = hermes_home / "hermes-agent"
+        repo_dir = hermes_home / "aura-forge-agent"
     return repo_dir if (repo_dir / ".git").exists() else None
 
 
@@ -1048,7 +1048,7 @@ def build_welcome_banner(console: "Console", model: str, cwd: str,
             # is wrong and how to fix it.
             left_lines.append(
                 f"[bold red]no model configured[/] "
-                f"[dim {dim}]— run /model or hermes setup[/]"
+                f"[dim {dim}]— run /model or auraforge setup[/]"
             )
         else:
             model_short = model.split("/")[-1] if "/" in model else model

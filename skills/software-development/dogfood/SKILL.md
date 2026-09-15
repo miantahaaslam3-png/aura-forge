@@ -6,7 +6,7 @@ author: Teknium (teknium1), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [qa, testing, browser, web, dogfood]
     related_skills: []
 ---

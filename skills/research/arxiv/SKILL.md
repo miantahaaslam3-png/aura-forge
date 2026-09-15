@@ -6,7 +6,7 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Research, Arxiv, Papers, Academic, Science, API]
     related_skills: [ocr-and-documents]
 ---

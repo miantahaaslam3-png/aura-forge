@@ -1,4 +1,4 @@
-"""``hermes journey`` — what Aura Forge has learned, on a timeline.
+"""``auraforge journey`` — what Aura Forge has learned, on a timeline.
 
 A terminal-native rendition of the desktop Star Map / Memory Graph: a horizontal
 timeline bar chart of learned skills and memories over time (oldest at top,

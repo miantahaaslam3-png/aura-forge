@@ -1,6 +1,6 @@
 """Safe Aura Forge Console command engine.
 
-This module backs ``hermes console`` and is intentionally narrower than the
+This module backs ``auraforge console`` and is intentionally narrower than the
 full Aura Forge CLI. It exposes a curated set of native adapters that can later be
 shared by the dashboard console websocket without becoming a raw shell.
 """
@@ -105,8 +105,8 @@ def _strip_console_status_footer(text: str) -> str:
     last = _strip_ansi(lines[-1]).strip()
     prev = _strip_ansi(lines[-2]).strip()
     if not (
-        prev.startswith("Run 'hermes doctor'")
-        and last.startswith("Run 'hermes setup'")
+        prev.startswith("Run 'auraforge doctor'")
+        and last.startswith("Run 'auraforge setup'")
     ):
         return text.rstrip()
 
@@ -201,7 +201,7 @@ def _clean_summary(text: str | None) -> str:
     summary = " ".join(str(text).split())
     if not summary:
         return ""
-    if summary.startswith("Run `hermes "):
+    if summary.startswith("Run `auraforge "):
         return ""
     return summary
 
@@ -491,14 +491,14 @@ def _register_command_family(
         child_key = tuple(child_path)
         full_path = (root, *tuple(child_path))
         usage = " ".join(full_path)
-        command_summary = summary or (summaries or {}).get(full_path) or f"Run `hermes {usage}`."
+        command_summary = summary or (summaries or {}).get(full_path) or f"Run `auraforge {usage}`."
         engine.register(
             full_path,
             usage,
             command_summary,
             handler_factory(tuple(child_path)),
             mutating=child_key in mutating_paths,
-            confirmation=confirmation or f"Run `hermes {usage}`?",
+            confirmation=confirmation or f"Run `auraforge {usage}`?",
         )
 
 
@@ -1208,7 +1208,7 @@ class HermesConsoleEngine:
             "whatsapp-cloud",
         }
         if first in blocked_top:
-            return f"`hermes {first}` is not available in Aura Forge Console."
+            return f"`auraforge {first}` is not available in Aura Forge Console."
         blocked_pairs = {
             ("config", "edit"): "`config edit` opens an editor and is not available in Aura Forge Console.",
             ("mcp", "serve"): "`mcp serve` starts a server and is not available in Aura Forge Console.",
@@ -1653,7 +1653,7 @@ def run_console_repl(
     stderr=None,
     interactive: bool | None = None,
 ) -> int:
-    """Run the local ``hermes console`` REPL."""
+    """Run the local ``auraforge console`` REPL."""
 
     stdin = stdin or sys.stdin
     stdout = stdout or sys.stdout

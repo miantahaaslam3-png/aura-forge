@@ -11,13 +11,13 @@ This is the "plan" phase of the transactional deployment model (#88683):
 The module is deliberately side-effect free — every collector is a probe
 over primitives that already exist (`find_profile_gateway_processes`,
 `_get_service_pids`, `gateway_state.json` code stamps from #91283,
-`detect_install_method`) — so `hermes update --plan` can run on a live
+`detect_install_method`) — so `auraforge update --plan` can run on a live
 fleet with zero risk, and the update receipt can embed the inventory
 without changing update behavior.
 
 Deployment kinds (the concept most fleet-update bugs were missing):
 
-    git      — source checkout; updatable in place via `hermes update`
+    git      — source checkout; updatable in place via `auraforge update`
     docker   — published image; NOT updatable in place (pull + recreate)
     nix/apt  — package-manager owned; updatable via the manager only
     unknown  — no marker; treated as in-place updatable (legacy default)
@@ -25,7 +25,7 @@ Deployment kinds (the concept most fleet-update bugs were missing):
 Supervisors (how a runtime is restarted after code changes):
 
     systemd / launchd — restart via the service manager (fleet-wide)
-    desktop           — Desktop app supervises `hermes serve`; it respawns
+    desktop           — Desktop app supervises `auraforge serve`; it respawns
     manual            — plain process; SIGTERM + watcher/manual relaunch
 """
 
@@ -348,8 +348,8 @@ def collect_runtime_inventory() -> UpdatePlan:
 
     # Serve/dashboard backends from the spawn ledger (#63206). These are the
     # runtimes the gateway collectors above can never see: a manually
-    # launched `hermes serve --host <ip>` for a remote Desktop, or a
-    # long-lived `hermes dashboard`. Every serve/dashboard registers itself
+    # launched `auraforge serve --host <ip>` for a remote Desktop, or a
+    # long-lived `auraforge dashboard`. Every serve/dashboard registers itself
     # (with structured host/port/profile since #63206) at startup, and
     # ledger_entries() live-verifies (pid, create_time) so PID reuse never
     # fabricates a row. Desktop-supervised backends are classified by their

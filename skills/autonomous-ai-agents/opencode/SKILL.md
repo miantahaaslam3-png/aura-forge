@@ -6,9 +6,9 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Coding-Agent, OpenCode, Autonomous, Refactoring, Code-Review]
-    related_skills: [claude-code, codex, hermes-agent]
+    related_skills: [claude-code, codex, auraforge-agent]
 ---
 
 # OpenCode CLI

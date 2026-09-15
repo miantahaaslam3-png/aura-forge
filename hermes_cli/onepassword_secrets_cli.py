@@ -1,4 +1,4 @@
-"""CLI handlers for ``hermes secrets onepassword ...``.
+"""CLI handlers for ``auraforge secrets onepassword ...``.
 
 Subcommands:
     setup    — verify the op CLI, set account / token env var, enable
@@ -356,7 +356,7 @@ def cmd_token(args: argparse.Namespace) -> int:
     if not op_cfg.get("enabled"):
         console.print(
             "[yellow]Note: the 1Password integration is currently disabled — "
-            "run `hermes secrets onepassword setup` to turn it on.[/yellow]"
+            "run `auraforge secrets onepassword setup` to turn it on.[/yellow]"
         )
     return 0
 
@@ -368,7 +368,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
     if not op_cfg.get("enabled"):
         console.print(
             "[yellow]1Password integration is disabled.  Run "
-            "`hermes secrets onepassword setup` first.[/yellow]"
+            "`auraforge secrets onepassword setup` first.[/yellow]"
         )
         return 1
 
@@ -376,7 +376,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
     if not references:
         console.print(
             "[yellow]No op:// references configured.  Add one with "
-            "`hermes secrets onepassword set ENV_VAR \"op://…\"`.[/yellow]"
+            "`auraforge secrets onepassword set ENV_VAR \"op://…\"`.[/yellow]"
         )
         return 0
 

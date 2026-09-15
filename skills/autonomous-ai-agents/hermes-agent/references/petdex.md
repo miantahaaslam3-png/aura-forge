@@ -3,7 +3,7 @@
 Browse, install, and select animated "pet" mascots from the public
 [petdex](https://github.com/crafter-station/petdex) gallery. An installed pet
 reacts to agent activity (idle, running a tool, reviewing, error, done) across
-the Aura Forge CLI, TUI, and desktop app. This skill drives the `hermes pets` CLI
+the Aura Forge CLI, TUI, and desktop app. This skill drives the `auraforge pets` CLI
 and the `display.pet` config — it does not generate sprites.
 
 ## When to Use
@@ -22,31 +22,31 @@ and the `display.pet` config — it does not generate sprites.
 
 ## How to Run
 
-Use the `terminal` tool to run `hermes pets <subcommand>`.
+Use the `terminal` tool to run `auraforge pets <subcommand>`.
 
 ## Quick Reference
 
 | Goal | Command |
 | --- | --- |
-| Browse the gallery | `hermes pets list` (add a substring to filter: `hermes pets list cat`) |
-| List installed pets | `hermes pets list --installed` |
-| Install a pet | `hermes pets install <slug>` (add `--select` to make it active) |
-| Set the active pet | `hermes pets select <slug>` (omit slug for a picker) |
-| Resize the pet everywhere | `hermes pets scale <factor>` (e.g. `0.5`, clamped 0.1–3.0) |
-| Preview/animate in terminal | `hermes pets show [slug] [--cycle] [--state run]` |
-| Disable the pet | `hermes pets off` |
-| Remove a pet | `hermes pets remove <slug>` |
-| Diagnose setup | `hermes pets doctor` |
+| Browse the gallery | `auraforge pets list` (add a substring to filter: `auraforge pets list cat`) |
+| List installed pets | `auraforge pets list --installed` |
+| Install a pet | `auraforge pets install <slug>` (add `--select` to make it active) |
+| Set the active pet | `auraforge pets select <slug>` (omit slug for a picker) |
+| Resize the pet everywhere | `auraforge pets scale <factor>` (e.g. `0.5`, clamped 0.1–3.0) |
+| Preview/animate in terminal | `auraforge pets show [slug] [--cycle] [--state run]` |
+| Disable the pet | `auraforge pets off` |
+| Remove a pet | `auraforge pets remove <slug>` |
+| Diagnose setup | `auraforge pets doctor` |
 
 ## Procedure
 
-1. Find a pet: `hermes pets list <query>` and note its `slug`.
-2. Install + activate: `hermes pets install <slug> --select`.
-3. Preview it: `hermes pets show` (Ctrl+C to stop).
-4. Confirm setup: `hermes pets doctor` — shows the resolved pet, configured
+1. Find a pet: `auraforge pets list <query>` and note its `slug`.
+2. Install + activate: `auraforge pets install <slug> --select`.
+3. Preview it: `auraforge pets show` (Ctrl+C to stop).
+4. Confirm setup: `auraforge pets doctor` — shows the resolved pet, configured
    render mode, detected terminal graphics protocol, and effective mode.
 
-Pets install into `<HERMES_HOME>/pets/<slug>/` (profile-aware). Selecting a pet
+Pets install into `<AURA_FORGE_HOME>/pets/<slug>/` (profile-aware). Selecting a pet
 writes `display.pet.slug` + `display.pet.enabled` to `config.yaml`.
 
 ## Configuration
@@ -58,7 +58,7 @@ Under `display.pet` in `config.yaml`:
 - `render_mode` — `auto` (detect) | `kitty` | `iterm` | `sixel` | `unicode` | `off`.
 - `scale` (float) — on-screen size of the native 192×208 frames (default 0.33,
   clamped 0.1–3.0). One knob resizes every surface; set it with
-  `hermes pets scale <factor>`, the `/pet scale` slash command, or the desktop
+  `auraforge pets scale <factor>`, the `/pet scale` slash command, or the desktop
   Appearance slider.
 - `unicode_cols` (int) — width in columns for the Unicode fallback.
 
@@ -67,9 +67,9 @@ Under `display.pet` in `config.yaml`:
 - A pet only shows once one is installed AND selected (`enabled: true`).
 - Inside a pipe/redirect (no TTY) terminal rendering is disabled by design.
 - The petdex npm CLI installs to `~/.codex/pets`; Aura Forge uses its own
-  profile-scoped `<HERMES_HOME>/pets/` instead — install through `hermes pets`.
+  profile-scoped `<AURA_FORGE_HOME>/pets/` instead — install through `auraforge pets`.
 
 ## Verification
 
-- `hermes pets doctor` reports `✓ ready` when a pet is installed, selected,
+- `auraforge pets doctor` reports `✓ ready` when a pet is installed, selected,
   enabled, and Pillow is importable.

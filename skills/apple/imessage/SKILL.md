@@ -6,7 +6,7 @@ author: Aura Forge Agent
 license: MIT
 platforms: [macos]
 metadata:
-  hermes:
+  auraforge:
     tags: [iMessage, SMS, messaging, macOS, Apple]
 prerequisites:
   commands: [imsg]

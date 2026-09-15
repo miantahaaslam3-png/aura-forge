@@ -1,4 +1,4 @@
-"""``hermes peer`` — bot-to-bot DMs across machines/gateways.
+"""``auraforge peer`` — bot-to-bot DMs across machines/gateways.
 
 A *peer* is another Aura Forge gateway (any machine: homelab, Spark, Aura Forge
 Cloud) running the ``api_server`` platform. Registering it here gives every
@@ -12,13 +12,13 @@ bot on THIS machine a transport to message bots on THAT machine:
 creating it when missing), runs ONE synchronous agent turn over the peer's
 existing ``POST /api/sessions/{id}/chat`` endpoint, and prints the reply on
 stdout — the exact cross-machine twin of the local
-``hermes -p <bot> chat --in ~ -c "Bot Chat" ...`` bot-messaging command, so
+``auraforge -p <bot> chat --in ~ -c "Bot Chat" ...`` bot-messaging command, so
 the Bot Mode protocol composes over it unchanged.
 
 Design notes:
 - No new server surface: the peer's stock api_server is the transport.
 - Peer labels/URLs live in config.yaml (``bot_peers``); the peer's
-  API_SERVER_KEY is a credential and lives in ``~/.hermes/.env`` as
+  API_SERVER_KEY is a credential and lives in ``~/.aura-forge/.env`` as
   ``HERMES_PEER_<NAME>_KEY``.
 - Named-profile targets use the peer's ``/p/<profile>/`` multiplex mirror;
   the bare target is the peer gateway's own (launch) profile.
@@ -146,7 +146,7 @@ def _ensure_bot_chat(base: str, key: str) -> str:
             raise RuntimeError(
                 f"Peer already has a '{BOT_CHAT_TITLE}' session but it is hidden and the "
                 f"peer's gateway is too old to expose hidden sessions to this lookup "
-                f"(HTTP 400: {detail}). Update the peer's hermes-agent, or unhide the "
+                f"(HTTP 400: {detail}). Update the peer's aura-forge-agent, or unhide the "
                 f"session there: PATCH /api/sessions/<id> {{\"hidden\": false}}."
             ) from exc
         raise
@@ -201,12 +201,12 @@ def cmd_peer(args) -> int:
             from hermes_cli.config import save_env_value
 
             save_env_value(_peer_key_env(name), key)
-            print(f"Peer '{name}' saved ({url}) — key stored as {_peer_key_env(name)} in ~/.hermes/.env")
+            print(f"Peer '{name}' saved ({url}) — key stored as {_peer_key_env(name)} in ~/.aura-forge/.env")
         else:
             print(
                 f"Peer '{name}' saved ({url}). No key given — set the peer's API_SERVER_KEY with:\n"
                 f"  hermes peer add {name} --url {url} --key <key>\n"
-                f"  (or add {_peer_key_env(name)}=<key> to ~/.hermes/.env)"
+                f"  (or add {_peer_key_env(name)}=<key> to ~/.aura-forge/.env)"
             )
         return 0
 
@@ -248,7 +248,7 @@ def cmd_peer(args) -> int:
         if not key:
             print(
                 f"No API key for peer '{peer_name}'. Set it: hermes peer add {peer_name} "
-                f"--url <url> --key <key> (or add {_peer_key_env(peer_name)}=<key> to ~/.hermes/.env)",
+                f"--url <url> --key <key> (or add {_peer_key_env(peer_name)}=<key> to ~/.aura-forge/.env)",
                 file=sys.stderr,
             )
             return 1
@@ -304,7 +304,7 @@ def build_peer_parser(subparsers) -> None:
             "agent's canonical Bot Chat over the peer's API server and prints "
             "the reply — the cross-machine twin of 'hermes -p <bot> chat'. "
             "The peer must run the api_server platform; its API_SERVER_KEY is "
-            "stored locally as a credential in ~/.hermes/.env."
+            "stored locally as a credential in ~/.aura-forge/.env."
         ),
         epilog=(
             "Examples:\n"
@@ -323,7 +323,7 @@ def build_peer_parser(subparsers) -> None:
     add_p = peer_sub.add_parser("add", aliases=["set"], help="Register (or update) a peer gateway")
     add_p.add_argument("name", help="Peer name (lowercase slug, e.g. spark, homelab)")
     add_p.add_argument("--url", required=True, help="Peer gateway base URL, e.g. http://spark.lan:8377")
-    add_p.add_argument("--key", default="", help="The peer's API_SERVER_KEY (stored in ~/.hermes/.env)")
+    add_p.add_argument("--key", default="", help="The peer's API_SERVER_KEY (stored in ~/.aura-forge/.env)")
     add_p.add_argument("--note", default="", help="Optional description")
 
     peer_sub.add_parser("list", aliases=["ls"], help="List registered peers")

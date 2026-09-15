@@ -1,4 +1,4 @@
-"""CLI handlers for the ``hermes proxy`` subcommand."""
+"""CLI handlers for the ``auraforge proxy`` subcommand."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def _print_aiohttp_missing() -> None:
     print(
-        "hermes proxy requires aiohttp. Run `hermes setup` to install it.",
+        "hermes proxy requires aiohttp. Run `auraforge setup` to install it.",
         file=sys.stderr,
     )
 
@@ -42,7 +42,7 @@ def cmd_proxy_start(args: Any) -> int:
         return 2
 
     if not adapter.is_authenticated():
-        auth_hint = getattr(adapter, "auth_hint", f"hermes auth add {adapter.name}")
+        auth_hint = getattr(adapter, "auth_hint", f"auraforge auth add {adapter.name}")
         print(
             f"Not logged into {adapter.display_name}. "
             f"Run `{auth_hint}` first.",
@@ -107,7 +107,7 @@ def cmd_proxy_list_providers(args: Any) -> int:
 
 
 def cmd_proxy(args: Any) -> int:
-    """Dispatch ``hermes proxy <subcommand>``."""
+    """Dispatch ``auraforge proxy <subcommand>``."""
     sub = getattr(args, "proxy_command", None)
     if sub == "start":
         return cmd_proxy_start(args)

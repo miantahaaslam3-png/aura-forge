@@ -6,7 +6,7 @@ author: Ben Barclay (benbarclay), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Documents, OCR, Action-Items, Deadlines, Extraction]
     related_skills: [ocr-and-documents, pdf, docx, notion]
 ---

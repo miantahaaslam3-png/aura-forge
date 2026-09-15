@@ -6,7 +6,7 @@ author: Ben Barclay (benbarclay), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Meetings, Action-Items, Follow-Up, Productivity]
     related_skills: [teams-meeting-pipeline, google-workspace, notion]
 ---

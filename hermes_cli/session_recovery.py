@@ -335,12 +335,12 @@ def _snapshot_and_inspect(
             raise SessionRecoverySafetyError(
                 "The source database bundle changed while it was being copied. "
                 "Stop every Aura Forge process using this profile and retry. "
-                "This includes the interactive `hermes` CLI session this "
+                "This includes the interactive `auraforge` CLI session this "
                 "command may have been launched from: a running parent CLI "
                 "writes session bookkeeping (compression ticks, context "
                 "tracking) to state.db in the background and counts as a "
                 "Aura Forge process even after the gateway is stopped. Run the "
-                "recovery from a fresh shell with no `hermes` session open, "
+                "recovery from a fresh shell with no `auraforge` session open, "
                 "or point --source at an immutable snapshot copy of the "
                 "database."
             )

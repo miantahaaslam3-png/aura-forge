@@ -2,7 +2,7 @@
 
 Mirrors the Skills Hub catalog pattern (``tools/skills_hub.py``): a static
 machine-readable JSON index hosted at a canonical URL, cached locally under
-``HERMES_HOME/cache/`` with a TTL, with a bundled seed file as the offline
+``AURA_FORGE_HOME/cache/`` with a TTL, with a bundled seed file as the offline
 fallback and format reference.
 
 Fallback chain: remote index → cached copy (fresh or stale) → bundled seed.

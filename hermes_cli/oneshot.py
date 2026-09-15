@@ -4,12 +4,12 @@ Bypasses cli.py entirely.  No banner, no spinner, no session_id line,
 no stderr chatter.  Just the agent's final text to stdout.
 
 Toolsets = explicit --toolsets when provided, otherwise whatever the user has
-configured for "cli" in `hermes tools`.
+configured for "cli" in `auraforge tools`.
 Rules / memory / AGENTS.md / preloaded skills = same as a normal chat turn.
 Approvals = auto-bypassed (HERMES_YOLO_MODE=1 is set for the call).
 Working directory = the user's CWD (AGENTS.md etc. resolve from there as usual).
 
-Model / provider selection mirrors `hermes chat`:
+Model / provider selection mirrors `auraforge chat`:
     - Both optional. If omitted, use the user's configured default.
     - If both given, pair them exactly as given.
     - If only --model given, auto-detect the provider that serves it.
@@ -72,7 +72,7 @@ def _build_preloaded_skills_prompt(skills: object = None) -> str | None:
         if loaded_skills:
             logging.warning(
                 "Unknown skill(s) requested, skipping: %s. Continuing with: %s. "
-                "List available skills with `hermes skills list`.",
+                "List available skills with `auraforge skills list`.",
                 missing_display,
                 ", ".join(loaded_skills),
             )
@@ -339,7 +339,7 @@ def run_oneshot(
 
 
 def _create_session_db_for_oneshot():
-    """Best-effort SessionDB for ``hermes -z`` / oneshot mode.
+    """Best-effort SessionDB for ``auraforge -z`` / oneshot mode.
 
     Oneshot bypasses ``HermesCLI._init_agent()``, so it must wire the SQLite
     session store itself. Without this, the ``session_search``/recall tool is

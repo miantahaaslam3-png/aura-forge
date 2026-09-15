@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Hermes CLI - Main entry point.
+Aura Forge CLI - Main entry point.
 
 Usage:
     hermes                     # Interactive chat (default)
@@ -11,13 +11,13 @@ Usage:
     hermes gateway status      # Show gateway status
     hermes gateway install     # Install gateway service
     hermes gateway uninstall   # Uninstall gateway service
-    hermes setup               # Interactive setup wizard
+    auraforge setup               # Interactive setup wizard
     hermes logout              # Clear stored authentication
     hermes status              # Show status of all components
     hermes cron                # Manage cron jobs
     hermes cron list           # List cron jobs
     hermes cron status         # Check if cron scheduler is running
-    hermes doctor              # Check configuration and dependencies
+    auraforge doctor              # Check configuration and dependencies
     hermes honcho setup                    # Configure Honcho AI memory integration
     hermes honcho status                   # Show Honcho config and connection status
     hermes honcho sessions                 # List directory → session name mappings
@@ -36,7 +36,7 @@ Usage:
     hermes honcho migrate                  # Step-by-step migration guide: OpenClaw native → Hermes + Honcho
     hermes --version           Show version and update status
     hermes update              Update to latest version
-    hermes uninstall           Uninstall Hermes Agent
+    hermes uninstall           Uninstall Aura Forge Agent
     hermes acp                 Run as an ACP server for editor integration
     hermes sessions browse     Interactive session picker with search
 
@@ -49,12 +49,12 @@ Usage:
 #
 # Guarded against ModuleNotFoundError because ``hermes_bootstrap`` is a
 # top-level module registered via pyproject.toml's ``py-modules`` list.
-# When the user upgrades code via ``git pull`` (or ``hermes update``
+# When the user upgrades code via ``git pull`` (or ``auraforge update``
 # crashes between ``git reset --hard`` and ``uv pip install -e .``), the
 # new code references ``hermes_bootstrap`` but the editable install's
 # ``.pth`` file still points at the old set of top-level modules.  Without
 # this guard, hermes crashes on import and the user can't run
-# ``hermes update`` to recover.  Missing the bootstrap means UTF-8 stdio
+# ``auraforge update`` to recover.  Missing the bootstrap means UTF-8 stdio
 # setup is skipped on Windows — degraded, not broken.  POSIX is unaffected.
 try:
     import hermes_bootstrap  # noqa: F401
@@ -84,7 +84,7 @@ if _bootstrap_root not in sys.path:
 from hermes_cli import _startup_fast  # noqa: E402
 
 # Early venv self-heal — MUST run before any third-party import below.  When
-# a prior ``hermes update`` left a recovery marker and a core package's import
+# a prior ``auraforge update`` left a recovery marker and a core package's import
 # files were wiped (#57828 — failed lazy backend refresh), the module-level
 # ``from hermes_cli.env_loader import ...`` / ``from hermes_cli.config import
 # ...`` imports further down would crash before ``main()`` ever reaches
@@ -239,7 +239,7 @@ def _set_process_title() -> None:
     Purely cosmetic — non-fatal on any platform.
 
     Strategy (try in order):
-      1. ``setproctitle`` (opt-in dep — installed via ``hermes tools`` or
+      1. ``setproctitle`` (opt-in dep — installed via ``auraforge tools`` or
          ``pip install setproctitle``, or bundled in a future release).
       2. ctypes ``prctl(PR_SET_NAME)`` (Linux only, 15-char limit).
       3. ctypes ``pthread_setname_np`` (macOS only, kernel thread name —
@@ -288,7 +288,7 @@ def _config_default_interface_early() -> str:
         return _EARLY_INTERFACE_CACHE[0]
     value = "cli"
     try:
-        home = os.environ.get("HERMES_HOME")
+        home = os.environ.get("AURA_FORGE_HOME")
         if home:
             cfg_path = os.path.join(home, "config.yaml")
         else:
@@ -320,7 +320,7 @@ def _wants_tui_early(argv: "list[str] | None" = None) -> bool:
     boots it there), then ``display.interface`` in config.
 
     The TTY gate is load-bearing for headless spawners — kanban workers,
-    cron jobs, pipes run ``hermes … chat -q`` with stdio on a pipe. This
+    cron jobs, pipes run ``auraforge … chat -q`` with stdio on a pipe. This
     is the earliest launch decision (it runs before ``cmd_chat`` /
     ``_resolve_use_tui``), so a ``display.interface: tui`` default used to
     boot the TUI here — whose no-TTY bail-out exits 0 without doing the
@@ -355,7 +355,7 @@ def _suppress_mouse_residue_early() -> None:
     if not _wants_tui_early():
         return
     try:
-        # Skip when stdout is redirected (`hermes --tui … >log`, CI capture):
+        # Skip when stdout is redirected (`auraforge --tui … >log`, CI capture):
         # the bytes can't reach the terminal anyway and would just pollute
         # the log with raw CSI.
         if not os.isatty(1):
@@ -409,7 +409,7 @@ def _print_fast_version_info() -> None:
 
 
 def _try_ultrafast_version() -> bool:
-    """Handle ``hermes --version`` before config/logging imports."""
+    """Handle ``auraforge --version`` before config/logging imports."""
     return _startup_fast.try_fast_version()
 
 
@@ -490,7 +490,7 @@ from hermes_cli.subcommands.claw import build_claw_parser
 def _require_tty(command_name: str) -> None:
     """Exit with a clear error if stdin is not a terminal.
 
-    Interactive TUI commands (hermes tools, hermes setup, hermes model) use
+    Interactive TUI commands (hermes tools, auraforge setup, auraforge model) use
     curses or input() prompts that spin at 100% CPU when stdin is a pipe.
     This guard prevents accidental non-interactive invocation.
     """
@@ -512,21 +512,21 @@ _ensure_project_root_on_path_fast()
 # ---------------------------------------------------------------------------
 # Profile override — MUST happen before any hermes module import.
 #
-# Many modules cache HERMES_HOME at import time (module-level constants).
+# Many modules cache AURA_FORGE_HOME at import time (module-level constants).
 # We intercept --profile/-p from sys.argv here and set the env var so that
-# every subsequent ``os.getenv("HERMES_HOME", ...)`` resolves correctly.
+# every subsequent ``os.getenv("AURA_FORGE_HOME", ...)`` resolves correctly.
 # The flag is stripped from sys.argv so argparse never sees it.
-# Falls back to ~/.hermes/active_profile for sticky default.
+# Falls back to ~/.aura-forge/active_profile for sticky default.
 # ---------------------------------------------------------------------------
 def _apply_profile_override() -> None:
-    """Pre-parse --profile/-p and set HERMES_HOME before imports."""
+    """Pre-parse --profile/-p and set AURA_FORGE_HOME before imports."""
     argv = sys.argv[1:]
     profile_name = None
     consume = 0
     profile_index = None
 
     def _inside_mcp_add_args(index: int) -> bool:
-        """True once argv reaches `hermes mcp add ... --args <command argv>`.
+        """True once argv reaches `auraforge mcp add ... --args <command argv>`.
 
         ``mcp add --args`` is command-argv passthrough. Flags after that point
         belong to the child MCP command (for example Docker MCP Toolkit's
@@ -571,7 +571,7 @@ def _apply_profile_override() -> None:
         return None
 
     # 1. Check for explicit -p / --profile flag. Historically this worked even
-    # after the subcommand (`hermes chat -p coder`), so keep scanning broadly.
+    # after the subcommand (`auraforge chat -p coder`), so keep scanning broadly.
     # The exception is command-argv passthrough regions such as `mcp add --args`.
     from hermes_cli._parser import top_level_value_flag_sets
 
@@ -617,16 +617,16 @@ def _apply_profile_override() -> None:
             consume = 0
             profile_index = None
 
-    # 1.5 If HERMES_HOME is already set and no explicit flag was given, trust it
+    # 1.5 If AURA_FORGE_HOME is already set and no explicit flag was given, trust it
     # only when it already points to a specific profile directory.  The
     # distinguishing heuristic: a profile path has "profiles" as its immediate
-    # parent directory name (e.g. ~/.hermes/profiles/coder or
-    # /opt/data/profiles/coder).  If HERMES_HOME points to the hermes root
-    # instead (e.g. systemd hardcodes HERMES_HOME=/root/.hermes), we must
+    # parent directory name (e.g. ~/.aura-forge/profiles/coder or
+    # /opt/data/profiles/coder).  If AURA_FORGE_HOME points to the hermes root
+    # instead (e.g. systemd hardcodes AURA_FORGE_HOME=/root/.hermes), we must
     # still read active_profile — the user may have switched profiles via
-    # `hermes profile use` and the gateway should honour that choice.
+    # `auraforge profile use` and the gateway should honour that choice.
     # See issue #22502.
-    hermes_home_env = os.environ.get("HERMES_HOME", "")
+    hermes_home_env = os.environ.get("AURA_FORGE_HOME", "")
     if profile_name is None and hermes_home_env:
         if Path(hermes_home_env).parent.name == "profiles":
             return
@@ -637,8 +637,8 @@ def _apply_profile_override() -> None:
     # run-script as HERMES_S6_SUPERVISED_CHILD=1) must NOT follow the sticky
     # active_profile. Each supervised slot has a fixed profile identity: named
     # slots pass ``-p <name>`` explicitly (handled in step 1 above), and the
-    # reserved ``gateway-default`` slot runs bare ``hermes gateway run`` to mean
-    # "the root HERMES_HOME profile". If the reserved default child read
+    # reserved ``gateway-default`` slot runs bare ``auraforge gateway run`` to mean
+    # "the root AURA_FORGE_HOME profile". If the reserved default child read
     # active_profile here, switching the active profile (e.g. via the dashboard)
     # would silently redirect the default gateway into that profile — yielding a
     # duplicate gateway for the active profile and no real default gateway. See
@@ -656,7 +656,7 @@ def _apply_profile_override() -> None:
         except (UnicodeDecodeError, OSError):
             pass  # corrupted file, skip
 
-    # 3. If we found a profile, resolve and set HERMES_HOME
+    # 3. If we found a profile, resolve and set AURA_FORGE_HOME
     if profile_name is not None:
         try:
             from hermes_cli.profiles import resolve_profile_env
@@ -677,7 +677,7 @@ def _apply_profile_override() -> None:
                 file=sys.stderr,
             )
             return
-        os.environ["HERMES_HOME"] = hermes_home
+        os.environ["AURA_FORGE_HOME"] = hermes_home
         # Strip the flag from argv so argparse doesn't choke
         if consume > 0 and profile_index is not None:
             start = profile_index + 1  # +1 because argv is sys.argv[1:]
@@ -686,13 +686,13 @@ def _apply_profile_override() -> None:
 
 _apply_profile_override()
 
-# Windows launcher self-heal — the ``hermes`` command users run is a COPY of
+# Windows launcher self-heal — the ``auraforge`` command users run is a COPY of
 # the venv console script, staged into the managed binary dir (the default
 # Hermes root's ``bin``, next to the managed uv) by install.ps1. That dir
 # lives OUTSIDE the git checkout precisely because an earlier layout staged
-# the copies at ``<checkout>\bin``, where ``hermes update``'s autostash
+# the copies at ``<checkout>\bin``, where ``auraforge update``'s autostash
 # (``git stash push --include-untracked``) swept them off disk; with the
-# desktop updater's ``--keep-stash`` nothing restored them and ``hermes``
+# desktop updater's ``--keep-stash`` nothing restored them and ``auraforge``
 # stopped resolving in every new terminal (venv\Scripts itself must stay off
 # PATH — it shadows the user's ``python``, #83797). Re-staging at process
 # start reaches already-broken installs through the one channel that still
@@ -701,7 +701,7 @@ _apply_profile_override()
 # fail toward inaction so source checkouts are untouched. Sits AFTER the
 # profile override on purpose — no hermes module may be imported before
 # profiles resolve. The launcher dir itself is per-machine (the helper
-# anchors on the DEFAULT root, not HERMES_HOME), so profile sessions heal
+# anchors on the DEFAULT root, not AURA_FORGE_HOME), so profile sessions heal
 # the same shared dir.
 if sys.platform == "win32":
     try:
@@ -711,7 +711,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-# Load .env from ~/.hermes/.env first, then project root as dev fallback.
+# Load .env from ~/.aura-forge/.env first, then project root as dev fallback.
 # User-managed env files should override stale shell exports on restart.
 from hermes_cli.config import get_hermes_home
 from hermes_cli.env_loader import load_hermes_dotenv
@@ -772,7 +772,7 @@ try:
 except Exception:
     pass  # best-effort — redaction stays at default (enabled) on config errors
 
-# Initialize centralized file logging early — all `hermes` subcommands
+# Initialize centralized file logging early — all `auraforge` subcommands
 # (chat, setup, gateway, config, etc.) write to agent.log + errors.log.
 # Dashboard entrypoints bootstrap with GUI mode so gui.log is always present
 # during GUI testing, including pre-dispatch startup failures.
@@ -905,7 +905,7 @@ def _read_git_revision_fingerprint(repo_root: Path) -> str | None:
                 return f"git:{ref}:{packed_sha}"
             # Ref name is known but unresolved — still stable across launches,
             # and the version/release fallback in the caller will invalidate
-            # after `hermes update`.
+            # after `auraforge update`.
             return f"git:{ref}:unresolved"
         return f"git:HEAD:{head}"
     except OSError:
@@ -1614,7 +1614,7 @@ def _resolve_last_session(source: str = "cli") -> Optional[str]:
     """Look up the most recently-used session ID for a source.
 
     Scoped to the current workspace first (git repo root, else cwd) so
-    ``hermes -c`` from repo A continues repo A's last session rather than the
+    ``auraforge -c`` from repo A continues repo A's last session rather than the
     global MRU. Falls back to the unscoped MRU when no session matches the
     current workspace, preserving the old behaviour for fresh directories.
     """
@@ -2413,7 +2413,7 @@ def _ensure_tui_node() -> None:
                 "-c",
                 f'source "{helper}" >&2 && ensure_node >&2 && command -v node',
             ],
-            env={**os.environ, "HERMES_HOME": hermes_home},
+            env={**os.environ, "AURA_FORGE_HOME": hermes_home},
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -2451,7 +2451,7 @@ def _restore_tui_workspace(tui_dir: Path) -> bool:
     """Try to restore a missing ``ui-tui/`` from git, returning True on success.
 
     On Windows an antivirus / NTFS filter driver can leave tracked ``ui-tui/``
-    files deleted in the working tree after ``hermes update`` (HEAD stays
+    files deleted in the working tree after ``auraforge update`` (HEAD stays
     intact; the files just vanish — see issue #49145). Those files are tracked,
     so ``git restore`` puts them back deterministically. Best-effort: returns
     False (rather than raising) when git is unavailable, this isn't a checkout,
@@ -2494,12 +2494,12 @@ def _ensure_tui_workspace(tui_dir: Path) -> None:
     print(
         "Error: the TUI workspace is missing from this Hermes checkout.\n"
         f"Expected directory: {tui_dir}\n"
-        "This usually means `hermes update` left tracked ui-tui files deleted.\n"
+        "This usually means `auraforge update` left tracked ui-tui files deleted.\n"
         "Recovery:\n"
         "  1. From the Hermes checkout, run `git restore -- ui-tui`\n"
         "  2. Run `npm install --silent --no-fund --no-audit --progress=false`\n"
-        "  3. Retry `hermes --tui`\n"
-        "If the checkout is still inconsistent, run `hermes update --force`.",
+        "  3. Retry `auraforge --tui`\n"
+        "If the checkout is still inconsistent, run `auraforge update --force`.",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -2523,7 +2523,7 @@ def _make_tui_argv(tui_dir: Path, tui_dev: bool) -> tuple[list[str], Path]:
             env_node = os.environ.get("HERMES_NODE")
             if env_node and os.path.isfile(env_node) and os.access(env_node, os.X_OK):
                 return env_node
-        # find_node_executable() prefers the managed $HERMES_HOME/node tree,
+        # find_node_executable() prefers the managed $AURA_FORGE_HOME/node tree,
         # which is not on PATH — a bare which() would declare "node not found"
         # and exit on an install whose only Node is the one Hermes installed,
         # and would pick a system Node over the managed one when both exist.
@@ -2993,7 +2993,7 @@ def _launch_tui(
     # HERMES_TUI_RESUME is an internal hand-off from the Python wrapper to the
     # Ink app.  Because we start from a full os.environ snapshot (via
     # build_subprocess_env), an exported/stale value
-    # in the user's shell would otherwise make a plain `hermes --tui` try to
+    # in the user's shell would otherwise make a plain `auraforge --tui` try to
     # resume a non-existent session and leave the UI at "error: session not
     # found" with no live session.  Only forward a resume id that argparse
     # resolved for this invocation; direct `node ui-tui/dist/entry.js` users can
@@ -3023,7 +3023,7 @@ def _launch_tui(
             except Exception:
                 pass
 
-    # Exit code 42 = TUI requested an update. Relaunch as `hermes update` so
+    # Exit code 42 = TUI requested an update. Relaunch as `auraforge update` so
     # the user sees update output directly and gets the new version.
     # preserve_inherited=False ensures --tui and other flags are NOT carried
     # into the update subcommand.
@@ -3042,9 +3042,9 @@ def _pin_kanban_board_env() -> None:
     """Pin the active kanban board into ``HERMES_KANBAN_BOARD`` for the chat session.
 
     Without this, in-process tools (``kanban_*``) and shelled-out CLI calls
-    (``hermes kanban …``) resolve the board on different paths: the env-pin if
+    (``auraforge kanban …``) resolve the board on different paths: the env-pin if
     set, otherwise the global ``<root>/kanban/current`` file. A concurrent
-    ``hermes kanban boards switch`` from another session can flip the file
+    ``auraforge kanban boards switch`` from another session can flip the file
     mid-turn, so the same chat sees its tool calls hit board A while its shell
     calls hit board B (#20074). Pinning at chat boot mirrors what the
     dispatcher already does for spawned workers.
@@ -3060,7 +3060,7 @@ def _pin_kanban_board_env() -> None:
 
 
 def _sync_bundled_skills_quietly() -> None:
-    """Seed ``~/.hermes/skills/`` with the bundled skill library on first launch.
+    """Seed ``~/.aura-forge/skills/`` with the bundled skill library on first launch.
 
     Called from any CLI entrypoint that the user might use as their first
     interaction with Hermes — chat, dashboard (the desktop GUI's backend),
@@ -3095,7 +3095,7 @@ def _resolve_use_tui(args) -> bool:
 
     The TTY gate (3) is load-bearing: ambient TUI preferences (env var or
     config default) must never hijack a NON-interactive invocation. Kanban
-    workers, cron jobs, and pipelines run ``hermes … chat -q`` with stdout
+    workers, cron jobs, and pipelines run ``auraforge … chat -q`` with stdout
     on a pipe; booting the Ink TUI there hits its no-TTY bail-out, which
     prints a resume hint and exits 0 — a kanban worker then dies with
     "exited cleanly without calling kanban_complete — protocol violation"
@@ -3256,7 +3256,7 @@ def cmd_chat(args):
             for _ref in _retired_xai_refs:
                 sys.stderr.write(f"  \033[33m⚠\033[0m {format_issue(_ref)}\n")
             sys.stderr.write(f"  \033[2mMigration guide: {MIGRATION_GUIDE_URL}\033[0m\n")
-            sys.stderr.write("  \033[2mRun 'hermes doctor' for details.\033[0m\n\n")
+            sys.stderr.write("  \033[2mRun 'auraforge doctor' for details.\033[0m\n\n")
     except Exception:
         pass
 
@@ -3267,7 +3267,7 @@ def cmd_chat(args):
             "It looks like Hermes isn't configured yet -- no API keys or providers found."
         )
         print()
-        print("  Run:  hermes setup")
+        print("  Run:  auraforge setup")
         print()
 
         from hermes_cli.setup import (
@@ -3289,7 +3289,7 @@ def cmd_chat(args):
             cmd_setup(args)
             return
         print()
-        print("You can run 'hermes setup' at any time to configure.")
+        print("You can run 'auraforge setup' at any time to configure.")
         sys.exit(1)
 
     # Start update check in background (runs while other init happens).
@@ -3313,7 +3313,7 @@ def cmd_chat(args):
     # loading happens at agent init (first message), by which point the
     # sync has long finished.
     #
-    # FIRST RUN is the exception: with an empty ~/.hermes/skills the banner
+    # FIRST RUN is the exception: with an empty ~/.aura-forge/skills the banner
     # prefetch races the background sync, caches an empty skills index, and
     # the very first launch greets the user with "No skills installed ·
     # 0 skills" while 69 bundled skills land milliseconds later (full-surface
@@ -3360,7 +3360,7 @@ def cmd_chat(args):
         os.environ["HERMES_YOLO_MODE"] = "1"
 
     # --ignore-user-config: make load_cli_config() / load_config() skip the
-    # user's ~/.hermes/config.yaml and return built-in defaults. Set BEFORE
+    # user's ~/.aura-forge/config.yaml and return built-in defaults. Set BEFORE
     # importing cli (which runs `CLI_CONFIG = load_cli_config()` at module
     # import time). Credentials in .env are still loaded — this flag only
     # ignores behavioral/config settings.
@@ -3543,7 +3543,7 @@ def cmd_whatsapp(args):
     # We intentionally don't write WHATSAPP_ENABLED=true here.  If the user
     # aborts the wizard later (Ctrl+C, failed npm install, missed QR scan),
     # we'd otherwise leave .env claiming WhatsApp is ready when the bridge
-    # has no creds.json.  Every subsequent `hermes gateway` then paid a 30s
+    # has no creds.json.  Every subsequent `auraforge gateway` then paid a 30s
     # bridge-bootstrap timeout and queued WhatsApp for indefinite retries.
     # Now: aborted setup leaves WHATSAPP_ENABLED unset → gateway skips it.
     # Re-runs that already have WHATSAPP_ENABLED=true (from a prior
@@ -3686,7 +3686,7 @@ def cmd_whatsapp(args):
     if (session_dir / "creds.json").exists():
         # Only enable WhatsApp now that pairing actually succeeded.  If the
         # user Ctrl+C'd at any earlier step, WHATSAPP_ENABLED stays unset
-        # and `hermes gateway` skips it cleanly instead of paying a 30s
+        # and `auraforge gateway` skips it cleanly instead of paying a 30s
         # bridge timeout + queueing the platform for indefinite retries.
         save_env_value("WHATSAPP_ENABLED", "true")
         print("✓ WhatsApp paired successfully!")
@@ -3697,14 +3697,14 @@ def cmd_whatsapp(args):
             print("    2. Send a message to the bot's WhatsApp number")
             print("    3. The agent will reply automatically")
             print()
-            print("  Tip: Agent responses are prefixed with '⚕ Hermes Agent'")
+            print("  Tip: Agent responses are prefixed with '⚕ Aura Forge Agent'")
         else:
             print("  Next steps:")
             print("    1. Start the gateway:  hermes gateway")
             print("    2. Open WhatsApp → Message Yourself")
             print("    3. Type a message — the agent will reply")
             print()
-            print("  Tip: Agent responses are prefixed with '⚕ Hermes Agent'")
+            print("  Tip: Agent responses are prefixed with '⚕ Aura Forge Agent'")
             print("  so you can tell them apart from your own messages.")
         print()
         print("  Or install as a service: hermes gateway install")
@@ -3721,7 +3721,7 @@ def cmd_whatsapp_cloud(args):
     common setup mistakes (e.g. pasting a phone number into the Phone
     Number ID field).
 
-    Distinct from ``hermes whatsapp`` (the Baileys bridge wizard) — the
+    Distinct from ``auraforge whatsapp`` (the Baileys bridge wizard) — the
     two adapters are complementary, not alternatives. See
     ``hermes_cli/setup_whatsapp_cloud.py``.
     """
@@ -3775,7 +3775,7 @@ def _is_profile_api_key_provider(provider_id: str) -> bool:
 def select_provider_and_model(args=None):
     """Core provider selection + model picking logic.
 
-    Shared by ``cmd_model`` (``hermes model``) and the setup wizard
+    Shared by ``cmd_model`` (``auraforge model``) and the setup wizard
     (``setup_model_provider`` in setup.py).  Handles the full flow:
     provider picker, credential prompting, model selection, and config
     persistence.
@@ -3981,8 +3981,8 @@ def select_provider_and_model(args=None):
                 active = _canonical_named_custom_key(active)
         else:
             warning = (
-                f"Unknown provider '{effective_provider}'. Check 'hermes model' for "
-                "available providers, or run 'hermes doctor' to diagnose config "
+                f"Unknown provider '{effective_provider}'. Check 'auraforge model' for "
+                "available providers, or run 'auraforge doctor' to diagnose config "
                 "issues."
             )
             print(f"Warning: {warning} Falling back to auto provider detection.")
@@ -4026,7 +4026,7 @@ def select_provider_and_model(args=None):
     # resolves back to a concrete slug, so the dispatch chain below is
     # unchanged. Custom providers and the trailing actions stay flat.
     canonical_descs = {p.slug: p.tui_desc for p in CANONICAL_PROVIDERS}
-    # Honor ``model_catalog.excluded_providers`` so the CLI ``hermes model``
+    # Honor ``model_catalog.excluded_providers`` so the CLI ``auraforge model``
     # picker hides the same providers the gateway/TUI pickers do. A canonical
     # provider is hidden if its slug OR any of its aliases appears in the
     # exclusion list (case-insensitive), matching list_authenticated_providers'
@@ -4216,7 +4216,7 @@ def select_provider_and_model(args=None):
 
     # ── Post-switch cleanup: clear stale OPENAI_BASE_URL ──────────────
     # When the user switches to a named provider (anything except "custom"),
-    # a leftover OPENAI_BASE_URL in ~/.hermes/.env can poison auxiliary
+    # a leftover OPENAI_BASE_URL in ~/.aura-forge/.env can poison auxiliary
     # clients that use provider:auto. Clear it proactively.  (#5161)
     if selected_provider not in {
         "custom",
@@ -4227,7 +4227,7 @@ def select_provider_and_model(args=None):
 
 
 def _clear_stale_openai_base_url():
-    """Remove OPENAI_BASE_URL from ~/.hermes/.env if the active provider is not 'custom'.
+    """Remove OPENAI_BASE_URL from ~/.aura-forge/.env if the active provider is not 'custom'.
 
     After a provider switch, a leftover OPENAI_BASE_URL causes auxiliary
     clients (compression, vision, delegation) with provider:auto to route
@@ -4264,9 +4264,9 @@ def _clear_stale_openai_base_url():
 # its own provider+model pair in config.yaml under `auxiliary.<task>`.
 #
 # The UI lives behind "Configure auxiliary models..." at the bottom of the
-# `hermes model` provider picker. It does NOT re-run credential setup — it
+# `auraforge model` provider picker. It does NOT re-run credential setup — it
 # only routes already-authenticated providers to specific aux tasks. Users
-# configure new providers through the normal `hermes model` flow first.
+# configure new providers through the normal `auraforge model` flow first.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # (task_key, display_name, short_description)
@@ -4532,7 +4532,7 @@ def _aux_select_for_task(task: str) -> None:
     shows: authenticated built-ins, the user's own ``providers:`` /
     ``custom_providers:`` endpoints, and providers whose credential pool is
     temporarily exhausted. Only already-configured providers appear; users set
-    up new ones through the normal ``hermes model`` flow, then route aux tasks
+    up new ones through the normal ``auraforge model`` flow, then route aux tasks
     to them here.
     """
     from hermes_cli.config import load_config
@@ -5022,8 +5022,8 @@ def _remove_custom_provider(config):
 # Lazy-export the model catalog at module level. Tests and a handful of
 # downstream call sites read `hermes_cli.main._PROVIDER_MODELS` directly,
 # so the symbol needs to be reachable as a module attribute. But importing
-# the catalog eagerly costs ~55ms on every `hermes` invocation — including
-# fast paths like `hermes --version` and slash-command dispatch that never
+# the catalog eagerly costs ~55ms on every `auraforge` invocation — including
+# fast paths like `auraforge --version` and slash-command dispatch that never
 # touch the catalog. PEP 562 module-level __getattr__ defers the import
 # until first attribute access, so the cost is only paid by callers that
 # actually look up the catalog. Termux already defers via the same
@@ -5036,7 +5036,7 @@ _LAZY_MODEL_EXPORTS = ("_PROVIDER_MODELS",)
 # implementations into their own modules, but main.py still re-exports their
 # surface so argparse wiring and test monkeypatches on hermes_cli.main.<name>
 # keep resolving unchanged. Importing those modules eagerly costs ~50ms on
-# every `hermes` invocation, including fast paths like `hermes --version`
+# every `auraforge` invocation, including fast paths like `auraforge --version`
 # that never run a subcommand. Resolve the re-exports through the module
 # __getattr__ below instead, so each module is only imported when one of its
 # names is actually touched. Monkeypatching keeps working: patch.object sets
@@ -5332,11 +5332,11 @@ def _prompt_api_key(
     provider_id: str = "",
     existing_source: str = "",
 ) -> tuple:
-    """Shared API-key entry point for ``hermes setup`` / ``hermes model``.
+    """Shared API-key entry point for ``auraforge setup`` / ``auraforge model``.
 
     Handles both first-time entry and the already-configured case.  When a key
     is already present, offers [K]eep / [R]eplace / [C]lear so the user can
-    recover from a malformed paste without editing ``~/.hermes/.env`` by hand.
+    recover from a malformed paste without editing ``~/.aura-forge/.env`` by hand.
 
     Returns ``(resolved_key, abort)``.  ``abort=True`` means the caller should
     ``return`` immediately — the user cancelled entry, declined to replace, or
@@ -5411,7 +5411,7 @@ def _prompt_api_key(
     if choice.startswith("c") and not pool_backed:
         save_env_value(key_env, "")
         print(
-            f"  API key cleared.  Re-run `hermes setup` to configure {pconfig.name} again."
+            f"  API key cleared.  Re-run `auraforge setup` to configure {pconfig.name} again."
         )
         return "", True
 
@@ -5525,7 +5525,7 @@ def _run_anthropic_oauth_flow(save_env_value):
         print("    1. Install Claude Code:  npm install -g @anthropic-ai/claude-code")
         print("    2. Run:                  claude setup-token")
         print("    3. Follow the browser prompts to authorize")
-        print("    4. Re-run:               hermes model")
+        print("    4. Re-run:               auraforge model")
         print()
         print("  Or paste an existing setup-token now (sk-ant-oat-...):")
         print()
@@ -5547,7 +5547,7 @@ def _run_anthropic_oauth_flow(save_env_value):
 
 
 def cmd_login(args):
-    """Authenticate Hermes CLI with a provider."""
+    """Authenticate Aura Forge CLI with a provider."""
     from hermes_cli.auth import login_command
 
     login_command(args)
@@ -5658,7 +5658,7 @@ def cmd_sync(args):
             print(
                 f"'{skill}' is not sync-eligible (bundled, hub-installed, "
                 f"external, or not found). Only agent-created / user-authored "
-                f"skills under ~/.hermes/skills/ can sync.",
+                f"skills under ~/.aura-forge/skills/ can sync.",
                 file=sys.stderr,
             )
             return 1
@@ -5684,7 +5684,7 @@ def cmd_sync(args):
                 print(
                     f"  {len(modified)} with local edits not yet shared: "
                     f"{', '.join(modified)}\n"
-                    f"  Share them back with `hermes sync propose <skill>`. "
+                    f"  Share them back with `auraforge sync propose <skill>`. "
                     f"Org updates will not overwrite them.",
                     file=sys.stderr,
                 )
@@ -5786,7 +5786,7 @@ def cmd_webhook(args):
 def cmd_slack(args):
     """Slack integration helpers.
 
-    Dispatches ``hermes slack <subcommand>``. Currently supports:
+    Dispatches ``auraforge slack <subcommand>``. Currently supports:
       manifest — print or write a Slack app manifest with every gateway
                  command registered as a first-class slash.
     """
@@ -5800,7 +5800,7 @@ def cmd_slack(args):
             "  manifest   Generate a Slack app manifest with every gateway\n"
             "             command registered as a native slash\n"
             "\n"
-            "Run `hermes slack manifest -h` for details.",
+            "Run `auraforge slack manifest -h` for details.",
             file=sys.stderr,
         )
         return 1
@@ -5853,7 +5853,7 @@ def cmd_verify(args):
 
 
 def cmd_security(args):
-    """Dispatch `hermes security <subcmd>`."""
+    """Dispatch `auraforge security <subcmd>`."""
     sub = getattr(args, "security_command", None)
     if sub in ("audit", None):
         from hermes_cli.security_audit import cmd_security_audit
@@ -5866,7 +5866,7 @@ def cmd_security(args):
 
 
 def cmd_approvals(args):
-    """Dispatch `hermes approvals <subcmd>`."""
+    """Dispatch `auraforge approvals <subcmd>`."""
     from hermes_cli.approvals_suggest import approvals_command
 
     status = approvals_command(args)
@@ -5933,7 +5933,7 @@ def cmd_import(args):
 
 def _print_version_info(*, check_updates: bool = True) -> None:
     # Single source of truth for version output — shared with the
-    # `hermes --version` pre-import fast path (the `version` subcommand
+    # `auraforge --version` pre-import fast path (the `version` subcommand
     # was consolidated into `--version`).
     _startup_fast.print_fast_version_info(check_updates=check_updates)
 
@@ -5944,7 +5944,7 @@ def cmd_version(args):
 
 
 def cmd_uninstall(args):
-    """Uninstall Hermes Agent (or just the Chat GUI with --gui)."""
+    """Uninstall Aura Forge Agent (or just the Chat GUI with --gui)."""
     # Machine-readable install snapshot for the desktop app's uninstall UI.
     # Must run before any TTY gate — it's called from a non-interactive child.
     if getattr(args, "gui_summary", False):
@@ -6008,7 +6008,7 @@ def _clear_bytecode_cache(root: Path) -> int:
 # paying the update_cmd import cost on every CLI invocation.
 
 # Stamp file recording the checkout fingerprint the bytecode cache was last
-# validated against. Lives next to the checkout (NOT in HERMES_HOME) because
+# validated against. Lives next to the checkout (NOT in AURA_FORGE_HOME) because
 # __pycache__ is per-checkout state shared by every profile.
 _BYTECODE_FINGERPRINT_FILE = ".bytecode-fingerprint"
 
@@ -6037,16 +6037,16 @@ def _sweep_stale_bytecode_if_checkout_changed() -> None:
     The stale-bytecode bug class (issues #6207, #60242; Dhruv's WhatsApp
     ``cannot import name 'parse_model_flags_detailed'`` report) has one
     shared shape: the checkout's ``.py`` files change (git pull inside
-    ``hermes update``, a manual ``git pull``, a ZIP update, a file-sync
+    ``auraforge update``, a manual ``git pull``, a ZIP update, a file-sync
     restore) while ``__pycache__`` retains bytecode from the previous
     revision, and a later process trusts the stale ``.pyc`` instead of the
     fresh source.
 
-    Update-time clears alone can never close this class: ``hermes update``
+    Update-time clears alone can never close this class: ``auraforge update``
     always executes the PRE-pull updater code, so any hardening added to it
     only takes effect one update late, and manual ``git pull`` never runs
     the updater at all. This launch-time guard closes the loop: every
-    ``hermes`` entry point compares the checkout fingerprint (cheap file
+    ``auraforge`` entry point compares the checkout fingerprint (cheap file
     reads, no git subprocess) against the last-validated stamp and sweeps
     the bytecode cache once when they diverge.
 
@@ -6082,7 +6082,7 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
 
     Uses a SHA-256 content hash of the web source tree (the same approach
     ``_desktop_build_needed()`` already uses for the Electron build), NOT
-    mtime comparison. ``git checkout`` / ``git pull`` / ``hermes update``
+    mtime comparison. ``git checkout`` / ``git pull`` / ``auraforge update``
     rewrite source mtimes without changing content, which made the old
     mtime check unreliable in both directions: it could skip a rebuild when
     source had genuinely changed (serving a stale dashboard) and force a
@@ -6172,7 +6172,7 @@ def _compute_web_ui_content_hash(project_root: Path, web_dir: Path) -> str:
 
 
 def _web_ui_stamp_path() -> Path:
-    """Return the path to the web UI build stamp file under $HERMES_HOME."""
+    """Return the path to the web UI build stamp file under $AURA_FORGE_HOME."""
     from hermes_constants import get_hermes_home
     return get_hermes_home() / "web-ui-build-stamp.json"
 
@@ -6208,7 +6208,7 @@ def _run_with_idle_timeout(
     WSL2 with the default 4 GB cap) the build can stall or sit silent for
     minutes; users see a frozen terminal, assume the update is hung, and
     reboot — leaving the editable install in a half-state with the
-    ``hermes`` launcher present but ``hermes_cli`` not importable.
+    ``auraforge`` launcher present but ``hermes_cli`` not importable.
 
     This helper fixes both halves: stdout is streamed (so the user sees
     progress), and if no bytes have appeared on stdout/stderr for
@@ -6360,7 +6360,7 @@ def _run_npm_install_deterministic(
     falls back to ``npm install`` only if ``npm ci`` fails (e.g. lockfile out of
     sync on a WIP checkout).  Without this, ``npm install`` on npm ≥ 10 silently
     rewrites committed lockfiles (stripping ``"peer": true`` etc.), which leaves
-    the working tree dirty and causes the next ``hermes update`` to stash the
+    the working tree dirty and causes the next ``auraforge update`` to stash the
     lockfile — repeatedly.
 
     ``--include=dev`` is forced on every invocation: the callers are frontend
@@ -6546,7 +6546,7 @@ def _do_build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
     Args:
         web_dir: Path to the dashboard frontend source directory.
         fatal: If True, print error guidance and return False on failure
-               instead of a soft warning (used by ``hermes web``).
+               instead of a soft warning (used by ``auraforge web``).
 
     Returns True if the build succeeded or was skipped (no package.json).
     """
@@ -6603,7 +6603,7 @@ def _do_build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
     # web_dir itself and --workspace would fail.  See #42973.
     #
     # When running from the workspace root, this must name the SAME closure
-    # as `hermes update`'s _update_node_dependencies() (ui-tui + web +
+    # as `auraforge update`'s _update_node_dependencies() (ui-tui + web +
     # --include-workspace-root): the helper prefers `npm ci`, which deletes
     # node_modules before reifying the requested tree, so a narrower closure
     # here silently prunes everything the update step just installed (root
@@ -6713,12 +6713,12 @@ def _desktop_dist_exists(desktop_dir: Path) -> bool:
 # SHA-256 content hash of the source tree so that:
 #   - ``git checkout`` / ``git pull`` that touch mtimes but not content
 #     don't trigger a rebuild
-#   - ``hermes update`` can unconditionally call ``hermes desktop --build-only``
+#   - ``auraforge update`` can unconditionally call ``auraforge desktop --build-only``
 #     and it will skip if nothing actually changed
-#   - ``hermes desktop`` (interactive launch) skips the build when the
+#   - ``auraforge desktop`` (interactive launch) skips the build when the
 #     stamp matches, making repeated launches fast
 #
-# Stamp file: $HERMES_HOME/desktop-build-stamp.json
+# Stamp file: $AURA_FORGE_HOME/desktop-build-stamp.json
 # Schema:
 #   {
 #     "contentHash": "<sha256 hex of source files>",
@@ -6787,7 +6787,7 @@ def _compute_desktop_content_hash(project_root: Path) -> str:
 
 
 def _desktop_stamp_path() -> Path:
-    """Return the path to the desktop build stamp file under $HERMES_HOME."""
+    """Return the path to the desktop build stamp file under $AURA_FORGE_HOME."""
     from hermes_constants import get_hermes_home
     return get_hermes_home() / "desktop-build-stamp.json"
 
@@ -6832,7 +6832,7 @@ def _renderer_bundle_torn(dist_dir: Path) -> bool:
     behind from different generations. The app then launches and dies on the
     first lazy import with ``Failed to fetch dynamically imported module:
     …/assets/<chunk>-<hash>.js`` — and because the content stamp still matches
-    the intact SOURCE tree, ``hermes desktop`` skips the rebuild that would fix
+    the intact SOURCE tree, ``auraforge desktop`` skips the rebuild that would fix
     it, so every relaunch reproduces the crash and reinstalling looks like the
     only way out. Detecting the tear turns it into a normal rebuild.
 
@@ -6861,7 +6861,7 @@ def _desktop_build_needed(desktop_dir: Path, project_root: Path, *, source_mode:
 
     Compares the current content hash against the saved stamp. Also returns
     True if the expected build artifact doesn't exist (e.g. first run after
-    ``hermes update`` that pulled new source but hasn't built yet).
+    ``auraforge update`` that pulled new source but hasn't built yet).
     """
     # If there's no build output at all, we definitely need to build
     if source_mode:
@@ -6957,7 +6957,7 @@ def _desktop_packaged_executable(desktop_dir: Path) -> Optional[Path]:
 # ─── Desktop exe integrity gate (#69179) ────────────────────────────────────
 #
 # The desktop self-update chain (Desktop → hermes-setup --update →
-# `hermes update` → `hermes desktop --build-only` → relaunch) rebuilds
+# `auraforge update` → `auraforge desktop --build-only` → relaunch) rebuilds
 # Hermes.exe on the end user's machine and used to verify only that the file
 # EXISTS before declaring success. A corrupt cached Electron zip whose
 # extraction produced a truncated electron.exe, an interrupted rcedit resource
@@ -7280,12 +7280,12 @@ def _ensure_desktop_exe_launchable(
     restored = _rollback_desktop_from_backup(packaged_executable)
     if restored is not None:
         print("  ↩ Update aborted — restored the previous working Hermes.exe from backup.")
-        print("    Your existing version was kept and still works. Run `hermes desktop`")
+        print("    Your existing version was kept and still works. Run `auraforge desktop`")
         print("    (or the in-app update) again to retry with a fresh Electron download.")
         return restored, True
 
     print("  ✗ No usable backup was found to restore.")
-    print("    Run `hermes desktop --force-build` to rebuild, or re-run the Hermes")
+    print("    Run `auraforge desktop --force-build` to rebuild, or re-run the Hermes")
     print("    installer to repair the install.")
     return None, False
 
@@ -7872,7 +7872,7 @@ def _macos_codesigning_identity_valid(security: str, identity: str) -> bool:
 def _desktop_macos_setup_tcc_identity(identity: str = "Hermes Local Signing") -> bool:
     """Create/import a self-signed code-signing cert and configure Hermes to use it.
 
-    One-shot setup for ``hermes desktop --setup-tcc-identity``. Creates a
+    One-shot setup for ``auraforge desktop --setup-tcc-identity``. Creates a
     self-signed "Code Signing" certificate in the login keychain (the same
     artifact the docs describe creating manually via Keychain Access), grants
     ``codesign`` access to it, writes ``desktop.macos_signing_identity`` to
@@ -8043,7 +8043,7 @@ def _force_adhoc_macos_signing(env: dict, *, source_mode: bool) -> bool:
     """Stop electron-builder grabbing a random keychain identity on self-update.
 
     The desktop self-updater rebuilds *and re-signs the .app on the end user's
-    machine* (``hermes desktop --build-only`` → electron-builder ``--dir``).
+    machine* (``auraforge desktop --build-only`` → electron-builder ``--dir``).
     With ``CSC_IDENTITY_AUTO_DISCOVERY`` on (its default), electron-builder
     signs the ``type=distribution``, hardened-runtime bundle with whatever it
     finds in that user's keychain — typically a personal "Apple Development"
@@ -8117,7 +8117,7 @@ def _desktop_linux_sandbox_fixup(packaged_executable: Path) -> bool:
 
     sandbox = packaged_executable.parent / "chrome-sandbox"
     if not sandbox.exists():
-        print(f"✗ Hermes Desktop is missing Electron's Linux sandbox helper: {sandbox}")
+        print(f"✗ Aura Forge Desktop is missing Electron's Linux sandbox helper: {sandbox}")
         return False
 
     # Reject symlinks — chown/chmod must not follow an attacker-controlled
@@ -8137,7 +8137,7 @@ def _desktop_linux_sandbox_fixup(packaged_executable: Path) -> bool:
 
     sudo = shutil.which("sudo")
     if not sudo:
-        print("✗ Hermes Desktop requires sudo to configure Electron's Linux sandbox helper.")
+        print("✗ Aura Forge Desktop requires sudo to configure Electron's Linux sandbox helper.")
         return False
 
     print("→ Configuring Electron Linux sandbox helper (sudo required)...")
@@ -8156,7 +8156,7 @@ def _detect_linux_password_store() -> str | None:
 
     Electron's safeStorage only reports encryption as available when Chromium
     selects the right keychain backend, and Chromium's own detection routinely
-    fails under `hermes desktop` because the launcher environment doesn't look
+    fails under `auraforge desktop` because the launcher environment doesn't look
     like a full desktop session. Probe order: KDE session env vars, GNOME
     Keyring's control socket, then a D-Bus ping of org.freedesktop.secrets
     (covers any Secret Service implementation, e.g. KeePassXC). Returns None
@@ -8248,11 +8248,11 @@ def _desktop_launch_options() -> tuple[list[str], str, str, str]:
 
 
 def _register_linux_desktop_entry() -> None:
-    """Install the XDG desktop entry for Hermes Desktop (Linux only, best-effort).
+    """Install the XDG desktop entry for Aura Forge Desktop (Linux only, best-effort).
 
     Gives the Electron app a launcher presence: a menu item and an icon.
     ``Exec`` and ``Icon`` are absolute, so the entry works outside a login
-    shell. ``hermes uninstall --gui`` removes it.
+    shell. ``auraforge uninstall --gui`` removes it.
     """
     try:
         from hermes_cli.linux_desktop_entry import install_desktop_entry, is_supported
@@ -8384,7 +8384,7 @@ def cmd_gui(args: argparse.Namespace):
             # stripped — the desktop updater chain (Desktop → hermes-setup →
             # hermes update) loses shell PATH customizations. Wrapping the
             # NixOS build env keeps its PYTHON hint while restoring managed Node
-            # ahead of a bare PATH (same idiom as the `hermes update` path).
+            # ahead of a bare PATH (same idiom as the `auraforge update` path).
             nixos_env = with_hermes_node_path(_nixos_build_env())
             install_result = _run_npm_install_deterministic(npm, PROJECT_ROOT, capture_output=False, env=nixos_env)
             if install_result.returncode != 0:
@@ -8526,7 +8526,7 @@ def cmd_gui(args: argparse.Namespace):
         return
 
     if source_mode:
-        print("→ Launching Hermes Desktop from source build...")
+        print("→ Launching Aura Forge Desktop from source build...")
         launch_result = subprocess.run([npm, "exec", "--", "electron", "."], cwd=desktop_dir, env=env, check=False)
         sys.exit(launch_result.returncode)
 
@@ -8544,7 +8544,7 @@ def cmd_gui(args: argparse.Namespace):
             sys.exit(1)
 
     launch_command.extend(config_electron_flags)
-    print(f"→ Launching packaged Hermes Desktop: {' '.join(launch_command)}")
+    print(f"→ Launching packaged Aura Forge Desktop: {' '.join(launch_command)}")
     launch_result = subprocess.run(launch_command, cwd=desktop_dir, env=env, check=False)
     sys.exit(launch_result.returncode)
 
@@ -8873,7 +8873,7 @@ def _dashboard_cmdline_for_pid(pid: int) -> list[str] | None:
 
 
 def _respawn_dashboard_processes(commands: list[list[str]]) -> list[list[str]]:
-    """Best-effort respawn of manually-started dashboards after ``hermes update``.
+    """Best-effort respawn of manually-started dashboards after ``auraforge update``.
 
     Spawns each recovered argv detached (new session, output to the profile's
     ``logs/dashboard-restart.log``).  Returns the commands that failed to
@@ -8925,7 +8925,7 @@ def _respawn_dashboard_processes(commands: list[list[str]]) -> list[list[str]]:
 
 
 # =========================================================================
-# Fork detection and upstream management for `hermes update`
+# Fork detection and upstream management for `auraforge update`
 # =========================================================================
 
 
@@ -8958,7 +8958,7 @@ def _load_installable_optional_extras(group: str = "all") -> list[str]:
     return referenced
 
 
-# Install-scoped breadcrumbs live next to the venv (not under $HERMES_HOME)
+# Install-scoped breadcrumbs live next to the venv (not under $AURA_FORGE_HOME)
 # because the venv is shared across profiles.
 #
 # ``.update-incomplete`` — generic core ``.[all]`` install was interrupted.
@@ -9013,7 +9013,7 @@ def _clear_lazy_refresh_incomplete_marker() -> None:
 
 
 def _recover_from_interrupted_install() -> None:
-    """Finish update work left half-done by a prior ``hermes update``.
+    """Finish update work left half-done by a prior ``auraforge update``.
 
     Handles two independent breadcrumbs:
 
@@ -9035,7 +9035,7 @@ def _recover_from_interrupted_install() -> None:
 
     Output: everything — our status lines AND the streamed pip/uv install
     (which inherits fd 1) — is routed to stderr.  Launches whose stdout is a
-    protocol stream (``hermes acp`` speaks JSON-RPC on stdout) must never get
+    protocol stream (``auraforge acp`` speaks JSON-RPC on stdout) must never get
     install noise on stdout.
     """
     if _pytest_owns_live_checkout(PROJECT_ROOT):
@@ -9146,7 +9146,7 @@ def _recover_core_update_marker_locked() -> None:
     would otherwise look healthy and clear the breadcrumb too early.
     """
     print(
-        "⚠ A previous `hermes update` was interrupted mid-install — "
+        "⚠ A previous `auraforge update` was interrupted mid-install — "
         "finishing dependency installation now..."
     )
 
@@ -9219,7 +9219,7 @@ def _windows_shim_in_process_chain() -> Path | None:
     ``venv\\Scripts\\hermes.exe`` is a launcher that runs the interpreter with
     the shim itself as its script, and that keeps the shim open — without
     ``FILE_SHARE_DELETE`` — for the whole process lifetime. So every
-    ``hermes ...`` command holds its own shim, and an editable install run
+    ``auraforge ...`` command holds its own shim, and an editable install run
     from one can never rewrite it (#88838, #89599).
 
     Two independent probes, because either can come up empty. Process
@@ -9315,7 +9315,7 @@ def _reexec_dependency_sync_off_windows_shim() -> bool:
     console and prints its own result, and ``--gateway`` writes the true exit
     code to ``.update_exit_code`` for the gateway watcher.
 
-    The child re-runs ``hermes update``, so the whole remaining flow — the
+    The child re-runs ``auraforge update``, so the whole remaining flow — the
     dependency sync and the node/web/lazy-refresh tail behind it — still
     happens exactly once. ``_UPDATE_REEXEC_ENV`` marks it so it cannot spawn
     another child, and so the "already up to date" early return does not
@@ -9392,7 +9392,7 @@ def _run_install_with_heartbeat(
 
     Some resolvers/build backends (especially when compiling Rust/C extensions)
     can stay quiet for minutes. Emit a simple elapsed-time heartbeat so users
-    know ``hermes update`` is still progressing even if pip/uv itself is silent.
+    know ``auraforge update`` is still progressing even if pip/uv itself is silent.
     """
     done = threading.Event()
     start = _time.time()
@@ -9447,7 +9447,7 @@ def _hermes_exe_shims(scripts_dir: Path) -> list[Path]:
     if not _is_windows():
         return []
 
-    names = set(_load_console_script_names()) or {"hermes", "hermes-agent", "hermes-acp"}
+    names = set(_load_console_script_names()) or {"hermes", "aura-forge-agent", "hermes-acp"}
     # The gateway shim is not a [project.scripts] entry point, but older
     # update/install paths still rewrite and quarantine it.
     names.add("hermes-gateway")
@@ -9463,7 +9463,7 @@ def _quarantine_running_hermes_exe(
     Windows allows RENAMING a mapped/running executable (the kernel tracks the
     file by handle, not path), but blocks DELETE/REPLACE while it's loaded. uv
     needs to overwrite the entry-point shims during ``pip install -e .``;
-    when ``hermes update`` runs, ``hermes.exe`` IS the live process, and uv
+    when ``auraforge update`` runs, ``hermes.exe`` IS the live process, and uv
     fails with ``Access is denied. (os error 5)``.
 
     We rename live shims to ``hermes.exe.old.<unix-ms>`` first. uv then writes
@@ -9472,13 +9472,13 @@ def _quarantine_running_hermes_exe(
 
     Rename can still fail when *another* process has opened the .exe without
     ``FILE_SHARE_DELETE`` — typically AV real-time scanners with transient
-    handles (recovers in <1s), or the Hermes Desktop backend child process
+    handles (recovers in <1s), or the Aura Forge Desktop backend child process
     (won't recover until the user closes it). We mitigate:
 
     1. Retry up to ``max_attempts`` times with exponential backoff
        (100/250/500/1000 ms). Handles the AV-scanner case.
     2. If all retries fail, print a clear warning naming the most likely
-       culprit (running Hermes Desktop / gateway / REPL).
+       culprit (running Aura Forge Desktop / gateway / REPL).
 
     The updater's own launcher is no longer one of those culprits: an update
     started from ``hermes.exe`` re-runs itself under the venv Python before
@@ -9538,8 +9538,8 @@ def _quarantine_running_hermes_exe(
             f"another process is holding it open)."
         )
         print(
-            "    Close Hermes Desktop, exit other `hermes` REPLs, stop the "
-            "gateway, or pause AV scanning, then re-run `hermes update`."
+            "    Close Aura Forge Desktop, exit other `auraforge` REPLs, stop the "
+            "gateway, or pause AV scanning, then re-run `auraforge update`."
         )
         if failed_out is not None:
             failed_out.append(shim.name)
@@ -9625,7 +9625,7 @@ def _restore_quarantined_exes(moved: list[tuple[Path, Path]]) -> None:
     """Roll back ``_quarantine_running_hermes_exe`` if uv didn't write replacements.
 
     This is the safety-critical direction. A failed *quarantine* only aborts an
-    update; a failed *restore* leaves the install with no ``hermes`` on PATH,
+    update; a failed *restore* leaves the install with no ``auraforge`` on PATH,
     and therefore no way to run the command that would repair it (#75584). The
     outbound rename already retries a lock, so this one must too rather than
     swallow the first ``OSError`` in silence.
@@ -9665,7 +9665,7 @@ def _run_quarantined_install(
     Any ``pip install -e .`` (or ``--reinstall``) rewrites the entry-point
     shims, and on Windows the live ``hermes.exe`` is the running process —
     pip can neither delete nor overwrite it, so without quarantine the shim
-    is left missing and ``hermes`` drops off PATH. This wraps
+    is left missing and ``auraforge`` drops off PATH. This wraps
     :func:`_run_install_with_heartbeat` with the same rename-out-of-the-way /
     restore-on-failure dance that the primary install path uses, so EVERY
     install that touches the shims is protected — including the
@@ -9698,7 +9698,7 @@ def _run_quarantined_install(
         # FAILURE (install died before the entry-points step) and on SUCCESS
         # too: uv audits an already-satisfied editable install as a no-op and
         # rewrites no entry points, which would otherwise leave the shims
-        # quarantined aside and `hermes` missing from PATH after a green
+        # quarantined aside and `auraforge` missing from PATH after a green
         # install (#75584). _restore_quarantined_exes skips any shim the
         # installer actually replaced, so this never clobbers fresh output.
         # Errors are not swallowed — the finally re-raises whatever escaped.
@@ -9734,7 +9734,7 @@ def _cleanup_quarantined_exes(scripts_dir: Path | None = None) -> None:
     """Sweep — and where necessary RESCUE — ``hermes.exe.old.*`` from updates.
 
     Called early on every hermes invocation. Two cases the old unconditional
-    ``unlink()`` got wrong, both ending with ``hermes`` gone from PATH:
+    ``unlink()`` got wrong, both ending with ``auraforge`` gone from PATH:
 
     1. **Orphan rescue.** If ``hermes.exe`` is missing while
        ``hermes.exe.old.*`` is present, that .old file is the ONLY surviving
@@ -9744,7 +9744,7 @@ def _cleanup_quarantined_exes(scripts_dir: Path | None = None) -> None:
        the same retry-and-report helper the update-time restore uses.
     2. **Concurrency.** A fresh quarantine file may belong to an update in
        flight in another process (the desktop update button racing a shell
-       ``hermes update`` does exactly this). Leave anything inside the grace
+       ``auraforge update`` does exactly this). Leave anything inside the grace
        window alone; a later run sweeps it.
 
     Silent no-op on non-Windows, when there is nothing to do, or on
@@ -10004,7 +10004,7 @@ def _repair_venv_via_import_probes(
     manual = " ".join(
         shlex.quote(s) for s in _lazy_refresh_repair_specs(broken)
     )
-    print("  ⚠ Venv repair incomplete. Run manually, then `hermes update`:")
+    print("  ⚠ Venv repair incomplete. Run manually, then `auraforge update`:")
     print(
         f"    {' '.join(install_cmd_prefix)} install --force-reinstall {manual}"
     )
@@ -10167,7 +10167,7 @@ def _install_python_dependencies_with_optional_fallback(
     # partial installs where a newly added base dep (e.g. ``pathspec``)
     # silently fails to land on top of a half-stale venv, and the only
     # symptom is a downstream subprocess crashing with ModuleNotFoundError
-    # hours later inside ``hermes update``'s desktop-rebuild or skill-sync
+    # hours later inside ``auraforge update``'s desktop-rebuild or skill-sync
     # stage. Reinstall with --reinstall to force resolution if anything is
     # missing, then re-verify so the failure surfaces here instead of
     # downstream.
@@ -10205,9 +10205,9 @@ def _verify_console_scripts_installed(
 
     On Windows, ``uv pip install -e .`` can register ``hermes.exe`` in the
     wheel RECORD while the file never lands on disk — typically when the live
-    ``hermes.exe`` shim is locked during ``hermes update``, or when uv/distlib
-    skips a launcher write. The symptom is ``hermes-agent.exe`` and
-    ``hermes-acp.exe`` present but ``hermes.exe`` missing, so ``hermes`` drops
+    ``hermes.exe`` shim is locked during ``auraforge update``, or when uv/distlib
+    skips a launcher write. The symptom is ``aura-forge-agent.exe`` and
+    ``hermes-acp.exe`` present but ``hermes.exe`` missing, so ``auraforge`` drops
     off PATH even though the install reported success (issue #52931).
 
     If any shim is missing we reinstall with ``--reinstall -e .`` under the
@@ -10250,7 +10250,7 @@ def _verify_console_scripts_installed(
     except subprocess.CalledProcessError as e:
         logger.warning("console script verification: repair install failed: %s", e)
         print(
-            "  ⚠ Entry point repair failed; try `hermes update --force` after "
+            "  ⚠ Entry point repair failed; try `auraforge update --force` after "
             "closing other hermes processes."
         )
         return
@@ -10343,7 +10343,7 @@ def _verify_core_dependencies_installed(
         return
 
     # Run the check inside the venv Python — sys.executable here may be the
-    # outer Python that drove ``hermes update``, not the venv we just wrote
+    # outer Python that drove ``auraforge update``, not the venv we just wrote
     # to. The uv install_cmd_prefix encodes which environment we targeted
     # (either ``[uv, pip]`` with VIRTUAL_ENV in env, or
     # ``[sys.executable, -m, pip]`` for the in-process Python); resolve the
@@ -10392,7 +10392,7 @@ def _verify_core_dependencies_installed(
     #
     # Quarantine the running ``hermes.exe`` first: ``--reinstall -e .``
     # rewrites the entry-point shims, and on Windows pip can't overwrite the
-    # live launcher, which would leave ``hermes`` off PATH.
+    # live launcher, which would leave ``auraforge`` off PATH.
     scripts_dir = _venv_scripts_dir() if _is_windows() else None
     repair_args = ["install", "--reinstall", "-e", "."]
     try:
@@ -10401,7 +10401,7 @@ def _verify_core_dependencies_installed(
         )
     except subprocess.CalledProcessError as e:
         logger.warning("dep verification: repair install failed: %s", e)
-        print("  ⚠ Repair install failed; check `hermes update` output above.")
+        print("  ⚠ Repair install failed; check `auraforge update` output above.")
         return
 
     still_missing = _missing_deps()
@@ -10434,7 +10434,7 @@ def _verify_core_dependencies_installed(
         logger.warning("dep verification: per-package repair failed: %s", e)
         print(
             f"  ⚠ Could not install: {', '.join(still_missing)}. "
-            "Run `hermes update --force` after closing other hermes processes."
+            "Run `auraforge update --force` after closing other hermes processes."
         )
         return
 
@@ -10442,7 +10442,7 @@ def _verify_core_dependencies_installed(
     if final_missing:
         print(
             f"  ⚠ Still missing after repair: {', '.join(final_missing)}. "
-            "Run `hermes update --force` after closing other hermes processes."
+            "Run `auraforge update --force` after closing other hermes processes."
         )
     else:
         print("  ✓ All declared core dependencies now installed")
@@ -10539,12 +10539,12 @@ def _resolve_node_runtime_npm() -> str | None:
 
 
 class _UpdateOutputStream:
-    """Stream wrapper used during ``hermes update`` to survive terminal loss.
+    """Stream wrapper used during ``auraforge update`` to survive terminal loss.
 
     Wraps the process's original stdout/stderr so that:
 
     * Every write is also mirrored to an append-only log file
-      (``~/.hermes/logs/update.log``) that users can inspect after the
+      (``~/.aura-forge/logs/update.log``) that users can inspect after the
       terminal disconnects.
     * Writes to the original stream that fail with ``BrokenPipeError`` /
       ``OSError`` / ``ValueError`` (closed file) no longer cascade into
@@ -10552,7 +10552,7 @@ class _UpdateOutputStream:
       stops.
 
     Combined with ``SIGHUP -> SIG_IGN`` installed by
-    ``_install_hangup_protection``, this makes ``hermes update`` safe to
+    ``_install_hangup_protection``, this makes ``auraforge update`` safe to
     run in a plain SSH session that might disconnect mid-install.
     """
 
@@ -10614,7 +10614,7 @@ class _UpdateOutputStream:
 def _install_hangup_protection(gateway_mode: bool = False):
     """Protect ``cmd_update`` from SIGHUP and broken terminal pipes.
 
-    Users commonly run ``hermes update`` in an SSH session or a terminal
+    Users commonly run ``auraforge update`` in an SSH session or a terminal
     that may close mid-install.  Without protection, ``SIGHUP`` from the
     terminal kills the Python process during ``pip install`` and leaves
     the venv half-installed; the documented workaround ("use screen /
@@ -10626,14 +10626,14 @@ def _install_hangup_protection(gateway_mode: bool = False):
        across ``exec()``, so pip and git subprocesses also stop dying on
        hangup.
     2. ``sys.stdout`` / ``sys.stderr`` are wrapped to mirror output to
-       ``~/.hermes/logs/update.log`` and to silently absorb
+       ``~/.aura-forge/logs/update.log`` and to silently absorb
        ``BrokenPipeError`` when the terminal vanishes.
 
     ``SIGINT`` (Ctrl-C) and ``SIGTERM`` (systemd shutdown) are
     **intentionally left alone** — those are legitimate cancellation
     signals the user or OS sent on purpose.
 
-    In gateway mode (``hermes update --gateway``) the update is already
+    In gateway mode (``auraforge update --gateway``) the update is already
     spawned detached from a terminal, so this function is a no-op.
 
     Returns a dict that ``cmd_update`` can pass to
@@ -10739,7 +10739,7 @@ def _size_delta_label(saved_mb: float) -> str:
 
 
 def cmd_update(args):
-    """Update Hermes Agent to the latest version.
+    """Update Aura Forge Agent to the latest version.
 
     Thin wrapper around ``_cmd_update_impl``: installs hangup protection,
     runs the update, then restores stdio on the way out (even on
@@ -10751,7 +10751,7 @@ def cmd_update(args):
     )
 
     if is_managed():
-        managed_error("update Hermes Agent")
+        managed_error("update Aura Forge Agent")
         return
 
     # --plan is read-only and deployment-kind aware, so it runs BEFORE the
@@ -10790,7 +10790,7 @@ def cmd_update(args):
 
     if getattr(args, "check", False):
         # --check honors --branch so the "any new commits?" answer matches
-        # what a subsequent `hermes update --branch=<x>` would actually pull.
+        # what a subsequent `auraforge update --branch=<x>` would actually pull.
         branch = _resolve_update_branch(args)
         _self()._cmd_update_check(
             branch=branch,
@@ -10891,7 +10891,7 @@ def cmd_update(args):
 def _coalesce_session_name_args(argv: list) -> list:
     """Join unquoted multi-word session names after -c/--continue and -r/--resume.
 
-    When a user types ``hermes -c Pokemon Agent Dev`` without quoting the
+    When a user types ``auraforge -c Pokemon Agent Dev`` without quoting the
     session name, argparse sees three separate tokens.  This function merges
     them into a single argument so argparse receives
     ``['-c', 'Pokemon Agent Dev']`` instead.
@@ -10987,7 +10987,7 @@ def cmd_profile(args):
     action = getattr(args, "profile_action", None)
 
     if action is None:
-        # Bare `hermes profile` — show current profile status
+        # Bare `auraforge profile` — show current profile status
         from hermes_cli.profiles import format_profile_label
 
         profile_name = get_active_profile_name()
@@ -11342,7 +11342,7 @@ def cmd_profile(args):
             print(f"Distribution: {dist_name}@{dist_version or '?'}")
             if dist_source:
                 print(f"Installed from: {dist_source}")
-            print(f"  (run `hermes profile info {name}` for full manifest)")
+            print(f"  (run `auraforge profile info {name}` for full manifest)")
         if alias_name:
             is_windows = sys.platform == "win32"
             wrapper = _get_wrapper_dir() / (f"{alias_name}.bat" if is_windows else alias_name)
@@ -11498,7 +11498,7 @@ def cmd_profile(args):
             if current is None:
                 print(
                     f"Error: Profile '{canon}' is not a distribution (no distribution.yaml). "
-                    "Only profiles installed via `hermes profile install` can be updated."
+                    "Only profiles installed via `auraforge profile install` can be updated."
                 )
                 sys.exit(1)
 
@@ -11698,7 +11698,7 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
     non-loopback browser-facing hostname. ``start_server`` fails closed when no
     ``DashboardAuthProvider`` is registered. Rather than greet an interactive
     operator with that hard error, prompt them to set up the bundled password
-    provider on the spot — or point them at ``hermes dashboard register`` for
+    provider on the spot — or point them at ``auraforge dashboard register`` for
     OAuth.
 
     No-ops (so the existing fail-closed ``SystemExit`` remains the backstop)
@@ -11737,7 +11737,7 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
     print()
     print("  How do you want to authenticate the dashboard?")
     print("    [1] Username & password (quickest; for a trusted LAN / VPN)")
-    print("    [2] OAuth via Nous Portal (run `hermes dashboard register`)")
+    print("    [2] OAuth via Nous Portal (run `auraforge dashboard register`)")
     print("    [3] Cancel")
     print()
 
@@ -11754,8 +11754,8 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
             "the dashboard again:\n"
             "    hermes dashboard register\n"
             "  It provisions a Nous Portal OAuth client and writes "
-            "HERMES_DASHBOARD_OAUTH_CLIENT_ID into ~/.hermes/.env for you.\n"
-            "  Docs: https://hermes-agent.nousresearch.com/docs/"
+            "HERMES_DASHBOARD_OAUTH_CLIENT_ID into ~/.aura-forge/.env for you.\n"
+            "  Docs: https://aura-forge-agent.nousresearch.com/docs/"
             "user-guide/features/web-dashboard#authentication-gated-mode"
         )
         sys.exit(0)
@@ -11853,10 +11853,10 @@ def _read_ssh_session_token_file(path: str) -> str:
 
     token_path = _Path(path)
     # The Desktop client writes the token under $HOME/.hermes/desktop-ssh: a
-    # literal "~/.hermes/desktop-ssh" in apps/desktop/electron/remote-lifecycle.ts
-    # expanded against the account's $HOME, independent of HERMES_HOME and the
+    # literal "~/.aura-forge/desktop-ssh" in apps/desktop/electron/remote-lifecycle.ts
+    # expanded against the account's $HOME, independent of AURA_FORGE_HOME and the
     # active profile. Anchor validation to that same OS-home path, NOT to
-    # get_hermes_home(): a non-default sticky profile (or any HERMES_HOME pointing
+    # get_hermes_home(): a non-default sticky profile (or any AURA_FORGE_HOME pointing
     # elsewhere, e.g. a Docker /opt/data root) re-homes get_hermes_home() and
     # would otherwise reject every token the client legitimately wrote (#69551).
     token_root = _Path.home() / ".hermes" / "desktop-ssh"
@@ -11932,7 +11932,7 @@ def _is_electron_packaged_web_dist(path: str) -> bool:
     """True when *path* looks like an Electron-packaged renderer dist.
 
     Packaged Desktop sets ``HERMES_WEB_DIST`` to ``.../app.asar/dist`` or
-    ``.../app.asar.unpacked/dist``. A standalone ``hermes dashboard`` that
+    ``.../app.asar.unpacked/dist``. A standalone ``auraforge dashboard`` that
     inherits that value serves the desktop frontend in the browser
     (issue #52945 — "Desktop IPC bridge is unavailable").
     """
@@ -11962,7 +11962,7 @@ def cmd_dashboard(args):
         if not pids:
             print("No hermes dashboard processes running.")
             sys.exit(0)
-        # Reuse the same SIGTERM-grace-SIGKILL path used after `hermes update`.
+        # Reuse the same SIGTERM-grace-SIGKILL path used after `auraforge update`.
         _self()._kill_stale_dashboard_processes(reason="requested via --stop")
         # _kill_stale_dashboard_processes prints outcomes itself.  Exit 0 if
         # we killed at least one, 1 if they were all unkillable.
@@ -11984,7 +11984,7 @@ def cmd_dashboard(args):
     # Desktop Electron spawns its backend with HERMES_DESKTOP=1 plus
     # HERMES_WEB_DIST=<packaged app.asar[/unpacked]/dist> (and often
     # HERMES_SERVE_HEADLESS=1 on the serve path). A shell that inherits
-    # those vars then runs `hermes dashboard` would otherwise:
+    # those vars then runs `auraforge dashboard` would otherwise:
     #   - serve the desktop renderer → "Desktop IPC bridge is unavailable"
     #     (issue #52945), or
     #   - disable the SPA via inherited HERMES_SERVE_HEADLESS.
@@ -12004,7 +12004,7 @@ def cmd_dashboard(args):
     # profile via the per-request ?profile= scoping. Running one dashboard
     # per profile just fragments that (port collisions, N processes, and a
     # "which dashboard am I on?" guessing game). So when a NAMED profile
-    # launches the dashboard (`worker dashboard` → HERMES_HOME points into
+    # launches the dashboard (`worker dashboard` → AURA_FORGE_HOME points into
     # profiles/), default to the machine dashboard:
     #   - already running → open the browser at ?profile=<name> and exit
     #   - not running     → re-exec as the machine dashboard (pinned to the
@@ -12062,14 +12062,14 @@ def cmd_dashboard(args):
         if getattr(args, "skip_build", False):
             reexec_argv.append("--skip-build")
         from tools.environments.local import build_subprocess_env
-        # Exact env preservation: HERMES_HOME is explicitly pinned to the
+        # Exact env preservation: AURA_FORGE_HOME is explicitly pinned to the
         # machine root below — the factory must not re-inject a profile home.
         env = build_subprocess_env(scrub_secrets=False, inherit_profile_home=False)
         # Pin the child to the machine ROOT, not the launching profile's
-        # HERMES_HOME.  We must resolve the root explicitly instead of just
-        # dropping HERMES_HOME: in the Docker layout the machine root is
-        # /opt/data (set via `ENV HERMES_HOME=/opt/data`), so an unset
-        # HERMES_HOME falls back to $HOME/.hermes = /opt/data/.hermes — an
+        # AURA_FORGE_HOME.  We must resolve the root explicitly instead of just
+        # dropping AURA_FORGE_HOME: in the Docker layout the machine root is
+        # /opt/data (set via `ENV AURA_FORGE_HOME=/opt/data`), so an unset
+        # AURA_FORGE_HOME falls back to $HOME/.hermes = /opt/data/.hermes — an
         # empty, auto-seeded home where the dashboard sees only the default
         # profile and the install-method stamp is missing (so the Docker
         # update-button guard also misfires).  get_default_hermes_root()
@@ -12078,11 +12078,11 @@ def cmd_dashboard(args):
         # See the support report for the double-mount workaround this avoids.
         try:
             from hermes_constants import get_default_hermes_root
-            env["HERMES_HOME"] = str(get_default_hermes_root())
+            env["AURA_FORGE_HOME"] = str(get_default_hermes_root())
         except Exception:
             # Best-effort: if root resolution fails, fall back to the prior
-            # behaviour (drop HERMES_HOME) rather than block the reroute.
-            env.pop("HERMES_HOME", None)
+            # behaviour (drop AURA_FORGE_HOME) rather than block the reroute.
+            env.pop("AURA_FORGE_HOME", None)
         # On Windows, os.execvpe() does not truly replace the process — it
         # spawns via CreateProcess then the parent exits.  Under Python 3.14+
         # this can crash with STATUS_ACCESS_VIOLATION (0xC0000005) when
@@ -12383,7 +12383,7 @@ def _first_positional_argv() -> str | None:
 
     Used by ``main()`` to decide whether plugin discovery has to run at
     argparse-setup time. Handles common invocations like
-    ``hermes -m gpt5 --provider openai chat "msg"`` by skipping the
+    ``auraforge -m gpt5 --provider openai chat "msg"`` by skipping the
     values attached to known top-level flags.
 
     Does NOT fully simulate argparse — unknown ``--foo=bar`` / ``--foo
@@ -12426,7 +12426,7 @@ def _plugin_cli_discovery_needed() -> bool:
     """
     first = _first_positional_argv()
     if first is None:
-        # Bare ``hermes`` or only flags → defaults to ``chat``.
+        # Bare ``auraforge`` or only flags → defaults to ``chat``.
         return False
     if first in _BUILTIN_SUBCOMMANDS:
         return False
@@ -12443,11 +12443,11 @@ def _resolve_deferred_platform_cli_command(command_name: str | None) -> None:
 
     Bundled platform plugins are cheap-registered as *deferred* entries to
     avoid importing every gateway SDK during normal startup. A platform that
-    registers a top-level ``hermes <name>`` command (e.g. Photon ->
+    registers a top-level ``auraforge <name>`` command (e.g. Photon ->
     ``ctx.register_cli_command(name="photon", ...)``) only runs that side
     effect when its module is imported. On the unknown-top-level-command slow
     path, ``discover_plugins()`` records the deferred loader but does not
-    import it, so the CLI registration never happens and ``hermes photon``
+    import it, so the CLI registration never happens and ``auraforge photon``
     fails with argparse ``invalid choice`` (issue #54678).
 
     Resolving only the platform whose name matches the first positional token
@@ -12616,7 +12616,7 @@ def _set_chat_arg_defaults(args) -> None:
 def _try_fast_chat_launch() -> bool:
     """Fast path for unambiguous interactive chat launches (all hosts).
 
-    ``hermes`` / ``hermes -w -s foo --yolo`` / ``hermes chat`` don't need the
+    ``auraforge`` / ``auraforge -w -s foo --yolo`` / ``auraforge chat`` don't need the
     full argparse tree: building all ~40 subcommand parsers costs ~140ms of
     pure-Python argparse setup plus their module imports, none of which the
     chat path uses. Parse the lightweight top-level/chat parser instead and
@@ -12763,7 +12763,7 @@ def _try_termux_fast_cli_launch() -> bool:
 def _try_termux_fast_tui_launch() -> bool:
     """Launch obvious Termux TUI invocations before building every subparser.
 
-    `hermes --tui` is the hot path on phones. The full parser setup imports
+    `auraforge --tui` is the hot path on phones. The full parser setup imports
     command modules for model, fallback, migrate, kanban, bundles, plugins,
     etc. even though the TUI immediately execs Node. On Termux only, parse the
     lightweight top-level/chat parser and hand off to ``cmd_chat`` when the
@@ -12865,7 +12865,7 @@ def cmd_memory(args):
 
 
 def cmd_acp(args):
-    """Launch Hermes Agent as an ACP server."""
+    """Launch Aura Forge Agent as an ACP server."""
     try:
         from acp_adapter.entry import main as acp_main
 
@@ -12960,7 +12960,7 @@ def cmd_monitoring(args):
         else:
             print("  OTLP endpoint:  not configured (monitoring.export.otlp)")
         print(f"  OTel SDK:       {'installed' if otlp_exporter.is_available() else 'not installed'} "
-              f"(optional extra: hermes-agent[otlp])")
+              f"(optional extra: aura-forge-agent[otlp])")
         print("\n  Scope: gateway service health + redacted diagnostics only.")
         print("  No prompts, messages, tool args/results, usage analytics, or traces.")
         return
@@ -12985,7 +12985,7 @@ def cmd_skills(args):
 
 
 def _cmd_skills_trust(args):
-    """``hermes skills trust [path]`` / ``hermes skills untrust [path]``.
+    """``auraforge skills trust [path]`` / ``auraforge skills untrust [path]``.
 
     Manages ``skills.trusted_project_dirs`` in config.yaml. With no path,
     operates on the project root enclosing the current directory (nearest
@@ -13090,13 +13090,13 @@ def _advertise_agent_env() -> None:
     detection reads it; pi and other agents set it — earendil-works/pi#7493)
     so generic tooling can attribute subprocesses to the harness that spawned
     them. The value must be our id in the public agent-harness registry
-    (``hermes-agent`` in huggingface.js ``agent-harnesses.ts``): standard-var
+    (``aura-forge-agent`` in huggingface.js ``agent-harnesses.ts``): standard-var
     matching is exact, so any other value is counted as "unknown".
     ``HERMES_AGENT`` is the Hermes-specific marker. setdefault: never
     clobber an outer harness (e.g. Hermes running inside another agent's
     terminal).
     """
-    os.environ.setdefault("AI_AGENT", "hermes-agent")
+    os.environ.setdefault("AI_AGENT", "aura-forge-agent")
     os.environ.setdefault("HERMES_AGENT", "true")
 
 
@@ -13118,7 +13118,7 @@ def main():
         pass
 
     # Sweep stale ``hermes.exe.old.*`` quarantine files left by previous
-    # ``hermes update`` runs on Windows. Silent no-op on non-Windows or when
+    # ``auraforge update`` runs on Windows. Silent no-op on non-Windows or when
     # there's nothing to clean. See ``_quarantine_running_hermes_exe``.
     try:
         _cleanup_quarantined_exes()
@@ -13131,15 +13131,15 @@ def main():
     # resolves fresh source against old bytecode. Never raises.
     _sweep_stale_bytecode_if_checkout_changed()
 
-    # Self-heal a venv left half-built by an interrupted ``hermes update``
+    # Self-heal a venv left half-built by an interrupted ``auraforge update``
     # (Ctrl-C, terminal close, WSL OOM mid-install). Skip when the user is
     # *running* update — that flow writes and clears its own marker, and we
     # don't want a recovery install racing the real one. Never raises.
     #
     # The substring match is deliberately loose: argv isn't parsed yet at this
     # point, and the failure modes are asymmetric. Over-matching (e.g.
-    # ``hermes skills install update``) merely defers recovery one launch;
-    # under-matching (missing ``hermes -p work update``) would race a recovery
+    # ``auraforge skills install update``) merely defers recovery one launch;
+    # under-matching (missing ``auraforge -p work update``) would race a recovery
     # install against the real one. Loose wins.
     try:
         if "update" not in sys.argv[1:]:
@@ -13200,7 +13200,7 @@ def main():
             "Manage the fallback provider chain.  Fallback providers are tried "
             "in order when the primary model fails with rate-limit, overload, or "
             "connection errors.  See: "
-            "https://hermes-agent.nousresearch.com/docs/user-guide/features/fallback-providers"
+            "https://aura-forge-agent.nousresearch.com/docs/user-guide/features/fallback-providers"
         ),
     )
     fallback_subparsers = fallback_parser.add_subparsers(dest="fallback_command")
@@ -13211,7 +13211,7 @@ def main():
     )
     fallback_subparsers.add_parser(
         "add",
-        help="Pick a provider + model (same picker as `hermes model`) and append to the chain",
+        help="Pick a provider + model (same picker as `auraforge model`) and append to the chain",
     )
     fallback_subparsers.add_parser(
         "remove",
@@ -13234,8 +13234,8 @@ def main():
             "Attended reclaim for the .worktrees/ directory hermes -w sessions "
             "accumulate. Never deletes uncommitted tracked changes, unique "
             "unpushed commits, or in-use trees; untracked-only scratch is "
-            "archived to ~/.hermes/archive/worktree-prune/ before removal. See: "
-            "https://hermes-agent.nousresearch.com/docs/user-guide/cli#worktree-cleanup"
+            "archived to ~/.aura-forge/archive/worktree-prune/ before removal. See: "
+            "https://aura-forge-agent.nousresearch.com/docs/user-guide/cli#worktree-cleanup"
         ),
     )
     worktree_subparsers = worktree_parser.add_subparsers(dest="worktree_action")
@@ -13338,9 +13338,9 @@ def main():
         help="Manage external secret sources (Bitwarden, 1Password)",
         description=(
             "Pull API keys from an external secret manager at process startup "
-            "instead of storing them in ~/.hermes/.env.  Supports Bitwarden "
+            "instead of storing them in ~/.aura-forge/.env.  Supports Bitwarden "
             "Secrets Manager and 1Password.  See: "
-            "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/"
+            "https://aura-forge-agent.nousresearch.com/docs/user-guide/secrets/"
         ),
     )
     secrets_subparsers = secrets_parser.add_subparsers(dest="secrets_command")
@@ -13382,7 +13382,7 @@ def main():
     # egress command — iron-proxy outbound credential-injection firewall
     # =========================================================================
     # NOTE: this is the OUTBOUND egress firewall (ironsh/iron-proxy).
-    # `hermes proxy` (defined elsewhere in this file) is a separate INBOUND
+    # `auraforge proxy` (defined elsewhere in this file) is a separate INBOUND
     # OAuth-aggregator reverse proxy.  Different direction, different purpose.
     egress_parser = subparsers.add_parser(
         "egress",
@@ -13391,7 +13391,7 @@ def main():
             "Manage iron-proxy, the optional TLS-intercepting egress firewall "
             "that swaps proxy tokens for real API credentials before outbound "
             "requests leave a sandbox.  Disabled by default.  See: "
-            "https://hermes-agent.nousresearch.com/docs/user-guide/egress/iron-proxy"
+            "https://aura-forge-agent.nousresearch.com/docs/user-guide/egress/iron-proxy"
         ),
     )
 
@@ -13400,7 +13400,7 @@ def main():
 
     def _dispatch_egress(args):  # noqa: ANN001
         # The egress subparser uses dest='egress_command' to stay disjoint
-        # from the inbound OAuth ``hermes proxy`` subparser (dest='proxy_command').
+        # from the inbound OAuth ``auraforge proxy`` subparser (dest='proxy_command').
         sub = getattr(args, "egress_command", None)
         if sub is not None and hasattr(args, "func") and args.func is not _dispatch_egress:
             return args.func(args)
@@ -13485,7 +13485,7 @@ def main():
         description=(
             "Configure the official Meta WhatsApp Business Cloud API "
             "adapter (Business account required, public webhook URL "
-            "required). Distinct from `hermes whatsapp` which sets up "
+            "required). Distinct from `auraforge whatsapp` which sets up "
             "the Baileys bridge for personal accounts."
         ),
     )
@@ -13616,7 +13616,7 @@ def main():
     # =========================================================================
     checkpoints_parser = subparsers.add_parser(
         "checkpoints",
-        help="Inspect / prune / clear ~/.hermes/checkpoints/",
+        help="Inspect / prune / clear ~/.aura-forge/checkpoints/",
         description="Manage the filesystem checkpoint store — the shadow git "
         "repo hermes uses to snapshot working directories before "
         "write_file/patch/terminal calls. Lets you see how much "
@@ -13691,7 +13691,7 @@ def main():
     # own argparse tree.  No hardcoded plugin commands in main.py.
     #
     # Skipped when the invocation is already targeting a known built-in
-    # subcommand — ``hermes --help``, ``hermes logs``,
+    # subcommand — ``auraforge --help``, ``auraforge logs``,
     # etc.  This avoids eagerly importing every bundled plugin module
     # (google.cloud.pubsub_v1, aiohttp, grpc, PIL …) which costs
     # 500-650ms on typical installs.
@@ -13817,13 +13817,13 @@ def main():
             "Install or check the cua-driver binary used by the\n"
             "`computer_use` toolset. Supported on macOS, Windows, and\n"
             "Linux.\n\n"
-            "Use `hermes computer-use install` to fetch and run the\n"
+            "Use `auraforge computer-use install` to fetch and run the\n"
             "upstream cua-driver installer. This is equivalent to the\n"
-            "post-setup hook that `hermes tools` runs when you first\n"
+            "post-setup hook that `auraforge tools` runs when you first\n"
             "enable the Computer Use toolset, and is a stable target\n"
             "for re-running the install if it didn't fire (e.g. when\n"
             "toggling the toolset on a returning-user setup).\n\n"
-            "Use `hermes computer-use doctor` to run cua-driver's\n"
+            "Use `auraforge computer-use doctor` to run cua-driver's\n"
             "`health_report` MCP tool and surface its check matrix\n"
             "(TCC, bundle identity, version, platform support, ...)\n"
             "in human-readable form."
@@ -13947,7 +13947,7 @@ def main():
                 from hermes_cli.tools_config import _cua_version_summary
                 version = _cua_version_summary(version)
                 # Name the override here too. Without it the operator is told
-                # to repair an install that `hermes computer-use install` will
+                # to repair an install that `auraforge computer-use install` will
                 # (correctly) refuse to touch, with nothing pointing at the
                 # env var that actually selected the binary.
                 origin = " [custom binary from HERMES_CUA_DRIVER_CMD]" if override else ""
@@ -14566,7 +14566,7 @@ def main():
     # =========================================================================
     build_claw_parser(subparsers, cmd_claw=cmd_claw)
 
-    # NOTE: the `hermes version` subcommand was removed — `hermes --version`
+    # NOTE: the `auraforge version` subcommand was removed — `auraforge --version`
     # / `-V` now carries the full output including update status.
 
     # =========================================================================
@@ -14620,7 +14620,7 @@ def main():
     #
     # The canonical name is "desktop"; "gui" is kept as a deprecated alias
     # for one release. The Hermes-Setup.exe success screen tells users to
-    # run `hermes desktop` from a terminal, so the canonical name needs
+    # run `auraforge desktop` from a terminal, so the canonical name needs
     # to be the one that appears in --help (argparse promotes the primary
     # name; aliases stay hidden).
     # =========================================================================
@@ -14643,7 +14643,7 @@ def main():
     # =========================================================================
     # Pre-process argv so unquoted multi-word session names after -c / -r
     # are merged into a single token before argparse sees them.
-    # e.g. ``hermes -c Pokemon Agent Dev`` → ``hermes -c 'Pokemon Agent Dev'``
+    # e.g. ``auraforge -c Pokemon Agent Dev`` → ``auraforge -c 'Pokemon Agent Dev'``
     # ── Container-aware routing ────────────────────────────────────────
     # When NixOS container mode is active, route ALL subcommands into
     # the managed container.  This MUST run before parse_args() so that
@@ -14770,7 +14770,7 @@ def main():
 
     # Execute the command.  Propagate the handler's return code as the
     # process exit code so subcommands that signal failure (e.g.
-    # ``hermes egress start`` refusing when credential_source=bitwarden
+    # ``auraforge egress start`` refusing when credential_source=bitwarden
     # is misconfigured) actually exit non-zero.  Handlers that return
     # None are treated as success (exit 0).
     if hasattr(args, "func"):

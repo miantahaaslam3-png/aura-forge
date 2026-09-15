@@ -6,7 +6,7 @@ author: Jakub Wolniewicz (@frizikk) + Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [kanban, review, quality, verification]
     category: devops
     requires_toolsets: [kanban]

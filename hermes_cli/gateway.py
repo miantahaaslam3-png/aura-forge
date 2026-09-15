@@ -57,7 +57,7 @@ from hermes_cli.config import (
 )
 
 # display_hermes_home is imported lazily at call sites to avoid ImportError
-# when hermes_constants is cached from a pre-update version during `hermes update`.
+# when hermes_constants is cached from a pre-update version during `auraforge update`.
 from hermes_cli.setup import (
     print_header,
     print_info,
@@ -375,7 +375,7 @@ def _wait_for_pid_exit(pid: int, timeout: float) -> bool:
 # A gateway whose asyncio loop is stalled (e.g. an in-loop compression pass,
 # #72707) cannot process SIGTERM/SIGUSR1 shutdown: the drain wait then burns
 # the full drain budget (180s by default), warns "still running after 180.0s
-# — restart may fail", and `hermes update` can deadlock behind it.  The loop
+# — restart may fail", and `auraforge update` can deadlock behind it.  The loop
 # publishes a liveness signal precisely for this case: an asyncio task
 # rewrites ``state/gateway.heartbeat`` every 30s (#66892), so a frozen loop
 # stops refreshing the file while a busy-but-alive loop keeps refreshing it.
@@ -669,7 +669,7 @@ def _get_ancestor_pids() -> set[int]:
 
     Walks from the current PID up to PID 1 (init) so that process-table scans
     never match the calling CLI process or any of its parents.  This prevents
-    ``hermes gateway status`` from falsely counting the ``hermes`` CLI that
+    ``auraforge gateway status`` from falsely counting the ``auraforge`` CLI that
     invoked it as a running gateway instance (see #13242).
     """
     ancestors: set[int] = set()
@@ -706,7 +706,7 @@ def _scan_gateway_pids(
     discover gateways outside the current profile.
     """
     # Exclude the entire ancestor chain so the CLI process that invoked this
-    # scan (e.g. ``hermes gateway status``) is never mistaken for a running
+    # scan (e.g. ``auraforge gateway status``) is never mistaken for a running
     # gateway.  See #13242.
     exclude_pids = exclude_pids | _get_ancestor_pids()
     pids: list[int] = []
@@ -720,7 +720,7 @@ def _scan_gateway_pids(
         looks_like_gateway_runtime_command_line,
     )
     current_home = str(get_hermes_home().resolve())
-    # Forward slashes on both sides of the HERMES_HOME= match — see
+    # Forward slashes on both sides of the AURA_FORGE_HOME= match — see
     # gateway.status._command_line_belongs_to_profile, which this mirrors.
     current_home_lc = current_home.lower().replace("\\", "/")
     current_profile_arg = _profile_arg(current_home)
@@ -739,10 +739,10 @@ def _scan_gateway_pids(
             )
 
         # Default-profile case: no profile flag in argv. Accept as long as
-        # the command doesn't advertise *some other* profile. HERMES_HOME
+        # the command doesn't advertise *some other* profile. AURA_FORGE_HOME
         # may be passed via env (not visible in wmic/CIM command line) so
         # its absence is NOT disqualifying — only a non-matching explicit
-        # HERMES_HOME= in argv is.
+        # AURA_FORGE_HOME= in argv is.
         if "--profile " in command_lc or " -p " in command_lc:
             return False
         if (
@@ -768,7 +768,7 @@ def _scan_gateway_pids(
             # ``subprocess.run(timeout=...)`` — because on Windows ``run()``'s
             # post-timeout cleanup joins the pipe reader threads unbounded; a
             # descendant (conhost.exe) holding duplicated pipe handles then
-            # wedges the caller forever. ``hermes update`` hung exactly there
+            # wedges the caller forever. ``auraforge update`` hung exactly there
             # on slow-WMI machines where the full Win32_Process scan exceeds
             # its budget (#87134).
             # bounded_probe_run also hides the console window: this scan runs
@@ -958,7 +958,7 @@ def find_gateway_pids(
         exclude_pids: PIDs to exclude from the result (e.g. service-managed
             PIDs that should not be killed during a stale-process sweep).
         all_profiles: When ``True``, return gateway PIDs across **all**
-            profiles (the pre-7923 global behaviour).  ``hermes update``
+            profiles (the pre-7923 global behaviour).  ``auraforge update``
             needs this because a code update affects every profile.
             When ``False`` (default), only PIDs belonging to the current
             Aura Forge profile are returned.
@@ -1208,7 +1208,7 @@ def _capture_gateway_argv(pid: int) -> list[str] | None:
 
 
 def _prepare_profile_gateway_update_restart(profile: str, pid: int) -> str | None:
-    """Choose who relaunches a profile gateway after ``hermes update``.
+    """Choose who relaunches a profile gateway after ``auraforge update``.
 
     A gateway started with ``--external-supervisor`` must exit back to that
     manager. Starting Aura Forge's detached watcher as well would escape the
@@ -1242,7 +1242,7 @@ def launch_detached_gateway_restart_by_cmdline(
 
     Companion to ``launch_detached_profile_gateway_restart`` for gateways that
     have no profile→PID-file mapping (Scheduled-Task / manually-launched
-    ``gateway run`` whose HERMES_HOME or argv doesn't match a known profile).
+    ``gateway run`` whose AURA_FORGE_HOME or argv doesn't match a known profile).
     Uses the identical detached-watcher mechanism; only the respawn argv
     differs (the process's own argv instead of a profile-derived one).
     """
@@ -1273,8 +1273,8 @@ def _spawn_gateway_restart_watcher(old_pid: int, run_argv: list[str]) -> bool:
     #
     # Windows — ``start_new_session`` is silently accepted but does NOT
     # detach.  The watcher stays attached to the CLI's console and dies
-    # when the user closes the terminal, leaving ``hermes update`` users
-    # with no running gateway until they re-invoke ``hermes gateway``
+    # when the user closes the terminal, leaving ``auraforge update`` users
+    # with no running gateway until they re-invoke ``auraforge gateway``
     # manually.  The Win32 equivalent is the ``CREATE_NEW_PROCESS_GROUP |
     # DETACHED_PROCESS | CREATE_NO_WINDOW`` creationflags bundle.
     #
@@ -1290,7 +1290,7 @@ def _spawn_gateway_restart_watcher(old_pid: int, run_argv: list[str]) -> bool:
     # want: the watcher respawns it under CREATE_NO_WINDOW detach flags, so
     # the gateway owns one hidden console that all descendants inherit —
     # nothing flashes (#54220/#56747).  The spec helper normalizes the
-    # interpreter and captures the stable cwd + env overlay (HERMES_HOME,
+    # interpreter and captures the stable cwd + env overlay (AURA_FORGE_HOME,
     # VIRTUAL_ENV, PYTHONPATH) so the respawn doesn't depend on the watcher's
     # transient working directory.  No-op on POSIX.
     # See gateway_windows.windowless_gateway_restart_spec.
@@ -1353,7 +1353,7 @@ def _spawn_gateway_restart_watcher(old_pid: int, run_argv: list[str]) -> bool:
             "stderr": subprocess.DEVNULL,
         }}
         # Anchor the respawned gateway at the stable working dir and overlay
-        # the env (VIRTUAL_ENV / PYTHONPATH / HERMES_HOME) the windowless
+        # the env (VIRTUAL_ENV / PYTHONPATH / AURA_FORGE_HOME) the windowless
         # base interpreter needs to import hermes_cli.  Empty on POSIX, where
         # the venv python resolves imports without help.
         if _respawn_cwd:
@@ -1479,7 +1479,7 @@ def _read_systemd_unit_environment(system: bool = False) -> dict[str, str]:
 
 
 def _hermes_home_from_systemd_unit_file(system: bool = False) -> str | None:
-    """Read ``HERMES_HOME`` from the on-disk unit file (not ``systemctl show``).
+    """Read ``AURA_FORGE_HOME`` from the on-disk unit file (not ``systemctl show``).
 
     Prefer the file when refreshing/comparing: under ``sudo``, ``systemctl``
     may be slow/unavailable in tests, and the on-disk unit is what
@@ -1498,18 +1498,18 @@ def _hermes_home_from_systemd_unit_file(system: bool = False) -> str | None:
         if not stripped.startswith("Environment="):
             continue
         body = stripped[len("Environment=") :].strip().strip('"')
-        if body.startswith("HERMES_HOME="):
+        if body.startswith("AURA_FORGE_HOME="):
             value = body.split("=", 1)[1].strip().strip('"')
             return value or None
     return None
 
 
 def _sync_hermes_home_from_systemd_unit(system: bool) -> None:
-    """When acting on a system-scope unit, adopt its ``HERMES_HOME``.
+    """When acting on a system-scope unit, adopt its ``AURA_FORGE_HOME``.
 
-    Under ``sudo``, ``HERMES_HOME`` is stripped and ``HOME=/root``, so
+    Under ``sudo``, ``AURA_FORGE_HOME`` is stripped and ``HOME=/root``, so
     :func:`get_hermes_home` falls back to ``/root/.hermes`` — the wrong
-    profile. The unit file pins ``HERMES_HOME`` for the actual gateway
+    profile. The unit file pins ``AURA_FORGE_HOME`` for the actual gateway
     process, so we mirror that into our own environment to make
     ``read_runtime_status`` / ``get_running_pid`` read the correct files.
     """
@@ -1519,13 +1519,13 @@ def _sync_hermes_home_from_systemd_unit(system: bool) -> None:
     # back to ``systemctl show`` for units that only exist in the manager.
     unit_home = (_hermes_home_from_systemd_unit_file(system=True) or "").strip()
     if not unit_home:
-        unit_home = _read_systemd_unit_environment(system=True).get("HERMES_HOME", "").strip()
+        unit_home = _read_systemd_unit_environment(system=True).get("AURA_FORGE_HOME", "").strip()
     if not unit_home:
         return
-    current = os.environ.get("HERMES_HOME", "").strip()
+    current = os.environ.get("AURA_FORGE_HOME", "").strip()
     if current == unit_home:
         return
-    os.environ["HERMES_HOME"] = unit_home
+    os.environ["AURA_FORGE_HOME"] = unit_home
 
 
 def _read_systemd_unit_properties(
@@ -2044,14 +2044,14 @@ def _print_gateway_process_mismatch(snapshot: GatewayRuntimeSnapshot) -> None:
             "⚠ Gateway process is running for this profile, but the service is not active"
         )
         print(f"  PID(s): {_format_gateway_pids(snapshot.gateway_pids, limit=None)}")
-        print("  This is usually a manual foreground/tmux/nohup run, so `hermes gateway`")
+        print("  This is usually a manual foreground/tmux/nohup run, so `auraforge gateway`")
         print("  can refuse to start another copy until this process stops.")
 
 
 def _print_other_profiles_gateway_status() -> None:
     """Print a summary of gateway status across all profiles.
 
-    Shown at the bottom of ``hermes gateway status`` output so users with
+    Shown at the bottom of ``auraforge gateway status`` output so users with
     multiple profiles can tell at a glance which gateways are running and
     avoid confusing another profile's process with the current one.
     """
@@ -2229,7 +2229,7 @@ def _reap_unsupervised_gateway_orphans(extra_exclude: set | None = None) -> bool
         try:
             # The install-time task name is profile-aware (Hermes_Gateway /
             # Hermes_Gateway_<profile>) — never hardcode it, or the guard is
-            # dormant on every standard `hermes gateway install` deployment.
+            # dormant on every standard `auraforge gateway install` deployment.
             from hermes_cli.gateway_windows import get_task_name
 
             _task_name = get_task_name()
@@ -2337,7 +2337,7 @@ def _reap_unsupervised_gateway_orphans(extra_exclude: set | None = None) -> bool
 
 
 def stop_profile_gateway() -> bool:
-    """Stop only the gateway for the current profile (HERMES_HOME-scoped).
+    """Stop only the gateway for the current profile (AURA_FORGE_HOME-scoped).
 
     Uses the PID file written by start_gateway(), so it only kills the
     gateway belonging to this profile — not gateways from other profiles.
@@ -2552,7 +2552,7 @@ def _windows_scheduled_task_supervises(task_name: str) -> bool:
 def _windows_gateway_should_absorb_console_controls() -> bool:
     """Return True for detached Windows gateway runs that should ignore Ctrl+C.
 
-    Foreground ``hermes gateway run`` must remain interruptible from
+    Foreground ``auraforge gateway run`` must remain interruptible from
     PowerShell/CMD. Detached service-style launches opt in via
     ``HERMES_GATEWAY_DETACHED=1``; older wrappers without the env marker are
     treated as detached when no interactive stdin is attached.
@@ -2605,11 +2605,11 @@ SERVICE_DESCRIPTION = "Aura Forge Agent Gateway - Messaging Platform Integration
 
 
 def _profile_suffix() -> str:
-    """Derive a service-name suffix from the current HERMES_HOME.
+    """Derive a service-name suffix from the current AURA_FORGE_HOME.
 
     Returns ``""`` for the default root, the profile name for
     ``<root>/profiles/<name>``, or a short hash for any other path.
-    Works correctly in Docker (HERMES_HOME=/opt/data) and standard deployments.
+    Works correctly in Docker (AURA_FORGE_HOME=/opt/data) and standard deployments.
     """
     import hashlib
     import re
@@ -2628,18 +2628,18 @@ def _profile_suffix() -> str:
             return parts[0]
     except ValueError:
         pass
-    # Fallback: short hash for arbitrary HERMES_HOME paths
+    # Fallback: short hash for arbitrary AURA_FORGE_HOME paths
     return hashlib.sha256(str(home).encode()).hexdigest()[:8]
 
 
 def _profile_arg(hermes_home: str | None = None, default_root: str | Path | None = None) -> str:
-    """Return ``--profile <name>`` only when HERMES_HOME is a named profile.
+    """Return ``--profile <name>`` only when AURA_FORGE_HOME is a named profile.
 
-    For ``~/.hermes/profiles/<name>``, returns ``"--profile <name>"``.
+    For ``~/.aura-forge/profiles/<name>``, returns ``"--profile <name>"``.
     For the default profile or hash-based custom paths, returns the empty string.
 
     Args:
-        hermes_home: Optional explicit HERMES_HOME path. Defaults to the current
+        hermes_home: Optional explicit AURA_FORGE_HOME path. Defaults to the current
             ``get_hermes_home()`` value. Should be passed when generating a
             service definition for a different user (e.g. system service).
         default_root: Optional Aura Forge root to compare against. Used when
@@ -2676,11 +2676,11 @@ def _profile_arg_for_target_user(hermes_home: str, target_home_dir: str) -> str:
 
 
 def get_service_name() -> str:
-    """Derive a systemd service name scoped to this HERMES_HOME.
+    """Derive a systemd service name scoped to this AURA_FORGE_HOME.
 
     Default ``~/.hermes`` returns ``hermes-gateway`` (backward compatible).
-    Profile ``~/.hermes/profiles/coder`` returns ``hermes-gateway-coder``.
-    Any other HERMES_HOME appends a short hash for uniqueness.
+    Profile ``~/.aura-forge/profiles/coder`` returns ``hermes-gateway-coder``.
+    Any other AURA_FORGE_HOME appends a short hash for uniqueness.
     """
     suffix = _profile_suffix()
     if not suffix:
@@ -3324,8 +3324,8 @@ def install_linux_gateway_from_setup(force: bool = False, enable_on_startup: boo
 def ensure_gateway_service(context: str = "setup") -> bool:
     """Install and start the gateway service without prompting.
 
-    The zero-decision service path used by ``hermes setup`` (end of wizard)
-    and ``hermes import``: if this host supports a service manager and no
+    The zero-decision service path used by ``auraforge setup`` (end of wizard)
+    and ``auraforge import``: if this host supports a service manager and no
     gateway service exists yet, install a user-scope service and start it.
     A gateway with zero configured platforms is a supported degraded mode
     (it runs the cron scheduler and picks up platforms as tokens appear),
@@ -3338,7 +3338,7 @@ def ensure_gateway_service(context: str = "setup") -> bool:
     Scope choice: always the least-surprising, no-privilege option —
     user-scope systemd unit on Linux, LaunchAgent on macOS, Scheduled Task
     on Windows. Users who want a boot-time system service still run
-    ``hermes gateway install --system`` explicitly (that path prompts and
+    ``auraforge gateway install --system`` explicitly (that path prompts and
     requires root; we never self-elevate from an installer).
     """
     from hermes_constants import is_container
@@ -3488,7 +3488,7 @@ def get_launchd_plist_path() -> Path:
     """Return the launchd plist path, scoped per profile.
 
     Default ``~/.hermes`` → ``ai.hermes.gateway.plist`` (backward compatible).
-    Profile ``~/.hermes/profiles/coder`` → ``ai.hermes.gateway-coder.plist``.
+    Profile ``~/.aura-forge/profiles/coder`` → ``ai.hermes.gateway-coder.plist``.
     """
     suffix = _profile_suffix()
     name = f"ai.hermes.gateway-{suffix}" if suffix else "ai.hermes.gateway"
@@ -3501,7 +3501,7 @@ def launchd_gateway_labels_for_install() -> list[str]:
     Derived from the install's profile layout (rooted at
     ``get_default_hermes_root()``), NOT by globbing ``~/Library/LaunchAgents``:
     the LaunchAgents directory is shared per-user, so a sandboxed
-    ``HERMES_HOME`` (tests, capture sandboxes, side-by-side installs) must
+    ``AURA_FORGE_HOME`` (tests, capture sandboxes, side-by-side installs) must
     never enumerate — let alone restart — another install's fleet.
 
     Root label first, then profile labels sorted by name.  Profile names
@@ -3639,7 +3639,7 @@ def _remap_path_for_user(path: str, target_home_dir: str) -> str:
     If *path* lives under ``Path.home()`` the corresponding prefix is swapped
     to *target_home_dir*; otherwise the path is returned unchanged.
 
-      /root/.hermes/hermes-agent  -> /home/alice/.hermes/hermes-agent
+      /root/.hermes/aura-forge-agent  -> /home/alice/.hermes/aura-forge-agent
       /opt/hermes                 -> /opt/hermes  (kept as-is)
 
     Note: this function intentionally does NOT resolve symlinks. A venv's
@@ -3660,7 +3660,7 @@ def _remap_path_for_user(path: str, target_home_dir: str) -> str:
 
 
 def _hermes_home_for_target_user(target_home_dir: str) -> str:
-    """Remap the current HERMES_HOME to the equivalent under a target user's home.
+    """Remap the current AURA_FORGE_HOME to the equivalent under a target user's home.
 
     When installing a system service via sudo, get_hermes_home() resolves to
     root's home.  This translates it to the target user's equivalent path:
@@ -3668,7 +3668,7 @@ def _hermes_home_for_target_user(target_home_dir: str) -> str:
       /root/.hermes/profiles/coder     → /home/alice/.hermes/profiles/coder
       /opt/custom-hermes               → /opt/custom-hermes  (kept as-is)
     """
-    current_hermes_raw = os.environ.get("HERMES_HOME", "").strip()
+    current_hermes_raw = os.environ.get("AURA_FORGE_HOME", "").strip()
     current_hermes = (
         Path(current_hermes_raw).expanduser()
         if current_hermes_raw
@@ -3676,7 +3676,7 @@ def _hermes_home_for_target_user(target_home_dir: str) -> str:
     )
     # Keep explicit custom paths lexical. Resolving a non-existent custom path
     # can rewrite it through host-specific path mappings, which would bake a
-    # different HERMES_HOME into the generated service unit.
+    # different AURA_FORGE_HOME into the generated service unit.
     current_default = Path.home() / ".hermes"
     target_default = Path(target_home_dir) / ".hermes"
 
@@ -3735,15 +3735,15 @@ def _stable_service_working_dir() -> str:
     resolution does not depend on cwd. Pinning ``WorkingDirectory`` to
     ``PROJECT_ROOT`` (``Path(__file__).parent.parent``) is actively harmful:
     when the unit is generated from a transient checkout — a ``.worktrees/``
-    dir, or a clone that ``hermes update`` later relocates/removes — the path
+    dir, or a clone that ``auraforge update`` later relocates/removes — the path
     rots. systemd then fails the start at the CHDIR step (``status=200/CHDIR``,
     "Changing to the requested working directory failed") *before* Python
     loads, so the on-boot ``refresh_systemd_unit_if_needed()`` self-heal never
     runs and ``Restart=always`` crash-loops forever on a dead directory.
 
-    ``HERMES_HOME`` is the stable anchor: it is where config/state/logs live,
+    ``AURA_FORGE_HOME`` is the stable anchor: it is where config/state/logs live,
     it never moves, and it is guaranteed to exist whenever the gateway is
-    meaningfully installed. Fall back to ``PROJECT_ROOT`` only if HERMES_HOME
+    meaningfully installed. Fall back to ``PROJECT_ROOT`` only if AURA_FORGE_HOME
     cannot be resolved (it always can in practice).
     """
     try:
@@ -3798,7 +3798,7 @@ def _append_node_dir_for_service(
 ) -> None:
     """Add the Node directory a generated service unit should use to *path_entries*.
 
-    The Hermes-managed Node under ``$HERMES_HOME/node`` goes first when it
+    The Hermes-managed Node under ``$AURA_FORGE_HOME/node`` goes first when it
     exists. A bare ``shutil.which("node")`` cannot be trusted on its own here:
     a service unit is written once and then survives reboots, so resolving a
     system Node that happens to be ahead on the installing shell's PATH bakes
@@ -3895,7 +3895,7 @@ def generate_systemd_unit(system: bool = False, run_as_user: str | None = None) 
         # (e.g. /root/) to the target user's home so the service can
         # actually access them.
         python_path = _remap_path_for_user(python_path, home_dir)
-        # Anchor cwd to the target user's HERMES_HOME (stable, always exists)
+        # Anchor cwd to the target user's AURA_FORGE_HOME (stable, always exists)
         # rather than a remapped source-checkout path that can rot. See
         # _stable_service_working_dir() for the full rationale.
         working_dir = str(hermes_home) if hermes_home else _remap_path_for_user(working_dir, home_dir)
@@ -3933,7 +3933,7 @@ Environment="USER={username}"
 Environment="LOGNAME={username}"
 Environment="PATH={sane_path}"
 Environment="VIRTUAL_ENV={venv_dir}"
-Environment="HERMES_HOME={hermes_home}"
+Environment="AURA_FORGE_HOME={hermes_home}"
 Restart=always
 RestartSec=5
 RestartForceExitStatus={GATEWAY_SERVICE_RESTART_EXIT_CODE}
@@ -3971,7 +3971,7 @@ Type={systemd_type}
 WorkingDirectory={working_dir}
 Environment="PATH={sane_path}"
 Environment="VIRTUAL_ENV={venv_dir}"
-Environment="HERMES_HOME={hermes_home}"
+Environment="AURA_FORGE_HOME={hermes_home}"
 Restart=always
 RestartSec=5
 RestartForceExitStatus={GATEWAY_SERVICE_RESTART_EXIT_CODE}
@@ -4036,17 +4036,17 @@ def _normalize_launchd_plist_for_comparison(text: str) -> str:
 
 
 def systemd_unit_is_current(system: bool = False) -> bool:
-    # ── HERMES_HOME sync chokepoint ──────────────────────────────────────
+    # ── AURA_FORGE_HOME sync chokepoint ──────────────────────────────────────
     # Every path that compares OR regenerates the unit funnels through here:
     # ``refresh_systemd_unit_if_needed`` gates on this before rewriting, and
     # ``systemd_status`` / ``systemd_install`` call it directly. Doing the
     # sync here — and ONLY here — enforces the invariant "the operator's
-    # pinned HERMES_HOME is adopted before any compare/regenerate" at a single
+    # pinned AURA_FORGE_HOME is adopted before any compare/regenerate" at a single
     # site, so a future callsite cannot regress it by forgetting to pre-sync.
     #
-    # Under ``sudo hermes gateway … --system``, HERMES_HOME is often stripped
+    # Under ``sudo hermes gateway … --system``, AURA_FORGE_HOME is often stripped
     # and falls back to ``/root/.hermes``. Adopting the unit's pinned home
-    # first makes TimeoutStopSec / WorkingDirectory / HERMES_HOME comparisons
+    # first makes TimeoutStopSec / WorkingDirectory / AURA_FORGE_HOME comparisons
     # use the real operator config — otherwise start/restart "refresh" rewrites
     # a correct unit from root's defaults and ``status`` keeps warning forever.
     # ``_sync_...`` is idempotent (early-returns once os.environ matches), so
@@ -4074,29 +4074,29 @@ def systemd_unit_is_current(system: bool = False) -> bool:
 
 
 def _temp_home_in_service_definition(definition: str) -> str | None:
-    """Return the temp-dir HERMES_HOME baked into a service definition, or None.
+    """Return the temp-dir AURA_FORGE_HOME baked into a service definition, or None.
 
-    A generated systemd unit / launchd plist carries the resolved HERMES_HOME
+    A generated systemd unit / launchd plist carries the resolved AURA_FORGE_HOME
     in its environment block. If that path lives under the system temp dir,
     the definition was almost certainly generated by a test/E2E harness that
-    exported a throwaway ``HERMES_HOME=/tmp/...`` — writing it to the real
+    exported a throwaway ``AURA_FORGE_HOME=/tmp/...`` — writing it to the real
     service file silently breaks the user's gateway on the next (re)start:
     the gateway comes back "active (running)" but pointed at an empty temp
     home ("No messaging platforms enabled"), deaf to every platform.
-    Seen live 2026-06-11: an E2E guard probe ran ``hermes gateway restart``
-    with ``HERMES_HOME=/tmp/hermes-e2e-<pr>`` exported; the restart path's
+    Seen live 2026-06-11: an E2E guard probe ran ``auraforge gateway restart``
+    with ``AURA_FORGE_HOME=/tmp/hermes-e2e-<pr>`` exported; the restart path's
     unit refresh baked the temp path into the production unit and the
     post-update restart produced a zombie gateway for 7+ hours.
 
-    Matches both systemd ``Environment="HERMES_HOME=..."`` lines and launchd
-    ``<key>HERMES_HOME</key><string>...</string>`` pairs.
+    Matches both systemd ``Environment="AURA_FORGE_HOME=..."`` lines and launchd
+    ``<key>AURA_FORGE_HOME</key><string>...</string>`` pairs.
     """
     import re
     import tempfile
 
-    candidates = re.findall(r'HERMES_HOME=([^"\n]+)', definition)
+    candidates = re.findall(r'AURA_FORGE_HOME=([^"\n]+)', definition)
     candidates += re.findall(
-        r"<key>HERMES_HOME</key>\s*<string>(.*?)</string>", definition, flags=re.S
+        r"<key>AURA_FORGE_HOME</key>\s*<string>(.*?)</string>", definition, flags=re.S
     )
     temp_roots = {
         Path(tempfile.gettempdir()).resolve(),
@@ -4117,16 +4117,16 @@ def _temp_home_in_service_definition(definition: str) -> str | None:
 
 
 def _refuse_temp_home_service_write(definition: str, kind: str) -> bool:
-    """Refuse (with guidance) when a service definition carries a temp HERMES_HOME."""
+    """Refuse (with guidance) when a service definition carries a temp AURA_FORGE_HOME."""
     temp_home = _temp_home_in_service_definition(definition)
     if temp_home is None:
         return False
     print(
-        f"✗ Refusing to write the gateway {kind}: HERMES_HOME resolves to a "
+        f"✗ Refusing to write the gateway {kind}: AURA_FORGE_HOME resolves to a "
         f"temporary directory ({temp_home})."
     )
     print(
-        "  This usually means a test/E2E environment exported HERMES_HOME. "
+        "  This usually means a test/E2E environment exported AURA_FORGE_HOME. "
         "Unset it (or run from a clean shell) and retry."
     )
     return True
@@ -4139,7 +4139,7 @@ def refresh_systemd_unit_if_needed(system: bool = False) -> bool:
         return False
 
     # The gate below funnels through ``systemd_unit_is_current``, which is the
-    # single HERMES_HOME-sync chokepoint (adopts the unit's pinned home before
+    # single AURA_FORGE_HOME-sync chokepoint (adopts the unit's pinned home before
     # any compare/regenerate). No separate pre-sync needed here — and the env
     # mutation it performs persists for the regenerate path below.
     if systemd_unit_is_current(system=system):
@@ -4150,10 +4150,10 @@ def refresh_systemd_unit_if_needed(system: bool = False) -> bool:
 
     # ── Test-environment safety belt ─────────────────────────────────────
     # The user-scope unit path resolves under ``Path.home()``, which is NOT
-    # sandboxed by the test conftest (only HERMES_HOME is). If a test
-    # exercises ``run_gateway()`` with a pytest-tmp HERMES_HOME, the freshly
+    # sandboxed by the test conftest (only AURA_FORGE_HOME is). If a test
+    # exercises ``run_gateway()`` with a pytest-tmp AURA_FORGE_HOME, the freshly
     # generated unit bakes that ``/tmp/pytest-of-.../hermes_test`` path into
-    # ``Environment="HERMES_HOME=..."``. Writing that to the developer's
+    # ``Environment="AURA_FORGE_HOME=..."``. Writing that to the developer's
     # real user systemd unit file silently breaks their gateway on the next
     # reboot (systemd loads the polluted env, the gateway looks at an empty
     # tmp dir, and Telegram/Discord/etc. all show as "not configured").
@@ -4170,7 +4170,7 @@ def refresh_systemd_unit_if_needed(system: bool = False) -> bool:
         return False
 
     # Structural variant of the same belt: refuse to bake ANY temp-dir
-    # HERMES_HOME into the unit (manual E2E homes like /tmp/hermes-e2e-NNN
+    # AURA_FORGE_HOME into the unit (manual E2E homes like /tmp/hermes-e2e-NNN
     # don't carry the pytest markers above but poison the unit identically).
     if _refuse_temp_home_service_write(new_unit, "systemd unit"):
         return False
@@ -4361,7 +4361,7 @@ def systemd_install(
     unit_path = get_systemd_unit_path(system=system)
     scope_flag = " --system" if system else ""
 
-    # Existing system units already pin HERMES_HOME; adopt it before any
+    # Existing system units already pin AURA_FORGE_HOME; adopt it before any
     # regenerate. This pre-sync is NOT redundant with the systemd_unit_is_current
     # chokepoint: the ``--force`` path below skips the is_current gate and calls
     # generate_systemd_unit() directly (line ~3172), so without this a
@@ -4460,7 +4460,7 @@ def systemd_start(system: bool = False):
         # Raises UserSystemdUnavailableError with a remediation message.
         _preflight_user_systemd()
     _require_service_installed("start", system=system)
-    # HERMES_HOME sync happens inside refresh_systemd_unit_if_needed's
+    # AURA_FORGE_HOME sync happens inside refresh_systemd_unit_if_needed's
     # systemd_unit_is_current gate (the single chokepoint), and the unit is
     # guaranteed to exist here by _require_service_installed, so the gate runs.
     refresh_systemd_unit_if_needed(system=system)
@@ -4490,7 +4490,7 @@ def systemd_stop(system: bool = False):
         label = _service_scope_label(system)
         print(
             f"Gateway {label} service is still stopping after 90s; "
-            "check `hermes gateway status` or logs for final shutdown state."
+            "check `auraforge gateway status` or logs for final shutdown state."
         )
         return
     print(f"✓ {_service_scope_label(system).capitalize()} service stopped")
@@ -4503,7 +4503,7 @@ def systemd_restart(system: bool = False):
     else:
         _preflight_user_systemd()
     _require_service_installed("restart", system=system)
-    # HERMES_HOME sync happens inside refresh_systemd_unit_if_needed's
+    # AURA_FORGE_HOME sync happens inside refresh_systemd_unit_if_needed's
     # systemd_unit_is_current gate (the single chokepoint). The unit exists
     # here (_require_service_installed), so the gate runs and its os.environ
     # mutation persists for the get_running_pid / drain-timeout reads below —
@@ -4601,7 +4601,7 @@ def systemd_restart(system: bool = False):
             label = _service_scope_label(system)
             print(
                 f"Gateway {label} service is still restarting after 90s; "
-                "check `hermes gateway status` or logs for final state."
+                "check `auraforge gateway status` or logs for final state."
             )
             return
         _wait_for_systemd_service_restart(system=system, previous_pid=pid)
@@ -4631,7 +4631,7 @@ def systemd_restart(system: bool = False):
         label = _service_scope_label(system)
         print(
             f"Gateway {label} service is still restarting after 90s; "
-            "check `hermes gateway status` or logs for final state."
+            "check `auraforge gateway status` or logs for final state."
         )
         return
     _wait_for_systemd_service_restart(system=system, previous_pid=pid)
@@ -4768,7 +4768,7 @@ def get_launchd_label() -> str:
 
 
 # Cached launchd domain result — probing is cheap but should only run once per
-# process invocation (each ``hermes gateway start/stop/status`` call).
+# process invocation (each ``auraforge gateway start/stop/status`` call).
 _resolved_launchd_domain: str | None = None
 
 
@@ -5063,7 +5063,7 @@ def _launchd_unsupported_marker_exists() -> bool:
 def _gateway_run_command() -> list[str]:
     """Build the `python -m hermes_cli.main [--profile X] gateway run --replace` argv.
 
-    Profile-aware: honors the active HERMES_HOME via `_profile_arg()` so the
+    Profile-aware: honors the active AURA_FORGE_HOME via `_profile_arg()` so the
     detached fallback launches into the same profile as the CLI invocation.
     """
     cmd = [get_python_path(), "-m", "hermes_cli.main"]
@@ -5083,7 +5083,7 @@ def _timestamped_stderr_gateway_command(
 
     ``external_supervisor=True`` is for launchd ProgramArguments only: the
     inner ``gateway run`` must carry ``--external-supervisor`` so
-    ``hermes update`` sees the flag on the live grandchild argv and hands
+    ``auraforge update`` sees the flag on the live grandchild argv and hands
     the process back to launchd instead of starting a detached watcher
     (#86893 / #87005). The detached nohup fallback stays unmarked.
 
@@ -5215,7 +5215,7 @@ def generate_launchd_plist() -> str:
 
     # Persist the configured RLIMIT_NOFILE floor into the service definition
     # itself. launchd starts children with a soft limit of 256 by default;
-    # without this block every plist rewrite (e.g. `hermes gateway start`)
+    # without this block every plist rewrite (e.g. `auraforge gateway start`)
     # would silently strip a manually-added limit and reintroduce EMFILE
     # crashes under load. The in-process floor (resource_limits.py) still
     # applies as a second layer for non-launchd launches.
@@ -5256,7 +5256,7 @@ def generate_launchd_plist() -> str:
         <string>{sane_path}</string>
         <key>VIRTUAL_ENV</key>
         <string>{venv_dir}</string>
-        <key>HERMES_HOME</key>
+        <key>AURA_FORGE_HOME</key>
         <string>{hermes_home}</string>
     </dict>
 
@@ -5367,7 +5367,7 @@ def refresh_launchd_plist_if_needed() -> bool:
         # service stays unregistered — KeepAlive can't revive a service
         # launchd no longer knows about, so the gateway stays dark until a
         # manual `launchctl bootstrap`. Failures append a timestamped line
-        # to ~/.hermes/logs/launchd-reload.log, which the health watchdog
+        # to ~/.aura-forge/logs/launchd-reload.log, which the health watchdog
         # can tail to detect a persistent orphan. See hermes-restart
         # rootcause handoff (2026-06-26 incident).
         reload_log_path = get_hermes_home() / "logs" / "launchd-reload.log"
@@ -5645,7 +5645,7 @@ def launchd_stop():
     # bootout unloads the service definition so KeepAlive doesn't respawn
     # the process.  A plain `kill SIGTERM` only signals the process — launchd
     # immediately restarts it because KeepAlive is unconditionally true.
-    # `hermes gateway start` re-bootstraps when it detects the job is unloaded.
+    # `auraforge gateway start` re-bootstraps when it detects the job is unloaded.
     try:
         subprocess.run(["launchctl", "bootout", target], check=True, timeout=90)
     except subprocess.CalledProcessError as e:
@@ -5669,7 +5669,7 @@ def _wait_for_gateway_exit(
 
     Uses the PID from the gateway.pid file — not launchd labels — so this
     works correctly when multiple gateway instances run under separate
-    HERMES_HOME directories.
+    AURA_FORGE_HOME directories.
 
     Args:
         timeout: Total seconds to wait before giving up.
@@ -5766,7 +5766,7 @@ def launchd_restart():
         if pid is not None and probe_gateway_loop_liveness(pid) == GATEWAY_LOOP_WEDGED:
             # Health probe says the event loop is provably dead (#81642):
             # the gateway cannot process a graceful shutdown, so waiting the
-            # full drain budget only stalls the restart (and `hermes update`
+            # full drain budget only stalls the restart (and `auraforge update`
             # behind it) for 180s. Bounded escalation instead: SIGTERM grace
             # → SIGKILL → proceed, ~10s worst case. Never taken for a
             # busy-but-alive gateway — a fresh heartbeat keeps the drain path
@@ -6038,7 +6038,7 @@ def _guard_named_profile_under_multiplexer(force: bool = False) -> None:
     it is the sole inbound process for EVERY profile on the host. Starting a
     separate gateway for a named profile would double-bind that profile's
     platforms (two pollers on one bot token, port fights). In that mode a
-    named-profile ``hermes gateway run`` is always a misconfiguration, so we
+    named-profile ``auraforge gateway run`` is always a misconfiguration, so we
     hard-error with a pointer to the multiplexer. ``--force`` overrides.
 
     Inert unless ALL of: (a) this invocation is a named profile, (b) a default-
@@ -6160,7 +6160,7 @@ def _guard_named_profile_under_multiplexer(force: bool = False) -> None:
 def _guard_supervised_gateway_conflict(force: bool = False) -> None:
     """Refuse a foreground gateway when a service manager already supervises one.
 
-    Running ``hermes gateway run [--replace]`` (or the manual-restart fallback)
+    Running ``auraforge gateway run [--replace]`` (or the manual-restart fallback)
     from a shell on a systemd/launchd host spawns a second, long-lived
     dispatcher that escapes the service cgroup, survives
     ``systemctl restart``, and becomes a silent concurrent writer on the shared
@@ -6203,10 +6203,10 @@ def _guard_existing_gateway_process_conflict(replace: bool = False) -> None:
     ``gateway.run`` performs the authoritative PID/lock check, but importing it
     is expensive: it pulls in model_tools/plugin discovery first. On small
     instances, a supervisor or dashboard loop repeatedly running bare
-    ``hermes gateway run`` can burn memory/CPU just to fail with "already
+    ``auraforge gateway run`` can burn memory/CPU just to fail with "already
     running" after plugin discovery. This cheap PID-file preflight preserves the
     same user-facing contract while avoiding that startup work without scanning
-    unrelated gateway processes from other HERMES_HOME roots.
+    unrelated gateway processes from other AURA_FORGE_HOME roots.
     """
     if replace or _running_under_gateway_supervisor():
         return
@@ -6248,7 +6248,7 @@ def _guard_official_docker_root_gateway() -> None:
     )
     print(
         "  Running the gateway as root can leave root-owned files in "
-        "$HERMES_HOME and break later non-root dashboard/gateway runs."
+        "$AURA_FORGE_HOME and break later non-root dashboard/gateway runs."
     )
     print(
         "  Set HERMES_ALLOW_ROOT_GATEWAY=1 only if you intentionally accept this risk."
@@ -6275,7 +6275,7 @@ def run_gateway(verbose: int = 0, quiet: bool = False, replace: bool = False, fo
     sys.path.insert(0, str(PROJECT_ROOT))
 
     # Detached Windows gateway runs must ignore console-control broadcasts
-    # from sibling CLI processes, but foreground `hermes gateway run` still
+    # from sibling CLI processes, but foreground `auraforge gateway run` still
     # needs to obey the banner's "Press Ctrl+C to stop" contract.
     # Service-style launchers set HERMES_GATEWAY_DETACHED=1; older wrappers
     # without the marker are handled by the non-TTY fallback.
@@ -6323,10 +6323,10 @@ def run_gateway(verbose: int = 0, quiet: bool = False, replace: bool = False, fo
     # Refresh the systemd unit definition on every boot so that restart
     # settings (RestartSec, StartLimitIntervalSec, etc.) stay current even
     # when the process was respawned via exit-code-75 (stale-code or
-    # /restart) rather than through `hermes gateway restart` which already
+    # /restart) rather than through `auraforge gateway restart` which already
     # calls refresh_systemd_unit_if_needed().  Without this, a code update
     # that ships new unit settings won't take effect until the next manual
-    # `hermes gateway start/restart` — leaving the gateway vulnerable to
+    # `auraforge gateway start/restart` — leaving the gateway vulnerable to
     # the exact failure mode the new settings were meant to prevent.
     if supports_systemd_services():
         try:
@@ -6461,7 +6461,7 @@ def run_gateway(verbose: int = 0, quiet: bool = False, replace: bool = False, fo
         logger.debug("respawn-storm breaker check failed (non-fatal): %s", _be)
 
     def _hard_exit_after_gateway_teardown(code: int) -> None:
-        # ``hermes gateway run`` enters through this CLI wrapper, not through
+        # ``auraforge gateway run`` enters through this CLI wrapper, not through
         # ``gateway.run.main()``.  Mirror that module's wedge-proof exit path:
         # once start_gateway() has completed graceful teardown, bypass Python
         # finalization so non-daemon worker threads (notably in-flight cron
@@ -6719,7 +6719,7 @@ def _all_platforms() -> list[dict]:
     Combines the built-in ``_PLATFORMS`` with plugin platforms registered via
     ``platform_registry``. Plugins are discovered on first call so bundled
     platforms (like IRC, which auto-load via ``kind: platform``) appear in
-    ``hermes setup gateway`` without needing the gateway to be running.
+    ``auraforge setup gateway`` without needing the gateway to be running.
     Built-ins keep their dict shape; plugin entries are adapted to the same
     shape with ``_registry_entry`` holding the source.
 
@@ -6735,7 +6735,7 @@ def _all_platforms() -> list[dict]:
     # Populate the registry so plugin platforms are visible. Idempotent.
     # Bundled platform plugins (``kind: platform``) auto-load unconditionally,
     # so every shipped messaging channel appears in the setup menu by default.
-    # User-installed platform plugins under ~/.hermes/plugins/ still require
+    # User-installed platform plugins under ~/.aura-forge/plugins/ still require
     # opt-in via ``plugins.enabled`` (untrusted code).
     try:
         from hermes_cli.plugins import discover_plugins
@@ -7206,7 +7206,7 @@ def _setup_weixin():
     print_info("  1. Aura Forge will open Tencent iLink QR login in this terminal.")
     print_info("  2. Use WeChat to scan and confirm the QR code.")
     print_info(
-        "  3. Aura Forge will store the returned account_id/token in ~/.hermes/.env."
+        "  3. Aura Forge will store the returned account_id/token in ~/.aura-forge/.env."
     )
     print_info(
         "  4. This adapter supports native text, image, video, and document delivery."
@@ -7229,7 +7229,7 @@ def _setup_weixin():
 
     if not check_weixin_requirements():
         print_error("  Missing dependencies: Weixin needs aiohttp and cryptography.")
-        print_info("  Install them, then rerun `hermes gateway setup`.")
+        print_info("  Install them, then rerun `auraforge gateway setup`.")
         return
 
     print()
@@ -7283,7 +7283,7 @@ def _setup_weixin():
         save_env_value("WEIXIN_ALLOWED_USERS", "")
         print_success("  DM pairing enabled.")
         print_info(
-            "  Unknown DM users can request access and you approve them with `hermes pairing approve`."
+            "  Unknown DM users can request access and you approve them with `auraforge pairing approve`."
         )
     elif access_idx == 1:
         save_env_value("WEIXIN_DM_POLICY", "open")
@@ -7458,7 +7458,7 @@ def _setup_qqbot():
             save_env_value("QQ_ALLOWED_USERS", "")
         print_success("  DM pairing enabled.")
         print_info(
-            "  Unknown users can request access; approve with `hermes pairing approve`."
+            "  Unknown users can request access; approve with `auraforge pairing approve`."
         )
     elif access_idx == 1:
         save_env_value("QQ_ALLOW_ALL_USERS", "true")
@@ -7674,7 +7674,7 @@ def _configure_platform(platform: dict) -> None:
       4. Env-var hint fallback for plugins that offer no setup helper.
 
     Bundled platform plugins (e.g. IRC) auto-load, so no plugin enable step
-    is needed here. User-installed platform plugins under ~/.hermes/plugins/
+    is needed here. User-installed platform plugins under ~/.aura-forge/plugins/
     must already be in ``plugins.enabled`` before they appear in this menu.
     """
     entry = platform.get("_registry_entry")
@@ -7699,7 +7699,7 @@ def _configure_platform(platform: dict) -> None:
     print(color(f"  ─── {emoji} {label} Setup ───", Colors.CYAN))
     required = entry.required_env if entry else []
     if required:
-        print_info(f"  Set these env vars in ~/.hermes/.env: {', '.join(required)}")
+        print_info(f"  Set these env vars in ~/.aura-forge/.env: {', '.join(required)}")
     else:
         print_info(
             f"  Configure {label} in config.yaml under gateway.platforms.{platform['key']}"
@@ -7998,7 +7998,7 @@ def _dispatch_via_service_manager_if_s6(
         return False
     if profile is None:
         # _profile_suffix() returns the bare profile name for
-        # HERMES_HOME=<root>/profiles/<name>, "" for the default root,
+        # AURA_FORGE_HOME=<root>/profiles/<name>, "" for the default root,
         # or a hash for unrelated paths. Map "" → "default" so the
         # default-profile gateway is reachable as gateway-default.
         profile = _profile_suffix() or "default"
@@ -8029,7 +8029,7 @@ def _dispatch_all_via_service_manager_if_s6(action: str) -> bool:
     Returns True iff dispatched (caller should ``return``); False
     otherwise — caller continues with the host-side code path.
 
-    Without this, ``hermes gateway stop --all`` and ``... restart --all``
+    Without this, ``auraforge gateway stop --all`` and ``... restart --all``
     fall through to ``kill_gateway_processes(all_profiles=True)``, which
     just ``pkill``s every gateway process. s6-supervise observes the
     crash and restarts each one ~1s later — so ``--all`` ends up
@@ -8086,7 +8086,7 @@ def gateway_command(args):
             print(f"  {line}")
         sys.exit(1)
     except SystemScopeRequiresRootError as e:
-        # The direct ``hermes gateway install|uninstall|start|stop|restart``
+        # The direct ``auraforge gateway install|uninstall|start|stop|restart``
         # path lands here when the user typed a system-scope action without
         # sudo. Same exit code as before — just gives the wizard a way to
         # intercept the same condition with friendlier guidance before the
@@ -8113,10 +8113,10 @@ def _maybe_redirect_run_to_s6_supervision(args) -> bool:
 
       1. ``_dispatch_via_service_manager_if_s6`` returns False unless
          we're in a container with s6 as PID 1. Host runs of
-         ``hermes gateway run`` are unaffected.
+         ``auraforge gateway run`` are unaffected.
       2. ``HERMES_S6_SUPERVISED_CHILD`` is exported by
          ``S6ServiceManager._render_run_script`` for the supervised
-         process itself — i.e. when s6-supervise execs ``hermes gateway
+         process itself — i.e. when s6-supervise execs ``auraforge gateway
          run --replace`` as a longrun, this guard short-circuits the
          redirect so the supervised gateway actually runs in
          foreground (otherwise we'd recurse: run → start → run → start
@@ -8141,7 +8141,7 @@ def _maybe_redirect_run_to_s6_supervision(args) -> bool:
     # Loud breadcrumb: explain the upgrade and how to opt out. Print to
     # stderr so it doesn't pollute stdout-parsing scripts. The
     # supervised gateway's own logs are routed by s6-log to both
-    # `docker logs` and ${HERMES_HOME}/logs/gateways/<profile>/current,
+    # `docker logs` and ${AURA_FORGE_HOME}/logs/gateways/<profile>/current,
     # so the user sees a clear sequence: this banner first, then the
     # gateway's own stdout/stderr from the supervisor.
     print(
@@ -8307,7 +8307,7 @@ def _gateway_command_inner(args):
                 "  tmux new -s hermes 'hermes gateway run'         # persistent via tmux"
             )
             print(
-                "  nohup hermes gateway run > ~/.hermes/logs/gateway.log 2>&1 &  # background"
+                "  nohup hermes gateway run > ~/.aura-forge/logs/gateway.log 2>&1 &  # background"
             )
             sys.exit(1)
         elif is_container():
@@ -8354,7 +8354,7 @@ def _gateway_command_inner(args):
             print_error(
                 "Refusing to uninstall the gateway from inside the gateway process.\n"
                 "This command was blocked to prevent the gateway from terminating itself.\n"
-                "Use `hermes gateway uninstall` from a shell outside the running gateway."
+                "Use `auraforge gateway uninstall` from a shell outside the running gateway."
             )
             sys.exit(1)
 
@@ -8401,7 +8401,7 @@ def _gateway_command_inner(args):
         # Phase 4: inside a container with s6, dispatch via the service
         # manager instead of falling through to systemd/launchd/windows.
         # `--all` isn't meaningful here (each profile has its own service
-        # slot — start them individually via `hermes -p <name> gateway
+        # slot — start them individually via `auraforge -p <name> gateway
         # start`), so just bring up the current profile's slot.
         if not start_all and _dispatch_via_service_manager_if_s6("start"):
             return
@@ -8440,7 +8440,7 @@ def _gateway_command_inner(args):
                 "  tmux new -s hermes 'hermes gateway run'         # persistent via tmux"
             )
             print(
-                "  nohup hermes gateway run > ~/.hermes/logs/gateway.log 2>&1 &  # background"
+                "  nohup hermes gateway run > ~/.aura-forge/logs/gateway.log 2>&1 &  # background"
             )
             print()
             print(
@@ -8468,7 +8468,7 @@ def _gateway_command_inner(args):
     elif subcmd == "stop":
         # Defense: refuse self-targeting gateway stop from inside the gateway.
         # Prevents agent-initiated kill loops when combined with supervisor KeepAlive.
-        # The supervised probe also PASSES a plain foreground `hermes gateway run`
+        # The supervised probe also PASSES a plain foreground `auraforge gateway run`
         # (env set, PID owned, but no supervisor): that is intentional and
         # harmless — with no supervisor there is no KeepAlive, so a self-stop is
         # a one-shot exit rather than a respawn loop.
@@ -8478,7 +8478,7 @@ def _gateway_command_inner(args):
             print_error(
                 "Refusing to stop the gateway from inside the gateway process.\n"
                 "This command was blocked to prevent restart loops.\n"
-                "Use `hermes gateway stop` from a shell outside the running gateway."
+                "Use `auraforge gateway stop` from a shell outside the running gateway."
             )
             sys.exit(1)
 
@@ -8567,7 +8567,7 @@ def _gateway_command_inner(args):
     elif subcmd == "restart":
         # Defense: refuse self-targeting gateway restart from inside the gateway.
         # Prevents agent-initiated kill loops when combined with supervisor KeepAlive.
-        # The supervised probe also PASSES a plain foreground `hermes gateway run`
+        # The supervised probe also PASSES a plain foreground `auraforge gateway run`
         # (env set, PID owned, but no supervisor): that is intentional and
         # harmless — with no supervisor there is no KeepAlive, so a self-restart
         # is a single relaunch rather than a respawn loop.
@@ -8577,7 +8577,7 @@ def _gateway_command_inner(args):
             print_error(
                 "Refusing to restart the gateway from inside the gateway process.\n"
                 "This command was blocked to prevent restart loops.\n"
-                "Use `hermes gateway restart` from a shell outside the running gateway."
+                "Use `auraforge gateway restart` from a shell outside the running gateway."
             )
             sys.exit(1)
 
@@ -8800,14 +8800,14 @@ def _gateway_command_inner(args):
                 print("  hermes gateway run      # Run in foreground")
                 if is_termux():
                     print(
-                        "  nohup hermes gateway run > ~/.hermes/logs/gateway.log 2>&1 &  # Best-effort background start"
+                        "  nohup hermes gateway run > ~/.aura-forge/logs/gateway.log 2>&1 &  # Best-effort background start"
                     )
                 elif is_wsl():
                     print(
                         "  tmux new -s hermes 'hermes gateway run'         # persistent via tmux"
                     )
                     print(
-                        "  nohup hermes gateway run > ~/.hermes/logs/gateway.log 2>&1 &  # background"
+                        "  nohup hermes gateway run > ~/.aura-forge/logs/gateway.log 2>&1 &  # background"
                     )
                 elif is_windows():
                     print(

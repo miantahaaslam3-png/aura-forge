@@ -6,7 +6,7 @@ author: Ben Barclay (benbarclay), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [GitHub, Issues, Coding, Pull-Requests, CI]
     related_skills: [github-issues, github-pr-workflow, systematic-debugging, test-driven-development, requesting-code-review]
 ---

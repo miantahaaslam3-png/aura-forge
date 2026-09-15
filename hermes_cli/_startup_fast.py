@@ -93,7 +93,7 @@ def is_container_startup_environment() -> bool:
 
 
 def active_profile_may_override_home(hermes_root: str) -> bool:
-    """Cheap probe: does an active non-default profile redirect HERMES_HOME?"""
+    """Cheap probe: does an active non-default profile redirect AURA_FORGE_HOME?"""
     active_profile = os.path.join(hermes_root, "active_profile")
     try:
         if os.path.exists(active_profile):
@@ -106,7 +106,7 @@ def active_profile_may_override_home(hermes_root: str) -> bool:
 
 
 def _resolved_home() -> str:
-    hermes_home = os.environ.get("HERMES_HOME", "").strip()
+    hermes_home = os.environ.get("AURA_FORGE_HOME", "").strip()
     if hermes_home:
         return hermes_home
     return os.path.join(os.path.expanduser("~"), ".hermes")
@@ -126,7 +126,7 @@ def container_mode_may_be_active() -> bool:
     if is_container_startup_environment():
         return False
 
-    hermes_home = os.environ.get("HERMES_HOME", "").strip()
+    hermes_home = os.environ.get("AURA_FORGE_HOME", "").strip()
     if hermes_home:
         if os.path.exists(os.path.join(hermes_home, ".container-mode")):
             return True
@@ -169,7 +169,7 @@ def read_install_method() -> str | None:
     order) — the managed/git/pip fallbacks need heavier imports and stay on
     the slow path. On the fast path home ambiguity is already excluded:
     ``container_mode_may_be_active()`` bails to the slow path whenever a
-    non-default profile might redirect HERMES_HOME.
+    non-default profile might redirect AURA_FORGE_HOME.
     """
     stamp = os.path.join(_resolved_home(), ".install_method")
     try:
@@ -181,14 +181,14 @@ def read_install_method() -> str | None:
 
 
 def print_fast_version_info(*, check_updates: bool = True) -> None:
-    """THE canonical ``hermes --version`` output (also used by /version).
+    """THE canonical ``auraforge --version`` output (also used by /version).
 
     The static lines print instantly from stdlib-only probes; everything
     heavier (upstream SHA in the version line, authoritative install-method
     detection, the update-status check) is lazy-imported AFTER the first
     line is already on screen, so perceived latency stays instant while the
     output carries the full information that used to require the (removed)
-    ``hermes version`` subcommand. Every lazy block degrades gracefully —
+    ``auraforge version`` subcommand. Every lazy block degrades gracefully —
     a broken/heavy import can never take the basic version output down.
     """
     # Line 1: registry-owned banner label (includes "· upstream <sha>" for
@@ -251,7 +251,7 @@ def print_fast_version_info(*, check_updates: bool = True) -> None:
 
 
 def try_fast_version(argv: list[str] | None = None) -> bool:
-    """Handle ``hermes --version`` before the heavy import wall.
+    """Handle ``auraforge --version`` before the heavy import wall.
 
     Only ``--version``/``-V`` (the ``version`` subcommand was removed —
     ``--version`` now carries the full output incl. update status), and

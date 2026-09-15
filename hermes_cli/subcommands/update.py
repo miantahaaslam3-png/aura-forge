@@ -1,4 +1,4 @@
-"""``hermes update`` subcommand parser.
+"""``auraforge update`` subcommand parser.
 
 Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
@@ -52,14 +52,14 @@ def build_update_parser(subparsers, *, cmd_update: Callable) -> None:
         "--backup",
         action="store_true",
         default=False,
-        help="Force a FULL pre-update backup (quick state snapshot + HERMES_HOME zip) for this run, regardless of updates.pre_update_backup",
+        help="Force a FULL pre-update backup (quick state snapshot + AURA_FORGE_HOME zip) for this run, regardless of updates.pre_update_backup",
     )
     update_parser.add_argument(
         "--yes",
         "-y",
         action="store_true",
         default=False,
-        help="Run without blocking on prompts: accepts the config-migration and stash-restore prompts, skips the fork-upstream prompt without adding a remote. API-key entry is skipped; run 'hermes config migrate' separately for those.",
+        help="Run without blocking on prompts: accepts the config-migration and stash-restore prompts, skips the fork-upstream prompt without adding a remote. API-key entry is skipped; run 'auraforge config migrate' separately for those.",
     )
     update_parser.add_argument(
         "--keep-stash",

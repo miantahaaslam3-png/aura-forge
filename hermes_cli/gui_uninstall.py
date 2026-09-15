@@ -5,14 +5,14 @@ The desktop GUI ships in two shapes and this module knows how to find and
 remove the artifacts of both, on Linux, macOS, and Windows, WITHOUT touching
 the Python agent or the user's config/data:
 
-  1. Source-built GUI (``hermes desktop`` / ``hermes gui``)
-     Built inside the agent checkout under ``$HERMES_HOME/hermes-agent/``:
+  1. Source-built GUI (``auraforge desktop`` / ``auraforge gui``)
+     Built inside the agent checkout under ``$AURA_FORGE_HOME/aura-forge-agent/``:
        - ``apps/desktop/dist``      (compiled renderer)
        - ``apps/desktop/release``   (electron-builder unpacked app + installers)
        - ``apps/desktop/node_modules`` and the workspace-root ``node_modules``
          (Electron itself, ~200MB) — only removed on a GUI uninstall because
          the agent does not need them.
-       - ``$HERMES_HOME/desktop-build-stamp.json`` (the build freshness stamp)
+       - ``$AURA_FORGE_HOME/desktop-build-stamp.json`` (the build freshness stamp)
 
   2. Packaged distributable (DMG / NSIS / AppImage / deb / rpm)
      Installed by the OS to a standard application location and carrying its
@@ -22,7 +22,7 @@ the Python agent or the user's config/data:
        - Linux:   ``~/.local/share/applications`` .desktop entry + AppImage
 
 In both shapes the Electron runtime keeps a ``userData`` directory keyed on
-the app name ("Aura Forge"), separate from ``$HERMES_HOME``:
+the app name ("Aura Forge"), separate from ``$AURA_FORGE_HOME``:
   - macOS:   ``~/Library/Application Support/Hermes``
   - Windows: ``%APPDATA%\\Hermes``
   - Linux:   ``$XDG_CONFIG_HOME/Hermes`` (default ``~/.config/Hermes``)
@@ -32,7 +32,7 @@ Chromium cache — pure GUI state, safe to remove on a GUI uninstall.
 
 The functions here are deliberately import-light and side-effect-free at
 import time so the Electron main process can shell out to
-``hermes uninstall --gui`` (and friends) without paying for the full CLI.
+``auraforge uninstall --gui`` (and friends) without paying for the full CLI.
 """
 
 import os
@@ -64,7 +64,7 @@ def log_warn(msg: str):
 
 def _agent_root(hermes_home: Path) -> Path:
     """The agent checkout root — same layout install.sh / install.ps1 use."""
-    return hermes_home / "hermes-agent"
+    return hermes_home / "aura-forge-agent"
 
 
 def desktop_userdata_dir() -> Path:
@@ -88,10 +88,10 @@ def desktop_userdata_dir() -> Path:
 
 
 def source_built_gui_artifacts(hermes_home: Path) -> "list[Path]":
-    """GUI build artifacts produced by ``hermes desktop`` inside the checkout.
+    """GUI build artifacts produced by ``auraforge desktop`` inside the checkout.
 
     These are removable on a GUI uninstall without harming the agent: the
-    Python agent runs from ``hermes-agent/`` source + ``venv/`` and never
+    Python agent runs from ``aura-forge-agent/`` source + ``venv/`` and never
     needs the Electron build output or node_modules.
     """
     agent_root = _agent_root(hermes_home)
@@ -147,7 +147,7 @@ def packaged_gui_app_paths() -> "list[Path]":
         data = os.environ.get("XDG_DATA_HOME")
         data_base = Path(data) if data else (home / ".local" / "share")
         paths += [
-            # The launcher entry `hermes desktop` installs. Its icon lives
+            # The launcher entry `auraforge desktop` installs. Its icon lives
             # in the checkout, not in the installed app.
             desktop_entry_path(),
             # Some packaged builds emit this casing.
@@ -157,7 +157,7 @@ def packaged_gui_app_paths() -> "list[Path]":
 
 
 def agent_is_installed(hermes_home: Path) -> bool:
-    """Return True when a usable Python agent install exists under HERMES_HOME.
+    """Return True when a usable Python agent install exists under AURA_FORGE_HOME.
 
     Used by the desktop UI to decide which uninstall options to offer: if the
     agent isn't present (a future "lite" GUI-only client), the "remove agent"
@@ -239,8 +239,8 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
         system package manager and are reported, not force-removed)
       - the Electron ``userData`` directory (unless ``remove_userdata=False``)
 
-    Never touches ``hermes-agent/hermes_cli`` (agent source), ``venv/``, or any
-    config / sessions / .env under ``$HERMES_HOME``.
+    Never touches ``aura-forge-agent/hermes_cli`` (agent source), ``venv/``, or any
+    config / sessions / .env under ``$AURA_FORGE_HOME``.
 
     Returns the list of paths actually removed.
     """

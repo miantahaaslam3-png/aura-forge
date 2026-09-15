@@ -333,7 +333,7 @@ Formats:
 
 Options:
   filename   optional output name/path (default: auto-named;
-             CLI saves under ~/.hermes/sessions/saved/)
+             CLI saves under ~/.aura-forge/sessions/saved/)
   redact     scrub API keys, tokens, and credentials before writing
 
 Examples:

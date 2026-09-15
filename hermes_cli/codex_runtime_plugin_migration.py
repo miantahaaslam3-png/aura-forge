@@ -48,10 +48,10 @@ logger = logging.getLogger(__name__)
 # Marker comments wrapping the managed section so re-runs can detect
 # what's ours and what's user-edited. Both must appear or strip is a no-op.
 MIGRATION_MARKER = (
-    "# managed by hermes-agent — `hermes codex-runtime migrate` regenerates this section"
+    "# managed by aura-forge-agent — `auraforge codex-runtime migrate` regenerates this section"
 )
 MIGRATION_END_MARKER = (
-    "# end hermes-agent managed section"
+    "# end aura-forge-agent managed section"
 )
 
 
@@ -212,7 +212,7 @@ def _format_toml_value(value: Any) -> str:
         # because TOML basic strings don't allow literal control chars
         # — passing them through would produce invalid TOML that codex
         # would refuse to load. Paths usually don't contain control
-        # chars but env-var passthrough (HERMES_HOME, PYTHONPATH) could
+        # chars but env-var passthrough (AURA_FORGE_HOME, PYTHONPATH) could
         # in pathological cases.
         escaped = (
             value
@@ -534,7 +534,7 @@ def _looks_like_test_tempdir(path: str) -> bool:
     pytest tempdirs live under ``pytest-of-<user>/pytest-<n>/`` (created via
     ``tmp_path`` / ``tmp_path_factory``) and are reaped between sessions.
     macOS routes ``/tmp`` through ``/private/var/folders/<…>/T`` which is
-    what pytest's tempdir factory uses by default. If a HERMES_HOME pointing
+    what pytest's tempdir factory uses by default. If a AURA_FORGE_HOME pointing
     at one of those paths is burned into ``~/.codex/config.toml``, every
     codex-routed hermes-tools call fails silently once the directory is GC'd.
 
@@ -561,29 +561,29 @@ def _build_hermes_tools_mcp_entry() -> dict:
 
     The command runs the worktree's Python via the current sys.executable
     so a hermes installed under /opt/, /usr/local/, or a venv all work.
-    HERMES_HOME and PYTHONPATH are passed through so the spawned process
+    AURA_FORGE_HOME and PYTHONPATH are passed through so the spawned process
     sees the same config + module layout the user is running."""
     import sys
 
     env: dict[str, str] = {}
-    # HERMES_HOME passes through IF SET so the MCP subprocess sees the same
+    # AURA_FORGE_HOME passes through IF SET so the MCP subprocess sees the same
     # config / auth / sessions DB as the parent CLI. Read from os.environ
     # (not get_hermes_home()) on purpose: when the env var is unset we want
-    # codex's subprocess to inherit whatever HERMES_HOME its launcher sets
+    # codex's subprocess to inherit whatever AURA_FORGE_HOME its launcher sets
     # at runtime (systemd unit, gateway, kanban dispatcher, custom shell),
     # rather than burning the migrate-time resolved default into config.toml
-    # — that would override the launcher's HERMES_HOME and pin the subprocess
+    # — that would override the launcher's AURA_FORGE_HOME and pin the subprocess
     # to the wrong profile.
     #
     # The pytest-tempdir guard below catches the issue #26250 Bug C scenario:
-    # a sibling test's monkeypatch.setenv("HERMES_HOME", tmp_path) would
+    # a sibling test's monkeypatch.setenv("AURA_FORGE_HOME", tmp_path) would
     # otherwise leak a transient pytest tempdir into the user's real
     # ~/.codex/config.toml and silently brick codex once the tempdir is GC'd.
-    hermes_home = os.environ.get("HERMES_HOME") or ""
+    hermes_home = os.environ.get("AURA_FORGE_HOME") or ""
     if hermes_home and _looks_like_test_tempdir(hermes_home):
         hermes_home = ""
     if hermes_home:
-        env["HERMES_HOME"] = hermes_home
+        env["AURA_FORGE_HOME"] = hermes_home
     # PYTHONPATH passes through so a worktree-launched hermes finds the
     # branch's modules instead of the installed package.
     pythonpath = os.environ.get("PYTHONPATH")
@@ -619,7 +619,7 @@ def migrate(
     ~/.codex/config.toml.
 
     Args:
-        hermes_config: full ~/.hermes/config.yaml dict
+        hermes_config: full ~/.aura-forge/config.yaml dict
         codex_home: override CODEX_HOME (defaults to ~/.codex)
         dry_run: skip the actual write; report what would happen
         discover_plugins: when True (default), query `plugin/list` against

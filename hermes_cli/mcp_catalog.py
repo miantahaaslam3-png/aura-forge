@@ -2,12 +2,12 @@
 
 Mirrors the optional-skills/ pattern: each catalog entry lives under
 ``optional-mcps/<name>/manifest.yaml`` and ships disabled. Users discover
-entries via ``hermes mcp catalog`` or the interactive ``hermes mcp picker``,
-and install them with ``hermes mcp install <name>`` (or by toggling in the
+entries via ``auraforge mcp catalog`` or the interactive ``auraforge mcp picker``,
+and install them with ``auraforge mcp install <name>`` (or by toggling in the
 picker, which flows them through any required env/OAuth setup).
 
 Catalog policy:
-- Entries are added only by merging a PR into hermes-agent. Presence in the
+- Entries are added only by merging a PR into aura-forge-agent. Presence in the
   ``optional-mcps/`` directory = Nous approval. No community tier, no trust
   signals beyond "it's in the catalog".
 - Manifests pin transport details (commands, args, refs). Pins follow the
@@ -15,9 +15,9 @@ Catalog policy:
   package launchers (``uvx pkg==X``, ``npx pkg@X``), full commit SHAs for
   git installs, and the pinned release should be at least 2 weeks old at
   pin time. MCPs are never
-  auto-updated; users explicitly re-run ``hermes mcp install <name>`` to
+  auto-updated; users explicitly re-run ``auraforge mcp install <name>`` to
   pull a new manifest version after a repo update.
-- Secrets prompted at install time go to ``~/.hermes/.env`` (the
+- Secrets prompted at install time go to ``~/.aura-forge/.env`` (the
   .env-is-for-secrets rule). Non-secret env vars also go to .env to keep
   one credential store.
 
@@ -84,7 +84,7 @@ class TransportSpec:
     version: Optional[str] = None  # informational, pinned
     # Static environment variables for the stdio subprocess (e.g. telemetry
     # opt-outs, mode flags). NOT for secrets — credentials go through
-    # auth.env so they are prompted for and land in ~/.hermes/.env.
+    # auth.env so they are prompted for and land in ~/.aura-forge/.env.
     env: Dict[str, str] = field(default_factory=dict)
 
 
@@ -481,7 +481,7 @@ def _run_bootstrap(cwd: Path, commands: List[str]) -> None:
 
 
 def _do_git_install(entry: CatalogEntry) -> Path:
-    """Clone the entry's repo into ``~/.hermes/mcp-installs/<name>`` and run
+    """Clone the entry's repo into ``~/.aura-forge/mcp-installs/<name>`` and run
     bootstrap commands. Returns the install directory."""
     assert entry.install is not None and entry.install.type == "git"
     install = entry.install
@@ -559,7 +559,7 @@ def _expand_install_dir(value: str, install_dir: Optional[Path]) -> str:
 
 def _prompt_env_vars(specs: List[EnvVarSpec]) -> Dict[str, str]:
     """Walk the env spec list, prompting the user for each. Writes secrets and
-    non-secrets alike to ~/.hermes/.env via save_env_value()."""
+    non-secrets alike to ~/.aura-forge/.env via save_env_value()."""
     collected: Dict[str, str] = {}
     for spec in specs:
         existing = get_env_value(spec.name)
@@ -722,7 +722,7 @@ def _apply_tool_selection(
     Probe-fail path:
       - If manifest declares ``tools.default_enabled`` → apply directly.
       - Otherwise → leave config with no filter (all on when reachable).
-      - Either way, point the user at ``hermes mcp configure <name>``.
+      - Either way, point the user at ``auraforge mcp configure <name>``.
     """
     print()
 
@@ -741,7 +741,7 @@ def _apply_tool_selection(
                 f"  Kept your existing exclude list ({len(prior_exclude)} "
                 f"entries). Edit mcp_servers.{entry.name}.tools.exclude in "
                 "config.yaml or run "
-                f"`hermes mcp configure {entry.name}` to change.",
+                f"`auraforge mcp configure {entry.name}` to change.",
                 Colors.GREEN,
             ))
             return
@@ -751,7 +751,7 @@ def _apply_tool_selection(
             f"({len(entry.tools.default_excluded)} entries); everything else "
             f"stays enabled. Edit mcp_servers.{entry.name}.tools.exclude in "
             "config.yaml or run "
-            f"`hermes mcp configure {entry.name}` to change.",
+            f"`auraforge mcp configure {entry.name}` to change.",
             Colors.GREEN,
         ))
         return
@@ -770,7 +770,7 @@ def _apply_tool_selection(
             print(color(
                 f"  Couldn\'t probe server. Kept your previous tool "
                 f"selection ({len(prior_selection)} tools). "
-                f"Run `hermes mcp configure {entry.name}` after the server "
+                f"Run `auraforge mcp configure {entry.name}` after the server "
                 "is reachable to refine.",
                 Colors.YELLOW,
             ))
@@ -786,7 +786,7 @@ def _apply_tool_selection(
             print(color(
                 f"  Couldn\'t probe server. Applied manifest default "
                 f"({len(manifest_default)} tools). "
-                f"Run `hermes mcp configure {entry.name}` after the server "
+                f"Run `auraforge mcp configure {entry.name}` after the server "
                 "is reachable to refine.",
                 Colors.YELLOW,
             ))
@@ -795,7 +795,7 @@ def _apply_tool_selection(
             print(color(
                 f"  Couldn\'t probe server; installed with no tool filter "
                 "(all tools enabled when reachable). "
-                f"Run `hermes mcp configure {entry.name}` after first "
+                f"Run `auraforge mcp configure {entry.name}` after first "
                 "connect to prune.",
                 Colors.YELLOW,
             ))
@@ -856,7 +856,7 @@ def _apply_tool_selection(
         # so the server is installed but contributes nothing until reconfigured.
         _write_tools_include(entry.name, [])
         print(color(
-            f"  No tools selected. Run `hermes mcp configure {entry.name}` "
+            f"  No tools selected. Run `auraforge mcp configure {entry.name}` "
             "to change.",
             Colors.YELLOW,
         ))
@@ -866,7 +866,7 @@ def _apply_tool_selection(
         # Everything selected — clear filter for the cleanest config shape.
         # NOTE: this means any tools the server adds later (e.g. a future MCP
         # version) will also be auto-enabled. To pin to the current set,
-        # the user can re-run `hermes mcp configure <name>` and unselect a
+        # the user can re-run `auraforge mcp configure <name>` and unselect a
         # tool to switch back to include-mode.
         _write_tools_include(entry.name, None)
         print(color(
@@ -921,12 +921,12 @@ def install_entry(entry: CatalogEntry, *, enable: bool = True) -> None:
     elif entry.auth.type == "oauth":
         if entry.auth.provider:
             # Case 2: provider-mediated (Google, GitHub, etc.). We rely on
-            # the existing `hermes auth <provider>` flow. Surface guidance
+            # the existing `auraforge auth <provider>` flow. Surface guidance
             # here rather than auto-running it — keeps the catalog install
             # decoupled from provider-auth lifecycle.
             print(color(
                 f"  This MCP uses {entry.auth.provider} OAuth. Run "
-                f"`hermes auth {entry.auth.provider}` if you have not "
+                f"`auraforge auth {entry.auth.provider}` if you have not "
                 "already authenticated.",
                 Colors.YELLOW,
             ))

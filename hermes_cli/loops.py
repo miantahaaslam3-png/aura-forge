@@ -370,7 +370,7 @@ def _meta_key(session_id: str) -> str:
 
 
 def _get_session_db() -> Optional[Any]:
-    """One SessionDB per HERMES_HOME.
+    """One SessionDB per AURA_FORGE_HOME.
 
     Delegates to the goals module's cached SessionDB so goals, loops,
     and heartbeats share one connection (same pattern as

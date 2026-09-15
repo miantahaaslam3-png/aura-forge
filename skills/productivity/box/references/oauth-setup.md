@@ -1,6 +1,6 @@
 # OAuth setup
 
-Use OAuth for every Hermes-to-Box connection. OAuth follows the signed-in Box user's permissions and the app's scopes; it does not grant enterprise-wide access.
+Use OAuth for every Aura Forge-to-Box connection. OAuth follows the signed-in Box user's permissions and the app's scopes; it does not grant enterprise-wide access.
 
 ## Choose the OAuth account
 
@@ -8,7 +8,7 @@ Authorize the Box account that Aura Forge should act as. OAuth follows that acco
 
 Everyone who uses a shared or background Aura Forge deployment receives the access of the one Box account it authorizes, so do not connect it to a broader personal or administrator account. Before starting the browser flow, make sure the authorization browser is signed in as the intended Box account.
 
-Choose a descriptive environment name, such as `hermes-box-oauth`. Do not overwrite or reauthorize an existing environment until its identity is confirmed.
+Choose a descriptive environment name, such as `auraforge-box-oauth`. Do not overwrite or reauthorize an existing environment until its identity is confirmed.
 
 ## Same-host interactive path
 

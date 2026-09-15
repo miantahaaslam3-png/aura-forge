@@ -6,9 +6,9 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Coding-Agent, Codex, OpenAI, Code-Review, Refactoring]
-    related_skills: [claude-code, hermes-agent]
+    related_skills: [claude-code, auraforge-agent]
 ---
 
 # Codex CLI
@@ -32,8 +32,8 @@ Requires the codex CLI and a git repository.
 - **Must run inside a git repository** — Codex refuses to run outside one
 - Use `pty=true` in terminal calls — Codex is an interactive terminal app
 
-For Aura Forge itself, `model.provider: openai-codex` uses Hermes-managed Codex
-OAuth from `~/.hermes/auth.json` after `hermes auth add openai-codex`. For the
+For Aura Forge itself, `model.provider: openai-codex` uses Aura Forge-managed Codex
+OAuth from `~/.auraforge/auth.json` after `auraforge auth add openai-codex`. For the
 standalone Codex CLI, a valid CLI OAuth session may live under
 `~/.codex/auth.json`; do not treat a missing `OPENAI_API_KEY` alone as proof
 that Codex auth is missing.

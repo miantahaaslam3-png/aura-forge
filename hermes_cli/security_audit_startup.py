@@ -13,7 +13,7 @@ and simply yields no finding):
 1. Running as root (POSIX uid 0).
 2. SSH daemon present with password authentication enabled.
 3. Running inside a container with no persistent volume mount over the
-   HERMES_HOME data dir (state is ephemeral — lost on container restart).
+   AURA_FORGE_HOME data dir (state is ephemeral — lost on container restart).
 4. A network-accessible gateway listener (dashboard / API server) with no
    authentication configured.
 
@@ -183,7 +183,7 @@ def _container_no_volume_mount(hermes_home: Optional[Path]) -> Optional[str]:
         f"Running in a container but the data dir ({home}) is NOT on a "
         "persistent volume mount — sessions, memory, skills, and API keys are "
         "ephemeral and lost on container restart. Mount a host volume over the "
-        "HERMES_HOME data directory."
+        "AURA_FORGE_HOME data directory."
     )
 
 

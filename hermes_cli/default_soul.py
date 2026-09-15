@@ -1,4 +1,4 @@
-"""Default SOUL.md template seeded into HERMES_HOME on first run."""
+"""Default SOUL.md template seeded into AURA_FORGE_HOME on first run."""
 
 DEFAULT_SOUL_MD = (
     "You are Aura Forge Agent, an intelligent AI assistant created by Nous Research. "

@@ -1,38 +1,38 @@
 ---
-name: hermes-agent-skill-authoring
+name: aura-forge-agent-skill-authoring
 description: "Author in-repo SKILL.md files: frontmatter and structure."
 version: 2.0.0
 author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
-    tags: [skills, authoring, hermes-agent, conventions, skill-md]
+  auraforge:
+    tags: [skills, authoring, auraforge-agent, conventions, skill-md]
     related_skills: [plan, requesting-code-review]
 ---
 
-# Authoring Hermes-Agent Skills (in-repo)
+# Authoring Aura Forge-Agent Skills (in-repo)
 
 ## Overview
 
 There are two places a SKILL.md can live:
 
-1. **User-local:** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` — personal, not shared. Created via `skill_manage(action='create')`.
-2. **In-repo (this skill is about this case):** `skills/<category>/<name>/SKILL.md` or `optional-skills/<category>/<name>/SKILL.md` inside the hermes-agent repo — committed, shipped with the package. Use `write_file` + `git add`. `skill_manage(action='create')` does NOT target this tree.
+1. **User-local:** `~/.auraforge/skills/<maybe-category>/<name>/SKILL.md` — personal, not shared. Created via `skill_manage(action='create')`.
+2. **In-repo (this skill is about this case):** `skills/<category>/<name>/SKILL.md` or `optional-skills/<category>/<name>/SKILL.md` inside the auraforge-agent repo — committed, shipped with the package. Use `write_file` + `git add`. `skill_manage(action='create')` does NOT target this tree.
 
 In-repo skills must meet the repo's **hardline authoring standards** (see AGENTS.md, "Skill authoring standards (HARDLINE)" — that section is the source of truth; this skill is the operational walkthrough). Reviewers reject PRs that violate them, so meeting them up front is cheaper than a salvage pass later.
 
 ## When to Use
 
 - User asks you to add a skill "in this branch / repo / commit"
-- You're committing a reusable workflow that should ship with hermes-agent
+- You're committing a reusable workflow that should ship with auraforge-agent
 - You're editing an existing skill under `skills/` or `optional-skills/` (use `patch` for small edits, `write_file` for rewrites; `skill_manage` still works for patch on in-repo skills, but not for `create`)
-- Don't use for: personal skills in `~/.hermes/skills/` (just use `skill_manage`)
+- Don't use for: personal skills in `~/.auraforge/skills/` (just use `skill_manage`)
 
 ## Decide the Tier First: Bundled vs Optional
 
 - **Bundled (`skills/<category>/`)** — daily-driver behavior, broadly useful across many user types, low footprint. Hard bar: you can say "a user will load this in 5+ sessions per month" with a straight face.
-- **Optional (`optional-skills/<category>/`)** — niche, vertical-specific (blockchain, gaming, finance, one app), recurring-job/task skills, or anything heavy. Installed via `hermes skills install official/<category>/<skill>`.
+- **Optional (`optional-skills/<category>/`)** — niche, vertical-specific (blockchain, gaming, finance, one app), recurring-job/task skills, or anything heavy. Installed via `auraforge skills install official/<category>/<skill>`.
 
 **When in doubt, optional.** Promoting later is easy; demoting is churn. "Would be useful to anyone who ever needs this" is an optional-tier argument, not a bundled one.
 
@@ -62,7 +62,7 @@ author: Real Name (github-handle), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]   # audit, don't guess — see Platform Gating
 metadata:
-  hermes:
+  auraforge:
     tags: [Short, Descriptive, Tags]
     related_skills: [other-in-repo-skill]
 ---
@@ -87,7 +87,7 @@ Bad: `Use when a user asks to monitor named competitors or companies for product
 
 ### `related_skills` rules
 
-- Every entry must resolve to an existing **in-repo** skill in the same tree state as your PR. Do not reference skills that were only planned, live in another PR, or exist only in `~/.hermes/skills/`.
+- Every entry must resolve to an existing **in-repo** skill in the same tree state as your PR. Do not reference skills that were only planned, live in another PR, or exist only in `~/.auraforge/skills/`.
 - Verify each entry: `search_files(pattern='<name>', target='files', path='skills')` (and `optional-skills/`).
 
 ## Platform Gating: audit, don't trust
@@ -183,7 +183,7 @@ A skill exists to make the agent's process more predictable — the agent reliab
 
 ## Common Pitfalls
 
-1. **Using `skill_manage(action='create')` for an in-repo skill.** It writes to `~/.hermes/skills/`, not the repo tree. Use `write_file`.
+1. **Using `skill_manage(action='create')` for an in-repo skill.** It writes to `~/.auraforge/skills/`, not the repo tree. Use `write_file`.
 2. **Trusting the validator's limits as the standard.** The validator allows 1024-char descriptions; review rejects anything over 60. The validator doesn't check `platforms:`, author format, tests, or docs — review does.
 3. **`author: Aura Forge Agent` on a contributed skill.** Credit the human first.
 4. **Leading whitespace before `---`.** Validation fails on any leading blank line or BOM.
@@ -199,7 +199,7 @@ A skill exists to make the agent's process more predictable — the agent reliab
 - [ ] Tier decided deliberately (bundled bar: 5+ sessions/month; else `optional-skills/`)
 - [ ] File at `skills/<category>/<name>/SKILL.md` or `optional-skills/<category>/<name>/SKILL.md`
 - [ ] Frontmatter starts at byte 0 with `---`, closes with `\n---\n`
-- [ ] `name`, `description`, `version`, `author`, `license`, `platforms`, `metadata.hermes.{tags, related_skills}` all present
+- [ ] `name`, `description`, `version`, `author`, `license`, `platforms`, `metadata.auraforge.{tags, related_skills}` all present
 - [ ] Description ≤ 60 chars, one sentence, ends with a period, no marketing words
 - [ ] `author` credits the human contributor first
 - [ ] `platforms:` audited against actual prose/scripts, not copied from a sibling

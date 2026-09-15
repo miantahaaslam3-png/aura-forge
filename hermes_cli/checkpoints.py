@@ -1,7 +1,7 @@
-"""`hermes checkpoints` CLI subcommand.
+"""`auraforge checkpoints` CLI subcommand.
 
 Gives users direct visibility and control over the filesystem checkpoint
-store at ``~/.hermes/checkpoints/``.  Actions:
+store at ``~/.aura-forge/checkpoints/``.  Actions:
 
     hermes checkpoints               # same as `status`
     hermes checkpoints status        # total size, project count, breakdown
@@ -230,8 +230,8 @@ def cmd_clear_legacy(args: argparse.Namespace) -> int:
 
 
 def register_cli(parser: argparse.ArgumentParser) -> None:
-    """Wire subcommands onto the ``hermes checkpoints`` parser."""
-    parser.set_defaults(func=cmd_status)  # bare `hermes checkpoints` → status
+    """Wire subcommands onto the ``auraforge checkpoints`` parser."""
+    parser.set_defaults(func=cmd_status)  # bare `auraforge checkpoints` → status
     subs = parser.add_subparsers(dest="checkpoints_command", metavar="COMMAND")
 
     p_status = subs.add_parser(

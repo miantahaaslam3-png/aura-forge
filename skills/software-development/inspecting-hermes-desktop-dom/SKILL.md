@@ -1,12 +1,12 @@
 ---
-name: inspecting-hermes-desktop-dom
+name: inspecting-auraforge-desktop-dom
 description: "Read the live Aura Forge desktop DOM/CSS over CDP."
 version: 1.0.0
 author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [desktop, electron, cdp, dom, ui-verification, self-inspection]
     related_skills: [node-inspect-debugger, systematic-debugging, dogfood]
 ---
@@ -39,7 +39,7 @@ CDP; hand aesthetics to the user.
 - Reading renderer console errors the user mentions but can't copy out
 
 **Don't use for:** perf profiling or heap work (`node-inspect-debugger`,
-`debugging-hermes-desktop`), or anything where the real question is "does this
+`debugging-auraforge-desktop`), or anything where the real question is "does this
 look right".
 
 ## The port
@@ -122,18 +122,18 @@ When there is no port, or you must not disturb the user's window:
 
 ```bash
 cd apps/desktop
-HERMES_HOME=/tmp/cdp-probe-home \
+AURA_FORGE_HOME=/tmp/cdp-probe-home \
 HERMES_DESKTOP_DEV_SERVER=http://127.0.0.1:5174 \
 HERMES_DESKTOP_CDP_PORT=9333 \
   npx electron . --user-data-dir=/tmp/cdp-probe-userdata
 ```
 
 The separate `--user-data-dir` dodges Electron's single-instance lock, so it
-cannot collide with a running `hgui`; the separate `HERMES_HOME` keeps it away
+cannot collide with a running `hgui`; the separate `AURA_FORGE_HOME` keeps it away
 from real sessions. Pick a port other than 9222 for the same reason. Run it in
 the background and kill it when done.
 
-`npm run perf:serve` does the same with a temp `HERMES_HOME` baked in, if you
+`npm run perf:serve` does the same with a temp `AURA_FORGE_HOME` baked in, if you
 also want the perf harness.
 
 ## Pitfalls
@@ -141,8 +141,8 @@ also want the perf harness.
 - **Never kill the user's dev server or app to "free" anything.** A mid-serve
   kill nukes Chromium's socket pool, and the resulting `ERR_NETWORK_CHANGED`
   gets blamed on whatever you just changed.
-- **A throwaway `HERMES_HOME` has no backend.** The app logs `ECONNREFUSED` for
-  `hermes:api` and may exit on its own. The renderer still mounts and the DOM is
+- **A throwaway `AURA_FORGE_HOME` has no backend.** The app logs `ECONNREFUSED` for
+  `auraforge:api` and may exit on its own. The renderer still mounts and the DOM is
   readable — read promptly, and don't mistake a self-exited probe for a broken
   port. Chromium logs `DevTools listening on ws://127.0.0.1:<port>/…` when it
   binds; that line is the proof the port opened.

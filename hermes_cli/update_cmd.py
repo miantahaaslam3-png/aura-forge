@@ -90,7 +90,7 @@ _STALE_PURGE_PROTECTED = frozenset(
 def _purge_stale_hermes_modules() -> None:
     """Evict every cached Aura Forge module after the checkout changed in-place.
 
-    ``hermes update`` keeps running in the pre-pull Python process. The
+    ``auraforge update`` keeps running in the pre-pull Python process. The
     gateway auto-restart phase that follows does function-level
     ``from hermes_cli.gateway import ...`` — executing NEW source inside an
     OLD ``sys.modules`` world. The moment new source references a symbol
@@ -140,7 +140,7 @@ def _purge_stale_hermes_modules() -> None:
 def _reload_updated_runtime_modules() -> None:
     """Reload update-sensitive modules after the checkout changes in-place.
 
-    ``hermes update`` keeps running in the pre-pull Python process. After a
+    ``auraforge update`` keeps running in the pre-pull Python process. After a
     large update, modules already present in ``sys.modules`` can still expose
     old symbols even though their source files on disk are new. Refresh the
     small module set used by lazy-backend refresh before that step imports
@@ -165,7 +165,7 @@ def _reload_updated_runtime_modules() -> None:
 def _reload_config_modules() -> None:
     """Force-reload modules from disk after git pull.
 
-    ``hermes update`` runs in the PRE-pull Python process. After ``git pull``
+    ``auraforge update`` runs in the PRE-pull Python process. After ``git pull``
     updates the source files on disk, modules already in ``sys.modules``
     still hold the OLD code. Function-level imports return the cached module,
     so ``DEFAULT_CONFIG["_config_version"]`` is the OLD value and
@@ -230,12 +230,12 @@ def _migrate_sibling_profile_configs() -> list[tuple[str, int, int]]:
     """Migrate every SIBLING profile's config.yaml to the current version.
 
     #91277 Phase 2 (fleet-wide config migration; #20438/#54926/#79048): the
-    shared checkout serves every profile, but ``hermes update`` historically
+    shared checkout serves every profile, but ``auraforge update`` historically
     migrated only the active profile's config — siblings drifted versions
     until their gateway hit a config the new code couldn't read.
 
     Per profile home (skipping the active one, already migrated by the
-    caller): scope config reads/writes via the context-local HERMES_HOME
+    caller): scope config reads/writes via the context-local AURA_FORGE_HOME
     override (thread-safe — never ``os.environ``), check the version, and
     run the NON-INTERACTIVE, quiet migration. Prompt-requiring settings are
     left for the profile's own next interactive session, identical to the
@@ -325,7 +325,7 @@ def _check_and_apply_config_migration(
     except Exception as exc:
         logger.debug("Config check during update failed: %s", exc)
         print("  ⚠️  Could not check config version.")
-        print("     Run 'hermes config migrate' to check manually.")
+        print("     Run 'auraforge config migrate' to check manually.")
         return
 
     has_new_options = bool(missing_env or missing_config)
@@ -362,7 +362,7 @@ def _check_and_apply_config_migration(
                 print(f"  ⚠️  {_warn}")
         except Exception as _mig_err:
             print(f"  ⚠️  Config format update failed: {_mig_err}")
-            print("     Run 'hermes config migrate' to retry.")
+            print("     Run 'auraforge config migrate' to retry.")
     elif needs_migration:
         print()
         # Show WHAT changed, not just a count, so the user can make an
@@ -430,7 +430,7 @@ def _check_and_apply_config_migration(
                 # here and crashes the update at this prompt.
                 print(
                     "  ⚠ Could not read input (encoding issue). Skipping. "
-                    "Run 'hermes config migrate' manually to configure."
+                    "Run 'auraforge config migrate' manually to configure."
                 )
                 response = "n"
 
@@ -450,10 +450,10 @@ def _check_and_apply_config_migration(
                 print()
                 print("✓ Configuration updated!")
             if (gateway_mode or assume_yes or response == "auto") and missing_env:
-                print("  ℹ API keys require manual entry: hermes config migrate")
+                print("  ℹ API keys require manual entry: auraforge config migrate")
         else:
             print()
-            print("Skipped. Run 'hermes config migrate' later to configure.")
+            print("Skipped. Run 'auraforge config migrate' later to configure.")
     else:
         print("  ✓ Configuration is up to date")
 
@@ -464,7 +464,7 @@ def _check_and_apply_config_migration(
     # drifted (field repro: sibling gateway restarted onto new code but
     # stayed at config v33 vs v37). Run the same NON-INTERACTIVE safe
     # migration for every sibling profile home, scoped via the
-    # context-local HERMES_HOME override (never os.environ — other
+    # context-local AURA_FORGE_HOME override (never os.environ — other
     # threads must not see it).
     try:
         _migrated_siblings = _migrate_sibling_profile_configs()
@@ -601,7 +601,7 @@ def _editable_install_is_current(git_cmd, cwd, pre_pull_sha: str | None) -> bool
 def _validate_critical_files_syntax(root) -> tuple[bool, str | None, str | None]:
     """Compile each file in ``_UPDATE_CRITICAL_FILES`` to catch SyntaxErrors.
 
-    These are the files imported on every ``hermes`` startup; if any of them
+    These are the files imported on every ``auraforge`` startup; if any of them
     has a syntax error (orphan merge-conflict markers, bad ref to a name
     that no longer exists, etc.) the CLI can't bootstrap at all. We validate
     them after a successful ``git pull`` so we can auto-roll-back instead of
@@ -671,7 +671,7 @@ def _validate_critical_modules_import(root) -> tuple[bool, str | None, str | Non
     against the half-updated tree. Costs ~0.4s.
 
     Uses the project venv's interpreter when there is one (matching
-    ``_venv_core_imports_healthy``): ``hermes update`` can be driven by a
+    ``_venv_core_imports_healthy``): ``auraforge update`` can be driven by a
     different Python than the install's own, and probing the wrong
     interpreter would test a tree the user never runs.
 
@@ -736,7 +736,7 @@ def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0)
     Writes a prompt marker file so the gateway can forward the question to the
     user, then polls for a response file.  Falls back to *default* on timeout.
 
-    Used by ``hermes update --gateway`` so interactive prompts (stash restore,
+    Used by ``auraforge update --gateway`` so interactive prompts (stash restore,
     config migration) are forwarded to the messenger instead of being silently
     skipped.
     """
@@ -812,7 +812,7 @@ def _web_toolchain_roots(web_dir: Path) -> tuple[Path, ...]:
     return (web_dir, web_dir.parent)
 
 def _print_curator_first_run_notice() -> None:
-    """Print a short heads-up about the skill curator after `hermes update`.
+    """Print a short heads-up about the skill curator after `auraforge update`.
 
     Only fires when the curator is enabled AND has no recorded run yet, which
     is exactly the window where the gateway ticker used to fire Curator
@@ -848,11 +848,11 @@ def _print_curator_first_run_notice() -> None:
     print("  Preview now:  hermes curator run --dry-run")
     print("  Pause it:     hermes curator pause")
     print(
-        "  Docs:         https://hermes-agent.nousresearch.com/docs/user-guide/features/curator"
+        "  Docs:         https://aura-forge-agent.nousresearch.com/docs/user-guide/features/curator"
     )
 
 def _print_fts_optimize_available_notice() -> None:
-    """Advertise the opt-in v23 search-index optimization after `hermes update`.
+    """Advertise the opt-in v23 search-index optimization after `auraforge update`.
 
     Only fires when the current profile's state.db is still on the legacy
     (pre-v23) inline FTS layout. Leads with the reclaimable-space figure and
@@ -933,7 +933,7 @@ def _print_fts_optimize_available_notice() -> None:
         print()
         print("◆ Session database optimization incomplete")
         print(
-            "  A previous `hermes sessions optimize-storage` run was "
+            "  A previous `auraforge sessions optimize-storage` run was "
             "interrupted. Search still works; re-run the command to resume "
             "and finish reclaiming disk:"
         )
@@ -969,11 +969,11 @@ def _print_curator_recent_run_notice() -> None:
 
     The curator runs in the background (gateway tick + CLI session start),
     so users learn about skill consolidations only by stumbling into a
-    rename. ``hermes update`` is a high-attention surface — surface the
+    rename. ``auraforge update`` is a high-attention surface — surface the
     most recent run's rename map here, once.
 
     Show-once: state stamps ``last_run_summary_shown_at`` after printing.
-    Subsequent ``hermes update`` invocations skip the block until a newer
+    Subsequent ``auraforge update`` invocations skip the block until a newer
     curator run lands. Silent when the curator has never run, when the
     most recent summary has already been shown, or when the summary has
     no rename information to display (no archives).
@@ -1170,7 +1170,7 @@ def _discard_staged(staged) -> None:
 
     Without this a phase-1 failure (typically disk exhaustion) orphans one
     staging copy per entry already processed — up to a full second copy of
-    the tree. The user then follows the "re-run `hermes update`" advice with
+    the tree. The user then follows the "re-run `auraforge update`" advice with
     *less* free space than before and the retry fails harder than the
     original attempt.
     """
@@ -1291,7 +1291,7 @@ def _assess_parked_branch_switch(
     to the update target.
 
     Live incident (2026-08-17, Teknium's box): the source checkout sat on a
-    stale feature branch left behind by earlier tooling; ``hermes update``
+    stale feature branch left behind by earlier tooling; ``auraforge update``
     autostashed, ran its post-update steps and printed "✓ Code updated!"
     while the running code stayed days behind main. The guard's contract:
 
@@ -1542,7 +1542,7 @@ def _refuse_update_for_contended_shims(exc: BaseException) -> None:
     print("  Desktop, a gateway, or another hermes REPL — and mutating the venv")
     print("  now would strand it half-updated.")
     print("  The dependency install has been deferred: close the process(es)")
-    print("  above, then run any `hermes` command to finish it automatically.")
+    print("  above, then run any `auraforge` command to finish it automatically.")
     # Idempotent: the git path already dropped the marker before the sync;
     # this covers the ZIP/repair paths so the deferral is never silent.
     _write_update_incomplete_marker()
@@ -1685,7 +1685,7 @@ def _abort_zip_update_if_dirty_tree() -> None:
         "  Overlaying the ZIP would overwrite uncommitted edits and permanently "
         "delete untracked files."
     )
-    print("  Stash or commit your changes, then rerun `hermes update`.")
+    print("  Stash or commit your changes, then rerun `auraforge update`.")
     print("  To inspect: git status --porcelain")
     _m().sys.exit(1)
 
@@ -1771,7 +1771,7 @@ def _print_update_summary(
             print("  Code and Python deps are updated, but the dashboard/TUI may")
             print("  be in a mixed state until the Node deps are rebuilt.")
         if not desktop_build_ok:
-            print("  Run `hermes desktop` to retry the desktop rebuild.")
+            print("  Run `auraforge desktop` to retry the desktop rebuild.")
     else:
         _print_update_completion(_update_complete_message(pre_update_version))
 
@@ -1854,8 +1854,8 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
         print(
             "  This path runs when git file I/O is broken on the system. "
             "Either resolve the git-side breakage (typically an antivirus "
-            "or NTFS filter holding files open) and rerun `hermes update "
-            f"--branch {branch}`, or update against main with `hermes update`."
+            "or NTFS filter holding files open) and rerun `auraforge update "
+            f"--branch {branch}`, or update against main with `auraforge update`."
         )
         _m().sys.exit(1)
     _abort_zip_update_if_dirty_tree()
@@ -1866,14 +1866,14 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
     print("→ Downloading latest version...")
     tmp_dir = tempfile.mkdtemp(prefix="hermes-update-")
     try:
-        zip_path = os.path.join(tmp_dir, f"hermes-agent-{branch}.zip")
+        zip_path = os.path.join(tmp_dir, f"aura-forge-agent-{branch}.zip")
         urlretrieve(zip_url, zip_path)
 
         print("→ Extracting...")
         import stat as _stat
         with zipfile.ZipFile(zip_path, "r") as zf:
             # Validate paths to prevent zip-slip (path traversal) AND reject
-            # symlink members. A GitHub source ZIP for hermes-agent itself
+            # symlink members. A GitHub source ZIP for aura-forge-agent itself
             # should never contain symlinks — they'd point outside the
             # extracted tree and let an attacker who can compromise the
             # update mirror plant arbitrary files via the update path.
@@ -1896,8 +1896,8 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
                     )
             zf.extractall(tmp_dir)
 
-        # GitHub ZIPs extract to hermes-agent-<branch>/
-        extracted = os.path.join(tmp_dir, f"hermes-agent-{branch}")
+        # GitHub ZIPs extract to aura-forge-agent-<branch>/
+        extracted = os.path.join(tmp_dir, f"aura-forge-agent-{branch}")
         if not os.path.isdir(extracted):
             # Try to find it
             for d in os.listdir(tmp_dir):
@@ -1990,7 +1990,7 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
                     "  Files appeared in the checkout while the update was "
                     "downloading; committing the swap would delete them."
                 )
-                print("  Stash or commit your changes, then rerun `hermes update`.")
+                print("  Stash or commit your changes, then rerun `auraforge update`.")
                 _m().sys.exit(1)
             _commit_staged_replacements(staged)
         except Exception:
@@ -2016,8 +2016,8 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
         # scare the user toward a reinstall they don't need.
         print("  Your existing install was left in place.")
         print(
-            "  Re-run `hermes update` to retry; if the agent won't start, "
-            "reinstall from https://hermes-agent.nousresearch.com"
+            "  Re-run `auraforge update` to retry; if the agent won't start, "
+            "reinstall from https://aura-forge-agent.nousresearch.com"
         )
         _m().sys.exit(1)
     finally:
@@ -2121,7 +2121,7 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
         print(f"  {failing_module}: {import_error}")
         print()
         print("  This usually means the copy was interrupted partway through.")
-        print("  Re-run `hermes update` to complete it.")
+        print("  Re-run `auraforge update` to complete it.")
         _m().sys.exit(1)
 
     node_failures = _update_node_dependencies()
@@ -2342,7 +2342,7 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
                 print(f"  {push.stderr.strip().splitlines()[0]}")
             print(
                 "  Commit, stash, or clean up your local changes manually, "
-                "then re-run `hermes update`."
+                "then re-run `auraforge update`."
             )
             raise subprocess.CalledProcessError(
                 push.returncode, push.args, output=push.stdout, stderr=push.stderr
@@ -2412,7 +2412,7 @@ def _stash_apply_failed_only_on_existing_untracked(stderr: str) -> bool:
 def _park_stashed_changes(stash_ref: str) -> None:
     """Leave a pre-update autostash parked instead of re-applying it.
 
-    Used by ``hermes update --keep-stash`` (the desktop updater's mode): the
+    Used by ``auraforge update --keep-stash`` (the desktop updater's mode): the
     stash made the update possible on a dirty tree, but local source edits
     must never be silently re-applied onto the updated code. Nothing is
     lost — the entry stays in ``git stash`` with printed recovery guidance.
@@ -2865,7 +2865,7 @@ def _invalidate_update_cache():
     reports a stale "commits behind" count after a successful update.
 
     The git repo is shared across profiles — when one profile runs
-    ``hermes update``, every profile is now current.
+    ``auraforge update``, every profile is now current.
     """
     homes = []
     # Default profile home (Docker-aware — uses /opt/data in Docker)
@@ -2908,7 +2908,7 @@ def _write_lazy_refresh_incomplete_marker() -> None:
     _write_marker_file(_m()._lazy_refresh_marker_path(), label="lazy-refresh-incomplete")
 
 
-# ``fleet_restart_pending`` lives under HERMES_HOME (not next to the venv).
+# ``fleet_restart_pending`` lives under AURA_FORGE_HOME (not next to the venv).
 # The existing ``.update-incomplete`` / ``.lazy-refresh-incomplete`` markers
 # gate dependency/venv repair; this one is the fleet-restart obligation after
 # a git pull that advanced HEAD (#95294). Cleared only when the restart phase
@@ -2917,7 +2917,7 @@ _FLEET_RESTART_PENDING_NAME = "fleet_restart_pending"
 
 
 def _fleet_restart_pending_marker_path() -> Path:
-    """HERMES_HOME breadcrumb for a pull that has not yet restarted the fleet."""
+    """AURA_FORGE_HOME breadcrumb for a pull that has not yet restarted the fleet."""
     return get_hermes_home() / _FLEET_RESTART_PENDING_NAME
 
 
@@ -3032,7 +3032,7 @@ def _warn_pending_fleet_restart(*, startup: bool = False) -> None:
     """Print the specific interrupted-update fleet-restart warning."""
     stream = sys.stderr if startup else sys.stdout
     print(
-        "⚠ A previous `hermes update` pulled new code but did not "
+        "⚠ A previous `auraforge update` pulled new code but did not "
         "restart running gateways.",
         file=stream,
     )
@@ -3042,7 +3042,7 @@ def _warn_pending_fleet_restart(*, startup: bool = False) -> None:
     )
     if startup:
         print(
-            "  Run `hermes update` or `hermes gateway restart`.",
+            "  Run `auraforge update` or `auraforge gateway restart`.",
             file=stream,
         )
 
@@ -3193,7 +3193,7 @@ def _run_pending_fleet_restart() -> bool:
 
 
 def _apply_pending_fleet_restart_catchup() -> None:
-    """On an already-up-to-date ``hermes update``, finish a skipped restart.
+    """On an already-up-to-date ``auraforge update``, finish a skipped restart.
 
     No-op when nothing is pending. Exits 1 when the catch-up restart is
     incomplete so automation does not treat the fleet as healthy.
@@ -3222,8 +3222,8 @@ def _format_concurrent_instances_message(
     lines.append(f"  Updating now would fail to overwrite {shim} because")
     lines.append("  Windows blocks REPLACE on a running executable.")
     lines.append("")
-    lines.append("  Close Aura Forge Desktop, exit any open `hermes` REPLs, and")
-    lines.append("  stop the gateway (`hermes gateway stop`) before retrying.")
+    lines.append("  Close Aura Forge Desktop, exit any open `auraforge` REPLs, and")
+    lines.append("  stop the gateway (`auraforge gateway stop`) before retrying.")
     lines.append("")
     if matches:
         pid_args = " ".join(f"/PID {pid}" for pid, _ in matches)
@@ -3231,7 +3231,7 @@ def _format_concurrent_instances_message(
         lines.append("  stale, terminate them directly, then retry the update:")
         lines.append(f"      taskkill {pid_args} /F")
         lines.append("")
-    lines.append("  Override with `hermes update --force` if you've already")
+    lines.append("  Override with `auraforge update --force` if you've already")
     lines.append("  confirmed those processes will not write to the venv.")
     return "\n".join(lines)
 
@@ -3281,10 +3281,10 @@ def _filter_non_gateway_concurrent_instances(
     """Return only the concurrent-instance matches that are NOT the gateway.
 
     Used by the pre-update concurrent gate to decide whether to abort
-    ``hermes update``. If every concurrent instance is a gateway, the pause
+    ``auraforge update``. If every concurrent instance is a gateway, the pause
     machinery (``_pause_windows_gateways_for_update``) and the post-update
     kill+restart block handle it — the update proceeds. If anything else (a
-    TUI shell, a Aura Forge Desktop backend child, an unrelated ``hermes`` REPL)
+    TUI shell, a Aura Forge Desktop backend child, an unrelated ``auraforge`` REPL)
     is in the list, the gate still aborts with the existing message, since
     those have no pause machinery downstream.
     """
@@ -3326,7 +3326,7 @@ def _capture_active_lazy_features() -> list[str]:
 
 
 def _capture_active_tool_dependencies() -> list[str]:
-    """Snapshot Python dependencies installed explicitly through ``hermes tools``."""
+    """Snapshot Python dependencies installed explicitly through ``auraforge tools``."""
     try:
         from hermes_cli import tools_config
 
@@ -3342,7 +3342,7 @@ def _restore_active_tool_dependencies(
     *,
     env: dict[str, str] | None = None,
 ) -> None:
-    """Restore allowlisted ``hermes tools`` dependencies into a rebuilt venv.
+    """Restore allowlisted ``auraforge tools`` dependencies into a rebuilt venv.
 
     The dependency names came from a pre-rebuild import probe and are resolved
     through a static package allowlist. Never raises: a failed optional tool
@@ -3425,7 +3425,7 @@ def _refresh_active_lazy_features(
 
     When pyproject.toml's ``[all]`` extra was slimmed down (May 2026), most
     optional backends moved to ``tools/lazy_deps.py`` and only install on
-    first use. ``hermes update`` runs ``uv pip install -e .[all]`` which
+    first use. ``auraforge update`` runs ``uv pip install -e .[all]`` which
     leaves those packages untouched — so if we bump a pin in
     :data:`LAZY_DEPS` (CVE response, transitive bug fix), users who already
     activated the backend keep the stale version forever.
@@ -3502,7 +3502,7 @@ def _refresh_active_lazy_features(
         print(f"  ⚠ {feature} failed to refresh: {reason}")
 
     if install_cmd_prefix is None:
-        print("  ⚠ Lazy refresh failed; rerun `hermes update` once resolved.")
+        print("  ⚠ Lazy refresh failed; rerun `auraforge update` once resolved.")
         return False
 
     # Immediate import-based recovery — metadata-only verifiers miss the case
@@ -3518,7 +3518,7 @@ def _refresh_active_lazy_features(
         print(
             "  Lazy backend(s) keep their previous version; probed packages look intact."
         )
-        print("  Rerun `hermes update` once the upstream issue is resolved.")
+        print("  Rerun `auraforge update` once the upstream issue is resolved.")
         return True
     if status == "indeterminate":
         print(
@@ -3616,7 +3616,7 @@ def _ensure_uv_for_termux(pip_cmd: list[str]) -> str | None:
     """Best-effort uv bootstrap on Termux for faster update installs.
 
     The normal path (``ensure_uv()`` in managed_uv) installs the managed
-    standalone uv into ``$HERMES_HOME/bin/uv``, but on Termux the official
+    standalone uv into ``$AURA_FORGE_HOME/bin/uv``, but on Termux the official
     installer may not work (glibc vs bionic).  Prefer a uv already on PATH
     (e.g. ``pkg install uv``); only if there is none do we fall back to a
     wheel-only ``pip install uv`` so we never source-build the Rust crate.
@@ -3653,7 +3653,7 @@ def _npm_manifest_paths() -> tuple[Path, ...]:
 
     The lockfile alone is NOT a sufficient key: on a local checkout a dev
     can edit package.json (root or a workspace) without running npm — the
-    lockfile is then unchanged but `hermes update` is exactly the step
+    lockfile is then unchanged but `auraforge update` is exactly the step
     expected to sync node_modules (via the `npm install` fallback in
     _run_npm_install_deterministic).
 
@@ -3761,7 +3761,7 @@ def _repair_node_deps_on_current_checkout(
     node_failures = _update_node_dependencies()
     if node_failures:
         print(f"  ⚠ Node.js refresh failed for: {', '.join(node_failures)}")
-        print("    Fix npm and re-run `hermes update`.")
+        print("    Fix npm and re-run `auraforge update`.")
         print_completion(
             "⚠ Checkout is current, but Node.js dependencies could not be repaired."
         )
@@ -3800,7 +3800,7 @@ def _update_node_dependencies() -> list[str]:
             print("→ Updating Node.js dependencies...")
             print("  ⚠ Skipped: only a Windows npm is reachable from this WSL shell.")
             print("    Install Node.js inside the WSL distro (nvm, or your distro's")
-            print("    package manager), then re-run `hermes update`.")
+            print("    package manager), then re-run `auraforge update`.")
             failed = []
             if any(
                 (_m().PROJECT_ROOT / workspace / "package.json").exists()
@@ -3819,7 +3819,7 @@ def _update_node_dependencies() -> list[str]:
 
     # Best-effort: warm npx's cache for agent-browser (#43564). Runs before
     # the lockfile-unchanged early return below since that's the common
-    # `hermes update` case. Synchronous and can block ~11s on a true cold
+    # `auraforge update` case. Synchronous and can block ~11s on a true cold
     # cache (~0.4s once warm) — print first so that doesn't look like a hang.
     print("→ Warming npx cache for agent-browser...")
     try:
@@ -3848,7 +3848,7 @@ def _update_node_dependencies() -> list[str]:
         print()
         print("  ⚠ Node.js dependency refresh did not complete cleanly; the")
         print("    installation may be in a mixed state (updated code, stale Node")
-        print("    deps). Fix npm and re-run `hermes update`.")
+        print("    deps). Fix npm and re-run `auraforge update`.")
         return list(labels)
 
     install_args = [
@@ -3870,7 +3870,7 @@ def _update_node_dependencies() -> list[str]:
     # NOTE: capture_output=False here is deliberate (#18840) — optional
     # postinstall scripts print download progress, and capturing it makes a
     # long download look hung. The chatty npm-deprecation noise during
-    # `hermes update` comes from the *desktop* build, not this step; that
+    # `auraforge update` comes from the *desktop* build, not this step; that
     # one is captured to update.log.
     result = _m()._run_npm_install_deterministic(
         npm,
@@ -3893,9 +3893,9 @@ def _update_node_dependencies() -> list[str]:
     return failures
 
 def _log_only_write(text: str) -> None:
-    """Write ``text`` to ``~/.hermes/logs/update.log`` only, never the terminal.
+    """Write ``text`` to ``~/.aura-forge/logs/update.log`` only, never the terminal.
 
-    During ``hermes update`` ``sys.stdout`` is an ``_UpdateOutputStream`` that
+    During ``auraforge update`` ``sys.stdout`` is an ``_UpdateOutputStream`` that
     mirrors to both the terminal and ``update.log``. Loud, low-signal
     subprocess output (npm installs, the Electron/vite build, the cua-driver
     installer's "Next steps" wall) should be captured and tucked into the log
@@ -3978,7 +3978,7 @@ def _print_fetch_failure(stderr: str) -> None:
 
 
 def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
-    """Implement ``hermes update --check``: fetch and report without installing.
+    """Implement ``auraforge update --check``: fetch and report without installing.
 
     ``branch`` selects which branch the check compares against. Default is
     "main"; callers can pass another branch to ask "are there new commits
@@ -4171,12 +4171,12 @@ def _ensure_fhs_path_guard() -> None:
 
     Mirrors the post-symlink probe added to ``scripts/install.sh`` so that
     existing FHS-layout root installs on RHEL/CentOS/Rocky/Alma 8+ get
-    repaired on ``hermes update`` without requiring a reinstall.  The
+    repaired on ``auraforge update`` without requiring a reinstall.  The
     installer's assumption that ``/usr/local/bin`` is on PATH for every
     standard shell breaks on those distros in non-login interactive shells
     (su, sudo -s, tmux panes, some web terminals): /etc/bashrc doesn't
     add /usr/local/bin and /root/.bash_profile doesn't either.  Symptom:
-    ``hermes`` prints ``command not found`` even though the symlink lives
+    ``auraforge`` prints ``command not found`` even though the symlink lives
     at /usr/local/bin/hermes.
 
     Silent no-op on: non-Linux, non-root, non-FHS installs, and any system
@@ -4190,7 +4190,7 @@ def _ensure_fhs_path_guard() -> None:
     except AttributeError:
         return
     # Only act when this is actually an FHS-layout install (command link at
-    # /usr/local/bin/hermes, code at /usr/local/lib/hermes-agent).
+    # /usr/local/bin/hermes, code at /usr/local/lib/aura-forge-agent).
     fhs_link = Path("/usr/local/bin/hermes")
     if not fhs_link.is_symlink() and not fhs_link.exists():
         return
@@ -4255,27 +4255,27 @@ def _ensure_fhs_path_guard() -> None:
         print("    (reload your shell or run 'source ~/.bashrc' to pick it up)")
 
 def _ensure_acp_launcher() -> None:
-    r"""Self-heal: install a ``hermes-acp`` launcher next to the ``hermes`` one.
+    r"""Self-heal: install a ``hermes-acp`` launcher next to the ``auraforge`` one.
 
     Mirrors the launcher block in ``scripts/install.sh`` so existing installs
-    gain the ACP command on ``hermes update`` without a reinstall.  ACP hosts
+    gain the ACP command on ``auraforge update`` without a reinstall.  ACP hosts
     (Zed, JetBrains, Buzz Desktop) spawn the agent by resolving the
     ``hermes-acp`` command name against the login-shell PATH; the console
     script of that name lives inside the install's venv, which is not on that
     PATH, so those hosts report Aura Forge as not installed even when it is.
 
-    The shim simply delegates to the sibling ``hermes`` launcher with the
+    The shim simply delegates to the sibling ``auraforge`` launcher with the
     ``acp`` subcommand, which makes it correct for every install layout
     (venv wrapper, FHS symlink, pipx/pip console script) without having to
     reconstruct interpreter/entrypoint paths.
 
-    No-op on Windows (install.ps1 stages the ``hermes`` / ``hermes-acp``
+    No-op on Windows (install.ps1 stages the ``auraforge`` / ``hermes-acp``
     launchers into the managed binary dir ``$AuraForgeHome\bin`` and puts THAT
     on the user PATH — never the whole ``venv\Scripts`` dir, which would
     shadow the user's ``python`` (#83797); when those launchers go missing,
     ``hermes_cli._install_repair.ensure_windows_bin_launchers`` re-stages
     them) and wherever a ``hermes-acp`` is already present next to the
-    ``hermes`` command.  Unwritable directories (e.g. ``/usr/local/bin`` as
+    ``auraforge`` command.  Unwritable directories (e.g. ``/usr/local/bin`` as
     non-root) are skipped silently.  Idempotent.
     """
     if _m().sys.platform == "win32":
@@ -4297,7 +4297,7 @@ def _ensure_acp_launcher() -> None:
                 continue
             shim = (
                 "#!/usr/bin/env bash\n"
-                "# Aura Forge Agent — ACP launcher (written by `hermes update`).\n"
+                "# Aura Forge Agent — ACP launcher (written by `auraforge update`).\n"
                 "# ACP hosts (Zed, JetBrains, Buzz) resolve the agent by this\n"
                 "# command name on the login-shell PATH.\n"
                 f'exec "{hermes_cmd}" acp "$@"\n'
@@ -4377,8 +4377,8 @@ def _run_pre_update_backup(args) -> Optional[str]:
       under ``state-snapshots/``. Files over 1 GiB are skipped with a
       warning so a bloated state.db can never stall the update
       (issues #15733, #34600 are the reason this safety net exists).
-    - ``full``  — the quick snapshot PLUS a full zip of HERMES_HOME under
-      ``backups/`` (restorable via ``hermes import``; the #48200 wrong-path
+    - ``full``  — the quick snapshot PLUS a full zip of AURA_FORGE_HOME under
+      ``backups/`` (restorable via ``auraforge import``; the #48200 wrong-path
       wipe is the reason this level exists).
 
     ``--backup`` forces ``full`` for one run; ``--no-backup`` forces ``off``.
@@ -4549,7 +4549,7 @@ def _run_pre_update_backup(args) -> Optional[str]:
 
     size_str = format_bytes(size_bytes)
 
-    # Render path using display_hermes_home so the user sees ~/.hermes/...
+    # Render path using display_hermes_home so the user sees ~/.aura-forge/...
     try:
         from hermes_constants import get_hermes_home, display_hermes_home
 
@@ -4625,11 +4625,11 @@ def _venv_core_imports_healthy() -> tuple[bool, str]:
     """Probe the project venv for the core imports the backend needs to boot.
 
     Runs a tiny import check inside the venv interpreter (NOT this process —
-    ``hermes update`` may be driven by a different Python). Catches the
+    ``auraforge update`` may be driven by a different Python). Catches the
     half-updated-venv state: git checkout current but a dependency sync that
     failed or was killed partway (e.g. Windows access-denied on a loaded
     .pyd), leaving imports like ``fastapi``'s new transitive deps missing.
-    Without this probe, ``hermes update`` on a current checkout prints
+    Without this probe, ``auraforge update`` on a current checkout prints
     "Already up to date!" and returns without ever re-syncing dependencies —
     the user's install stays broken no matter how many times they update
     (ryanc's incident, July 2026).
@@ -4941,7 +4941,7 @@ def _abort_dependency_sync_if_self_locked(gateway_resume=None) -> None:
       importing anything heavy, so it maps nothing and the swap succeeds.
 
     - The ``hermes.exe`` console shim we were launched from (#88838, #89599).
-      The marker cannot help here — every future ``hermes`` launch is also the
+      The marker cannot help here — every future ``auraforge`` launch is also the
       shim, so deferring to the next launch defers forever.  Hand the install
       to a child under the venv interpreter and exit, releasing the shim.
     """
@@ -4974,7 +4974,7 @@ def _defer_update_for_self_lock(loaded: list[str]) -> None:
     print()
     print("  On Windows a mapped extension cannot be replaced by the process")
     print("  holding it. The code update has been applied; only the dependency")
-    print("  sync has been deferred: the next `hermes` launch will complete it")
+    print("  sync has been deferred: the next `auraforge` launch will complete it")
     print("  in a fresh process before anything imports these modules.")
     _m()._write_update_incomplete_marker()
 
@@ -5072,7 +5072,7 @@ def _format_venv_python_holders_message(matches: list[tuple[int, str, str]]) -> 
     """Explain which venv processes block the update and how to clear them.
 
     Holder labels come from the parsed SUBCOMMAND, never substring matching
-    (#90778): a standalone ``hermes dashboard`` must not be labeled as the
+    (#90778): a standalone ``auraforge dashboard`` must not be labeled as the
     Desktop backend (advice to close an app that isn't running), and flags
     like ``--preserve-cache`` must not match \"serve\". Unknown argv gets no
     hint rather than a wrong one.
@@ -5102,7 +5102,7 @@ def _format_venv_python_holders_message(matches: list[tuple[int, str, str]]) -> 
         "  Close the Aura Forge desktop app / other Aura Forge terminals, then re-run:"
     )
     lines.append("    hermes update")
-    lines.append("  (or use `hermes update --force-venv` to proceed anyway at your own risk)")
+    lines.append("  (or use `auraforge update --force-venv` to proceed anyway at your own risk)")
     return "\n".join(lines)
 
 def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
@@ -5142,7 +5142,7 @@ def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
     except OSError:
         venv_prefix = str(venv_dir).lower().rstrip(os.sep) + os.sep
 
-    # Never return ourselves or our own ancestry: a CLI ``hermes update``
+    # Never return ourselves or our own ancestry: a CLI ``auraforge update``
     # runs from the venv python and would otherwise nominate itself.
     # Same #87594 carve-out as _detect_venv_python_processes: a GATEWAY
     # ancestor is not "our own ancestry" in the interactive sense — it is
@@ -5579,7 +5579,7 @@ def _stop_process_trees(pids: list[int]) -> None:
 
 
 def _looks_like_desktop_control_plane(cmdline: str) -> bool:
-    """True for this-install ``hermes serve`` / ``hermes dashboard`` argv.
+    """True for this-install ``auraforge serve`` / ``auraforge dashboard`` argv.
 
     That is the Desktop control plane, not the messaging gateway. Serve and
     dashboard do not host platform adapters (#92091); do not feed this into
@@ -6117,7 +6117,7 @@ def _cold_start_windows_gateway_after_update() -> bool:
     is installed, signalling the user wants a gateway. Unlike the relaunch
     paths — which watch an old PID and respawn once it exits — this is a direct
     fresh spawn via the same hidden-console + breakaway path that
-    ``hermes gateway start`` uses (``gateway_windows._spawn_detached``).
+    ``auraforge gateway start`` uses (``gateway_windows._spawn_detached``).
 
     Best-effort and idempotent: re-checks that nothing is running first so a
     concurrent start (e.g. the autostart entry firing) can't produce a
@@ -6585,7 +6585,7 @@ def _recover_gateway_restart_after_abort(
 ) -> dict[str, list]:
     """Retry supervised gateway restarts from a clean Python process.
 
-    ``hermes update`` normally performs the fleet restart in the interpreter
+    ``auraforge update`` normally performs the fleet restart in the interpreter
     that started before ``git pull``.  If that phase raises while importing the
     new tree, a warning alone leaves the old gateway alive against new files on
     disk.  The recovery boundary launches the existing per-profile
@@ -6758,7 +6758,7 @@ def _refresh_windows_gateway_launchers() -> None:
 
     The Scheduled Task / Startup-folder launchers (``gateway.cmd`` +
     ``gateway.vbs``) are persistence artifacts written once at install time —
-    ``hermes update`` never touched them, so installs created before the
+    ``auraforge update`` never touched them, so installs created before the
     hidden-console rework (aa2ae36c3f) kept launching the gateway through
     ``pythonw.exe`` forever: every descendant spawn flashed a conhost
     (#54220/#56747) and, since #70344, the console-less gateway died at
@@ -6786,7 +6786,7 @@ def _refresh_bootstrap_cache_scripts(branch: str = "main") -> None:
     """Sync the installer's bootstrap-cache scripts from the fresh checkout.
 
     The Desktop GUI updater (``hermes-setup.exe``) executes
-    ``$HERMES_HOME/bootstrap-cache/install-<ref>.ps1`` (or ``.sh``) for its
+    ``$AURA_FORGE_HOME/bootstrap-cache/install-<ref>.ps1`` (or ``.sh``) for its
     repair/bootstrap stages. Installer binaries built before the #67193
     cache-refresh fix (June 2026 and earlier) NEVER re-download a cached
     branch-ref script — ``install-main.ps1`` cached at install time is
@@ -6794,7 +6794,7 @@ def _refresh_bootstrap_cache_scripts(branch: str = "main") -> None:
     2026-08-09 incident: a June 4 cached script's venv stage lacked the
     #81327 process-tree sweep and died on ``Access denied``). The binary
     has no self-update path, so the poisoned cache outlives every
-    ``hermes update``.
+    ``auraforge update``.
 
     Overwriting the cached script for *branch* with the freshly pulled
     ``scripts/install.ps1`` / ``scripts/install.sh`` on every update turns
@@ -7004,7 +7004,7 @@ def _discard_lockfile_churn(git_cmd, repo_root):
 
     npm rewrites lockfiles non-deterministically at install/build time. On a
     managed install those diffs are never intentional, so we discard them so
-    ``hermes update`` sees a clean tree instead of autostashing every run.
+    ``auraforge update`` sees a clean tree instead of autostashing every run.
     Best-effort; only ever touches files named ``package-lock.json``.
     """
     try:
@@ -7050,7 +7050,7 @@ def _normalize_managed_eol(git_cmd, repo_root):
     overwritten", so ``install.ps1`` pins ``core.autocrlf=false`` on the managed
     clone (#67730). Checkouts created before that landed never got the pin and
     cannot receive it — the bootstrap installer reuses its build-pinned
-    ``install.ps1`` forever — so ``hermes update``, which ships with the checkout
+    ``install.ps1`` forever — so ``auraforge update``, which ships with the checkout
     itself, is the only path left that can fix them.
 
     The pin and the cleanup are one operation. Under ``autocrlf=true`` git
@@ -7185,7 +7185,7 @@ def _rebuild_desktop_after_update(
 
     print("→ Checking if desktop app needs rebuilding...")
     # Consult the content-hash stamp IN-PROCESS first. The spawned
-    # `hermes desktop --build-only` subprocess re-imports the whole CLI stack
+    # `auraforge desktop --build-only` subprocess re-imports the whole CLI stack
     # (~1-3 s) just to reach the same _m()._desktop_build_needed check; when
     # the stamp already says "up to date" we can skip the spawn entirely. The
     # update path never passes --source, so the subprocess would run with
@@ -7210,7 +7210,7 @@ def _rebuild_desktop_after_update(
     # surface the captured tail so the failure is debuggable.
     #
     # Start the build subprocess with the Hermes-managed Node on PATH: when
-    # `hermes update` runs inside the desktop updater chain (Desktop →
+    # `auraforge update` runs inside the desktop updater chain (Desktop →
     # hermes-setup → hermes update), the shell PATH customizations are lost,
     # so a bare-PATH child would fail with `node: not found` before cmd_gui can
     # self-heal.
@@ -7225,7 +7225,7 @@ def _rebuild_desktop_after_update(
             desktop_build_cmd, cwd=_m().PROJECT_ROOT, env=build_env
         )
     if build_result.returncode != 0:
-        print("  ⚠ Desktop build failed (run `hermes desktop` to retry)")
+        print("  ⚠ Desktop build failed (run `auraforge desktop` to retry)")
         tail = "\n".join((build_result.stdout or "").strip().splitlines()[-15:])
         if tail:
             print(tail)
@@ -7384,7 +7384,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         )
 
     # With gateways paused, anything still running from the venv interpreter
-    # (most commonly the Desktop app's `hermes serve` backend) will keep .pyd
+    # (most commonly the Desktop app's `auraforge serve` backend) will keep .pyd
     # files locked and corrupt the dependency sync below. Refuse rather than
     # race: killing the desktop backend is futile (the app supervises and
     # respawns it), so the user must close the app. Deliberately NOT bypassed
@@ -7456,7 +7456,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 _venv_holders = _m()._detect_venv_python_processes()
         if _venv_holders:
             # Manual serve/dashboard rung (#63206): a network-bound
-            # `hermes serve --host <ip>` powering a REMOTE Desktop holds the
+            # `auraforge serve --host <ip>` powering a REMOTE Desktop holds the
             # venv and used to dead-end the update with exit 2 — the user's
             # only option was killing the backend by hand, and nothing ever
             # brought it back (the remote client's endpoint stayed dead).
@@ -7540,7 +7540,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             sys.exit(2)
 
     # Self-lock deferral moved: the venv-holder sweep above excludes this
-    # process by design (a CLI `hermes update` IS the venv python), and an
+    # process by design (a CLI `auraforge update` IS the venv python), and an
     # updater that has imported a native venv extension cannot rewrite its
     # own mapped .pyd (#83569). That check used to run HERE — before the
     # fetch — but firing pre-fetch meant a deferral stranded the user on the
@@ -7567,7 +7567,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         else:
             print("✗ Not a git repository. Please reinstall:")
             print(
-                "  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash"
+                "  curl -fsSL https://aura-forge-agent.nousresearch.com/install.sh | bash"
             )
             sys.exit(1)
 
@@ -8073,7 +8073,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Capture the pre-pull SHA so we can auto-roll-back if the new code
         # has a syntax error in a critical-path file (PR #28452 incident:
         # orphan merge-conflict markers in hermes_cli/config.py bricked
-        # every user who ran ``hermes update`` for the 7 minutes between
+        # every user who ran ``auraforge update`` for the 7 minutes between
         # the bad commit and the fix landing).
         pre_pull_sha = _capture_head_sha(git_cmd, _m().PROJECT_ROOT)
         try:
@@ -8194,7 +8194,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     )
                     if rollback_result.returncode == 0:
                         print("  ✓ Rollback complete — your install is unchanged.")
-                        print("  Try ``hermes update`` again later once a fix lands.")
+                        print("  Try ``auraforge update`` again later once a fix lands.")
                     else:
                         print("  ✗ Rollback failed. Recover manually with:")
                         print(f"    cd {_m().PROJECT_ROOT} && git reset --hard {pre_pull_sha}")
@@ -8246,9 +8246,9 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # applied: a checkout that is pinned to a raw SHA (detached HEAD) can
         # report "N new commit(s)" against origin yet still sit on the old
         # commit afterward (the branch-switch step re-detaches to the SHA).
-        # Before this guard, ``hermes update`` printed "✓ Code updated!" and
+        # Before this guard, ``auraforge update`` printed "✓ Code updated!" and
         # reinstalled deps + rebuilt the desktop app against the stale tree —
-        # no error, no warning, ``hermes doctor`` healthy. Compare pre-pull
+        # no error, no warning, ``auraforge doctor`` healthy. Compare pre-pull
         # and post-pull HEAD; if they match, surface the no-op instead of
         # claiming success.
         post_pull_sha = _capture_head_sha(git_cmd, _m().PROJECT_ROOT)
@@ -8302,7 +8302,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # #95294: HEAD advanced; running gateways still serve pre-pull
         # modules until the restart phase below. Any interrupt between here
         # and a completed (or no-op) restart leaves this marker so the next
-        # ``hermes update`` can catch up even when git is already up to date.
+        # ``auraforge update`` can catch up even when git is already up to date.
         # Distinct from ``.update-incomplete`` (venv/install repair).
         _write_fleet_restart_pending_marker(expected_sha=post_pull_sha or "")
 
@@ -8338,7 +8338,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         #
         # Drop the core-install breadcrumb BEFORE touching the venv. If the
         # install is killed mid-flight (Ctrl-C, terminal close, WSL OOM), the
-        # marker survives and the next ``hermes`` launch finishes the install
+        # marker survives and the next ``auraforge`` launch finishes the install
         # via ``_recover_from_interrupted_install``. Cleared after the core
         # ``.[all]`` install completes — lazy refresh uses a separate marker.
         _write_update_incomplete_marker()
@@ -8459,7 +8459,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             _m()._clear_lazy_refresh_incomplete_marker()
         else:
             print(
-                "  ⚠ Lazy-refresh recovery incomplete — run `hermes` again "
+                "  ⚠ Lazy-refresh recovery incomplete — run `auraforge` again "
                 "to finish import-based venv repair."
             )
 
@@ -8489,8 +8489,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
             print()
             print(f"  ⚠ {failing_module} still fails to import after updating:")
             print(f"      {import_error}")
-            print("    Run `hermes update` again — if it persists, reinstall:")
-            print("    https://hermes-agent.nousresearch.com")
+            print("    Run `auraforge update` again — if it persists, reinstall:")
+            print("    https://aura-forge-agent.nousresearch.com")
 
         node_failures = _update_node_dependencies()
         _m()._build_web_ui(_m().PROJECT_ROOT / "web")
@@ -8601,7 +8601,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Seed the model-catalog disk cache from the freshly-pulled checkout.
         # The repo ships the canonical catalog at
         # website/static/api/model-catalog.json, and `git pull` just made it
-        # current — so copy it straight over ~/.hermes/cache/model_catalog.json
+        # current — so copy it straight over ~/.aura-forge/cache/model_catalog.json
         # instead of waiting on a network fetch (which can be bot-gated or hit a
         # Portal hiccup). Keeps the model picker's curated/free lists in sync
         # with the version the user just installed. Non-fatal on failure: the
@@ -8646,10 +8646,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
             logger.debug("Skills sync during update failed: %s", e)
 
         # Sync bundled skills to all profiles (including the active one).
-        # seed_profile_skills() uses subprocess with an explicit HERMES_HOME so
-        # it is not affected by sync_skills()'s module-level HERMES_HOME cache,
+        # seed_profile_skills() uses subprocess with an explicit AURA_FORGE_HOME so
+        # it is not affected by sync_skills()'s module-level AURA_FORGE_HOME cache,
         # which means the active profile is reliably synced regardless of whether
-        # the caller's HERMES_HOME env var points at the default or a named profile.
+        # the caller's AURA_FORGE_HOME env var points at the default or a named profile.
         try:
             from hermes_cli.profiles import (
                 list_profiles,
@@ -8747,7 +8747,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Most-recent curator run notice — show-once per run. Surfaces the
         # rename map (`old-name → umbrella`) on the high-attention update
         # surface so users learn about consolidations without having to
-        # check `hermes curator status`. Self-stamps after printing so it
+        # check `auraforge curator status`. Self-stamps after printing so it
         # never repeats for the same run.
         try:
             _print_curator_recent_run_notice()
@@ -8773,10 +8773,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Migrate the Windows hermes launchers to the managed binary dir
         # (the default Aura Forge root's bin, next to the managed uv) and repair
         # them if they are missing. Earlier layouts put them inside the git
-        # checkout (hermes-agent\bin) or put venv\Scripts itself on PATH; the
+        # checkout (aura-forge-agent\bin) or put venv\Scripts itself on PATH; the
         # in-checkout copies were swept by this command's own pre-update
         # autostash (git stash push --include-untracked) and, with
-        # --keep-stash (the desktop updater), never restored — `hermes`
+        # --keep-stash (the desktop updater), never restored — `auraforge`
         # stopped resolving in every new terminal. Updates never run
         # install.ps1, so this tail call is how existing installs reach the
         # new layout. No-op on POSIX and on source checkouts (root is not
@@ -8791,7 +8791,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Refresh the cua-driver binary used by the Computer Use toolset.
         # The upstream installer is gated on supported platforms and on the
         # binary already being on PATH, so this is a no-op for users who
-        # don't have it. Tying the refresh to ``hermes update`` gives users a
+        # don't have it. Tying the refresh to ``auraforge update`` gives users a
         # predictable cadence (matches when they pull new agent code) without
         # adding startup latency or a per-launch GitHub API call.
         try:
@@ -8820,8 +8820,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 # silent) upstream installer when the driver's native
                 # check-update verb positively reports a newer release.
                 # An indeterminate check (offline, rate-limited, old
-                # driver) keeps the installed version — `hermes update`
-                # must stay fast; `hermes computer-use install --upgrade`
+                # driver) keeps the installed version — `auraforge update`
+                # must stay fast; `auraforge computer-use install --upgrade`
                 # remains the force path. Windows also defers confirmed
                 # updates and contract repairs to that explicit command
                 # because the upstream installer may prompt for console/UAC
@@ -8835,7 +8835,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             logger.debug("cua-driver refresh failed: %s", e)
 
         # Write exit code *before* the gateway restart attempt.
-        # When running as ``hermes update --gateway`` (spawned by the gateway's
+        # When running as ``auraforge update --gateway`` (spawned by the gateway's
         # /update command), this process lives inside the gateway's systemd
         # cgroup.  A graceful SIGUSR1 restart keeps the drain loop alive long
         # enough for the exit-code marker to be written below, but the
@@ -9308,7 +9308,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                                 f"  ⚠ {svc_name} is a system service and restarting it needs root.\n"
                                 f"    Restart it manually to load the new version:\n"
                                 f"      sudo systemctl restart {svc_name}\n"
-                                f"    To let `hermes update` restart it automatically, allow\n"
+                                f"    To let `auraforge update` restart it automatically, allow\n"
                                 f"    passwordless sudo for systemctl, or run updates with sudo."
                             )
                             return
@@ -9327,7 +9327,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                         # the RestartSec backoff and leave the unit
                         # dead.  Clearing the failed state first makes
                         # the restart idempotent.  Mirrors the recovery
-                        # path in `hermes gateway restart`
+                        # path in `auraforge gateway restart`
                         # (`systemd_restart()`) as of PR #20949.
                         subprocess.run(
                             _manage_cmd + ["reset-failed", svc_name],
@@ -9801,7 +9801,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # When both hermes.service (from a pre-rename install) and the
         # current hermes-gateway.service are enabled, they SIGTERM-fight
         # for the same bot token (see PR #11909). Flagging here means
-        # every `hermes update` surfaces the issue until the user migrates.
+        # every `auraforge update` surfaces the issue until the user migrates.
         try:
             from hermes_cli.gateway import (
                 has_legacy_hermes_units,
@@ -9841,7 +9841,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
 
         print()
         print("Tip: You can now select a provider and model:")
-        print("  hermes model              # Select provider and model")
+        print("  auraforge model              # Select provider and model")
 
         # Phase 1 (#91277): post-update fleet version verification. Compare
         # every live gateway's stamped code_sha against the freshly-updated
@@ -9978,7 +9978,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # runs pre-update modules — surface that as a failed update so
             # automation / operators do not treat the fleet as healthy.
             # Leave ``fleet_restart_pending`` in place so the next
-            # ``hermes update`` still runs the catch-up restart.
+            # ``auraforge update`` still runs the catch-up restart.
             sys.exit(1)
         _clear_fleet_restart_pending_marker()
 

@@ -833,7 +833,7 @@ def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, An
         logger.warning(
             "custom_providers in config.yaml is a dict, not a list. "
             "Each entry must be prefixed with '-' in YAML. "
-            "Run 'hermes doctor' for details."
+            "Run 'auraforge doctor' for details."
         )
         return None
 
@@ -1551,7 +1551,7 @@ def _resolve_azure_foundry_runtime(
     base_url = explicit_base_url_clean or cfg_base_url or env_base_url
     if not base_url:
         raise AuthError(
-            "Azure Foundry requires a base URL. Set it via 'hermes model' or "
+            "Azure Foundry requires a base URL. Set it via 'auraforge model' or "
             "the AZURE_FOUNDRY_BASE_URL environment variable."
         )
 
@@ -1640,10 +1640,10 @@ def _resolve_azure_foundry_runtime(
     if not api_key:
         raise AuthError(
             "Azure Foundry requires an API key. Set AZURE_FOUNDRY_API_KEY in "
-            "~/.hermes/.env or run 'hermes model' to configure. To use "
+            "~/.aura-forge/.env or run 'auraforge model' to configure. To use "
             "keyless Microsoft Entra ID auth instead, set "
             "model.auth_mode: entra_id in config.yaml (or pick "
-            "'Microsoft Entra ID' in 'hermes model')."
+            "'Microsoft Entra ID' in 'auraforge model')."
         )
 
     source = "explicit" if (explicit_api_key or explicit_base_url) else "config"
@@ -1935,10 +1935,10 @@ def resolve_runtime_provider(
                 "Vertex AI credentials could not be resolved. Vertex uses "
                 "OAuth2 (not a static API key): provide a service-account JSON "
                 "via GOOGLE_APPLICATION_CREDENTIALS (or VERTEX_CREDENTIALS_PATH) "
-                "in ~/.hermes/.env, or run 'gcloud auth application-default "
+                "in ~/.aura-forge/.env, or run 'gcloud auth application-default "
                 "login' for ADC. Set the GCP project/region under vertex: in "
                 "config.yaml if they aren't embedded in the credentials. "
-                "Run `hermes setup` to install Vertex support."
+                "Run `auraforge setup` to install Vertex support."
             )
         return {
             "provider": "vertex",
@@ -2069,7 +2069,7 @@ def resolve_runtime_provider(
         # For Nous, the pool entry's runtime_api_key is the agent_key
         # compatibility field. It must be an invoke JWT. The pool doesn't
         # refresh it during selection (that would trigger network calls in
-        # non-runtime contexts like `hermes auth list`). If the key is
+        # non-runtime contexts like `auraforge auth list`). If the key is
         # expired/missing, refresh the selected pool entry before falling back
         # to singleton auth resolution.
         if provider == "nous" and entry is not None:

@@ -6,7 +6,7 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos]
 metadata:
-  hermes:
+  auraforge:
     tags: [debugging, python, pdb, debugpy, breakpoints, dap, post-mortem]
     related_skills: [systematic-debugging, node-inspect-debugger]
 ---
@@ -29,7 +29,7 @@ Three tools, picked by situation:
 
 - A test fails and the traceback doesn't reveal why a value is wrong
 - You need to step through a function and watch a collection mutate
-- A long-running process (hermes gateway, tui_gateway) misbehaves and you can't restart it
+- A long-running process (auraforge gateway, tui_gateway) misbehaves and you can't restart it
 - Post-mortem: an exception fired in prod-ish code and you want to inspect locals at the crash site
 - A subprocess / child (Python `_SlashWorker`, PTY bridge worker) is the actual bug site
 
@@ -94,7 +94,7 @@ python -m pdb path/to/script.py arg1 arg2
 
 ## Recipe 3: Debug a pytest test
 
-The hermes test runner and pytest both support this:
+The auraforge test runner and pytest both support this:
 
 ```bash
 # Drop to pdb on failure (or on any raised exception):
@@ -149,7 +149,7 @@ For long-lived processes: Aura Forge gateway, tui_gateway, a daemon, a process t
 ### Setup
 
 ```bash
-source <hermes-agent-repo>/.venv/bin/activate
+source <auraforge-agent-repo>/.venv/bin/activate
 pip install debugpy
 ```
 
@@ -246,7 +246,7 @@ This is fine for one-off automation but painful as an interactive UX.
   "connect": { "host": "127.0.0.1", "port": 5678 },
   "justMyCode": false,
   "pathMappings": [
-    { "localRoot": "${workspaceFolder}", "remoteRoot": "<hermes-agent-repo>" }
+    { "localRoot": "${workspaceFolder}", "remoteRoot": "<auraforge-agent-repo>" }
   ]
 }
 ```
@@ -271,15 +271,15 @@ nc 127.0.0.1 4444
 
 `remote-pdb` is the cleanest agent-friendly choice when `debugpy`'s DAP protocol is overkill. Use `debugpy` only when you actually need IDE integration.
 
-## Debugging Hermes-specific Processes
+## Debugging Aura Forge-specific Processes
 
 ### Tests
 See Recipe 3. The wrapper captures subprocess output, so run pytest directly for interactive pdb.
 
 ### `run_agent.py` / CLI — one-shot
-Easiest: add `breakpoint()` near the suspect line, then run `hermes` normally. Control returns to your terminal at the pause point.
+Easiest: add `breakpoint()` near the suspect line, then run `auraforge` normally. Control returns to your terminal at the pause point.
 
-### `tui_gateway` subprocess (spawned by `hermes --tui`)
+### `tui_gateway` subprocess (spawned by `auraforge --tui`)
 The gateway runs as a child of the Node TUI. Options:
 
 **A. Source-edit the gateway:**
@@ -289,7 +289,7 @@ import debugpy
 debugpy.listen(("127.0.0.1", 5678))
 debugpy.wait_for_client()
 ```
-Start `hermes --tui`. The TUI will appear frozen (its backend is waiting). Attach a client; execution resumes when you `continue`.
+Start `auraforge --tui`. The TUI will appear frozen (its backend is waiting). Attach a client; execution resumes when you `continue`.
 
 **B. Use `remote-pdb` at a specific handler:**
 ```python

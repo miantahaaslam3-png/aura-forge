@@ -445,7 +445,7 @@ def detect_default_chromium(system: str | None = None) -> str | None:
 # default user-data-dir. Chromium ≥136 (Google-branded builds) refuses
 # remote debugging on the default dir no matter who launches it, and the
 # live dir is usually held by the user's running browser (SingletonLock).
-# Instead we snapshot the real profile into ``~/.hermes/browser-profile/``
+# Instead we snapshot the real profile into ``~/.aura-forge/browser-profile/``
 # — a non-default dir Chrome will happily debug, that never contends with
 # the user's browser — launch the user's real binary on the copy with a
 # devtools port, and hand the CDP URL to whichever browser lane is active

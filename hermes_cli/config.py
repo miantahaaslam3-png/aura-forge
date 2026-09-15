@@ -1,17 +1,17 @@
 """
 Configuration management for Aura Forge Agent.
 
-Config files are stored in ~/.hermes/ for easy access:
-- ~/.hermes/config.yaml  - All settings (model, toolsets, terminal, etc.)
-- ~/.hermes/.env         - API keys and secrets
+Config files are stored in ~/.aura-forge/ for easy access:
+- ~/.aura-forge/config.yaml  - All settings (model, toolsets, terminal, etc.)
+- ~/.aura-forge/.env         - API keys and secrets
 
 This module provides:
-- hermes config          - Show current configuration
-- hermes config edit     - Open config in editor
-- hermes config get      - Print a resolved configuration value
-- hermes config set      - Set a specific value
-- hermes config unset    - Remove a user configuration value
-- hermes config wizard   - Re-run setup wizard
+- auraforge config          - Show current configuration
+- auraforge config edit     - Open config in editor
+- auraforge config get      - Print a resolved configuration value
+- auraforge config set      - Set a specific value
+- auraforge config unset    - Remove a user configuration value
+- auraforge config wizard   - Re-run setup wizard
 """
 
 import copy
@@ -51,7 +51,7 @@ def _backup_corrupt_config(config_path: Path) -> Optional[Path]:
     When the YAML can't be parsed, ``load_config()`` silently falls back to
     ``DEFAULT_CONFIG`` and the user's broken file stays on disk untouched.
     That file is still the user's only copy of their intended overrides — if
-    they re-run the setup wizard or ``hermes config set`` (which rewrites
+    they re-run the setup wizard or ``auraforge config set`` (which rewrites
     ``config.yaml``), the broken-but-recoverable content is gone for good.
 
     This snapshots the corrupted file to ``config.yaml.corrupt.<ts>.bak`` so
@@ -104,20 +104,20 @@ def _warn_config_parse_failure(
 ) -> None:
     """Surface a config.yaml parse failure to user, log, and stderr.
 
-    A YAML parse error in ``~/.hermes/config.yaml`` causes ``load_config()``
+    A YAML parse error in ``~/.aura-forge/config.yaml`` causes ``load_config()``
     to silently fall back to ``DEFAULT_CONFIG``, which means every user
     override (auxiliary providers, fallback chain, model overrides, etc.)
     is dropped. Before this helper that was a one-line ``print(...)`` that
     scrolled off-screen on the first invocation and was never seen again.
 
     Now: warn once per (path, mtime_ns, size) on stderr **and** in
-    ``agent.log`` / ``errors.log`` at WARNING level so ``hermes logs``
+    ``agent.log`` / ``errors.log`` at WARNING level so ``auraforge logs``
     surfaces it. Re-warns automatically if the file changes (different
     mtime/size), so users editing the config see the next failure. On the
     first warning for a given broken file we also snapshot it to a
     timestamped ``.bak`` (best-effort) so the user's recoverable content
     survives any later rewrite of ``config.yaml`` by the setup wizard or
-    ``hermes config set``.
+    ``auraforge config set``.
 
     ``fallback`` selects the message wording: ``"defaults"`` (fresh process,
     nothing else to serve) or ``"last-known-good"`` (in-process retention of
@@ -145,7 +145,7 @@ def _warn_config_parse_failure(
         msg = (
             f"Failed to parse {config_path}: {exc}. "
             f"REFUSING to write config.yaml so the existing file is preserved. "
-            f"Fix the YAML (hermes config edit) and retry."
+            f"Fix the YAML (auraforge config edit) and retry."
         )
     else:
         msg = (
@@ -158,7 +158,7 @@ def _warn_config_parse_failure(
         msg += f" A copy of the corrupted file was saved to {backup_path}."
     logger.warning(msg)
     try:
-        sys.stderr.write(f"⚠️  hermes config: {msg}\n")
+        sys.stderr.write(f"⚠️  auraforge config: {msg}\n")
         sys.stderr.flush()
     except Exception:
         pass
@@ -178,18 +178,18 @@ _ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 #   ``PYTHONUSERBASE`` — Python interpreter init. Aura Forge itself starts
 #   from one of these on every restart.
 # * ``NODE_OPTIONS`` / ``NODE_PATH`` — Node interpreter; affects npm,
-#   ``hermes update``, the TUI build.
+#   ``auraforge update``, the TUI build.
 # * ``PATH`` — too broad to allow. The dashboard never needs to rewrite
 #   the operator's PATH; if a tool can't be found, the fix is to add an
 #   absolute path in the integration config, not to mutate PATH globally.
 # * ``GIT_SSH_COMMAND`` / ``GIT_EXEC_PATH`` — git rewrites that fire
-#   on every plugin install / ``hermes update``.
+#   on every plugin install / ``auraforge update``.
 # * ``BROWSER`` / ``EDITOR`` / ``VISUAL`` / ``PAGER`` — commands the
 #   shell or CLI invokes implicitly. Wrong values here = RCE on next
 #   ``$EDITOR``.
 # * ``SHELL`` — what subprocess uses with ``shell=True`` (we try to
 #   avoid that, but defense in depth).
-# * ``HERMES_HOME`` / ``HERMES_PROFILE`` / ``HERMES_CONFIG`` /
+# * ``AURA_FORGE_HOME`` / ``HERMES_PROFILE`` / ``HERMES_CONFIG`` /
 #   ``HERMES_ENV`` — Aura Forge runtime location flags. Writing these into
 #   ``.env`` would relocate state in ways the user did not request from
 #   the dashboard. ``config.yaml`` is the supported surface for these.
@@ -221,7 +221,7 @@ _ENV_VAR_NAME_DENYLIST: frozenset[str] = frozenset({
     # Aura Forge runtime location — never via dashboard env writer.
     # NOT a HERMES_* blanket: integration credentials (HERMES_GEMINI_*,
     # HERMES_LANGFUSE_*, HERMES_SPOTIFY_*, ...) ARE allowed.
-    "HERMES_HOME", "HERMES_PROFILE", "HERMES_CONFIG", "HERMES_ENV",
+    "AURA_FORGE_HOME", "HERMES_PROFILE", "HERMES_CONFIG", "HERMES_ENV",
     "HERMES_CONFIG_PATH", "HERMES_ENV_PATH",
     # MCP catalog trust root. Package-manager wrappers may still provide this
     # in the process environment; only generic persistence writes are blocked.
@@ -261,10 +261,10 @@ def _reject_denylisted_env_var(key: str) -> None:
             f"Environment variable {key!r} is on the writer denylist. "
             "Names that influence subprocess execution (LD_PRELOAD, "
             "PYTHONPATH, PATH, EDITOR, ...) or Aura Forge runtime location "
-            "and security policy (HERMES_HOME, HERMES_YOLO_MODE, ...) "
+            "and security policy (AURA_FORGE_HOME, HERMES_YOLO_MODE, ...) "
             "cannot be persisted via "
             "the env writer. If you really need this, edit "
-            "~/.hermes/.env directly."
+            "~/.aura-forge/.env directly."
         )
 
 
@@ -351,8 +351,8 @@ _EXTRA_ENV_KEYS = frozenset({
     "MATRIX_REQUIRE_MENTION", "MATRIX_FREE_RESPONSE_ROOMS", "MATRIX_AUTO_THREAD", "MATRIX_DM_AUTO_THREAD",
     "MATRIX_RECOVERY_KEY",
     # Langfuse observability plugin — optional tuning keys + standard SDK vars.
-    # Activation is via plugins.enabled (opt-in through `hermes plugins enable
-    # observability/langfuse` or `hermes tools → Langfuse`); credentials gate
+    # Activation is via plugins.enabled (opt-in through `auraforge plugins enable
+    # observability/langfuse` or `auraforge tools → Langfuse`); credentials gate
     # the plugin at runtime.
     "HERMES_LANGFUSE_ENV",
     "HERMES_LANGFUSE_RELEASE",
@@ -432,7 +432,7 @@ def is_managed() -> bool:
     """Check if Aura Forge is running in package-manager-managed mode.
 
     Two signals: the HERMES_MANAGED env var (set by the systemd service),
-    or a .managed marker file in HERMES_HOME (set by the NixOS activation
+    or a .managed marker file in AURA_FORGE_HOME (set by the NixOS activation
     script, so interactive shells also see it).
     """
     return get_managed_system() is not None
@@ -460,7 +460,7 @@ def _install_method_project_root(project_root: Optional[Path] = None) -> Path:
 
     This is the parent of ``hermes_cli/`` — i.e. the git checkout for source
     installs, ``/opt/hermes`` inside the published image. It is a property of
-    the running interpreter, NOT of ``$HERMES_HOME``, which is why a
+    the running interpreter, NOT of ``$AURA_FORGE_HOME``, which is why a
     code-scoped stamp here is immune to two installs sharing one data
     directory.
     """
@@ -476,7 +476,7 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     Resolution order:
     1. Code-scoped stamp ``<install tree>/.install_method`` (next to the
        running code) — the authoritative marker.
-    2. Legacy home-scoped stamp ``$HERMES_HOME/.install_method`` — read for
+    2. Legacy home-scoped stamp ``$AURA_FORGE_HOME/.install_method`` — read for
        backward compatibility, but a ``docker`` value is IGNORED when we are
        not actually running inside a container (see below).
     3. HERMES_MANAGED env / .managed marker (NixOS managed mode)
@@ -487,13 +487,13 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     Why the stamp is code-scoped, not home-scoped (issue: shared ``~/.hermes``)
     --------------------------------------------------------------------------
     The install method describes *the binary that is running*, but
-    ``$HERMES_HOME`` is a shared DATA directory — the Docker docs deliberately
+    ``$AURA_FORGE_HOME`` is a shared DATA directory — the Docker docs deliberately
     bind-mount it (``~/.hermes:/opt/data``) so config/sessions/memory persist
     and can be shared with a host-side Desktop/CLI install. When a
-    containerised gateway and a host install share one ``$HERMES_HOME``, a
+    containerised gateway and a host install share one ``$AURA_FORGE_HOME``, a
     home-scoped stamp is a single slot describing two different installs:
     the container stamps ``docker`` on every boot, the host install then reads
-    ``docker`` and ``hermes update`` refuses to run ("doesn't apply inside the
+    ``docker`` and ``auraforge update`` refuses to run ("doesn't apply inside the
     Docker container") even though the host binary is a perfectly updatable
     git/pip install. Scoping the stamp to the install tree gives each install
     its own truthful marker.
@@ -508,7 +508,7 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     The supported installs self-identify via the code-scoped stamp:
       - the curl installer (scripts/install.sh, the README/website install
         command) git-clones the repo and stamps ``git`` next to the code;
-      - the published ``nousresearch/hermes-agent`` image bakes a ``docker``
+      - the published ``nousresearch/aura-forge-agent`` image bakes a ``docker``
         stamp into ``/opt/hermes`` at build time.
     An unsupported manual install dropped into a container (no stamp) falls
     through to the ``.git`` checks and behaves like any off-path install.
@@ -524,7 +524,7 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     # home-manager install gives "unknown".
     supported_methods = {"apt", "docker", "nix", "nixos", "home-manager", "git", "unknown"}
 
-    # 1. Code-scoped stamp — authoritative, immune to shared $HERMES_HOME.
+    # 1. Code-scoped stamp — authoritative, immune to shared $AURA_FORGE_HOME.
     try:
         method = (root / ".install_method").read_text(encoding="utf-8").strip().lower()
         if method in supported_methods:
@@ -534,8 +534,8 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
 
     # 2. Legacy home-scoped stamp — back-compat. Ignore a ``docker`` value
     #    when we are not actually containerised: that is the signature of a
-    #    host install whose shared $HERMES_HOME was stamped by a co-located
-    #    container, and honouring it wrongly blocks ``hermes update``.
+    #    host install whose shared $AURA_FORGE_HOME was stamped by a co-located
+    #    container, and honouring it wrongly blocks ``auraforge update``.
     try:
         method = (
             (get_hermes_home() / ".install_method")
@@ -593,7 +593,7 @@ def stamp_install_method(method: str, project_root: Optional[Path] = None) -> No
     """Write the install method next to the running code (code-scoped stamp).
 
     The stamp lives in the install tree (``<install tree>/.install_method``),
-    not in ``$HERMES_HOME``, so that two installs sharing one data directory
+    not in ``$AURA_FORGE_HOME``, so that two installs sharing one data directory
     do not overwrite each other's marker. See ``detect_install_method`` for
     the full rationale.
 
@@ -625,11 +625,11 @@ def recommended_update_command_for_method(method: str) -> str:
     if is_nix_install_method(method):
         return _NIX_UPDATE_MSG
     if method == "docker":
-        return "docker pull nousresearch/hermes-agent:latest"
+        return "docker pull nousresearch/aura-forge-agent:latest"
     if method == "apt":
         # By contract, the current "apt" install method is the Termux APT
         # distribution. It deliberately uses Termux's `pkg` frontend.
-        return "pkg upgrade hermes-agent"
+        return "pkg upgrade aura-forge-agent"
     return "hermes update"
 
 
@@ -645,7 +645,7 @@ def recommended_update_command() -> str:
     return recommended_update_command_for_method(method)
 
 
-# Long-form text for ``hermes update`` / ``--check`` when running inside the
+# Long-form text for ``auraforge update`` / ``--check`` when running inside the
 # Docker image.  Surfaced by ``cmd_update`` and ``_cmd_update_check`` in
 # hermes_cli/main.py; lives here so the wording stays consistent and we
 # don't grow two slightly-different copies.
@@ -661,26 +661,26 @@ def recommended_update_command() -> str:
 #     helper spells that out, with notes on tag pinning and config
 #     persistence so users don't get blindsided.
 _DOCKER_UPDATE_MESSAGE = """\
-✗ ``hermes update`` doesn't apply inside the Docker container.
+✗ ``auraforge update`` doesn't apply inside the Docker container.
 
-Aura Forge Agent runs as a published image (nousresearch/hermes-agent), not a
+Aura Forge Agent runs as a published image (nousresearch/aura-forge-agent), not a
 git checkout — the container has no working tree to pull into.  Update by
 pulling a fresh image and restarting your container instead:
 
-  docker pull nousresearch/hermes-agent:latest
+  docker pull nousresearch/aura-forge-agent:latest
   # then restart whatever started the container, e.g.:
-  docker compose up -d --force-recreate hermes-agent
+  docker compose up -d --force-recreate aura-forge-agent
   # or, for ad-hoc runs, exit the current container and `docker run` again
 
 Verify the new version after restart:
-  docker run --rm nousresearch/hermes-agent:latest --version
+  docker run --rm nousresearch/aura-forge-agent:latest --version
 
 Notes:
   • If you pinned a specific tag (e.g. ``:v0.14.0``) the ``:latest`` tag
     won't move your container — pull the newer tag you actually want, or
     switch to ``:latest`` / ``:main`` for rolling updates.  See available
-    tags at https://hub.docker.com/r/nousresearch/hermes-agent/tags
-  • Your config and session history live under ``$HERMES_HOME`` (``/opt/data``
+    tags at https://hub.docker.com/r/nousresearch/aura-forge-agent/tags
+  • Your config and session history live under ``$AURA_FORGE_HOME`` (``/opt/data``
     in the container, typically bind-mounted from the host) and persist
     across image upgrades — re-pulling doesn't lose any state.
   • Running a fork?  Build your own image with this repo's ``Dockerfile``
@@ -688,7 +688,7 @@ Notes:
 
 
 def format_docker_update_message() -> str:
-    """Return the user-facing message for ``hermes update`` inside Docker.
+    """Return the user-facing message for ``auraforge update`` inside Docker.
 
     Centralised so ``cmd_update`` (the apply path) and ``_cmd_update_check``
     (the dry-run path) share the same wording.  See ``_DOCKER_UPDATE_MESSAGE``
@@ -715,7 +715,7 @@ def managed_error(action: str = "modify configuration"):
 # =============================================================================
 
 def get_container_exec_info() -> Optional[dict]:
-    """Read container mode metadata from HERMES_HOME/.container-mode.
+    """Read container mode metadata from AURA_FORGE_HOME/.container-mode.
 
     Returns a dict with keys: backend, container_name, exec_user, hermes_bin
     or None if container mode is not active, we're already inside the
@@ -747,7 +747,7 @@ def get_container_exec_info() -> Optional[dict]:
     # All other exceptions (PermissionError, malformed data, etc.) propagate
 
     backend = info.get("backend", "docker")
-    container_name = info.get("container_name", "hermes-agent")
+    container_name = info.get("container_name", "aura-forge-agent")
     exec_user = info.get("exec_user", "hermes")
     hermes_bin = info.get("hermes_bin", "/data/current-package/bin/hermes")
 
@@ -784,7 +784,7 @@ def _resolve_hermes_uid_gid() -> tuple[Optional[int], Optional[int]]:
 
     Docker containers running Aura Forge commonly set these to map the in-container
     user to a host user so volume-mounted state files end up with the right
-    ownership. The entrypoint chowns the top-level HERMES_HOME once, but
+    ownership. The entrypoint chowns the top-level AURA_FORGE_HOME once, but
     subdirectories created at runtime by ``ensure_hermes_home()`` (especially
     for profile namespaces under ``profiles/<name>/``) need the same chown
     or they land as ``root:root`` and block subsequent uid-mapped workers
@@ -845,9 +845,9 @@ def _secure_dir(path):
     permissions (0750) so interactive users in the hermes group can
     share state with the gateway service.
 
-    The mode can be overridden via the HERMES_HOME_MODE environment variable
-    (e.g. HERMES_HOME_MODE=0701) for deployments where a web server (nginx,
-    caddy, etc.) needs to traverse HERMES_HOME to reach a served subdirectory.
+    The mode can be overridden via the AURA_FORGE_HOME_MODE environment variable
+    (e.g. AURA_FORGE_HOME_MODE=0701) for deployments where a web server (nginx,
+    caddy, etc.) needs to traverse AURA_FORGE_HOME to reach a served subdirectory.
     The execute-only bit on a directory permits cd-through without exposing
     directory listings.
 
@@ -859,7 +859,7 @@ def _secure_dir(path):
     if is_managed():
         return
     try:
-        mode_str = os.environ.get("HERMES_HOME_MODE", "").strip()
+        mode_str = os.environ.get("AURA_FORGE_HOME_MODE", "").strip()
         mode = int(mode_str, 8) if mode_str else 0o700
     except ValueError:
         mode = 0o700
@@ -914,7 +914,7 @@ def _secure_file(path):
 
 
 def _ensure_default_soul_md(home: Path) -> None:
-    """Seed a default SOUL.md into HERMES_HOME, upgrading legacy empty templates.
+    """Seed a default SOUL.md into AURA_FORGE_HOME, upgrading legacy empty templates.
 
     First run: write DEFAULT_SOUL_MD. Existing installs whose SOUL.md is still
     the old comment-only scaffold (seeded by older install.sh / install.ps1 /
@@ -937,7 +937,7 @@ def _ensure_default_soul_md(home: Path) -> None:
 # Home paths whose directory skeleton has been created this process — see
 # ensure_hermes_home(). Only successful passes are recorded, so a raised
 # managed-mode/missing-profile error keeps re-checking on later loads.
-_HERMES_HOME_ENSURED: set = set()
+_AURA_FORGE_HOME_ENSURED: set = set()
 
 
 def ensure_hermes_home():
@@ -950,7 +950,7 @@ def ensure_hermes_home():
     Memoized per home path: this runs on EVERY ``load_config()`` (inside the
     config lock), and the ~14 mkdir/chmod syscalls per call made repeated
     config loads the dominant cost of hot read paths like ``model.options``.
-    After the first successful pass for a given ``HERMES_HOME`` we only re-run
+    After the first successful pass for a given ``AURA_FORGE_HOME`` we only re-run
     the full walk if the home directory itself has vanished (a deleted home is
     recreated on the next load, as before). Profile switches change
     ``get_hermes_home()`` and therefore re-run for the new path.
@@ -958,12 +958,12 @@ def ensure_hermes_home():
     home = get_hermes_home()
     key = str(home)
 
-    # Named profiles must be created explicitly (e.g. ``hermes profile create``).
+    # Named profiles must be created explicitly (e.g. ``auraforge profile create``).
     # Check tombstones before the memo so a stale empty shell cannot skip
     # the deleted-profile guard.
     from hermes_constants import assert_named_profile_home_live
     assert_named_profile_home_live(home)
-    if key in _HERMES_HOME_ENSURED and home.is_dir():
+    if key in _AURA_FORGE_HOME_ENSURED and home.is_dir():
         return
     if is_managed():
         old_umask = os.umask(0o007)
@@ -983,14 +983,14 @@ def ensure_hermes_home():
             _secure_dir(d)
         _ensure_default_soul_md(home)
 
-    _HERMES_HOME_ENSURED.add(key)
+    _AURA_FORGE_HOME_ENSURED.add(key)
 
 
 def _ensure_hermes_home_managed(home: Path):
     """Managed-mode variant: verify dirs exist (activation creates them), seed SOUL.md."""
     if not home.is_dir():
         raise RuntimeError(
-            f"HERMES_HOME {home} does not exist."
+            f"AURA_FORGE_HOME {home} does not exist."
         )
     for subdir in ("cron", "sessions", "logs", "memories"):
         d = home / subdir
@@ -1218,7 +1218,7 @@ def _unset_nested(config, dotted_key: str) -> bool:
 
 
 def _is_env_config_key(key: str) -> bool:
-    """Return whether `hermes config set` routes this key to .env."""
+    """Return whether `auraforge config set` routes this key to .env."""
     if "." in key:
         return False
     key_upper = key.upper()
@@ -1298,7 +1298,7 @@ def get_missing_skill_config_vars() -> List[Dict[str, Any]]:
         all_vars = discover_all_skill_config_vars()
     except Exception as e:
         # A malformed SKILL.md, unreadable external skill dir, or similar
-        # should never break `hermes update`.  Skill-config prompting is a
+        # should never break `auraforge update`.  Skill-config prompting is a
         # post-migration nicety, not a blocker.
         import logging
         logging.getLogger(__name__).debug(
@@ -2138,7 +2138,7 @@ def validate_config_structure(config: Optional[Dict[str, Any]] = None) -> List["
         try:
             config = load_config()
         except Exception:
-            return [ConfigIssue("error", "Could not load config.yaml", "Run 'hermes setup' to create a valid config")]
+            return [ConfigIssue("error", "Could not load config.yaml", "Run 'auraforge setup' to create a valid config")]
 
     issues: List[ConfigIssue] = []
 
@@ -2307,7 +2307,7 @@ def print_config_warnings(config: Optional[Dict[str, Any]] = None) -> None:
     for ci in issues:
         marker = "\033[31m✗\033[0m" if ci.severity == "error" else "\033[33m⚠\033[0m"
         lines.append(f"  {marker} {ci.message}")
-    lines.append("  \033[2mRun 'hermes doctor' for fix suggestions.\033[0m")
+    lines.append("  \033[2mRun 'auraforge doctor' for fix suggestions.\033[0m")
     sys.stderr.write("\n".join(lines) + "\n\n")
 
 
@@ -2436,7 +2436,7 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
         results["warnings"].append(msg)
         # stderr so it is visible even on quiet startup paths, matching the
         # corrupt-config warning posture in _warn_config_parse_failure().
-        sys.stderr.write(f"⚠ hermes config: {msg}\n")
+        sys.stderr.write(f"⚠ auraforge config: {msg}\n")
         if not quiet:
             print(f"  ⚠ {msg}")
     else:
@@ -2581,7 +2581,7 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
                         print(f"  ✓ Saved {name}")
                     print()
             else:
-                print("  Set later with: hermes config set <key> <value>")
+                print("  Set later with: auraforge config set <key> <value>")
     
     # Check for missing config fields.
     #
@@ -2589,7 +2589,7 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
     # DEFAULT_CONFIG at read time, so a missing key already takes effect with
     # its default (see _persist_migration's invariant). We surface the list for
     # the informational "N new config option(s) available" display in
-    # `hermes update`, but only the version bump is persisted.
+    # `auraforge update`, but only the version bump is persisted.
     missing_config = get_missing_config_fields()
     if missing_config:
         results["config_added"].extend(field["key"] for field in missing_config)
@@ -2640,7 +2640,7 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
                 print()
             _persist_migration(config)
         else:
-            print("  Set later with: hermes config set <key> <value>")
+            print("  Set later with: auraforge config set <key> <value>")
 
     return results
 
@@ -2743,7 +2743,7 @@ def _env_expand_match(m: re.Match) -> str:
         if val is not None:
             return val
         logger.warning(
-            "Config ref %r: %s is not set (check ~/.hermes/.env); "
+            "Config ref %r: %s is not set (check ~/.aura-forge/.env); "
             "keeping the literal placeholder", raw, name,
         )
         return raw
@@ -3007,7 +3007,7 @@ def _normalize_root_model_keys(config: Dict[str, Any]) -> Dict[str, Any]:
     confusion on subsequent loads.
 
     Also aliases ``api_base`` → ``base_url`` (issue #8919). ``api_base`` is the
-    intuitive name OpenAI-SDK / LiteLLM users reach for, and ``hermes config set``
+    intuitive name OpenAI-SDK / LiteLLM users reach for, and ``auraforge config set``
     blindly accepts any dotted key — so ``model.api_base`` got written, confirmed,
     and then silently ignored by the runtime resolver (which reads only
     ``model.base_url``), causing requests to fall back to OpenRouter. We migrate
@@ -3020,7 +3020,7 @@ def _normalize_root_model_keys(config: Dict[str, Any]) -> Dict[str, Any]:
     but ``model.name`` was not, so a custom-provider config like
     ``model: {name: <id>, provider: <custom>}`` resolved to an empty model and
     the API request went out with ``model=`` (HTTP 400 from OpenAI-compatible
-    backends) — while display paths (``hermes status``/``dump``) read ``name``
+    backends) — while display paths (``auraforge status``/``dump``) read ``name``
     and *showed* the model, making the failure silent. Normalizing here (the
     single load/save chokepoint) means every reader, present and future, sees a
     populated ``default`` and the stale alias is migrated out of config.yaml on
@@ -3325,7 +3325,7 @@ def resolve_ephemeral_system_prompt_from_config(cfg: Optional[Dict[str, Any]]) -
 
 
 def read_raw_config() -> Dict[str, Any]:
-    """Read ~/.hermes/config.yaml as-is, without merging defaults or migrating.
+    """Read ~/.aura-forge/config.yaml as-is, without merging defaults or migrating.
 
     Returns the raw YAML dict, or ``{}`` if the file doesn't exist or can't
     be parsed.  Use this for lightweight config reads where you just need a
@@ -3568,13 +3568,13 @@ def atomic_config_write(config_path: Path, data: Any, **kwargs: Any) -> None:
 
 
 def load_config() -> Dict[str, Any]:
-    """Load configuration from ~/.hermes/config.yaml.
+    """Load configuration from ~/.aura-forge/config.yaml.
 
     Cached on the config file's (mtime_ns, size). Returns a deepcopy of
     the cached value when unchanged, since most call sites mutate the
     result (e.g. ``cfg["model"]["default"] = ...`` before ``save_config``).
     The cache is keyed on ``str(config_path)`` so profile switches
-    (which change ``HERMES_HOME`` and therefore ``get_config_path()``)
+    (which change ``AURA_FORGE_HOME`` and therefore ``get_config_path()``)
     don't collide.
 
     Read-only callers should use ``load_config_readonly()`` to skip the
@@ -3964,8 +3964,8 @@ _FALLBACK_COMMENT = """
 #
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
-#   openai-codex (OAuth — hermes auth) — OpenAI Codex
-#   nous         (OAuth — hermes auth) — Nous Portal
+#   openai-codex (OAuth — auraforge auth) — OpenAI Codex
+#   nous         (OAuth — auraforge auth) — Nous Portal
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
@@ -3996,8 +3996,8 @@ _COMMENTED_SECTIONS = """
 #
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
-#   openai-codex (OAuth — hermes auth) — OpenAI Codex
-#   nous         (OAuth — hermes auth) — Nous Portal
+#   openai-codex (OAuth — auraforge auth) — OpenAI Codex
+#   nous         (OAuth — auraforge auth) — Nous Portal
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
@@ -4020,7 +4020,7 @@ def save_config(
     preserve_keys: Optional[Set[Tuple[str, ...]]] = None,
     merge_existing: bool = False,
 ):
-    """Save configuration to ~/.hermes/config.yaml.\n
+    """Save configuration to ~/.aura-forge/config.yaml.\n
 
     Default values from ``DEFAULT_CONFIG`` are not written to disk unless
     the user explicitly set them (i.e. the path exists in the raw config
@@ -4153,16 +4153,16 @@ def _parse_env_value(raw_value: str) -> str:
 
 
 def load_env() -> Dict[str, str]:
-    """Load environment variables from ~/.hermes/.env.
+    """Load environment variables from ~/.aura-forge/.env.
 
     Normalizes line endings before parsing while treating each assignment's
     value as opaque data for boundary discovery.
 
     The parsed dict is memoised keyed on the .env file mtime, because
     ``get_env_value()`` is called dozens-to-hundreds of times per
-    interactive menu render (`hermes tools`, `hermes setup`, status
+    interactive menu render (`auraforge tools`, `auraforge setup`, status
     panels). Sanitisation is O(lines), so re-parsing the
-    same file on every call was burning ~300ms of CPU per `hermes tools`
+    same file on every call was burning ~300ms of CPU per `auraforge tools`
     menu paint on top of the OAuth-refresh slowness. The mtime check
     invalidates the cache when the user edits .env mid-process.
     """
@@ -4254,7 +4254,7 @@ def _sanitize_env_lines(lines: list) -> list:
 
 
 def sanitize_env_file() -> int:
-    """Read, sanitize, and rewrite ~/.hermes/.env in place.
+    """Read, sanitize, and rewrite ~/.aura-forge/.env in place.
 
     Returns the number of lines whose safe formatting was normalized. Returns
     0 when no changes are needed.
@@ -4385,7 +4385,7 @@ def _env_line_defines_key(
 
 
 def save_env_value(key: str, value: str):
-    """Save or update a value in ~/.hermes/.env."""
+    """Save or update a value in ~/.aura-forge/.env."""
     if is_managed():
         managed_error(f"set {key}")
         return
@@ -4496,7 +4496,7 @@ def custom_endpoint_key_env(identity: str) -> str:
 
 
 def remove_env_value(key: str) -> bool:
-    """Remove a key from ~/.hermes/.env and os.environ.
+    """Remove a key from ~/.aura-forge/.env and os.environ.
 
     Returns True if the key was found and removed, False otherwise.
     """
@@ -4605,7 +4605,7 @@ def save_env_value_secure(key: str, value: str) -> Dict[str, Any]:
 
 
 def reload_env() -> int:
-    """Re-read ~/.hermes/.env into os.environ. Returns count of vars updated.
+    """Re-read ~/.aura-forge/.env into os.environ. Returns count of vars updated.
 
     Adds/updates vars that changed and removes vars that were deleted from
     the .env file (but only vars known to Aura Forge — OPTIONAL_ENV_VARS and
@@ -4627,7 +4627,7 @@ def reload_env() -> int:
 
 
 def get_env_value(key: str) -> Optional[str]:
-    """Get a value from ``os.environ`` or ``~/.hermes/.env``, scope-aware.
+    """Get a value from ``os.environ`` or ``~/.aura-forge/.env``, scope-aware.
 
     The ``os.environ`` read routes through ``agent.secret_scope.get_secret``
     so that, under an active profile scope (multiplexed gateway turn), this
@@ -4664,7 +4664,7 @@ def get_env_value(key: str) -> Optional[str]:
 
 
 def get_env_value_prefer_dotenv(key: str) -> Optional[str]:
-    """Resolve a credential env value, preferring ``~/.hermes/.env`` over ``os.environ``.
+    """Resolve a credential env value, preferring ``~/.aura-forge/.env`` over ``os.environ``.
 
     Used for Hermes-managed credentials where a deliberate edit to ``.env``
     must take precedence over a stale value inherited from the parent shell
@@ -4844,7 +4844,7 @@ def show_config():
         if _env_ghost is not None and str(_env_ghost).strip() != str(_cfg_max_turns).strip():
             print(color(
                 f"                ⚠ .env has stale HERMES_MAX_ITERATIONS={_env_ghost} "
-                f"(run 'hermes doctor --fix' to remove)",
+                f"(run 'auraforge doctor --fix' to remove)",
                 Colors.YELLOW,
             ))
     except Exception:
@@ -4982,9 +4982,9 @@ def show_config():
 
     print()
     print(color("─" * 60, Colors.DIM))
-    print(color("  hermes config edit     # Edit config file", Colors.DIM))
-    print(color("  hermes config set <key> <value>", Colors.DIM))
-    print(color("  hermes setup           # Run setup wizard", Colors.DIM))
+    print(color("  auraforge config edit     # Edit config file", Colors.DIM))
+    print(color("  auraforge config set <key> <value>", Colors.DIM))
+    print(color("  auraforge setup           # Run setup wizard", Colors.DIM))
     print()
 
 
@@ -5296,8 +5296,8 @@ def warn_unpinned_cron_jobs_after_model_config_change(
         f"⚠️  {affected} enabled unpinned cron {noun} {verb} stored "
         f"{snapshot_field} values that differ from the new global {axis}. "
         "They will fail closed on their next run instead of silently using the "
-        "changed model/provider. Inspect with `hermes cron list`, then pin the "
-        "intended values with `hermes cron edit <job_id> --provider <provider> "
+        "changed model/provider. Inspect with `auraforge cron list`, then pin the "
+        "intended values with `auraforge cron edit <job_id> --provider <provider> "
         "--model <model>`."
     )
 
@@ -5351,7 +5351,7 @@ _SCHEMA_DEFINED_DICT_KEYS = frozenset({
     # Plugin settings — enable/disable lists plus index_url override
     # (hermes_cli/plugins_cmd.py, hermes_cli/plugin_index.py). Absent from
     # DEFAULT_CONFIG (written only when used), so listed here for
-    # `hermes config set plugins.index_url ...` validation.
+    # `auraforge config set plugins.index_url ...` validation.
     "plugins",
 })
 
@@ -5376,7 +5376,7 @@ def _known_top_level_keys() -> set[str]:
 
     Combines :data:`DEFAULT_CONFIG` with the dynamic categories that
     accept user-supplied child keys.  Used by :func:`_validate_config_key`
-    to decide whether a ``hermes config set`` invocation is targeting a
+    to decide whether a ``auraforge config set`` invocation is targeting a
     known shape.
     """
     keys = set(DEFAULT_CONFIG.keys())
@@ -5388,7 +5388,7 @@ def _known_top_level_keys() -> set[str]:
 
 def _suggest_closest_key(key: str, candidates: set[str], cutoff: float = 0.6) -> Optional[str]:
     """Return the closest valid key name from ``candidates`` if any are
-    similar enough to ``key``, else None.  Used by ``hermes config set``
+    similar enough to ``key``, else None.  Used by ``auraforge config set``
     to point users at the right path when they've typo'd a top-level key.
 
     Uses :func:`difflib.get_close_matches` with a conservative cutoff so
@@ -5579,7 +5579,7 @@ def set_config_value(key: str, value: str, force: bool = False):
             scalar (e.g. ``--force model gpt-x`` replaces the whole ``model:``
             mapping). Without --force, scalar writes over mapping sections are
             refused (bare ``model`` is redirected to ``model.default``). The
-            CLI exposes this via ``hermes config set --force``.
+            CLI exposes this via ``auraforge config set --force``.
     """
     if is_managed():
         managed_error("set configuration values")
@@ -5673,9 +5673,9 @@ def set_config_value(key: str, value: str, force: bool = False):
             coerced_value = _coerce_float(_stripped)
         elif _looks_structured_value(value):
             # List/mapping literals -- e.g.
-            #   hermes config set platform_toolsets.line '["file","web"]'
+            #   auraforge config set platform_toolsets.line '["file","web"]'
             # or a multi-line YAML block:
-            #   hermes config set custom_providers '- name: foo
+            #   auraforge config set custom_providers '- name: foo
             #     base_url: https://...'
             # Without this, such values were stored as a raw STRING, and every
             # reader that gates on isinstance(..., list) (``_get_platform_tools``,
@@ -5706,7 +5706,7 @@ def set_config_value(key: str, value: str, force: bool = False):
 
     value = coerced_value
     # Normalize a scalar ``model`` key before writing sub-keys so that
-    # ``hermes config set model.provider openai`` doesn't silently
+    # ``auraforge config set model.provider openai`` doesn't silently
     # destroy the model id when ``model`` is a bare string shorthand
     # (e.g. ``model: gpt-4o``).  Without this _set_nested replaces the
     # scalar with an empty dict, dropping the model id permanently.
@@ -5717,7 +5717,7 @@ def set_config_value(key: str, value: str, force: bool = False):
             user_config["model"] = {"default": _model_val}
     # Guard against #74995: a single-segment key that names an existing
     # mapping would silently overwrite the entire section with a scalar
-    # (e.g. ``hermes config set model gpt-5.6-sol`` when model already
+    # (e.g. ``auraforge config set model gpt-5.6-sol`` when model already
     # contains default/provider/context_length).  Bare ``model`` is a
     # documented shorthand — redirect to ``model.default`` and preserve
     # siblings.  All other mapping sections are rejected unless --force.
@@ -5760,7 +5760,7 @@ def set_config_value(key: str, value: str, force: bool = False):
                     file=sys.stderr,
                 )
                 print(
-                    f"    hermes config set {key}.<sub-key> <value>",
+                    f"    auraforge config set {key}.<sub-key> <value>",
                     file=sys.stderr,
                 )
                 print(
@@ -5768,13 +5768,13 @@ def set_config_value(key: str, value: str, force: bool = False):
                     file=sys.stderr,
                 )
                 print(
-                    f"    hermes config set --force {key} {value!r}",
+                    f"    auraforge config set --force {key} {value!r}",
                     file=sys.stderr,
                 )
                 sys.exit(1)
     _set_nested(user_config, key, value)
     # Normalize the api_base → base_url alias at set-time too (issue #8919),
-    # so a fresh `hermes config set model.api_base ...` lands on the canonical
+    # so a fresh `auraforge config set model.api_base ...` lands on the canonical
     # key the runtime resolver actually reads, instead of being silently
     # ignored. Mirrors the load-time migration in _normalize_root_model_keys.
     _alias_norm = key.strip().lower()
@@ -5807,7 +5807,7 @@ def set_config_value(key: str, value: str, force: bool = False):
             pass  # best-effort: the config write above already succeeded
 
     # Mask the echoed value when the (possibly nested) key is credential-shaped
-    # — e.g. `hermes config set model.api_key cfut_...` routes to config.yaml
+    # — e.g. `auraforge config set model.api_key cfut_...` routes to config.yaml
     # (lowercase, so it misses the .env api_keys list above) and would otherwise
     # print the raw secret to the terminal.
     _leaf_key = key.rsplit(".", 1)[-1].lower()
@@ -5873,7 +5873,7 @@ def unset_config_value(key: str):
 
     if _is_env_config_key(key):
         # Unified lifecycle: prune env-seeded credential_pool entries and
-        # model-cache rows too, so `hermes config unset <KEY>` fully removes
+        # model-cache rows too, so `auraforge config unset <KEY>` fully removes
         # the provider instead of leaving it resurrectable (#51071 family).
         from hermes_cli.credential_lifecycle import remove_provider_env_credential
 
@@ -5922,12 +5922,12 @@ def config_command(args):
     elif subcmd == "get":
         key = getattr(args, 'key', None)
         if not key:
-            print("Usage: hermes config get <key> [--json]")
+            print("Usage: auraforge config get <key> [--json]")
             print()
             print("Examples:")
-            print("  hermes config get model")
-            print("  hermes config get terminal.backend")
-            print("  hermes config get skills.config --json")
+            print("  auraforge config get model")
+            print("  auraforge config get terminal.backend")
+            print("  auraforge config get skills.config --json")
             sys.exit(1)
         get_config_value(key, as_json=getattr(args, 'json', False))
 
@@ -5936,12 +5936,12 @@ def config_command(args):
         value = getattr(args, 'value', None)
         force = bool(getattr(args, 'force', False))
         if not key or value is None:
-            print("Usage: hermes config set [--force] <key> <value>")
+            print("Usage: auraforge config set [--force] <key> <value>")
             print()
             print("Examples:")
-            print("  hermes config set model anthropic/claude-sonnet-4")
-            print("  hermes config set terminal.backend docker")
-            print("  hermes config set OPENROUTER_API_KEY sk-or-...")
+            print("  auraforge config set model anthropic/claude-sonnet-4")
+            print("  auraforge config set terminal.backend docker")
+            print("  auraforge config set OPENROUTER_API_KEY sk-or-...")
             print()
             print("  --force: skip the unknown-key notice for unrecognized keys,")
             print("           and allow a scalar to replace a whole mapping section")
@@ -5957,12 +5957,12 @@ def config_command(args):
     elif subcmd == "unset":
         key = getattr(args, 'key', None)
         if not key:
-            print("Usage: hermes config unset <key>")
+            print("Usage: auraforge config unset <key>")
             print()
             print("Examples:")
-            print("  hermes config unset model")
-            print("  hermes config unset terminal.backend")
-            print("  hermes config unset OPENROUTER_API_KEY")
+            print("  auraforge config unset model")
+            print("  auraforge config unset terminal.backend")
+            print("  auraforge config unset OPENROUTER_API_KEY")
             sys.exit(1)
         try:
             unset_config_value(key)
@@ -6067,7 +6067,7 @@ def config_command(args):
         if missing_config:
             print()
             print(color(f"  {len(missing_config)} new config option(s) available", Colors.YELLOW))
-            print("    Run 'hermes config migrate' to add them")
+            print("    Run 'auraforge config migrate' to add them")
         
         print()
     
@@ -6075,15 +6075,15 @@ def config_command(args):
         print(f"Unknown config command: {subcmd}")
         print()
         print("Available commands:")
-        print("  hermes config           Show current configuration")
-        print("  hermes config edit      Open config in editor")
-        print("  hermes config get <key>          Print a resolved config value")
-        print("  hermes config set <key> <value>   Set a config value")
-        print("  hermes config unset <key>        Remove a config value")
-        print("  hermes config check     Check for missing/outdated config")
-        print("  hermes config migrate   Update config with new options")
-        print("  hermes config path      Show config file path")
-        print("  hermes config env-path  Show .env file path")
+        print("  auraforge config           Show current configuration")
+        print("  auraforge config edit      Open config in editor")
+        print("  auraforge config get <key>          Print a resolved config value")
+        print("  auraforge config set <key> <value>   Set a config value")
+        print("  auraforge config unset <key>        Remove a config value")
+        print("  auraforge config check     Check for missing/outdated config")
+        print("  auraforge config migrate   Update config with new options")
+        print("  auraforge config path      Show config file path")
+        print("  auraforge config env-path  Show .env file path")
         sys.exit(1)
 
 
@@ -6132,7 +6132,7 @@ _inject_profile_env_vars()
 # ── Platform-plugin env var injection ────────────────────────────────────────
 # Bundled platform plugins under ``plugins/platforms/*/plugin.yaml`` declare
 # their required env vars via ``requires_env``.  This mirror of
-# ``_inject_profile_env_vars`` surfaces them in ``hermes config`` UI so users
+# ``_inject_profile_env_vars`` surfaces them in ``auraforge config`` UI so users
 # can configure Teams / IRC / Google Chat without the core repo ever needing
 # to know they exist.
 #

@@ -1,14 +1,14 @@
 """Install and remove the Linux desktop entry (``hermes.desktop``).
 
-``hermes desktop`` builds and launches the Electron app. On Linux, a
+``auraforge desktop`` builds and launches the Electron app. On Linux, a
 freshly-built app has no launcher presence: no menu item, no icon. This
 module writes the XDG desktop entry that gives it one.
-``hermes uninstall --gui`` removes the entry again.
+``auraforge uninstall --gui`` removes the entry again.
 
 Two values must be absolute for the entry to work:
 
   - ``Exec`` — the launcher runs without shell ``PATH`` customizations, so
-    a bare ``hermes desktop`` fails when hermes lives in ``~/.local/bin``
+    a bare ``auraforge desktop`` fails when hermes lives in ``~/.local/bin``
     or a venv. Resolve the real binary and write its full path.
   - ``Icon`` — an unqualified icon name needs an indexed icon theme. The
     spec allows an absolute path instead, so point at the app icon in the
@@ -58,9 +58,9 @@ def icon_path(project_root: Path) -> Path:
 
 
 def resolve_exec_command() -> str:
-    """Build the absolute ``Exec=`` command line for ``hermes desktop``.
+    """Build the absolute ``Exec=`` command line for ``auraforge desktop``.
 
-    Prefer the real ``hermes`` executable (argv[0] or PATH). When Aura Forge
+    Prefer the real ``auraforge`` executable (argv[0] or PATH). When Aura Forge
     runs as a module with no launcher installed, use the current
     interpreter, also absolute.
     """
@@ -71,7 +71,7 @@ def resolve_exec_command() -> str:
         resolved = Path(bin_path).resolve()
         if _needs_interpreter(resolved):
             # The resolved launcher is a Python script whose shebang points at
-            # a NON-venv interpreter (e.g. the repo's `hermes` script with
+            # a NON-venv interpreter (e.g. the repo's `auraforge` script with
             # `#!/usr/bin/env python3` when argv[0] came from the shell
             # installer's bash wrapper). Launched from the .desktop entry that
             # shebang resolves to the SYSTEM python and dies on the first

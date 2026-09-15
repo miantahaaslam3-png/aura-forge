@@ -6,7 +6,7 @@ author: SHL0MS, Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [ASCII, Video, FFmpeg, Terminal-Art]
     related_skills: []
 ---

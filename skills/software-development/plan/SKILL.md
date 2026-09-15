@@ -1,12 +1,12 @@
 ---
 name: plan
-description: Write a markdown plan to .hermes/plans/; no execution.
+description: Write a markdown plan to .auraforge/plans/; no execution.
 version: 2.0.0
 author: Aura Forge Agent (writing-craft adapted from obra/superpowers)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [planning, plan-mode, implementation, workflow, design, documentation]
     related_skills: [subagent-driven-development, test-driven-development, requesting-code-review]
 ---
@@ -23,7 +23,7 @@ For this turn, you are planning only.
 - Do not edit project files except the plan markdown file.
 - Do not run mutating terminal commands, commit, push, or perform external actions.
 - You may inspect the repo or other context with read-only commands/tools when needed.
-- Your deliverable is a markdown plan saved inside the active workspace under `.hermes/plans/`.
+- Your deliverable is a markdown plan saved inside the active workspace under `.auraforge/plans/`.
 
 ## Output requirements
 
@@ -43,12 +43,12 @@ If the task is code-related, include exact file paths, likely test targets, and 
 ## Save location
 
 Save the plan with `write_file` under:
-- `.hermes/plans/YYYY-MM-DD_HHMMSS-<slug>.md`
+- `.auraforge/plans/YYYY-MM-DD_HHMMSS-<slug>.md`
 
 Treat that as relative to the active working directory / backend workspace. Aura Forge file tools are backend-aware, so using this relative path keeps the plan with the workspace on local, docker, ssh, modal, and daytona backends.
 
 If the runtime provides a specific target path, use that exact path.
-If not, create a sensible timestamped filename yourself under `.hermes/plans/`.
+If not, create a sensible timestamped filename yourself under `.auraforge/plans/`.
 
 ## Interaction style
 

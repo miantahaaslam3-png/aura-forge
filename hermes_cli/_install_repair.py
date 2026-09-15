@@ -55,7 +55,7 @@ def _is_termux_env(env: dict | None = None) -> bool:
 def _stdout_to_stderr():
     """Route fd 1 (and sys.stdout) to stderr for the duration of an install.
 
-    ``hermes acp`` speaks JSON-RPC on stdout; an inherited-fd install child
+    ``auraforge acp`` speaks JSON-RPC on stdout; an inherited-fd install child
     writing there would corrupt the protocol. Mirrors
     ``main.py::_recover_from_interrupted_install``.
     """
@@ -185,23 +185,23 @@ def ensure_windows_bin_launchers(
     windows: bool | None = None,
     user_path_entries: list[str] | None = None,
 ) -> list[str]:
-    """Re-stage the Windows ``hermes`` launchers when they vanish.
+    """Re-stage the Windows ``auraforge`` launchers when they vanish.
 
-    On Windows, ``hermes`` resolves through launchers derived from the venv
+    On Windows, ``auraforge`` resolves through launchers derived from the venv
     console scripts — never ``venv\\Scripts`` itself on PATH, which would
     shadow the user's ``python`` (#83797). The canonical launcher home is
     the managed binary dir — the default Aura Forge root's ``bin``
     (``%LOCALAPPDATA%\\hermes\\bin``, next to the managed uv) — which lives
     OUTSIDE the git checkout so no git operation can ever touch it. It is
     a per-machine dir shared by every profile: ``get_hermes_home()`` would
-    point inside ``profiles\\<name>`` under ``hermes -p``, so the anchor
+    point inside ``profiles\\<name>`` under ``auraforge -p``, so the anchor
     here is :func:`hermes_constants.get_default_hermes_root`.
 
     Earlier installer versions staged them at ``<checkout>\\bin`` instead —
-    inside the git working tree — where ``hermes update``'s pre-update
+    inside the git working tree — where ``auraforge update``'s pre-update
     autostash (``git stash push --include-untracked``) swept them off disk;
     once the desktop updater stopped re-applying stashes (``--keep-stash``)
-    nothing restored them and ``hermes`` stopped resolving in every new
+    nothing restored them and ``auraforge`` stopped resolving in every new
     terminal. That legacy location is re-staged too, during the transition,
     for installs whose user PATH still resolves through it.
 
@@ -238,7 +238,7 @@ def ensure_windows_bin_launchers(
     root = Path(root)
 
     # Per-machine anchor: the DEFAULT Aura Forge root, not get_hermes_home() —
-    # under ``hermes -p <name>`` that returns ``profiles\\<name>``, which
+    # under ``auraforge -p <name>`` that returns ``profiles\\<name>``, which
     # would fail the managed-clone gate below and silently skip the heal
     # for profile users. The launcher dir serves the whole machine.
     from hermes_constants import get_default_hermes_root
@@ -360,9 +360,9 @@ def migrate_windows_bin_path(
     read_user_path=None,
     write_user_path=None,
 ) -> bool:
-    """One-time PATH migration to the ``HERMES_HOME\\bin`` launcher layout.
+    """One-time PATH migration to the ``AURA_FORGE_HOME\\bin`` launcher layout.
 
-    Runs from the ``hermes update`` tail (and mirrors what install.ps1's
+    Runs from the ``auraforge update`` tail (and mirrors what install.ps1's
     Set-PathVariable does on fresh installs/repairs, which never reach
     existing installs — updates don't run install.ps1):
 
@@ -507,7 +507,7 @@ def _quarantine_running_hermes_exe(
         return []
     names = set(_load_console_script_names(scripts_dir.parent.parent)) or {
         "hermes",
-        "hermes-agent",
+        "aura-forge-agent",
         "hermes-acp",
     }
     names.add("hermes-gateway")
@@ -533,7 +533,7 @@ def _restore_quarantined_exes(moved: list[tuple[Path, Path]]) -> None:
     module: one retry ladder and one recovery message for every restore site,
     instead of the near-identical copies that had already drifted (#75584).
     Warnings land on stderr — this module runs in the early-recovery path and
-    ``hermes acp`` speaks JSON-RPC on stdout.
+    ``auraforge acp`` speaks JSON-RPC on stdout.
     """
     _er.restore_quarantined_shims(moved)
 
@@ -565,7 +565,7 @@ def _run_install_cmd(cmd: list[str], *, env: dict | None, root: Path) -> None:
         # Restore runs on success AND failure: a SUCCESSFUL install can still
         # skip the entry-points step entirely (uv audits an already-satisfied
         # editable install as a no-op and rewrites nothing), which would leave
-        # the quarantined shims renamed aside and `hermes` gone from PATH
+        # the quarantined shims renamed aside and `auraforge` gone from PATH
         # (#75584). _restore_quarantined_exes only renames back when the
         # installer did NOT write a fresh shim, so this is safe in both cases.
         if scripts_dir is not None:

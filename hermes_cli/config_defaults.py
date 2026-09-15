@@ -34,8 +34,8 @@ DEFAULT_CONFIG = {
     # pressure. Reopening one re-resumes it from disk. 0/null disables.
     "max_live_sessions": 16,
     "session": {
-        # Per-terminal `hermes -c`: each CLI session drops a breadcrumb file
-        # under $HERMES_HOME/terminal-sessions/<terminal-id>, and a bare
+        # Per-terminal `auraforge -c`: each CLI session drops a breadcrumb file
+        # under $AURA_FORGE_HOME/terminal-sessions/<terminal-id>, and a bare
         # -c/--continue resumes THIS terminal's session (tmux pane, kitty
         # window, wezterm pane, plain tty, ...) instead of the globally
         # most-recent one. Set false to restore the old latest-session
@@ -52,7 +52,7 @@ DEFAULT_CONFIG = {
         # null/absent = feature fully off (zero behavior change). When set,
         # the agent gets a one-time wrap-up notice at 80% elapsed and
         # implicit provider stale timeouts are capped to the remaining
-        # budget. CLI one-shot equivalent: `hermes chat --run-budget N`.
+        # budget. CLI one-shot equivalent: `auraforge chat --run-budget N`.
         "run_budget_seconds": None,
         # Inactivity timeout for gateway agent execution (seconds).
         # The agent can run indefinitely as long as it's actively calling
@@ -112,7 +112,7 @@ DEFAULT_CONFIG = {
         # so the requesting turn is not amputated by restart_drain_timeout.
         # 0 = legacy behaviour (enter stop()/drain immediately). Default
         # 30 min is a safety valve for wedged agents, not a target latency —
-        # an interactive `hermes gateway restart` must never block for hours
+        # an interactive `auraforge gateway restart` must never block for hours
         # on a turn that wedged (#79133). Long unattended turns can raise
         # this in config.yaml.
         "restart_after_turn_timeout": 1800,
@@ -298,7 +298,7 @@ DEFAULT_CONFIG = {
         # Long-lived reconnect-loop escalation (seconds). A platform that has
         # been continuously failing/reconnecting for this long gets
         # needs_attention flagged in gateway runtime status (visible in
-        # `hermes status` / fleet monitoring). Retries never stop — this is a
+        # `auraforge status` / fleet monitoring). Retries never stop — this is a
         # signal, not a circuit breaker. 0 = disable.
         "reconnect_attention_after": 7200,
         # Freshness window for the gateway auto-continue note (seconds).
@@ -385,7 +385,7 @@ DEFAULT_CONFIG = {
         # Root directory for Aura Forge' terminal session temp files (background
         # logs/pid/exit files, code-execution sandboxes, etc.). When empty,
         # Aura Forge uses TMPDIR/TMP/TEMP if set, otherwise a managed dir on real
-        # storage at HERMES_HOME/cache/terminal (auto-pruned after 72h) — NOT
+        # storage at AURA_FORGE_HOME/cache/terminal (auto-pruned after 72h) — NOT
         # tmpfs /tmp, which is RAM-capped and small on many distros (e.g.
         # Arch-based setups) and fills up under load. Set this to redirect
         # session temp anywhere else; must be an absolute POSIX path that
@@ -411,7 +411,7 @@ DEFAULT_CONFIG = {
         # still running. The dying parent owns those children's stdout pipes,
         # so exiting immediately kills the delivery a few seconds later —
         # destroying Bot Mode handoff replies dispatched via message_agent /
-        # bot_relay from a short-lived `hermes -p <bot> chat -Q` recipient
+        # bot_relay from a short-lived `auraforge -p <bot> chat -Q` recipient
         # (#90879). The parent instead waits (up to this bound) for tracked
         # notify_on_complete processes to finish before exiting. Plain
         # background processes without notify_on_complete (servers, daemons)
@@ -423,9 +423,9 @@ DEFAULT_CONFIG = {
         "env_passthrough": [],
         # HOME handling for host tool subprocesses:
         #   auto    — host keeps the real OS-user HOME; containers use
-        #             HERMES_HOME/home for persistent state (default)
+        #             AURA_FORGE_HOME/home for persistent state (default)
         #   real    — force the real OS-user HOME
-        #   profile — force HERMES_HOME/home when it exists (old strict
+        #   profile — force AURA_FORGE_HOME/home when it exists (old strict
         #             per-profile CLI config isolation)
         "home_mode": "auto",
         # Extra files to source in the login shell when building the
@@ -499,7 +499,7 @@ DEFAULT_CONFIG = {
         # are owned by your host user instead of root, which avoids needing
         # `sudo chown` after container runs. Default off to preserve behavior
         # for images whose entrypoints expect to start as root (e.g. the
-        # bundled Aura Forge image, which drops to the `hermes` user via
+        # bundled Aura Forge image, which drops to the `auraforge` user via
         # s6-setuidgid inside each supervised service).
         # When on, SETUID/SETGID caps are omitted from the container since
         # no privilege drop is needed.
@@ -532,7 +532,7 @@ DEFAULT_CONFIG = {
         "keyless_rescue": True,
         # Per-provider tier selection for ring vendors with both a keyless
         # free endpoint and a keyed paid path (exa, parallel, tavily,
-        # firecrawl, keenable). Set by the `hermes tools` picker's
+        # firecrawl, keenable). Set by the `auraforge tools` picker's
         # "Free (keyless)" / "Paid (API key)" rows.
         #   free  — always use the anonymous free endpoint (even with a key)
         #   paid  — always use the keyed path (missing key = error; vendor
@@ -593,7 +593,7 @@ DEFAULT_CONFIG = {
         # the active profile is copied. The snapshot is a non-default dir, so it
         # sidesteps Chrome 136+'s block on debugging the default profile and
         # never contends with the user's running browser. Turning this back off
-        # deletes the snapshot store (~/.hermes/browser-profile/) so copied
+        # deletes the snapshot store (~/.aura-forge/browser-profile/) so copied
         # credentials don't outlive consent. Only Chromium-family default
         # browsers are supported (Chrome, Edge, Brave, Chromium); a non-Chromium
         # default (e.g. Firefox) fails closed with a clear message. Default
@@ -606,7 +606,7 @@ DEFAULT_CONFIG = {
         # fully quit before its profile can be copied), arm the "offer to close
         # it" flow. This does NOT auto-kill: when the profile is locked the
         # snapshot always blocks and the agent asks the user first; only on
-        # approval does it run `hermes browser close-profile` (terminates the
+        # approval does it run `auraforge browser close-profile` (terminates the
         # browser process tree bound to that profile, losing unsaved tabs) and
         # retry. Still locked afterward → stays blocked, no loop, no auto-kill.
         # OFF by default. No effect on macOS/Linux (copy-while-running works).
@@ -657,14 +657,14 @@ DEFAULT_CONFIG = {
     #   - enabled: True -> False   (opt-in; most users never use /rollback)
     #   - max_snapshots: 50 -> 20  (now actually enforced via ref rewrite)
     #   - auto_prune:   False -> True (orphans/stale pruned automatically)
-    # Opt in via ``hermes chat --checkpoints`` or set enabled=True here.
+    # Opt in via ``auraforge chat --checkpoints`` or set enabled=True here.
     "checkpoints": {
         "enabled": False,
         # Max checkpoints to keep per working directory.  Pre-v2 this only
         # limited the `/rollback` listing; v2 actually rewrites the ref and
         # garbage-collects older commits.
         "max_snapshots": 20,
-        # Hard ceiling on total ``~/.hermes/checkpoints/`` size (MB).  When
+        # Hard ceiling on total ``~/.aura-forge/checkpoints/`` size (MB).  When
         # exceeded, the oldest checkpoint per project is dropped in a
         # round-robin pass until total size falls under the cap.
         # 0 disables the size cap.
@@ -687,7 +687,7 @@ DEFAULT_CONFIG = {
         # external volume / network share / VPN is simply not mounted yet —
         # and this sweep runs unattended, so it must never guess. Orphan
         # cleanup is only available via the explicit
-        # ``hermes checkpoints prune`` command (add ``--keep-orphans`` to
+        # ``auraforge checkpoints prune`` command (add ``--keep-orphans`` to
         # skip it), where a human is looking at the output.
         "auto_prune": True,
         "retention_days": 7,
@@ -722,7 +722,7 @@ DEFAULT_CONFIG = {
     # small so a slow/dead server adds little to first-response latency.
     "mcp_discovery_timeout": 1.5,
 
-    # Single-query (``hermes -q/-z "..."``) variant of mcp_discovery_timeout.
+    # Single-query (``auraforge -q/-z "..."``) variant of mcp_discovery_timeout.
     # In one-shot mode there is only ONE turn, so the between-turns late-binding
     # refresh never runs: a server that misses the small interactive bound is
     # invisible to the LLM for the whole session.  This larger bound gives slow
@@ -1232,7 +1232,7 @@ DEFAULT_CONFIG = {
         },
         # Triage specifier — flesh out a rough one-liner in the Kanban
         # Triage column into a concrete spec, then promote it to ``todo``.
-        # Invoked by ``hermes kanban specify`` (single id or --all). Set a
+        # Invoked by ``auraforge kanban specify`` (single id or --all). Set a
         # cheap, capable model here (gemini-flash works well); the main
         # model is overkill for short spec expansion.
         "triage_specifier": {
@@ -1246,7 +1246,7 @@ DEFAULT_CONFIG = {
         },
         # Kanban decomposer — decomposes a triage task into a graph of
         # child tasks routed to specialist profiles by description.
-        # Invoked by ``hermes kanban decompose`` and the kanban
+        # Invoked by ``auraforge kanban decompose`` and the kanban
         # auto-decompose dispatcher tick. Returns a JSON task graph;
         # uses more tokens than the specifier so allow more headroom.
         "kanban_decomposer": {
@@ -1260,7 +1260,7 @@ DEFAULT_CONFIG = {
         },
         # Profile describer — auto-generates a 1-2 sentence description
         # of what a profile is good at. Invoked by
-        # ``hermes profile describe <name> --auto`` and the dashboard's
+        # ``auraforge profile describe <name> --auto`` and the dashboard's
         # auto-generate button. Short, cheap call.
         "profile_describer": {
             "provider": "auto",
@@ -1286,7 +1286,7 @@ DEFAULT_CONFIG = {
         # Curator — skill-usage review fork. Timeout is generous because the
         # review pass can take several minutes on reasoning models (umbrella
         # building over hundreds of candidate skills). "auto" = use main chat
-        # model; override via `hermes model` → auxiliary → Curator to route
+        # model; override via `auraforge model` → auxiliary → Curator to route
         # to a cheaper aux model (e.g. openrouter google/gemini-3-flash-preview).
         "curator": {
             "provider": "auto",
@@ -1397,18 +1397,18 @@ DEFAULT_CONFIG = {
         # Set false to restore the legacy c-j submit fallback on unusual POSIX
         # PTYs whose plain Enter arrives as LF instead of CR.
         "cli_multiline_shortcuts": True,
-        # Which interface bare `hermes` (and `hermes chat`) launches by default:
+        # Which interface bare `auraforge` (and `auraforge chat`) launches by default:
         #   "cli" — the classic prompt_toolkit REPL (default, preserves prior behavior)
         #   "tui" — the modern Ink TUI (same as passing `--tui`)
         # Explicit flags always win over this setting: `--cli` forces the classic
         # REPL and `--tui` (or HERMES_TUI=1) forces the TUI regardless of config.
         "interface": "cli",
-        # When true, `hermes --tui` auto-resumes the most recent human-
+        # When true, `auraforge --tui` auto-resumes the most recent human-
         # facing session on launch instead of forging a fresh one.
-        # Mirrors `hermes -c` muscle memory.  Default off so existing
+        # Mirrors `auraforge -c` muscle memory.  Default off so existing
         # users aren't surprised.  HERMES_TUI_RESUME=<id> always wins.
         "tui_auto_resume_recent": False,
-        # When true (default), `hermes --tui` drops a one-time hint
+        # When true (default), `auraforge --tui` drops a one-time hint
         # ("subagents working · /agents to watch live") the first time a turn
         # starts delegating, nudging the user toward the live spawn-tree
         # dashboard. Set false to suppress the hint.
@@ -1547,7 +1547,7 @@ DEFAULT_CONFIG = {
         "tool_progress_grouping": "accumulate",
         # Optional custom phrases for generic long-running status messages.
         # Built-in defaults live in gateway/assets/status_phrases.yaml. Users
-        # can set `path`/`paths` to HERMES_HOME-relative YAML files/directories
+        # can set `path`/`paths` to AURA_FORGE_HOME-relative YAML files/directories
         # (or rely on conventional status_phrases.yaml / status_phrases/*.yaml).
         # Keys: status, generic. Use
         # mode: "append" (default) to add phrases, or "replace" to fully
@@ -1605,7 +1605,7 @@ DEFAULT_CONFIG = {
         "copy_shortcut": "auto",  # "auto" (platform default) | "ctrl_c" | "ctrl_shift_c" | "disabled"
         # Petdex animated mascot (https://github.com/crafter-station/petdex).
         # A purely cosmetic sprite that reacts to agent activity across the
-        # CLI, TUI, and desktop app. Manage with `hermes pets`. Disabled until
+        # CLI, TUI, and desktop app. Manage with `auraforge pets`. Disabled until
         # a pet is installed + selected (no effect on prompt caching — this is
         # a display concern only).
         "pet": {
@@ -1843,7 +1843,7 @@ DEFAULT_CONFIG = {
             # use, OR an absolute path to a pre-downloaded .onnx file.
             # Full voice list: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/VOICES.md
             "voice": "en_US-lessac-medium",
-            # "voices_dir": "",        # Override voice cache dir; default = ~/.hermes/cache/piper-voices/
+            # "voices_dir": "",        # Override voice cache dir; default = ~/.aura-forge/cache/piper-voices/
             # "use_cuda": False,       # Requires onnxruntime-gpu
             # "length_scale": 1.0,     # 2.0 = twice as slow
             # "noise_scale": 0.667,
@@ -1995,7 +1995,7 @@ DEFAULT_CONFIG = {
     # "compressor" = built-in lossy summarization (default).
     # Set to a plugin name to activate an alternative engine (e.g. "lcm"
     # for Lossless Context Management).  The engine must be installed as
-    # a plugin in plugins/context_engine/<name>/ or ~/.hermes/plugins/.
+    # a plugin in plugins/context_engine/<name>/ or ~/.aura-forge/plugins/.
     "context": {
         "engine": "compressor",
         # Return freed glibc allocator pages after long-running agent/TUI
@@ -2068,7 +2068,7 @@ DEFAULT_CONFIG = {
         # the parent's context window and trigger a compression/429 death
         # spiral. delegate_task sizes each summary against the parent's
         # remaining context headroom (split across the batch); when it must
-        # trim, the full text is spilled to ~/.hermes/cache/delegation/
+        # trim, the full text is spilled to ~/.aura-forge/cache/delegation/
         # (mounted into remote backends) and the in-context summary becomes a
         # head+tail window plus a footer with the exact read_file offset to
         # page the omitted middle — the same convention web_extract uses for
@@ -2195,18 +2195,18 @@ DEFAULT_CONFIG = {
 
     # Skills — external skill directories for sharing skills across tools/agents.
     # Each path is expanded (~, ${VAR}) and resolved.  Read-only — skill creation
-    # always goes to ~/.hermes/skills/.
+    # always goes to ~/.aura-forge/skills/.
     "skills": {
         "external_dirs": [],   # e.g. ["~/.agents/skills", "/shared/team-skills"]
         # Project-local skill discovery: when a session starts inside a git
         # checkout, ``<root>/.hermes/skills/`` and ``<root>/.agents/skills/``
         # are sourced as the highest-precedence skill tier — but ONLY when the
         # project root is listed in trusted_project_dirs below. Trust a repo
-        # with ``hermes skills trust`` (run from inside it). Set to false to
+        # with ``auraforge skills trust`` (run from inside it). Set to false to
         # disable discovery entirely (no scan, no untrusted-skills notice).
         "project_discovery": True,
         # Absolute paths of project roots whose repo-local skills may load.
-        # Managed by ``hermes skills trust`` / ``hermes skills untrust``.
+        # Managed by ``auraforge skills trust`` / ``auraforge skills untrust``.
         "trusted_project_dirs": [],
         # Substitute ${HERMES_SKILL_DIR} and ${HERMES_SESSION_ID} in SKILL.md
         # content with the absolute skill directory and the active session id
@@ -2234,7 +2234,7 @@ DEFAULT_CONFIG = {
         # scanned regardless of this setting.
         "guard_agent_created": False,
         # Advisory NVIDIA SkillEvaluator Tier 1 scan on hub installs
-        # (`hermes skills install`). Runs ALONGSIDE the built-in skills
+        # (`auraforge skills install`). Runs ALONGSIDE the built-in skills
         # guard (which stays the enforcement layer) and only when the
         # optional `skillevaluator` binary is on PATH:
         #   uv tool install --python 3.13 \
@@ -2259,10 +2259,10 @@ DEFAULT_CONFIG = {
         "write_approval": False,
         # Per-mutation audit ledger (tracker #79686 P3). Every skill mutation
         # — curator, agent, or user — appends one JSONL entry to
-        # ~/.hermes/skills/.curator_ledger.jsonl with before/after file
+        # ~/.aura-forge/skills/.curator_ledger.jsonl with before/after file
         # hashes; file contents are stored content-addressed (deduped) under
-        # ~/.hermes/.curator_backups/blobs/. Enables `hermes curator ledger`
-        # and single-mutation `hermes curator rollback <entry-id>`.
+        # ~/.aura-forge/.curator_backups/blobs/. Enables `auraforge curator ledger`
+        # and single-mutation `auraforge curator rollback <entry-id>`.
         # Telemetry, never a gate: ledger failures cannot block a mutation.
         "ledger": True,
     },
@@ -2276,7 +2276,7 @@ DEFAULT_CONFIG = {
     # and patch drift. Runs inactivity-triggered from session start — no
     # cron daemon.
     #
-    # See `hermes curator status` for the last run summary.
+    # See `auraforge curator status` for the last run summary.
     "curator": {
         "enabled": True,
         # How long to wait between curator runs (hours).  Default: 7 days.
@@ -2293,12 +2293,12 @@ DEFAULT_CONFIG = {
         # (mark stale / archive long-unused skills) and skips the forked
         # aux-model review entirely — no umbrella-building, no aux-model cost.
         # Set to true to opt back into merging overlapping skills into
-        # class-level umbrellas. `hermes curator run --consolidate` overrides
+        # class-level umbrellas. `auraforge curator run --consolidate` overrides
         # this for a single invocation.
         "consolidate": False,
         # Also prune (archive) bundled built-in skills after the inactivity
         # period, not just agent-created ones. ON by default. Built-ins are
-        # normally restored on every `hermes update`, so pruning them only
+        # normally restored on every `auraforge update`, so pruning them only
         # sticks because a suppression list tells the re-seeder to leave them
         # archived. Hub-installed skills are NEVER pruned here — they have an
         # external upstream owner. Built-ins accrue usage telemetry and their
@@ -2308,14 +2308,14 @@ DEFAULT_CONFIG = {
         # to keep all bundled built-ins permanently.
         "prune_builtins": True,
         # TTL purge of skills/.archive/. 0 (default) = never purge — archived
-        # skills are kept forever. When > 0, `hermes curator purge` deletes
+        # skills are kept forever. When > 0, `auraforge curator purge` deletes
         # archived skills older than this many days (explicit command only,
         # never automatic; every purge is recorded in the audit ledger).
         "archive_ttl_days": 0,
         # Pre-run backup: before every real curator pass (dry-run is
-        # skipped), snapshot ~/.hermes/skills/ into
-        # ~/.hermes/skills/.curator_backups/<utc-iso>/skills.tar.gz so the
-        # user can roll back with `hermes curator rollback`.
+        # skipped), snapshot ~/.aura-forge/skills/ into
+        # ~/.aura-forge/skills/.curator_backups/<utc-iso>/skills.tar.gz so the
+        # user can roll back with `auraforge curator rollback`.
         "backup": {
             "enabled": True,
             "keep": 5,  # retain last N regular snapshots
@@ -2565,7 +2565,7 @@ DEFAULT_CONFIG = {
     "platform_hints": {},
 
     # Plugin system settings. ``enabled`` / ``disabled`` are written by
-    # ``hermes plugins enable|disable`` and intentionally omitted here so an
+    # ``auraforge plugins enable|disable`` and intentionally omitted here so an
     # empty default does not clobber a user's allow-list on merge.
     "plugins": {
         # Wall-clock cap (seconds) for a single in-process Python plugin hook
@@ -2579,7 +2579,7 @@ DEFAULT_CONFIG = {
     # subagent_stop, etc.).  Each entry maps an event name to a list of
     # {matcher, command, timeout} dicts.  First registration of a new
     # command prompts the user for consent; subsequent runs reuse the
-    # stored approval from ~/.hermes/shell-hooks-allowlist.json.
+    # stored approval from ~/.aura-forge/shell-hooks-allowlist.json.
     # See `website/docs/user-guide/features/hooks.md` for schema + examples.
     "hooks": {},
 
@@ -2612,7 +2612,7 @@ DEFAULT_CONFIG = {
             "transport_fallback": "deny",
         },
         # Writes to agent-instruction files (AGENTS.md/CLAUDE.md/SOUL.md/
-        # .cursorrules, project-local .hermes config) always require human
+        # .cursorrules, project-local .auraforge config) always require human
         # approval — even under auto-approve/yolo. Extra patterns are
         # fnmatch globs matched against the basename (e.g. "*.mdc").
         "protected_instruction_files": True,
@@ -2629,7 +2629,7 @@ DEFAULT_CONFIG = {
         # Acknowledged supply-chain security advisories. Each entry is the
         # ID of an advisory the user has read and acted on (uninstalled the
         # compromised package, rotated credentials). Acked advisories no
-        # longer trigger the startup banner. Add via `hermes doctor --ack
+        # longer trigger the startup banner. Add via `auraforge doctor --ack
         # <id>`; remove by editing the list directly. See
         # ``hermes_cli/security_advisories.py`` for the catalog.
         "acked_advisories": [],
@@ -2678,7 +2678,7 @@ DEFAULT_CONFIG = {
         # Active cron SCHEDULER provider (Axis B — the trigger that decides
         # WHEN a due job fires). Empty string = the built-in in-process 60s
         # ticker (default). Name an installed provider (plugins/cron_providers/<name>/ or
-        # $HERMES_HOME/plugins/<name>/) to relocate the trigger — e.g. "chronos",
+        # $AURA_FORGE_HOME/plugins/<name>/) to relocate the trigger — e.g. "chronos",
         # the NAS-mediated managed-cron provider for scale-to-zero deployments.
         # An unknown or unavailable provider falls back to the built-in, so cron
         # never loses its trigger.
@@ -2757,7 +2757,7 @@ DEFAULT_CONFIG = {
     # Kanban multi-agent coordination — controls the dispatcher loop that
     # spawns workers for ready tasks. The dispatcher ticks every N seconds
     # (default 60), reclaims stale claims, promotes dependency-satisfied
-    # todos to ready, and fires `hermes -p <assignee> chat -q ...` for
+    # todos to ready, and fires `auraforge -p <assignee> chat -q ...` for
     # each claimable ready task. One dispatcher per profile is sufficient;
     # running more than one on the same kanban.db will race for claims.
     "kanban": {
@@ -2793,7 +2793,7 @@ DEFAULT_CONFIG = {
         "worker_log_backup_count": 1,
         # Profile assigned to the root/orchestration task after Triage
         # decomposition. When unset, falls back to the default profile (the
-        # one `hermes` launches with no -p flag). This does not control the
+        # one `auraforge` launches with no -p flag). This does not control the
         # decomposer prompt, model, or skills; configure that LLM path under
         # auxiliary.kanban_decomposer.
         "orchestrator_profile": "",
@@ -2825,7 +2825,7 @@ DEFAULT_CONFIG = {
         "max_in_progress_per_profile": None,
         # When true, the kanban dispatcher auto-runs the decomposer on
         # tasks that land in Triage (every dispatcher tick). When false,
-        # decomposition is manual via `hermes kanban decompose <id>` or
+        # decomposition is manual via `auraforge kanban decompose <id>` or
         # the dashboard's Decompose button.
         "auto_decompose": True,
         # Max triage tasks to decompose per dispatcher tick. Prevents a
@@ -2879,7 +2879,7 @@ DEFAULT_CONFIG = {
         #     with the active virtualenv/conda env's python, so project deps
         #     (pandas, torch, project packages) and relative paths resolve.
         #   strict            — scripts run in an isolated temp directory with
-        #     hermes-agent's own python (sys.executable). Maximum isolation
+        #     aura-forge-agent's own python (sys.executable). Maximum isolation
         #     and reproducibility; project deps and relative paths won't work.
         # Env scrubbing (strips *_API_KEY, *_TOKEN, *_SECRET, ...) and the
         # tool whitelist apply identically in both modes.
@@ -2973,7 +2973,7 @@ DEFAULT_CONFIG = {
         },
     },
 
-    # Logging — controls file logging to ~/.hermes/logs/.
+    # Logging — controls file logging to ~/.aura-forge/logs/.
     # agent.log captures INFO+ (all agent activity); errors.log captures WARNING+.
     "logging": {
         "level": "INFO",       # Minimum level for agent.log: DEBUG, INFO, WARNING
@@ -2984,13 +2984,13 @@ DEFAULT_CONFIG = {
     # Remotely-hosted model catalog manifest.  When enabled, the CLI fetches
     # curated model lists for OpenRouter and Nous Portal from this URL,
     # falling back to the in-repo snapshot on network failure.  Lets us
-    # update model picker lists without shipping a hermes-agent release.
+    # update model picker lists without shipping a aura-forge-agent release.
     # The default URL is served by the docs site GitHub Pages deploy.
     "model_catalog": {
         "enabled": True,
-        "url": "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json",
+        "url": "https://aura-forge-agent.nousresearch.com/docs/api/model-catalog.json",
         # Disk cache TTL in hours.  Beyond this, the CLI refetches on the
-        # next /model or `hermes model` invocation; network failures
+        # next /model or `auraforge model` invocation; network failures
         # silently fall back to the stale cache.
         "ttl_hours": 1,
         # Optional per-provider override URLs for third parties that want
@@ -3152,7 +3152,7 @@ DEFAULT_CONFIG = {
         # its routing index. The primary copy lives in state.db (the
         # gateway_routing table). Default True for backward compatibility with
         # external tooling and downgrade safety; set to false to stop
-        # producing ~/.hermes/sessions/sessions.json entirely.
+        # producing ~/.aura-forge/sessions/sessions.json entirely.
         "write_sessions_json": True,
 
         # Scale-to-zero idle detection (Phase 0). The gateway watches for idle
@@ -3187,7 +3187,7 @@ DEFAULT_CONFIG = {
         # the breaker never tripped — e.g. the ~150s wedged-event-loop cycle in
         # #81642 (stall -> ~90s liveness-watchdog hard-exit -> respawn ->
         # auto-resume replays the same session), which also makes
-        # `hermes update` hang because it can never drain the gateway.
+        # `auraforge update` hang because it can never drain the gateway.
         "restart_loop_guard": {
             "max_restarts": 3,
             "window_seconds": 60,
@@ -3230,7 +3230,7 @@ DEFAULT_CONFIG = {
 
         # When false (default), any file path the agent emits is delivered
         # as a native attachment as long as it isn't under the credential /
-        # system-path denylist (/etc, /proc, ~/.ssh, ~/.aws, ~/.hermes/.env,
+        # system-path denylist (/etc, /proc, ~/.ssh, ~/.aws, ~/.aura-forge/.env,
         # auth.json, etc.). This matches the symmetry of inbound delivery
         # — we accept any document type the user uploads, and the agent
         # can hand back any file that isn't a credential.
@@ -3245,7 +3245,7 @@ DEFAULT_CONFIG = {
         "strict": False,
         # Extra directories from which model-emitted bare file paths may be
         # uploaded as native gateway attachments. Files inside the Aura Forge
-        # cache (~/.hermes/cache/{documents,images,audio,video,screenshots})
+        # cache (~/.aura-forge/cache/{documents,images,audio,video,screenshots})
         # are always trusted; this list adds operator-controlled roots
         # (project dirs, scratch dirs, mounted shares). Accepts a list of
         # absolute paths or a single os.pathsep-separated string. Bridged
@@ -3318,7 +3318,7 @@ DEFAULT_CONFIG = {
         "fresh_final_after_seconds": 0.0,
     },
 
-    # Session storage — controls automatic cleanup of ~/.hermes/state.db.
+    # Session storage — controls automatic cleanup of ~/.aura-forge/state.db.
     # state.db accumulates every session, message, tool call, and FTS5 index
     # entry forever.  Without auto-pruning, a heavy user (gateway + cron)
     # reports 384MB+ databases with 68K+ messages, which slows down FTS5
@@ -3332,7 +3332,7 @@ DEFAULT_CONFIG = {
         # silently deleting it could surprise users.  Opt in explicitly.
         "auto_prune": False,
         # How many inactive days of ended-session history to keep. Matches
-        # the default of ``hermes sessions prune``.
+        # the default of ``auraforge sessions prune``.
         "retention_days": 90,
         # When true, auto-archive (soft-hide, never delete) sessions that
         # haven't been touched in ``auto_archive_days`` days, once per
@@ -3358,7 +3358,7 @@ DEFAULT_CONFIG = {
         # state.db itself, so it's shared across all processes.
         "min_interval_hours": 24,
         # Legacy per-session JSON snapshot writer.  When true, the agent
-        # rewrites ``~/.hermes/sessions/session_{sid}.json`` on every turn
+        # rewrites ``~/.aura-forge/sessions/session_{sid}.json`` on every turn
         # boundary with the full message list.  state.db is canonical and
         # has every field the snapshot stored (plus per-message timestamps
         # and token counts), so this is off by default — the snapshots had
@@ -3370,10 +3370,10 @@ DEFAULT_CONFIG = {
         # that drops duplicate content copies and stops trigram-indexing tool
         # output (typically reclaims ~60%+ of state.db on heavy users). It is
         # OPT-IN: existing databases keep their working legacy index until the
-        # user runs `hermes sessions optimize-storage`, because the rebuild is
+        # user runs `auraforge sessions optimize-storage`, because the rebuild is
         # disk-heavy and long on large DBs (see that command's disk preflight).
         #
-        #   "advise" (default): `hermes update` prints a one-line notice with
+        #   "advise" (default): `auraforge update` prints a one-line notice with
         #     the reclaimable size and the command, when a legacy index is
         #     detected. Nothing is changed automatically.
         #   "require": the notice is shown as a REQUIRED upgrade (firmer copy),
@@ -3385,7 +3385,7 @@ DEFAULT_CONFIG = {
         "fts_optimize_notice": "advise",
         # CJK-bigram search index (messages_fts_cjk, cjk_unicode61 loadable
         # tokenizer). When the extension is built (native/fts5_cjk/build.sh →
-        # ~/.hermes/lib/libfts5_cjk.so), 1-2 char CJK terms (일본, 项目, ...)
+        # ~/.aura-forge/lib/libfts5_cjk.so), 1-2 char CJK terms (일본, 项目, ...)
         # get index-speed exact matching instead of LIKE full-table scans.
         # True (default): use the index when the extension is present; the
         # setting is inert when it isn't. False: never load the extension or
@@ -3405,7 +3405,7 @@ DEFAULT_CONFIG = {
         # may hold and still be resumed interactively (CLI/TUI/desktop).
         "max_resume_messages": 20000,
         # Max active messages a single session may hold for an in-memory
-        # (non-streaming) export such as `hermes sessions export`. Checked
+        # (non-streaming) export such as `auraforge sessions export`. Checked
         # per session, so full-DB backups of many small sessions still work.
         "max_export_messages": 20000,
     },
@@ -3431,27 +3431,27 @@ DEFAULT_CONFIG = {
         },
     },
 
-    # ``hermes doctor`` behaviour.
+    # ``auraforge doctor`` behaviour.
     "doctor": {
-        # Per-probe timeout (seconds) for the opt-in `hermes doctor --live`
+        # Per-probe timeout (seconds) for the opt-in `auraforge doctor --live`
         # real-call backend probes (Firecrawl/FAL/browser/MCP/TTS/STT).
         "live_probe_timeout": 10,
     },
 
-    # ``hermes update`` behaviour.
+    # ``auraforge update`` behaviour.
     "updates": {
         # Pre-update safety backup — ONE consolidated mechanism, three modes:
         #
         #   quick (default) — snapshot critical small state files (pairing
         #     JSONs, cron jobs, config.yaml, .env, auth.json, per-profile
-        #     DBs) into <HERMES_HOME>/state-snapshots/ before the update.
+        #     DBs) into <AURA_FORGE_HOME>/state-snapshots/ before the update.
         #     Files over 1 GiB (e.g. a bloated state.db) are skipped with a
         #     warning so the snapshot stays fast. Restore via ``/snapshot``.
         #     This is the #15733 (lost pairing data) / #34600 (emptied cron
         #     jobs) safety net.
-        #   full — the quick snapshot PLUS a full ``hermes backup``-style zip
-        #     of HERMES_HOME into <HERMES_HOME>/backups/, restorable with
-        #     ``hermes import``. Can add minutes on large homes. This is the
+        #   full — the quick snapshot PLUS a full ``auraforge backup``-style zip
+        #     of AURA_FORGE_HOME into <AURA_FORGE_HOME>/backups/, restorable with
+        #     ``auraforge import``. Can add minutes on large homes. This is the
         #     #48200 (wrong-path wipe) safety net. ``--backup`` forces this
         #     for a single run.
         #   off — no pre-update backup of any kind. ``--no-backup`` forces
@@ -3464,7 +3464,7 @@ DEFAULT_CONFIG = {
         # Values below 1 are floored to 1 — the backup just created is
         # always preserved. The quick snapshot always keeps exactly 1.
         "backup_keep": 5,
-        # What `hermes update` does with uncommitted local changes to the
+        # What `auraforge update` does with uncommitted local changes to the
         # source tree when it runs NON-interactively — i.e. triggered from
         # the desktop/chat app or the gateway, where there's no TTY to answer
         # a restore prompt. Interactive (terminal) updates are unaffected:
@@ -3480,7 +3480,7 @@ DEFAULT_CONFIG = {
         #               ignored paths — node_modules, venv, build outputs —
         #               are never touched.
         "non_interactive_local_changes": "stash",
-        # When `hermes update` finds the source checkout parked on a feature
+        # When `auraforge update` finds the source checkout parked on a feature
         # branch (left behind by tooling or a manual checkout), switch back
         # to the update target automatically whenever the working tree is
         # clean. Committed-but-unmerged work is safe — `git checkout` never
@@ -3508,12 +3508,12 @@ DEFAULT_CONFIG = {
         #                         survive; a conflict stops the update
         #                         cleanly with nothing changed. A safety tag
         #                         (pre-update-<stamp>) is left before the
-        #                         merge. `hermes update --switch-branch`
+        #                         merge. `auraforge update --switch-branch`
         #                         overrides back to the switch path for one
         #                         run (e.g. a deep feature branch that must
         #                         not accumulate update merge commits).
         "parked_branch_strategy": "switch",
-        # Refresh an already-installed cua-driver during `hermes update`.
+        # Refresh an already-installed cua-driver during `auraforge update`.
         # The refresh is best-effort and macOS-only. Turn this off if the
         # upstream installer is not appropriate for the machine, for example
         # on non-admin accounts where `/Applications` is not writable.
@@ -3546,7 +3546,7 @@ DEFAULT_CONFIG = {
 
         # How to handle missing server binaries.
         # ``"auto"`` — try to install via npm/go/pip into
-        #              ``<HERMES_HOME>/lsp/bin/`` on first use.
+        #              ``<AURA_FORGE_HOME>/lsp/bin/`` on first use.
         # ``"manual"`` — only use binaries already on PATH.
         # ``"off"`` — alias for ``manual``.
         "install_strategy": "auto",
@@ -3579,7 +3579,7 @@ DEFAULT_CONFIG = {
     # X (Twitter) Search via xAI's built-in x_search Responses tool.
     # The tool registers when xAI credentials are available (SuperGrok
     # OAuth or XAI_API_KEY) AND the x_search toolset is enabled in
-    # `hermes tools`. These settings tune the backing Responses API call.
+    # `auraforge tools`. These settings tune the backing Responses API call.
     "x_search": {
         # xAI model used for the Responses call. grok-4.5 is the
         # recommended default; any Grok model with x_search tool
@@ -3600,7 +3600,7 @@ DEFAULT_CONFIG = {
     # External secret sources
     # =========================================================================
     # Pull credentials from external secret managers at process startup
-    # rather than storing them in ~/.hermes/.env.
+    # rather than storing them in ~/.aura-forge/.env.
     "secrets": {
         # Optional explicit ordering of enabled secret sources.  When
         # omitted, sources run in registration order (bundled first,
@@ -3618,7 +3618,7 @@ DEFAULT_CONFIG = {
             "enabled": False,
             # Name of the env var that holds the Bitwarden machine-account
             # access token.  This is the one bootstrap secret; it lives
-            # in ~/.hermes/.env (or your shell) and never in config.yaml.
+            # in ~/.aura-forge/.env (or your shell) and never in config.yaml.
             "access_token_env": "BWS_ACCESS_TOKEN",
             # UUID of the BSM project to sync from.
             "project_id": "",
@@ -3627,7 +3627,7 @@ DEFAULT_CONFIG = {
             "cache_ttl_seconds": 300,
             # Optional encrypted last-good fallback for network/timeout outages.
             # When enabled, successful BWS fetches write AES-GCM encrypted cache
-            # material under ~/.hermes/cache/. If a later startup cannot reach
+            # material under ~/.aura-forge/cache/. If a later startup cannot reach
             # Bitwarden due to NETWORK/TIMEOUT, Aura Forge may use this encrypted
             # cache for up to max_stale_seconds. Auth failures do not fall back.
             "encrypted_cache": {
@@ -3640,7 +3640,7 @@ DEFAULT_CONFIG = {
             # take effect until you also cleared the matching .env line.
             "override_existing": True,
             # When True, the bws binary is auto-downloaded into
-            # ~/.hermes/bin/ on first use.  When False you must install
+            # ~/.aura-forge/bin/ on first use.  When False you must install
             # bws yourself and have it on PATH.
             "auto_install": True,
             # Bitwarden region / self-hosted endpoint.  Empty string
@@ -3649,7 +3649,7 @@ DEFAULT_CONFIG = {
             # https://vault.bitwarden.eu for EU Cloud, or your own URL
             # for self-hosted Bitwarden.  Plumbed into the bws subprocess
             # as BWS_SERVER_URL.  Prompted for during
-            # `hermes secrets bitwarden setup`.
+            # `auraforge secrets bitwarden setup`.
             "server_url": "",
         },
         "onepassword": {
@@ -3664,7 +3664,7 @@ DEFAULT_CONFIG = {
             # `op read --account <account>`.  Empty = op's default account.
             "account": "",
             # Name of the env var holding a 1Password service-account token
-            # for headless auth.  Sourced from ~/.hermes/.env (or the shell)
+            # for headless auth.  Sourced from ~/.aura-forge/.env (or the shell)
             # and exported to the op child as OP_SERVICE_ACCOUNT_TOKEN.
             # Leave the var unset to use an interactive/desktop op session.
             "service_account_token_env": "OP_SERVICE_ACCOUNT_TOKEN",
@@ -3772,7 +3772,7 @@ DEFAULT_CONFIG = {
     # leaks tokens that only work behind the configured trusted proxy boundary
     # (CA private key + proxy endpoint integrity are part of that boundary).
     #
-    # Configure with `hermes egress setup`.  Disabled by default — the rest of
+    # Configure with `auraforge egress setup`.  Disabled by default — the rest of
     # Aura Forge works exactly as before with `enabled: false`.
     "proxy": {
         # Master switch.  When false, iron-proxy is never started, no docker
@@ -3782,7 +3782,7 @@ DEFAULT_CONFIG = {
         # Tunnel listener port.  Sandboxes get `HTTPS_PROXY=http://<host>:<port>`.
         # 9090 is the default; collide-aware setup wizard can reassign.
         "tunnel_port": 9090,
-        # Auto-download the pinned iron-proxy binary into ~/.hermes/bin/ on
+        # Auto-download the pinned iron-proxy binary into ~/.aura-forge/bin/ on
         # first use.  When false, you must place `iron-proxy` on PATH yourself.
         "auto_install": True,
         # Where iron-proxy looks up the real upstream secrets at egress time.
@@ -3823,7 +3823,7 @@ DEFAULT_CONFIG = {
     },
 
     # Aura Forge Desktop (Electron app) launch options. These only affect
-    # `hermes desktop`; they do not touch the CLI/gateway.
+    # `auraforge desktop`; they do not touch the CLI/gateway.
     "desktop": {
         # Git repository discovery for the Desktop Projects sidebar. Empty
         # roots preserve the historical bounded scan of the user's home.
@@ -4334,7 +4334,7 @@ OPTIONAL_ENV_VARS = {
         "category": "provider",
     },
     "AZURE_FOUNDRY_BASE_URL": {
-        "description": "Azure Foundry base URL (set via 'hermes model' for endpoint-specific config)",
+        "description": "Azure Foundry base URL (set via 'auraforge model' for endpoint-specific config)",
         "prompt": "Azure Foundry base URL",
         "url": None,
         "password": False,
@@ -5030,7 +5030,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "API_SERVER_MODEL_NAME": {
-        "description": "Model name advertised on /v1/models. Defaults to the profile name (or 'hermes-agent' for the default profile). Useful for multi-user setups with OpenWebUI.",
+        "description": "Model name advertised on /v1/models. Defaults to the profile name (or 'aura-forge-agent' for the default profile). Useful for multi-user setups with OpenWebUI.",
         "prompt": "API server model name",
         "url": None,
         "password": False,

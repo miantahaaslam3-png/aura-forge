@@ -1,5 +1,5 @@
 """
-Hermes Agent — Web UI server.
+Aura Forge Agent — Web UI server.
 
 Provides a FastAPI backend serving the Vite/React frontend and REST API
 endpoints for managing configuration, environment variables, and sessions.
@@ -119,7 +119,7 @@ try:
     from starlette.concurrency import run_in_threadpool
 except ImportError:
     # First try lazy-installing the dashboard extras. Only the user actually
-    # running `hermes dashboard` needs fastapi+uvicorn; lazy install keeps
+    # running `auraforge dashboard` needs fastapi+uvicorn; lazy install keeps
     # them out of every other install path. After install, re-import.
     try:
         from tools.lazy_deps import ensure as _lazy_ensure
@@ -269,8 +269,8 @@ def _parent_start_markers_match(actual: str, expected: str) -> bool:
 def _start_desktop_cron_ticker(stop_event: "threading.Event", interval: int = 60) -> None:
     """Tick the cron scheduler from inside the desktop dashboard backend.
 
-    The scheduler tick loop normally lives in ``hermes gateway run`` — but the
-    desktop app spawns a ``hermes dashboard`` backend, not a gateway, so a cron
+    The scheduler tick loop normally lives in ``auraforge gateway run`` — but the
+    desktop app spawns a ``auraforge dashboard`` backend, not a gateway, so a cron
     a user creates in the app would never fire. We run the resolved cron
     scheduler provider here (no live adapters; delivery falls back to the
     per-platform send path).
@@ -366,7 +366,7 @@ def _eager_reconcile_own_session_db() -> None:
     """One writable open of this process's own state.db at startup.
 
     ``SessionDB.__init__`` runs ``_init_schema`` → ``_reconcile_columns``,
-    bringing a store left behind by `hermes update` current before the
+    bringing a store left behind by `auraforge update` current before the
     dashboard's first session-list poll, with the open-time lock patience
     (jittered retries) absorbing transient contention. Never raises: a
     store this cannot fix is still served through the read-probe heal in
@@ -397,7 +397,7 @@ async def _lifespan(app: "FastAPI"):
     # Bring this profile's state.db schema current BEFORE the first
     # session-list poll (#79531/#80037). Migrations used to run lazily on
     # the first writable open — typically the user's first new session —
-    # so a store left behind by `hermes update` kept 500ing every
+    # so a store left behind by `auraforge update` kept 500ing every
     # /api/sessions poll (and the read-probe heal, while it retries per
     # poll, can lose repeatedly to lock contention from orphaned sibling
     # backends). One writable open here runs _init_schema →
@@ -420,7 +420,7 @@ async def _lifespan(app: "FastAPI"):
     _warm_gateway_module()
 
     # Snapshot the checkout revision at boot so risky lazy-import paths (the
-    # model picker) can detect when `hermes update` replaced the code
+    # model picker) can detect when `auraforge update` replaced the code
     # underneath this long-lived process and refuse with a clear "restart
     # required" message instead of a stale-module ImportError (#86207).  This
     # mirrors the gateway's record_boot_fingerprint in gateway/run.py; the
@@ -522,7 +522,7 @@ def _get_pty_active_session_files(app: "FastAPI") -> dict[str, Path]:
         return app.state.pty_active_session_files
 
 
-app = FastAPI(title="Hermes Agent", version=__version__, lifespan=_lifespan)
+app = FastAPI(title="Aura Forge Agent", version=__version__, lifespan=_lifespan)
 
 
 # Memory-provider OAuth connect routes live in the memory layer, not here.
@@ -1227,8 +1227,8 @@ _SCHEMA_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "proxy.enabled": {
         "type": "boolean",
         "description": (
-            "Docker-only egress credential firewall. Requires `hermes egress setup` "
-            "and `hermes egress start`; Modal/SSH/Daytona are not wired yet."
+            "Docker-only egress credential firewall. Requires `auraforge egress setup` "
+            "and `auraforge egress start`; Modal/SSH/Daytona are not wired yet."
         ),
         "category": "security",
     },
@@ -2157,7 +2157,7 @@ _FS_READDIR_HIDDEN = {
 # (agent.file_safety.get_read_block_error and
 # gateway.platforms.base._ROOT_CREDENTIAL_FILES) so the dashboard Files tab
 # doesn't lag behind them — an operator can point the managed root at
-# HERMES_HOME itself, at which point every one of these basenames is a live
+# AURA_FORGE_HOME itself, at which point every one of these basenames is a live
 # secret store sitting in the browsable tree.
 _SENSITIVE_MANAGED_FILE_BASENAMES = frozenset({
     "auth.json",
@@ -2183,7 +2183,7 @@ _SENSITIVE_MANAGED_FILE_BASENAMES = frozenset({
 # basename-only guard would still expose e.g. ``mcp-tokens/<server>.json``
 # (live MCP OAuth tokens) and ``pairing/<x>``. We match on ANY path component
 # so these trees are blocked wherever they appear under the browsable root,
-# without needing to resolve them relative to HERMES_HOME.
+# without needing to resolve them relative to AURA_FORGE_HOME.
 _SENSITIVE_MANAGED_DIR_NAMES = frozenset({
     "mcp-tokens",
     "pairing",
@@ -2218,7 +2218,7 @@ def _is_sensitive_path(path: Path) -> bool:
     credential-directory-tree check: a path is sensitive if its own basename
     is sensitive OR any of its path components is a credential directory
     (``mcp-tokens`` / ``pairing``). The component match is case-insensitive
-    and needs no HERMES_HOME resolution, so it blocks these trees wherever
+    and needs no AURA_FORGE_HOME resolution, so it blocks these trees wherever
     they sit under the operator-configured managed root — closing the gap
     the canonical guards cover as directory trees but a basename-only check
     would miss.
@@ -2496,7 +2496,7 @@ def _local_dashboard_request(request: Request) -> bool:
 
 
 def _default_hermes_root_is_opt_data() -> bool:
-    raw = os.environ.get("HERMES_HOME", "").strip()
+    raw = os.environ.get("AURA_FORGE_HOME", "").strip()
     if not raw:
         return False
     try:
@@ -2509,7 +2509,7 @@ def _default_hermes_root_is_opt_data() -> bool:
 
 
 def _dashboard_local_update_managed_externally() -> bool:
-    """Return true when the dashboard should not offer ``hermes update``.
+    """Return true when the dashboard should not offer ``auraforge update``.
 
     Containerized dashboards are updated by the outer launcher/image, not by an
     in-browser local update action. Keep this dashboard capability separate
@@ -2518,7 +2518,7 @@ def _dashboard_local_update_managed_externally() -> bool:
 
     However, when the install method is ``git`` (a bind-mounted checkout inside
     a container — e.g. the hermes-webui image sharing the Hermes source tree),
-    the dashboard's ``hermes update`` button is the correct update path and
+    the dashboard's ``auraforge update`` button is the correct update path and
     should not be suppressed. Other containerized install methods remain
     externally managed unless their apply path is proven safe inside the
     running container filesystem.
@@ -2704,7 +2704,7 @@ async def upload_chat_image(payload: ChatImageUpload, profile: Optional[str] = N
     clipboard image bytes are not visible to the server-side clipboard, so the
     page uploads them here, then drives the TUI's ``/image <path>`` command
     with the returned gateway-visible path. Files land under
-    ``HERMES_HOME/images/`` — the same directory ``clipboard.paste`` /
+    ``AURA_FORGE_HOME/images/`` — the same directory ``clipboard.paste`` /
     ``image.attach`` already use.
     """
     def _run():
@@ -3515,7 +3515,7 @@ _TOPOLOGY_CACHE_TTL = 10.0
 
 # Stable install identity for /api/status. One random opaque id per physical
 # install, minted on first read and persisted under the ROOT Hermes home
-# (get_default_hermes_root()) — NOT the profile-scoped HERMES_HOME — so every
+# (get_default_hermes_root()) — NOT the profile-scoped AURA_FORGE_HOME — so every
 # profile served by the same install reports the same id. Clients (the desktop
 # connection registry) use it to recognize that two registered addresses
 # (hostname + Tailscale IP, LAN + WAN) are one backend and collapse duplicate
@@ -3770,7 +3770,7 @@ async def get_status(profile: Optional[str] = None):
         # When ?profile=<name> was given, scope PID and state reads to that
         # profile's directory — gateway identity files (PID, lock, runtime
         # status) are written to the per-profile home, not the process-level
-        # HERMES_HOME (see issue #69143). Plain /api/status keeps the exact
+        # AURA_FORGE_HOME (see issue #69143). Plain /api/status keeps the exact
         # zero-arg call so its behavior (and cache signature) is unchanged.
         #
         # The module-level probe references are handed to the resolver so the
@@ -3930,7 +3930,7 @@ async def get_status(profile: Optional[str] = None):
         restart_drain_timeout = await run_in_threadpool(_resolve_restart_drain_timeout)
 
         # Dashboard auth gate (Phase 7): surface whether the gate is engaged
-        # and which providers are registered so ``hermes status`` and the
+        # and which providers are registered so ``auraforge status`` and the
         # SPA's StatusPage can show "OAuth gate ON via Nous Research" or
         # "loopback only — no auth gate" with no extra round trips.
         auth_required = bool(getattr(app.state, "auth_required", False))
@@ -4071,7 +4071,7 @@ async def get_status(profile: Optional[str] = None):
             status["memory"] = {"pressure": "unknown"}
 
         # Disk-usage rollup (NS-656, same lineage as OOF-2/OOF-107 fleet
-        # disk-exhaustion incidents). One statvfs call on HERMES_HOME's
+        # disk-exhaustion incidents). One statvfs call on AURA_FORGE_HOME's
         # filesystem — coarse MB numbers + enum, same public disclosure
         # class as the memory block, and equally advisory: not folded
         # into components/overall.
@@ -4280,7 +4280,7 @@ async def get_system_stats():
 #
 # The curator periodically reviews skills (archive stale, prune, pin).  The
 # dashboard surfaces its state and the pause/resume/run-now controls that
-# `hermes curator` exposes.
+# `auraforge curator` exposes.
 # ---------------------------------------------------------------------------
 
 
@@ -4531,7 +4531,7 @@ async def run_debug_share_endpoint(body: DebugShareRequest | None = None):
 # Both commands are spawned as detached subprocesses so the HTTP request
 # returns immediately.  stdin is closed (``DEVNULL``) so any stray ``input()``
 # calls fail fast with EOF rather than hanging forever.  stdout/stderr are
-# streamed to a per-action log file under ``~/.hermes/logs/<action>.log`` so
+# streamed to a per-action log file under ``~/.aura-forge/logs/<action>.log`` so
 # the dashboard can tail them back to the user.
 # ---------------------------------------------------------------------------
 
@@ -4685,7 +4685,7 @@ def _spawn_hermes_action(
     *,
     env_overrides: Optional[Dict[str, str]] = None,
 ) -> subprocess.Popen:
-    """Spawn ``hermes <subcommand>`` detached and record the Popen handle.
+    """Spawn ``auraforge <subcommand>`` detached and record the Popen handle.
 
     Uses the running interpreter's ``hermes_cli.main`` module so the action
     inherits the same venv/PYTHONPATH the web server is using.
@@ -4701,7 +4701,7 @@ def _spawn_hermes_action(
     cmd = [_dashboard_spawn_executable(), "-m", "hermes_cli.main", *subcommand]
 
     # The dashboard runs *inside* the gateway process, so os.environ carries
-    # _HERMES_GATEWAY=1. Inheriting it makes a spawned `hermes gateway restart`
+    # _HERMES_GATEWAY=1. Inheriting it makes a spawned `auraforge gateway restart`
     # trip the in-process restart-loop guard and exit 1 — silently failing the
     # dashboard's auto-restart paths. The gateway's own restart watcher already
     # drops it (gateway/run.py); mirror that here (#52470).
@@ -4876,12 +4876,12 @@ def _validate_messaging_env_value(platform_id: str, key: str, value: str) -> Non
 
 
 def _spawn_gateway_restart(profile: Optional[str] = None) -> Tuple[subprocess.Popen, bool]:
-    """Spawn ``hermes gateway restart``, reusing an in-flight restart.
+    """Spawn ``auraforge gateway restart``, reusing an in-flight restart.
 
     Multiple dashboard paths can request a restart in quick succession
     (restart button double-click, or a stale cached frontend firing its own
     restart after the server already auto-restarted post-onboarding). Two
-    concurrent ``hermes gateway restart`` children race each other on the
+    concurrent ``auraforge gateway restart`` children race each other on the
     manual kill-and-start path, so reuse the live one instead.
 
     Reusing only the *live* child is not enough. The child exits as soon as
@@ -4959,7 +4959,7 @@ def _restart_gateway_after_webhook_enable(profile: Optional[str] = None) -> dict
 
 @app.post("/api/gateway/restart")
 async def restart_gateway(profile: Optional[str] = None):
-    """Kick off a ``hermes gateway restart`` in the background."""
+    """Kick off a ``auraforge gateway restart`` in the background."""
     try:
         proc, _reused = _spawn_gateway_restart(profile)
     except HTTPException:
@@ -5049,7 +5049,7 @@ async def gateway_drain(request: Request):
 
 @app.post("/api/hermes/update")
 async def update_hermes():
-    """Kick off ``hermes update`` in the background."""
+    """Kick off ``auraforge update`` in the background."""
     if _dashboard_local_update_managed_externally():
         message = (
             "Hermes updates are managed outside this dashboard in "
@@ -5186,7 +5186,7 @@ async def check_hermes_update(force: bool = False):
 
     Powers the dashboard's "check before you update" flow: the System page
     shows the commit-behind count and asks the user to confirm before
-    ``POST /api/hermes/update`` actually runs ``hermes update``.
+    ``POST /api/hermes/update`` actually runs ``auraforge update``.
 
     Returns:
         install_method: 'apt' | 'git' | 'docker' | 'nix' | 'nixos' | 'unknown'
@@ -5238,7 +5238,7 @@ async def check_hermes_update(force: bool = False):
         return payload
     if install_method == "apt":
         payload["message"] = (
-            "Hermes is managed by Termux APT; run `pkg upgrade hermes-agent`."
+            "Hermes is managed by Termux APT; run `pkg upgrade aura-forge-agent`."
         )
         return payload
 
@@ -5525,7 +5525,7 @@ async def speak_text(payload: TTSSpeakRequest, profile: Optional[str] = None):
     Used by the desktop voice-conversation mode to play back assistant
     responses without exposing the on-disk file path. Reuses the
     existing TTS provider chain (Edge / OpenAI / ElevenLabs / etc.)
-    configured in ``~/.hermes/config.yaml`` under ``tts.``.
+    configured in ``~/.aura-forge/config.yaml`` under ``tts.``.
     """
     text = (payload.text or "").strip()
     if not text:
@@ -5912,7 +5912,7 @@ async def get_update_receipt():
     if not receipt:
         raise HTTPException(
             status_code=404,
-            detail="No update receipt found (no `hermes update` run recorded).",
+            detail="No update receipt found (no `auraforge update` run recorded).",
         )
     return {"receipt": receipt, "summary": _latest_update_receipt_summary()}
 
@@ -7391,7 +7391,7 @@ def _dashboard_code_skew_guard() -> Optional[str]:
     """Return a clear \"restart required\" message when the dashboard runs stale code.
 
     The dashboard is a long-lived process; its ``sys.modules`` is frozen at
-    boot.  When ``hermes update`` (or a manual ``git pull``) replaces the
+    boot.  When ``auraforge update`` (or a manual ``git pull``) replaces the
     checkout underneath it, a first-time lazy import on a new code path can
     resolve a freshly-pulled consumer module against a stale cached dependency
     -> ImportError — e.g. ``/api/model/options`` 500 after the update added
@@ -7474,7 +7474,7 @@ async def get_model_options(
 def get_recommended_default_model(provider: str = ""):
     """Return the recommended default model for a freshly-authenticated provider.
 
-    Mirrors the model-curation `hermes model` does so GUI onboarding lands on a
+    Mirrors the model-curation `auraforge model` does so GUI onboarding lands on a
     sensible default instead of blindly taking the first curated entry. For
     Nous this honors the user's free/paid tier: free users get a free model,
     paid users get the full curated default. For any other provider it falls
@@ -7692,7 +7692,7 @@ def set_moa_models(body: MoaConfigPayload, profile: Optional[str] = None):
 async def set_model_assignment(body: ModelAssignment, profile: Optional[str] = None):
     """Assign a model to the main slot or an auxiliary task slot.
 
-    Writes to ``~/.hermes/config.yaml`` — applies to **new** sessions only.
+    Writes to ``~/.aura-forge/config.yaml`` — applies to **new** sessions only.
     The currently running chat PTY (if any) is not affected; use the
     ``/model`` slash command inside a chat to hot-swap that specific session.
     """
@@ -7807,7 +7807,7 @@ def _apply_model_assignment_sync(
         save_config(cfg)
 
         # Register a named ``custom_providers`` entry for a custom/local
-        # endpoint, mirroring the ``hermes model`` custom flow
+        # endpoint, mirroring the ``auraforge model`` custom flow
         # (_save_custom_provider). Without this the endpoint only lives in
         # ``model.*`` and the picker has no proper ready row for it — the
         # GUI then surfaces a "needs setup" dead-end on the bare ``custom``
@@ -8100,7 +8100,7 @@ async def update_config(body: ConfigUpdate, profile: Optional[str] = None):
         # REST saves bypass the config.set RPC (which re-emits itself), so
         # refresh live sessions' cached approval/YOLO indicators after a mode
         # change. Own-profile saves only: a profile-scoped save targets a
-        # different HERMES_HOME than this process's gateway sessions.
+        # different AURA_FORGE_HOME than this process's gateway sessions.
         if approvals_mode_changed and not _is_other_profile(body.profile or profile):
             _broadcast_gateway_session_info()
         return {"ok": True}
@@ -8164,7 +8164,7 @@ def _catalog_provider_env_metadata() -> dict:
 
     Returns ``{env_var: {provider, provider_label, description, url, is_password,
     advanced}}`` for every API-key provider in the unified ``provider_catalog()``
-    (i.e. the ``hermes model`` universe). This is what lets the desktop Keys tab
+    (i.e. the ``auraforge model`` universe). This is what lets the desktop Keys tab
     render a card for a provider even when its env var was never hand-added to
     ``OPTIONAL_ENV_VARS`` — closing the drift where CLI-configurable providers
     (openai-api, kilocode, novita, tencent-tokenhub, copilot, …) were missing
@@ -8230,7 +8230,7 @@ def _catalog_provider_env_metadata() -> dict:
         # AWS-SDK providers (Bedrock) authenticate via the AWS credential chain
         # rather than a pasted API key, so they have no api_key_env_vars. Tag
         # their AWS_* settings to the provider card so they still appear on the
-        # Keys tab (otherwise Bedrock — a `hermes model` provider — would be
+        # Keys tab (otherwise Bedrock — a `auraforge model` provider — would be
         # invisible in the desktop app).
         if d.auth_type == "aws_sdk":
             for aws_var in ("AWS_REGION", "AWS_PROFILE"):
@@ -8248,7 +8248,7 @@ def _catalog_provider_env_metadata() -> dict:
         # Vertex AI authenticates via OAuth2 (service-account JSON or ADC), not a
         # pasted API key, so it also has no api_key_env_vars. Tag its credential
         # env var to the provider card so it appears on the Keys tab (otherwise
-        # Vertex — a `hermes model` provider — would be invisible in the desktop
+        # Vertex — a `auraforge model` provider — would be invisible in the desktop
         # app). The value is a filesystem path, not a secret string, so it is
         # not a password field.
         if d.auth_type == "vertex":
@@ -8299,7 +8299,7 @@ def _get_env_vars_sync(profile: Optional[str] = None):
             "channel_managed": var_name in channel_keys,
             # Provider grouping hints derived from the unified provider catalog
             # so the desktop Keys tab groups by the SAME provider identity the
-            # CLI `hermes model` picker uses (not desktop-only prefix guesses).
+            # CLI `auraforge model` picker uses (not desktop-only prefix guesses).
             "provider": cat_meta.get("provider", ""),
             "provider_label": cat_meta.get("provider_label", ""),
             # True when this key exists in the user's .env but is NOT in any
@@ -8637,7 +8637,7 @@ def list_custom_endpoints(profile: Optional[str] = None):
     Scoped to the requested profile's config.yaml (issue: custom providers
     only landing in the default profile): the desktop settings UI targets the
     active profile, so read/write must resolve that profile's home rather than
-    the process-level HERMES_HOME. Mirrors ``/api/config``'s profile scoping.
+    the process-level AURA_FORGE_HOME. Mirrors ``/api/config``'s profile scoping.
     """
     try:
         with _config_profile_scope(profile):
@@ -8960,7 +8960,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "email": {
         "name": "Email",
         "description": "Talk to Hermes through an IMAP/SMTP mailbox.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/",
         "env_vars": (
             "EMAIL_ADDRESS",
             "EMAIL_PASSWORD",
@@ -9003,7 +9003,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "google_chat": {
         "name": "Google Chat",
         "description": "Connect Hermes to Google Chat via Cloud Pub/Sub.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/google_chat",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/google_chat",
     },
     "wecom": {
         "name": "WeCom (group bot)",
@@ -9032,7 +9032,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "weixin": {
         "name": "Weixin / WeChat (Personal)",
         "description": "Connect a personal WeChat account through Tencent's iLink Bot API.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin/",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/weixin/",
         "env_vars": ("WEIXIN_ACCOUNT_ID", "WEIXIN_TOKEN", "WEIXIN_BASE_URL"),
         "required_env": ("WEIXIN_ACCOUNT_ID", "WEIXIN_TOKEN"),
     },
@@ -9059,34 +9059,34 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     # Channels page can point at the Microsoft Teams setup guide.
     "teams": {
         "description": "Connect Hermes to Microsoft Teams chats via the Bot Framework.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/teams",
     },
     # Bundled platform plugins: name comes from the plugin registry label;
     # give each a human description (the registry's install_hint is a
     # dependency note, not a description) and a docs link.
     "irc": {
         "description": "Relay messages between an IRC channel (or DMs) and Hermes.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/irc",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/irc",
     },
     "line": {
         "description": "Use Hermes from LINE via the LINE Messaging API webhook.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/line",
     },
     "ntfy": {
         "description": "Chat with Hermes over ntfy push topics (ntfy.sh or self-hosted).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/ntfy",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/ntfy",
     },
     "photon": {
         "description": "Use Hermes through iMessage via Photon's managed Spectrum platform.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/photon",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/photon",
     },
     "raft": {
         "description": "Join a Raft workspace as an external agent.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/raft",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/raft",
     },
     "simplex": {
         "description": "Talk to Hermes over SimpleX Chat via a local simplex-chat daemon.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/simplex",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/simplex",
     },
     "yuanbao": {
         "name": "Yuanbao (元宝)",
@@ -9097,7 +9097,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "api_server": {
         "name": "API server",
         "description": "Expose Hermes as an OpenAI-compatible HTTP API for tools like Open WebUI.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/",
         "env_vars": (
             "API_SERVER_ENABLED",
             "API_SERVER_KEY",
@@ -9110,20 +9110,20 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "webhook": {
         "name": "Webhooks",
         "description": "Receive events from GitHub, GitLab, and other webhook sources.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/webhooks/",
         "env_vars": ("WEBHOOK_ENABLED", "WEBHOOK_PORT", "WEBHOOK_SECRET"),
         "required_env": (),
     },
     "msgraph_webhook": {
         "name": "Microsoft Graph Webhook",
         "description": "Receive Microsoft Graph change notifications (Teams meetings, Outlook, …).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/msgraph-webhook",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/msgraph-webhook",
         "required_env": (),
     },
     "whatsapp_cloud": {
         "name": "WhatsApp Cloud API",
         "description": "Use Hermes via Meta's hosted WhatsApp Cloud API (no local bridge).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud",
     },
     "relay": {
         "name": "Relay (experimental)",
@@ -9405,7 +9405,7 @@ def _platform_env_prefixes(platform_id: str) -> tuple[str, ...]:
 
 
 # Which per-platform knobs the setup UI hides, and why: see
-# hermes_cli/setup_hidden_env.py. Shared with the `hermes setup gateway`
+# hermes_cli/setup_hidden_env.py. Shared with the `auraforge setup gateway`
 # wizard so the surfaces ask for the same things.
 from hermes_cli.setup_hidden_env import (  # noqa: E402
     is_setup_hidden_env as _is_setup_hidden_env,
@@ -9537,7 +9537,7 @@ def _messaging_platform_payload(
     #
     # profile_home is passed when the request was scoped to a named profile:
     # gateway/status readers resolve process-level paths and do NOT follow the
-    # HERMES_HOME contextvar override (#56986 / #69143), so the profile's
+    # AURA_FORGE_HOME contextvar override (#56986 / #69143), so the profile's
     # directory has to be handed over explicitly or messaging silently reports
     # another profile's gateway (#71211).
     liveness = resolve_gateway_liveness(
@@ -10182,7 +10182,7 @@ async def cancel_whatsapp_onboarding(pairing_id: str):
     return {"ok": True}
 
 
-_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.hermes-agent.nousresearch.com"
+_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.aura-forge-agent.nousresearch.com"
 _TELEGRAM_ONBOARDING_USER_AGENT = f"HermesDashboard/{__version__}"
 @dataclass
 class _TelegramOnboardingPairing:
@@ -10334,7 +10334,7 @@ async def _telegram_onboarding_request(
 
 @app.post("/api/messaging/telegram/onboarding/start")
 async def start_telegram_onboarding(body: TelegramOnboardingStart):
-    bot_name = (body.bot_name or "Hermes Agent").strip() or "Hermes Agent"
+    bot_name = (body.bot_name or "Aura Forge Agent").strip() or "Aura Forge Agent"
     payload = await _telegram_onboarding_request(
         "POST",
         "/v1/telegram/pairings",
@@ -10556,7 +10556,7 @@ async def cancel_telegram_onboarding(pairing_id: str):
 async def get_messaging_platforms(profile: Optional[str] = None):
     # Profile-scoped so the dashboard's global profile switcher shows the
     # TARGET profile's channel credentials/state, not the root install's.
-    # load_env() honors the HERMES_HOME contextvar override; the gateway
+    # load_env() honors the AURA_FORGE_HOME contextvar override; the gateway
     # status readers do NOT (they resolve process-level paths), so the
     # profile directory is passed explicitly for those (#71211).
     def _run():
@@ -10610,7 +10610,7 @@ def _multiplex_port_binding_conflict(
     if not requested or requested.lower() == "current":
         from hermes_cli.profiles import get_active_profile_name
 
-        # The dashboard's own profile. "custom" (an unrecognized HERMES_HOME)
+        # The dashboard's own profile. "custom" (an unrecognized AURA_FORGE_HOME)
         # is outside the profiles tree, so a multiplexed gateway never serves
         # it — nothing to guard.
         target = get_active_profile_name()
@@ -10780,7 +10780,7 @@ async def test_messaging_platform(platform_id: str, profile: Optional[str] = Non
 # connected, plus a disconnect button. The actual login flow (PKCE for
 # Anthropic, device-code for Nous/Codex) still runs in the CLI for now;
 # Phase 2 will add in-browser flows. For unconnected providers we return
-# the canonical ``hermes auth add <provider>`` command so the dashboard
+# the canonical ``auraforge auth add <provider>`` command so the dashboard
 # can surface a one-click copy.
 
 
@@ -10813,7 +10813,7 @@ def _anthropic_oauth_status() -> Dict[str, Any]:
     """Status for the "Anthropic API Key" catalog entry.
 
     Two sources, in priority order:
-    1. ``~/.hermes/.anthropic_oauth.json`` — Hermes-managed PKCE flow (what
+    1. ``~/.aura-forge/.anthropic_oauth.json`` — Hermes-managed PKCE flow (what
        this entry's Connect button writes)
     2. ``ANTHROPIC_API_KEY`` → ``ANTHROPIC_TOKEN`` → ``CLAUDE_CODE_OAUTH_TOKEN``
        env vars (registry order) — from ``.env``, the shell, or an external
@@ -10942,7 +10942,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         "id": "nous",
         "name": "Nous Portal",
         "flow": "device_code",
-        "cli_command": "hermes auth add nous",
+        "cli_command": "auraforge auth add nous",
         "docs_url": "https://portal.nousresearch.com",
         "status_fn": None,  # dispatched via auth.get_nous_auth_status
     },
@@ -10950,7 +10950,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         "id": "openai-codex",
         "name": "ChatGPT or Codex Subscription",
         "flow": "device_code",
-        "cli_command": "hermes auth add openai-codex",
+        "cli_command": "auraforge auth add openai-codex",
         "docs_url": "https://platform.openai.com/docs",
         "status_fn": None,  # dispatched via auth.get_codex_auth_status
     },
@@ -10958,7 +10958,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         "id": "qwen-oauth",
         "name": "Qwen (via Qwen CLI)",
         "flow": "external",
-        "cli_command": "hermes auth add qwen-oauth",
+        "cli_command": "auraforge auth add qwen-oauth",
         "docs_url": "https://github.com/QwenLM/qwen-code",
         "status_fn": None,  # dispatched via auth.get_qwen_auth_status
     },
@@ -10971,7 +10971,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         # as Nous's device-code flow; the PKCE bit is a security
         # extension that doesn't change the operator experience.
         "flow": "device_code",
-        "cli_command": "hermes auth add minimax-oauth",
+        "cli_command": "auraforge auth add minimax-oauth",
         "docs_url": "https://www.minimax.io",
         "status_fn": None,  # dispatched via auth.get_minimax_oauth_auth_status
     },
@@ -10982,8 +10982,8 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         # containers, and desktop installs without requiring a reachable
         # 127.0.0.1 callback.
         "flow": "device_code",
-        "cli_command": "hermes auth add xai-oauth",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/guides/xai-grok-oauth",
+        "cli_command": "auraforge auth add xai-oauth",
+        "docs_url": "https://aura-forge-agent.nousresearch.com/docs/guides/xai-grok-oauth",
         "status_fn": None,  # dispatched via auth.get_xai_oauth_auth_status
     },
     {
@@ -11001,7 +11001,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         "id": "anthropic",
         "name": "Anthropic API Key",
         "flow": "pkce",
-        "cli_command": "hermes auth add anthropic",
+        "cli_command": "auraforge auth add anthropic",
         "docs_url": "https://docs.claude.com/en/api/getting-started",
         "status_fn": _anthropic_oauth_status,
     },
@@ -11159,14 +11159,14 @@ def _build_oauth_catalog() -> list[Dict[str, Any]]:
          PKCE card and the synthetic claude-code subscription row, which are not
          catalog providers), and
       2. every accounts-tab provider in the unified ``provider_catalog()`` (the
-         ``hermes model`` universe) — so any OAuth/external provider added as a
+         ``auraforge model`` universe) — so any OAuth/external provider added as a
          plugin appears automatically, with sensible defaults, even if no
          explicit card was written for it.
 
     The explicit catalog wins on metadata; the unified catalog guarantees we
     never silently drop a provider the CLI picker offers. Order: explicit cards
     first (their curated order), then any catalog-only providers appended in
-    ``hermes model`` order.
+    ``auraforge model`` order.
     """
     rows: list[Dict[str, Any]] = []
     seen: set[str] = set()
@@ -11179,7 +11179,7 @@ def _build_oauth_catalog() -> list[Dict[str, Any]]:
         rows.append(dict(entry))
 
     # 2. Catalog accounts-providers not already covered — keeps the Accounts tab
-    #    in lockstep with the `hermes model` universe (zero-edit for new plugins).
+    #    in lockstep with the `auraforge model` universe (zero-edit for new plugins).
     try:
         from hermes_cli.provider_catalog import provider_catalog
         for d in provider_catalog():
@@ -11190,7 +11190,7 @@ def _build_oauth_catalog() -> list[Dict[str, Any]]:
                 "id": d.slug,
                 "name": d.label,
                 "flow": "external",
-                "cli_command": f"hermes auth add {d.slug}",
+                "cli_command": f"auraforge auth add {d.slug}",
                 "docs_url": d.signup_url or "",
                 "status_fn": None,
             })
@@ -11221,7 +11221,7 @@ async def list_oauth_providers(profile: Optional[str] = None):
           has_refresh_token bool
 
     Membership is derived from the unified provider_catalog() so this stays in
-    sync with the `hermes model` picker; _OAUTH_OVERRIDES supplies per-provider
+    sync with the `auraforge model` picker; _OAUTH_OVERRIDES supplies per-provider
     flow/status/cli metadata.
     """
     def _run():
@@ -11331,7 +11331,7 @@ async def disconnect_oauth_provider(
 #     2. UI opens auth_url in a new tab. User authorizes, copies code.
 #     3. POST /api/providers/oauth/anthropic/submit { session_id, code }
 #          → server exchanges (code + verifier) → tokens at console.anthropic.com
-#          → persists to ~/.hermes/.anthropic_oauth.json AND credential pool
+#          → persists to ~/.aura-forge/.anthropic_oauth.json AND credential pool
 #          → returns { ok: true, status: "approved" }
 #
 #   Device code (Nous, OpenAI Codex):
@@ -11434,7 +11434,7 @@ def _save_anthropic_oauth_creds(access_token: str, refresh_token: str, expires_a
     """Persist Anthropic PKCE creds to both Hermes file AND credential pool.
 
     Mirrors what auth_commands.add_command does so the dashboard flow leaves
-    the system in the same state as ``hermes auth add anthropic``.
+    the system in the same state as ``auraforge auth add anthropic``.
     """
     from agent.anthropic_adapter import _get_hermes_oauth_file
     oauth_file = _get_hermes_oauth_file()
@@ -11879,7 +11879,7 @@ def _minimax_poller(session_id: str) -> None:
     auth_state dict that ``_minimax_oauth_login`` (the CLI flow) builds
     and persists via ``_minimax_save_auth_state`` — so the dashboard
     path leaves the system in the same state as
-    ``hermes auth add minimax-oauth``.
+    ``auraforge auth add minimax-oauth``.
     """
     from hermes_cli.auth import (
         _minimax_poll_token,
@@ -12002,7 +12002,7 @@ def _xai_device_poller(session_id: str) -> None:
                 # chat provider.
                 set_active=False,
             )
-            # Mirror `hermes auth add xai-oauth`: first credential may become
+            # Mirror `auraforge auth add xai-oauth`: first credential may become
             # active when none is set yet; never overwrite an existing choice.
             mark_provider_active_if_unset("xai-oauth")
             # The singleton write above is the single source of truth: the
@@ -12012,8 +12012,8 @@ def _xai_device_poller(session_id: str) -> None:
             # entries and triggers rotation churn / ``refresh_token_reused``.
             # An interactive dashboard login is also an explicit re-enable
             # signal, so clear any ``device_code`` suppression left by a
-            # prior ``hermes auth remove xai-oauth`` (mirrors auth_add_command
-            # and the ``hermes model`` re-login path in _login_xai_oauth).
+            # prior ``auraforge auth remove xai-oauth`` (mirrors auth_add_command
+            # and the ``auraforge model`` re-login path in _login_xai_oauth).
             unsuppress_credential_source("xai-oauth", "device_code")
         with _oauth_sessions_lock:
             sess["status"] = "approved"
@@ -12482,7 +12482,7 @@ def _session_db_read_probe_statements() -> tuple:
     added there is probed here automatically — the previous hand-written
     probe listed four columns and went stale the first time a new column
     (sessions.last_activity_at) shipped, leaving the desktop sidebar empty
-    after `hermes update` until the first message forced a writable open.
+    after `auraforge update` until the first message forced a writable open.
     """
     from hermes_state_schema import schema_read_probe_statements
 
@@ -12612,7 +12612,7 @@ _last_auto_archive_check: Dict[str, float] = {}
 def _maybe_auto_archive_for_profile(profile: Optional[str]) -> None:
     """Run the config-gated stale-session auto-archive for ``profile``.
 
-    The Desktop backend is spawned as ``hermes serve`` — it runs neither the
+    The Desktop backend is spawned as ``auraforge serve`` — it runs neither the
     interactive CLI nor the messaging gateway, so neither of those startup
     hooks fire for Desktop users. Triggering the (double-throttled, config-off
     by default) sweep from the session-list path is what makes
@@ -12679,7 +12679,7 @@ async def _auto_archive_ticker_loop(
 
 
 def _prune_sessions(body: SessionPrune):
-    """Delete ended sessions matching filters (mirrors `hermes sessions prune`)."""
+    """Delete ended sessions matching filters (mirrors `auraforge sessions prune`)."""
     has_window = (
         body.started_before is not None or body.started_after is not None
     )
@@ -12981,12 +12981,12 @@ def _cron_profile_dicts() -> List[Dict[str, Any]]:
 def _cron_default_profile() -> str:
     """Profile to target when a cron request carries no explicit ``profile``.
 
-    A desktop pool backend runs one process per profile (HERMES_HOME already
+    A desktop pool backend runs one process per profile (AURA_FORGE_HOME already
     scoped), but these cron endpoints deliberately route storage through the
     profiles tree via ``_cron_profile_home`` — so a hardcoded ``"default"``
     fallback would write a non-default profile's job into ``~/.hermes``.
     Resolve the process's own profile instead. ``custom`` (an unrecognized
-    HERMES_HOME outside the profiles tree) has no profile-dir equivalent, so
+    AURA_FORGE_HOME outside the profiles tree) has no profile-dir equivalent, so
     it keeps the legacy ``default`` fallback.
     """
     try:
@@ -12999,7 +12999,7 @@ def _cron_default_profile() -> str:
 
 
 def _cron_profile_home(profile: Optional[str]) -> Tuple[str, Path]:
-    """Resolve a profile query value to (profile_name, HERMES_HOME)."""
+    """Resolve a profile query value to (profile_name, AURA_FORGE_HOME)."""
     from hermes_cli import profiles as profiles_mod
 
     raw = (profile or _cron_default_profile()).strip() or "default"
@@ -13500,7 +13500,7 @@ def _gateway_fire_endpoint(profile: str, home: Path) -> str:
         # Profile-scoped read through the CANONICAL loader (managed-scope
         # overlay, ${ENV_VAR} expansion, profile pathing) — never a raw
         # yaml.safe_load of config.yaml (tests/hermes_cli/
-        # test_config_read_guard.py). The HERMES_HOME override scopes
+        # test_config_read_guard.py). The AURA_FORGE_HOME override scopes
         # get_config_path() to the TARGET profile, same pattern the
         # deprecated _fire_cron_job_for_profile used for its store scope.
         from hermes_constants import (
@@ -13604,7 +13604,7 @@ def _gateway_intentionally_stopped(profile: Optional[str]) -> bool:
 
     Reads the durable ``desired_state`` field of the profile's
     ``gateway_state.json`` — written exclusively by the s6 lifecycle
-    commands (``hermes gateway stop`` persists ``"stopped"``; start and
+    commands (``auraforge gateway stop`` persists ``"stopped"``; start and
     restart persist ``"running"``, see service_manager's
     ``_write_gateway_desired_state``). This is the same operator-intent
     signal container-boot reconciliation trusts, and it is precisely NOT
@@ -13651,7 +13651,7 @@ def _gateway_intentionally_stopped(profile: Optional[str]) -> bool:
 # MCP server endpoints — list / add / remove / test.
 #
 # Wraps the same config data layer the CLI uses (hermes_cli.mcp_config), so
-# servers managed here show up under `hermes mcp list` and vice versa.  Secrets
+# servers managed here show up under `auraforge mcp list` and vice versa.  Secrets
 # in stdio `env` blocks are redacted on read; the agent picks them up from
 # config.yaml at session start exactly as with CLI-added servers.
 # ---------------------------------------------------------------------------
@@ -14200,7 +14200,7 @@ async def set_webhook_enabled(name: str, body: WebhookEnabledToggle):
 #
 # restart + update already exist above; these complete the lifecycle so a
 # remote admin can bring the gateway up or down without shell access.  Both
-# spawn the real `hermes gateway <verb>` so behaviour matches the CLI exactly.
+# spawn the real `auraforge gateway <verb>` so behaviour matches the CLI exactly.
 # Status is already surfaced by /api/status (gateway_running/state/platforms).
 # ---------------------------------------------------------------------------
 
@@ -14316,8 +14316,8 @@ async def add_credential_pool_entry(body: CredentialPoolAdd):
         pool.add_entry(entry)
         # Re-adding a credential is an explicit re-engagement signal: lift
         # every suppression for this provider so a source deleted earlier
-        # (via DELETE below or `hermes auth remove`) can seed again.
-        # Mirrors the `hermes auth add` behaviour in auth_commands.py.
+        # (via DELETE below or `auraforge auth remove`) can seed again.
+        # Mirrors the `auraforge auth add` behaviour in auth_commands.py.
         if not provider.startswith(CUSTOM_POOL_PREFIX):
             try:
                 from hermes_cli.auth import (
@@ -14345,7 +14345,7 @@ async def remove_credential_pool_entry(provider: str, index: int):
     their backing source (.env var, OAuth singleton file, custom-provider
     config) on every call, so deleting only the pool row silently reverts on
     the next dashboard refresh.  We dispatch through the same RemovalStep
-    registry the CLI ``hermes auth remove`` uses: each source cleans up its
+    registry the CLI ``auraforge auth remove`` uses: each source cleans up its
     external state and suppresses ``(provider, source)`` so the seeders skip
     it.  Manual entries have no registered step — nothing external to clean,
     no suppression needed (they aren't re-seeded).
@@ -14883,7 +14883,7 @@ async def prune_checkpoints():
 def _profile_cli_args(profile: Optional[str]) -> List[str]:
     """Return ``["-p", <name>]`` for a validated non-default profile.
 
-    Hub install/uninstall/update run in a fresh ``hermes`` subprocess, and
+    Hub install/uninstall/update run in a fresh ``auraforge`` subprocess, and
     ``_apply_profile_override()`` reads ``-p`` from argv in the child — the
     only mechanism that reaches import-time-bound globals like
     ``skills_hub.SKILLS_DIR``. Empty/"current" means the dashboard's own
@@ -14930,7 +14930,7 @@ from hermes_cli.web_routers.skills import (  # noqa: E402,F401 — legacy re-exp
 
 
 
-# Human-readable labels for each hub source id (matches `hermes skills search`
+# Human-readable labels for each hub source id (matches `auraforge skills search`
 # provenance).  Keep in sync with create_source_router()'s source list.
 _SKILL_HUB_SOURCE_LABELS = {
     "official": "Official (Nous)",
@@ -15104,14 +15104,14 @@ def _resolve_profile_dir(name: str) -> Path:
 def _profile_setup_command(name: str) -> str:
     """Return the shell command used to configure a profile in the CLI."""
     _resolve_profile_dir(name)
-    return "hermes setup" if name == "default" else f"{name} setup"
+    return "auraforge setup" if name == "default" else f"{name} setup"
 
 
 def _write_profile_model(profile_dir: Path, provider: str, model: str) -> None:
     """Write the main model assignment into a specific profile's config.yaml.
 
     Scopes ``load_config``/``save_config`` to ``profile_dir`` via the
-    context-local HERMES_HOME override so the write lands in the target
+    context-local AURA_FORGE_HOME override so the write lands in the target
     profile's config rather than the dashboard process's active profile.
     Clears any stale ``base_url`` / ``context_length`` the same way
     ``POST /api/model/set`` does, since the new model may differ.
@@ -15132,7 +15132,7 @@ def _write_profile_mcp_servers(profile_dir: Path, servers: List["MCPServerCreate
     """Write MCP server entries into a specific profile's config.yaml.
 
     Scopes ``load_config``/``save_config`` to ``profile_dir`` via the
-    context-local HERMES_HOME override (same mechanism as
+    context-local AURA_FORGE_HOME override (same mechanism as
     ``_write_profile_model``) so the entries land in the target profile's
     config rather than the dashboard process's active profile.
 
@@ -15183,7 +15183,7 @@ def _disable_unselected_skills(profile_dir: Path, keep: List[str]) -> int:
     uses "replace" semantics: the user picks exactly which seeded built-in /
     optional skills stay active, and everything else gets added to the disabled
     list. (Hub skills are installed separately via subprocess and are active on
-    install.) Scoped to the profile via the HERMES_HOME override. Returns the
+    install.) Scoped to the profile via the AURA_FORGE_HOME override. Returns the
     number of skills newly disabled.
     """
     from hermes_constants import set_hermes_home_override, reset_hermes_home_override
@@ -15293,7 +15293,7 @@ def _profile_scope(profile: Optional[str]):
     config resolution is untouched, but the skill-module globals are still
     retargeted to the *current* ``get_hermes_home()`` so writes land in the
     live home even when the import-time binding is stale (e.g. the process
-    imported the modules before a HERMES_HOME override, or under test
+    imported the modules before a AURA_FORGE_HOME override, or under test
     isolation).
     """
     requested = (profile or "").strip()
@@ -15314,20 +15314,20 @@ def _profile_scope(profile: Optional[str]):
         token = set_hermes_home_override(str(profile_dir))
 
     with _SKILLS_PROFILE_LOCK:
-        old_home = _skills_tool.HERMES_HOME
+        old_home = _skills_tool.AURA_FORGE_HOME
         old_skills_dir = _skills_tool.SKILLS_DIR
-        old_mgr_home = _skill_mgr.HERMES_HOME
+        old_mgr_home = _skill_mgr.AURA_FORGE_HOME
         old_mgr_skills_dir = _skill_mgr.SKILLS_DIR
-        _skills_tool.HERMES_HOME = profile_dir
+        _skills_tool.AURA_FORGE_HOME = profile_dir
         _skills_tool.SKILLS_DIR = profile_dir / "skills"
-        _skill_mgr.HERMES_HOME = profile_dir
+        _skill_mgr.AURA_FORGE_HOME = profile_dir
         _skill_mgr.SKILLS_DIR = profile_dir / "skills"
         try:
             yield profile_dir if token is not None else None
         finally:
-            _skills_tool.HERMES_HOME = old_home
+            _skills_tool.AURA_FORGE_HOME = old_home
             _skills_tool.SKILLS_DIR = old_skills_dir
-            _skill_mgr.HERMES_HOME = old_mgr_home
+            _skill_mgr.AURA_FORGE_HOME = old_mgr_home
             _skill_mgr.SKILLS_DIR = old_mgr_skills_dir
             if token is not None:
                 reset_hermes_home_override(token)
@@ -16155,7 +16155,7 @@ async def get_models_analytics(
 # ---------------------------------------------------------------------------
 # /api/pty — PTY-over-WebSocket bridge for the dashboard "Chat" tab.
 #
-# The endpoint spawns the same ``hermes --tui`` binary the CLI uses, behind
+# The endpoint spawns the same ``auraforge --tui`` binary the CLI uses, behind
 # a POSIX pseudo-terminal, and forwards bytes + resize escapes across a
 # WebSocket.  The browser renders the ANSI through xterm.js (see
 # web/src/pages/ChatPage.tsx).
@@ -16601,7 +16601,7 @@ def _resolve_chat_argv(
 ) -> tuple[list[str], Optional[str], Optional[dict]]:
     """Resolve the argv + cwd + env for the chat PTY.
 
-    Default: whatever ``hermes --tui`` would run.  Tests monkeypatch this
+    Default: whatever ``auraforge --tui`` would run.  Tests monkeypatch this
     function to inject a tiny fake command (``cat``, ``sh -c 'printf …'``)
     so nothing has to build Node or the TUI bundle.
 
@@ -16625,11 +16625,11 @@ def _resolve_chat_argv(
     WebSocket close.
 
     `profile` (when set) scopes the ENTIRE chat to that profile by pointing
-    ``HERMES_HOME`` at the profile dir in the child env. Every spawned
+    ``AURA_FORGE_HOME`` at the profile dir in the child env. Every spawned
     process (the TUI and the ``tui_gateway.entry`` it launches) resolves
     ``get_hermes_home()`` from that env var at its own import, so the child
     binds the profile's config, skills, memory, and state.db from the start
-    — the same propagation ``hermes -p <name>`` performs. The in-process
+    — the same propagation ``auraforge -p <name>`` performs. The in-process
     ``HERMES_TUI_GATEWAY_URL`` attach is SKIPPED for scoped chats: the
     dashboard's in-memory gateway runs under the dashboard's own profile,
     so a profile-scoped chat must spawn its own gateway subprocess.
@@ -16644,12 +16644,12 @@ def _resolve_chat_argv(
     argv, cwd = _make_tui_argv(PROJECT_ROOT / "ui-tui", tui_dev=False)
     # Hermes TUI child: build via the single spawn-env factory (profile-home
     # contract applied; secrets kept — the spawned agent needs provider creds).
-    # An explicit profile scope still overrides HERMES_HOME before config is
+    # An explicit profile scope still overrides AURA_FORGE_HOME before config is
     # bridged into the child environment.
     from tools.environments.local import build_subprocess_env
     env = build_subprocess_env(scrub_secrets=False, inherit_profile_home=True)
     if profile_dir is not None:
-        env["HERMES_HOME"] = str(profile_dir)
+        env["AURA_FORGE_HOME"] = str(profile_dir)
     try:
         from hermes_cli.config import (
             apply_terminal_config_to_env,
@@ -16717,7 +16717,7 @@ def _resolve_chat_argv(
     # Profile-scoped chats must NOT attach to the dashboard's in-memory
     # gateway — it runs under the dashboard's own profile. Without the
     # attach URL, gatewayClient spawns its own `tui_gateway.entry`, which
-    # inherits the profile HERMES_HOME set above.
+    # inherits the profile AURA_FORGE_HOME set above.
     if profile_dir is None:
         if gateway_ws_url := _build_gateway_ws_url():
             env["HERMES_TUI_GATEWAY_URL"] = gateway_ws_url
@@ -16932,7 +16932,7 @@ def _ws_close_reason(text: str) -> str:
 # ---------------------------------------------------------------------------
 # /api/console — safe Hermes Console command WebSocket.
 #
-# Unlike /api/pty, this endpoint never spawns a PTY, shell, or full Hermes CLI
+# Unlike /api/pty, this endpoint never spawns a PTY, shell, or full Aura Forge CLI
 # subprocess. It runs the curated console engine in-process and exchanges
 # structured JSON frames with the dashboard xterm overlay.
 # ---------------------------------------------------------------------------
@@ -17906,14 +17906,14 @@ def mount_spa(application: FastAPI):
     and the SPA's runtime ``__HERMES_BASE_PATH__`` honour that prefix
     without rebuilding the bundle.
     """
-    # `hermes serve` is the headless backend: it must NEVER serve the browser
+    # `auraforge serve` is the headless backend: it must NEVER serve the browser
     # SPA, even if a dist is lying around from a prior `dashboard`/build. Take
     # the no-frontend path so only the JSON-RPC/WS/API surface is reachable.
     _headless = os.environ.get("HERMES_SERVE_HEADLESS") == "1"
     if _headless:
         _msg = (
             "Headless backend (hermes serve): web UI disabled — use "
-            "`hermes dashboard` for the browser UI."
+            "`auraforge dashboard` for the browser UI."
         )
 
         @application.get("/{full_path:path}")
@@ -17923,7 +17923,7 @@ def mount_spa(application: FastAPI):
             # for /api/ws auth (apps/desktop/electron/dashboard-token.ts).
             # When headless serve 404'd every path, a renderer whose spawn
             # token no longer matched the backend's live token (e.g. after
-            # `hermes update` replaced the backend) had no way to adopt the
+            # `auraforge update` replaced the backend) had no way to adopt the
             # served token — the WS handshake failed and the window
             # white-screened (#95575). Serve a minimal token-only page at the
             # exact root, but ONLY when the dashboard auth gate is off: on a
@@ -17938,7 +17938,7 @@ def mount_spa(application: FastAPI):
                     "window.__HERMES_AUTH_REQUIRED__=false;"
                     "</script></head><body>"
                     "Headless backend (hermes serve): web UI disabled — use "
-                    "`hermes dashboard` for the browser UI."
+                    "`auraforge dashboard` for the browser UI."
                     "</body></html>",
                     headers={
                         "Cache-Control": "no-store, no-cache, must-revalidate"
@@ -17948,7 +17948,7 @@ def mount_spa(application: FastAPI):
         return
 
     # A missing WEB_DIST is deliberately NOT a mount-time terminal state
-    # (#82614): a long-lived `hermes dashboard --skip-build` process that
+    # (#82614): a long-lived `auraforge dashboard --skip-build` process that
     # survives a `git pull` (or starts before the first build) used to
     # install a permanent no_frontend catch-all here and could never
     # recover — every route answered 404 "Frontend not built" until the
@@ -18014,7 +18014,7 @@ def mount_spa(application: FastAPI):
             html = html.replace('href="/ds-assets/', f'href="{prefix}/ds-assets/')
             html = html.replace('src="/ds-assets/', f'src="{prefix}/ds-assets/')
         # Theme flash mitigation: when the active theme is a user theme
-        # (``HERMES_HOME/dashboard-themes/<name>.yaml``), inject a minimal
+        # (``AURA_FORGE_HOME/dashboard-themes/<name>.yaml``), inject a minimal
         # critical-CSS block so the first paint uses the target palette.
         # Without this the SPA paints the default Hermes Teal canvas, then
         # ``ThemeProvider`` flips the CSS variables once
@@ -18286,7 +18286,7 @@ def _normalise_theme_definition(data: Dict[str, Any]) -> Optional[Dict[str, Any]
     # tag on theme apply.  Clipped to _THEME_CUSTOM_CSS_MAX to keep the
     # payload bounded.  We intentionally do NOT parse/sanitise the CSS
     # here — the dashboard is localhost-only and themes are user-authored
-    # YAML in ~/.hermes/, same trust level as the config file itself.
+    # YAML in ~/.aura-forge/, same trust level as the config file itself.
     custom_css_val = data.get("customCSS")
     custom_css: Optional[str] = None
     if isinstance(custom_css_val, str) and custom_css_val.strip():
@@ -18341,7 +18341,7 @@ def _normalise_theme_definition(data: Dict[str, Any]) -> Optional[Dict[str, Any]
 
 
 def _discover_user_themes() -> list:
-    """Scan ~/.hermes/dashboard-themes/*.yaml for user-created themes.
+    """Scan ~/.aura-forge/dashboard-themes/*.yaml for user-created themes.
 
     Returns a list of fully-normalised theme definitions ready to ship
     to the frontend, so the client can apply them without a secondary
@@ -18349,7 +18349,7 @@ def _discover_user_themes() -> list:
 
     Uses the dashboard process launch home, not ``get_hermes_home()``, so a
     transient profile override from embedded chat does not hide themes that
-    live under the server's own ``HERMES_HOME``.
+    live under the server's own ``AURA_FORGE_HOME``.
     """
     themes_dir = get_process_hermes_home() / "dashboard-themes"
     if not themes_dir.is_dir():
@@ -18372,7 +18372,7 @@ async def get_dashboard_themes():
 
     Built-in entries ship name/label/description only (the frontend owns
     their full definitions in `web/src/themes/presets.ts`).  User themes
-    from `~/.hermes/dashboard-themes/*.yaml` ship with their full
+    from `~/.aura-forge/dashboard-themes/*.yaml` ship with their full
     normalised definition under `definition`, so the client can apply
     them without a stub.
     """
@@ -18510,7 +18510,7 @@ def _discover_dashboard_plugins() -> list:
     """Scan plugins/*/dashboard/manifest.json for dashboard extensions.
 
     Checks three plugin sources (same as hermes_cli.plugins):
-    1. User plugins:    ~/.hermes/plugins/<name>/dashboard/manifest.json
+    1. User plugins:    ~/.aura-forge/plugins/<name>/dashboard/manifest.json
     2. Bundled plugins: <repo>/plugins/<name>/dashboard/manifest.json  (memory/, etc.)
     3. Project plugins: ./.hermes/plugins/  (only if HERMES_ENABLE_PROJECT_PLUGINS)
     """
@@ -18522,15 +18522,15 @@ def _discover_dashboard_plugins() -> list:
     # User dashboard plugins are a dashboard-owned asset (same category as
     # theme YAML): resolve them from the process launch home so they don't
     # vanish when a request is scoped to another profile via a context-local
-    # HERMES_HOME override (e.g. embedded /chat under --open-profile).
+    # AURA_FORGE_HOME override (e.g. embedded /chat under --open-profile).
     #
     # #87197: when the process itself is profile-scoped (``--profile <name>``
-    # sets ``HERMES_HOME=<root>/profiles/<name>``), the launch home is the
+    # sets ``AURA_FORGE_HOME=<root>/profiles/<name>``), the launch home is the
     # profile directory, which has no ``plugins/`` — user plugins are
-    # installed in the hermes root (``~/.hermes/plugins``). Scan the default
+    # installed in the hermes root (``~/.aura-forge/plugins``). Scan the default
     # root as well (``get_default_hermes_root()`` unwraps
     # ``<root>/profiles/<name>`` → ``<root>`` and returns a custom
-    # ``HERMES_HOME`` unchanged when it *is* the root), mirroring how
+    # ``AURA_FORGE_HOME`` unchanged when it *is* the root), mirroring how
     # ``hermes_cli.plugins`` resolves plugin install locations. The
     # ``seen_names`` dedupe below keeps profile-local plugins (if any)
     # authoritative over same-named root plugins.
@@ -18848,7 +18848,7 @@ def _merged_plugins_hub(force_refresh: bool = False) -> Dict[str, Any]:
                         continue
                     if cached_result is False:
                         auth_required = True
-                        auth_command = f"hermes auth {name}"
+                        auth_command = f"auraforge auth {name}"
                         break
             except Exception:
                 pass
@@ -19206,7 +19206,7 @@ def _mount_plugin_api_routes():
             _log.warning(
                 "Plugin %s: ignoring backend api=%s (project plugins may "
                 "not auto-import Python code; move the plugin to "
-                "~/.hermes/plugins/ if you trust it)",
+                "~/.aura-forge/plugins/ if you trust it)",
                 plugin["name"], api_file_name,
             )
             continue
@@ -19457,7 +19457,7 @@ def _demo() -> None:
 # When the requested port is already bound, uvicorn's ``bind_socket()``
 # catches the OSError itself and does ``logger.error(exc); sys.exit(1)`` — a
 # bare ERROR line plus the same exit 1 as any real backend crash. The desktop
-# spawn (and any script wrapping ``hermes serve``) cannot tell "port occupied"
+# spawn (and any script wrapping ``auraforge serve``) cannot tell "port occupied"
 # from "backend broken". So we probe the exact bind before handing the socket
 # to uvicorn and, on conflict, emit ONE machine-readable stdout sentinel plus
 # a human hint, then exit with a distinct code.
@@ -19703,7 +19703,7 @@ def start_server(
         if not list_providers():
             # Surface the *specific* reason any bundled provider declined
             # to register (e.g. missing HERMES_DASHBOARD_OAUTH_CLIENT_ID).
-            # Each provider plugin that ships with Hermes Agent exposes a
+            # Each provider plugin that ships with Aura Forge Agent exposes a
             # module-level ``LAST_SKIP_REASON`` string for this purpose;
             # without it the operator would only see "no providers" which
             # is misleading when the provider IS installed but unconfigured.
@@ -19759,7 +19759,7 @@ def start_server(
                 "    (hash with: python -c \"from "
                 "plugins.dashboard_auth.basic import hash_password; "
                 "print(hash_password('your-password'))\")\n"
-                "  • OAuth: run `hermes dashboard register` (Nous Portal) or "
+                "  • OAuth: run `auraforge dashboard register` (Nous Portal) or "
                 "install a DashboardAuthProvider plugin.\n"
                 "There is no unauthenticated public-dashboard option. For "
                 "local-only use, bind 127.0.0.1 and leave dashboard.public_url "
@@ -19787,7 +19787,7 @@ def start_server(
                         "plugins.disabled but dashboard.basic_auth is "
                         "configured.\n"
                         "Remove 'basic' from plugins.disabled (or run "
-                        "`hermes plugins enable basic`), then restart the "
+                        "`auraforge plugins enable basic`), then restart the "
                         "dashboard.\n\n"
                     ) + _fix_hint
             except Exception:
@@ -19955,7 +19955,7 @@ def start_server(
                 _log.debug("orphan MCP helper reap skipped: %s", exc)
 
             # tui_gateway/slash_worker.py::_start_parent_death_watchdog. No-op
-            # for standalone `hermes serve` (no HERMES_PARENT_PID env).
+            # for standalone `auraforge serve` (no HERMES_PARENT_PID env).
             _start_parent_death_watchdog()
 
             actual_port = _read_bound_port(server, fallback=port)
@@ -19967,7 +19967,7 @@ def start_server(
             # with it. Both best-effort; failures degrade to legacy behavior.
             # Registered AFTER the bind so the entry carries the ACTUAL port
             # (ephemeral binds included) — the structured host/port/profile
-            # is what lets `hermes update` relaunch a manually-started serve
+            # is what lets `auraforge update` relaunch a manually-started serve
             # on its real endpoint instead of dropping it (#63206).
             try:
                 from hermes_cli.process_identity import (

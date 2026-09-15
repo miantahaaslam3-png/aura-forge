@@ -4,10 +4,10 @@ Aura Forge Plugin System
 
 Discovers, loads, and manages plugins from four sources:
 
-1. **Bundled plugins** – ``<repo>/plugins/<name>/`` (shipped with hermes-agent;
+1. **Bundled plugins** – ``<repo>/plugins/<name>/`` (shipped with aura-forge-agent;
    ``memory/`` and ``context_engine/`` subdirs are excluded — they have their
    own discovery paths)
-2. **User plugins**   – ``~/.hermes/plugins/<name>/``
+2. **User plugins**   – ``~/.aura-forge/plugins/<name>/``
 3. **Project plugins** – ``./.hermes/plugins/<name>/`` (opt-in via
    ``HERMES_ENABLE_PROJECT_PLUGINS``)
 4. **Pip plugins**     – packages that expose the ``hermes_agent.plugins``
@@ -112,7 +112,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 #
 # Set ``HERMES_PLUGINS_DEBUG=1`` to surface verbose plugin-discovery logs to
-# stderr in addition to ~/.hermes/logs/agent.log. Aimed at plugin authors
+# stderr in addition to ~/.aura-forge/logs/agent.log. Aimed at plugin authors
 # trying to figure out why their plugin isn't showing up: which directories
 # were scanned, which manifests parsed, which plugins were skipped (and why),
 # what each ``register(ctx)`` call registered, and full tracebacks on load
@@ -266,9 +266,9 @@ VALID_HOOKS: Set[str] = {
     # SQLite write lock). Observers only: return values are ignored.
     #
     # WHICH PROCESS each fires in matters, because kanban workers run as
-    # separate `hermes -p <profile> chat -q` subprocesses:
+    # separate `auraforge -p <profile> chat -q` subprocesses:
     #   - kanban_task_claimed   -> the DISPATCHER process (gateway-embedded
-    #                              dispatcher or `hermes kanban dispatch`),
+    #                              dispatcher or `auraforge kanban dispatch`),
     #                              right before the worker subprocess spawns.
     #   - kanban_task_completed -> the WORKER process, when it calls
     #                              kanban_complete (or a CLI/manual complete).
@@ -296,7 +296,7 @@ VALID_HOOKS: Set[str] = {
     #
     # WHICH PROCESS: worker spawn/exit/stale-claim and the dispatch tick
     # fire in the DISPATCHER process (gateway-embedded dispatcher or
-    # ``hermes kanban dispatch``); on_kanban_task_updated fires in whichever
+    # ``auraforge kanban dispatch``); on_kanban_task_updated fires in whichever
     # process committed the mutation (CLI, worker, or the gateway-embedded
     # dashboard API).
     #
@@ -952,7 +952,7 @@ def resolve_plugin_load_order(
                 logger.warning(
                     "Plugin %s requires plugin '%s' which is not enabled/"
                     "installed; loading anyway (probe availability at runtime "
-                    "via ctx.has_plugin). Run `hermes plugins enable %s` if "
+                    "via ctx.has_plugin). Run `auraforge plugins enable %s` if "
                     "it is installed.",
                     k, dep_id, dep_id,
                 )
@@ -1116,11 +1116,11 @@ class PluginManifest:
     # ``platform``: gateway messaging platform adapter (e.g. IRC). Bundled
     #              platform plugins auto-load so every shipped platform is
     #              available out of the box; user-installed platform plugins
-    #              in ~/.hermes/plugins/ still gated by ``plugins.enabled``
+    #              in ~/.aura-forge/plugins/ still gated by ``plugins.enabled``
     #              (untrusted code).
     kind: str = "standalone"
     # Registry key — path-derived, used by ``plugins.enabled``/``disabled``
-    # lookups and by ``hermes plugins list``. For a flat plugin at
+    # lookups and by ``auraforge plugins list``. For a flat plugin at
     # ``plugins/disk-cleanup/`` the key is ``disk-cleanup``; for a nested
     # category plugin at ``plugins/image_gen/openai/`` the key is
     # ``image_gen/openai``. When empty, falls back to ``name``.
@@ -1164,7 +1164,7 @@ class PluginManifest:
     # ``<key>:`` namespace (e.g. ``["ping"]`` → publishes ``<key>:ping``).
     # ``listens`` lists the fully-qualified ``<plugin>:<event>`` names this
     # plugin subscribes to. Both are purely for discoverability
-    # (``hermes plugins show``); a plugin may emit/subscribe without declaring.
+    # (``auraforge plugins show``); a plugin may emit/subscribe without declaring.
     emits: List[str] = field(default_factory=list)
     listens: List[str] = field(default_factory=list)
 
@@ -1680,15 +1680,15 @@ class PluginContext:
     def profile_name(self) -> str:
         """Return the active Aura Forge profile name (e.g. ``"default"``).
 
-        Derived from ``HERMES_HOME`` via
+        Derived from ``AURA_FORGE_HOME`` via
         :func:`hermes_cli.profiles.get_active_profile_name`, so it works in
         every execution context — interactive CLI, gateway, and
         kanban-spawned worker sessions alike — without depending on
         ``_cli_ref`` (which is ``None`` outside an interactive CLI run).
 
         Returns ``"default"`` for the default profile, the profile id when
-        running under ``~/.hermes/profiles/<name>``, or ``"custom"`` when
-        ``HERMES_HOME`` points somewhere unrecognized.
+        running under ``~/.aura-forge/profiles/<name>``, or ``"custom"`` when
+        ``AURA_FORGE_HOME`` points somewhere unrecognized.
         """
         try:
             from hermes_cli.profiles import get_active_profile_name
@@ -2144,7 +2144,7 @@ class PluginContext:
         handler_fn: Callable | None = None,
         description: str = "",
     ) -> PluginRegistration:
-        """Register a CLI subcommand (e.g. ``hermes honcho ...``).
+        """Register a CLI subcommand (e.g. ``auraforge honcho ...``).
 
         The *setup_fn* receives an argparse subparser and should add any
         arguments/sub-subparsers.  If *handler_fn* is provided it is set
@@ -2189,7 +2189,7 @@ class PluginContext:
         The handler signature is ``fn(raw_args: str) -> str | None``.
         It may also be an async callable — the gateway dispatch handles both.
 
-        Unlike ``register_cli_command()`` (which creates ``hermes <subcommand>``
+        Unlike ``register_cli_command()`` (which creates ``auraforge <subcommand>``
         terminal commands), this registers in-session slash commands that users
         invoke during a conversation.
 
@@ -2738,7 +2738,7 @@ class PluginContext:
         ``source`` must be an instance of
         :class:`agent.secret_sources.base.SecretSource`.  Registered
         sources run during ``load_hermes_dotenv()`` startup — after
-        ``~/.hermes/.env`` loads, before Aura Forge reads credentials — when
+        ``~/.aura-forge/.env`` loads, before Aura Forge reads credentials — when
         their ``secrets.<source.name>`` config section is enabled.  The
         orchestrator (``agent.secret_sources.registry.apply_all``) owns
         ordering, mapped-vs-bulk precedence, conflict warnings, and
@@ -3228,7 +3228,7 @@ class PluginContext:
         Plugins use this to declare their own auxiliary tasks without touching
         core files. After registration, the task:
 
-          - Appears in the ``hermes model → Configure auxiliary models`` picker
+          - Appears in the ``auraforge model → Configure auxiliary models`` picker
           - Has its provider/model/base_url/api_key bridged from config.yaml to
             ``AUXILIARY_<KEY_UPPER>_*`` env vars at gateway startup
           - Gets default routing fields (provider="auto", model="", etc.) merged
@@ -3605,7 +3605,7 @@ class PluginContext:
 
         The skill becomes resolvable as ``'<plugin_name>:<name>'`` via
         ``skill_view()``.  It does **not** enter the flat
-        ``~/.hermes/skills/`` tree and is **not** listed in the system
+        ``~/.aura-forge/skills/`` tree and is **not** listed in the system
         prompt's ``<available_skills>`` index — plugin skills are
         opt-in explicit loads only.
 
@@ -3822,7 +3822,7 @@ class PluginManager:
         # discovery time (see _register_deferred_platform_tools). Keyed by
         # plugin id: the already-imported package module, so materializing the
         # adapter later doesn't re-execute it, and the tool names it
-        # contributed, so `hermes plugins list` still attributes them once the
+        # contributed, so `auraforge plugins list` still attributes them once the
         # full plugin loads.
         self._predeclared_modules: Dict[str, types.ModuleType] = {}
         self._predeclared_tools: Dict[str, List[str]] = {}
@@ -4446,8 +4446,8 @@ class PluginManager:
             # feishu, teams, ...) are registered LAZILY. Their modules import
             # heavy, platform-specific SDKs at module level (lark_oapi,
             # microsoft_teams, discord.py, slack_bolt, ...), so eagerly loading
-            # all ~20 of them added several seconds to every `hermes`
-            # invocation — including plain `hermes chat`, which never touches a
+            # all ~20 of them added several seconds to every `auraforge`
+            # invocation — including plain `auraforge chat`, which never touches a
             # gateway platform. Instead we register a cheap deferred loader in
             # the platform_registry keyed on the platform name; the real module
             # is imported only when the gateway / cron / setup / send_message
@@ -4468,7 +4468,7 @@ class PluginManager:
             if not is_enabled:
                 loaded = LoadedPlugin(manifest=manifest, enabled=False)
                 loaded.error = (
-                    "not enabled in config (run `hermes plugins enable {}` to activate)"
+                    "not enabled in config (run `auraforge plugins enable {}` to activate)"
                     .format(lookup_key)
                 )
                 self._plugins[lookup_key] = loaded
@@ -4567,7 +4567,7 @@ class PluginManager:
         logger.debug("  bundled/platforms: %d manifest(s)", len(bundled_platforms))
         manifests.extend(bundled_platforms)
 
-        # 2. User plugins (~/.hermes/plugins/)
+        # 2. User plugins (~/.aura-forge/plugins/)
         user_dir = get_hermes_home() / "plugins"
         logger.debug("Scanning user plugins: %s", user_dir)
         user_manifests = self._scan_directory(user_dir, source="user")
@@ -4933,13 +4933,13 @@ class PluginManager:
         The platform adapter module is imported only when the gateway / cron /
         setup / send_message path first asks the ``platform_registry`` for this
         platform. Until then we record a lightweight ``LoadedPlugin`` so
-        ``hermes plugins list`` still shows the platform as available, and we
+        ``auraforge plugins list`` still shows the platform as available, and we
         hand the registry a loader that runs the normal eager-load path.
         """
         lookup_key = manifest.key or manifest.name
         platform_name = self._platform_name_from_manifest(manifest)
 
-        # Record an enabled placeholder for introspection (`hermes plugins
+        # Record an enabled placeholder for introspection (`auraforge plugins
         # list`). The real module load swaps in a fully-populated LoadedPlugin
         # (tools/hooks/commands attribution) when the loader fires.
         loaded = LoadedPlugin(manifest=manifest, enabled=True)
@@ -5024,7 +5024,7 @@ class PluginManager:
         agent calls like any other tool. Deferring the plugin defers both, so
         in a CLI/TUI process the client tools never register at all:
         ``resolve_toolset()`` returns ``[]``, the toolset is missing from the
-        ``hermes tools`` checklist, and even an explicit ``platform_toolsets``
+        ``auraforge tools`` checklist, and even an explicit ``platform_toolsets``
         entry is dropped because the key is unknown. The same tools work in
         gateway/web processes only because those materialize every platform at
         startup (issue #78050).
@@ -5101,7 +5101,7 @@ class PluginManager:
         except Exception as exc:
             # A register_tools() that registered some tools and THEN raised
             # leaves those tools live in the registry. Credit them, or
-            # `hermes plugins list` under-reports what the process is actually
+            # `auraforge plugins list` under-reports what the process is actually
             # carrying — and _load_plugin's own diff would miss them later
             # too, since they are already in its "before" snapshot.
             partial = [t for t in self._plugin_tool_names if t not in before]
@@ -5293,7 +5293,7 @@ class PluginManager:
                 ]
                 # Tools this plugin already contributed at discovery time were
                 # registered before ``registration_start``, so the ledger slice
-                # above cannot see them and `hermes plugins list` would
+                # above cannot see them and `auraforge plugins list` would
                 # under-report once the deferred adapter materializes (#78050).
                 # Credit them back to the plugin that actually registered them.
                 _predeclared = [
@@ -6144,7 +6144,7 @@ class PluginManager:
 _plugin_manager: Optional[PluginManager] = None
 
 # Keyed cache: resolved Aura Forge home -> PluginManager. Aura Forge supports
-# multiple profiles via different HERMES_HOME directories, and a single
+# multiple profiles via different AURA_FORGE_HOME directories, and a single
 # long-lived process (gateway multiplexer, test session, embedder) can
 # switch between them via ``set_hermes_home_override()`` — which is a
 # ContextVar and deliberately does NOT touch os.environ (see
@@ -6212,7 +6212,7 @@ def get_plugin_manager() -> PluginManager:
 
     Managers are cached per resolved home so repeated calls within the
     same profile reuse discovery state (normal performance), while a
-    profile switch — via ``HERMES_HOME`` or the context-local
+    profile switch — via ``AURA_FORGE_HOME`` or the context-local
     ``set_hermes_home_override()`` — gets its own manager with its own
     plugin submodules, instead of silently inheriting another profile's
     context engine or stale relative-import state.
@@ -7140,7 +7140,7 @@ def get_plugin_subscriptions() -> Dict[str, List[Callable]]:
 def get_plugin_toolsets() -> List[tuple]:
     """Return plugin toolsets as ``(key, label, description)`` tuples.
 
-    Used by the ``hermes tools`` TUI so plugin-provided toolsets appear
+    Used by the ``auraforge tools`` TUI so plugin-provided toolsets appear
     alongside the built-in ones and can be toggled on/off per platform.
     """
     manager = get_plugin_manager()

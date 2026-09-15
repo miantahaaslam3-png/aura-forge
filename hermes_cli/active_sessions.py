@@ -392,7 +392,7 @@ class ActiveSessionLease:
     enabled: bool = True
     released: bool = False
     # Registry paths pinned at acquisition time. A lease acquired under the
-    # root ``HERMES_HOME`` must release against the same registry even when
+    # root ``AURA_FORGE_HOME`` must release against the same registry even when
     # ``release()`` runs inside a profile home override (native multiplex
     # routes turns under ``_profile_runtime_scope``), otherwise the root
     # entry survives until process exit and the session cap fills with
@@ -519,7 +519,7 @@ def try_acquire_active_session(
 
 def release_active_session(lease: ActiveSessionLease) -> None:
     # Prefer the registry the lease was acquired against: the caller may be
-    # running under a profile HERMES_HOME override (#85431).
+    # running under a profile AURA_FORGE_HOME override (#85431).
     state_path, lock_path = _lease_paths(lease)
     with _FileLock(lock_path):
         if lease.released:
@@ -612,7 +612,7 @@ def release_orphaned_leases(live_lease_ids: set[str]) -> int:
     """Drop this process's registry entries that no live session owns.
 
     ``_prune_dead`` only reclaims leases whose owning process died. A server
-    that runs for days (``hermes dashboard`` / ``serve``) never trips that
+    that runs for days (``auraforge dashboard`` / ``serve``) never trips that
     check, so a lease whose session skipped teardown is held until restart.
     The owning process is the only authority on which of its own leases are
     real, so it drops the rest itself — exact, with no heartbeat write on the

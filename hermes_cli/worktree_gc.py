@@ -1,7 +1,7 @@
-"""On-demand worktree + branch reclaim (``hermes worktree`` / ``/worktree prune``).
+"""On-demand worktree + branch reclaim (``auraforge worktree`` / ``/worktree prune``).
 
 The startup pruner in ``cli._prune_stale_worktrees`` is deliberately
-conservative and silent: it runs before the banner on every ``hermes -w``
+conservative and silent: it runs before the banner on every ``auraforge -w``
 launch, so it only reaps clean, fully-merged scratch trees past an age tier
 and preserves everything else. That policy is correct for an unattended
 startup path — but it means real installs accumulate two kinds of debris the
@@ -25,7 +25,7 @@ safe. Invariants shared with the startup pruner (never violated here either):
 - live-locked trees (owning pid alive) are never touched;
 - a branch is deleted only after its worktree removal succeeded — a failed
   removal must not orphan reachable commits;
-- untracked-only dirt is ARCHIVED to ``~/.hermes/archive/worktree-prune/``
+- untracked-only dirt is ARCHIVED to ``~/.aura-forge/archive/worktree-prune/``
   before its tree is reaped, never destroyed.
 
 Classification primitives are imported from ``cli`` so the two paths can

@@ -1,7 +1,7 @@
 """Image-authored deployment provenance for immutable Aura Forge runtimes.
 
 The published image bakes ``/etc/hermes/image-provenance.json`` outside both
-``$HERMES_HOME`` and the mutable checkout.  A bind-mounted checkout (including
+``$AURA_FORGE_HOME`` and the mutable checkout.  A bind-mounted checkout (including
 ``.git``) therefore cannot hide the build fact, and environment or config
 values cannot forge it.
 

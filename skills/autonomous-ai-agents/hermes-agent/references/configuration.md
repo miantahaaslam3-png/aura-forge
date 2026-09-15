@@ -1,7 +1,7 @@
 # Configuration, Toolsets & Voice
 
-Edit with `hermes config edit` or `hermes config set section.key value`.
-Full reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+Edit with `auraforge config edit` or `auraforge config set section.key value`.
+Full reference: https://auraforge-agent.nousresearch.com/docs/user-guide/configuration
 
 ### Config Sections (most-used keys)
 
@@ -21,11 +21,11 @@ Full reference: https://hermes-agent.nousresearch.com/docs/user-guide/configurat
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 | `curator` | `enabled`, `consolidate` (false, opt-in aux-model consolidation), `interval_hours`, `stale_after_days` |
 
-`hermes config check` reports sections missing from an older config.
+`auraforge config check` reports sections missing from an older config.
 
 ### Toolsets
 
-Enable/disable via `hermes tools` (interactive) or `hermes tools enable/disable NAME`.
+Enable/disable via `auraforge tools` (interactive) or `auraforge tools enable/disable NAME`.
 Full enumeration: `TOOLSETS` dict in `toolsets.py` (`_HERMES_CORE_TOOLS` is the default bundle most platforms inherit).
 
 | Toolset | What it provides |

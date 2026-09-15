@@ -3,7 +3,7 @@
 Skills Hub CLI — Unified interface for the Aura Forge Skills Hub.
 
 Powers both:
-  - `hermes skills <subcommand>` (CLI argparse entry point)
+  - `auraforge skills <subcommand>` (CLI argparse entry point)
   - `/skills <subcommand>` (slash command in the interactive chat)
 
 All logic lives in shared do_* functions. The CLI entry point and slash command
@@ -73,7 +73,7 @@ def _resolve_short_name(name: str, sources, console: Console) -> str:
         table.add_column("Source", style="dim")
         table.add_column("Trust", style="dim")
         # overflow="fold" keeps the full slug visible (wraps instead of ellipsis-truncating)
-        # so users can copy it for `hermes skills install`.
+        # so users can copy it for `auraforge skills install`.
         table.add_column("Identifier", style="bold cyan", overflow="fold", no_wrap=False)
         for r in exact:
             trust_style = {"builtin": "bright_cyan", "trusted": "green", "community": "yellow"}.get(r.trust_level, "dim")
@@ -163,7 +163,7 @@ def _resolve_source_meta_and_bundle(identifier: str, sources):
 
     Meta and bundle must come from the same adapter. Keeping catalog
     metadata from skills.sh while taking a ClawHub zip of a same-named
-    skill is how ``hermes skills inspect owner/repo/skills/foo`` showed
+    skill is how ``auraforge skills inspect owner/repo/skills/foo`` showed
     the requested identifier and the wrong SKILL.md.
     """
     first_meta = None
@@ -219,7 +219,7 @@ def _is_valid_installed_skill_name(name: str) -> bool:
 
 
 def _existing_categories() -> List[str]:
-    """Return sorted subdirectory names under ``~/.hermes/skills/`` that look
+    """Return sorted subdirectory names under ``~/.aura-forge/skills/`` that look
     like category buckets (contain at least one ``SKILL.md`` somewhere below).
 
     Used to suggest reusable categories when interactively installing from a
@@ -277,7 +277,7 @@ def _prompt_for_category(c: Console, existing: List[str]) -> str:
         c.print(f"[dim]Existing: {', '.join(existing)}[/]")
     else:
         c.print(
-            "[bold]Category[/] [dim](optional — press Enter to install flat at ~/.hermes/skills/<name>/)[/]"
+            "[bold]Category[/] [dim](optional — press Enter to install flat at ~/.aura-forge/skills/<name>/)[/]"
         )
     from hermes_cli.cli_output import line_input
 
@@ -342,7 +342,7 @@ def do_search(query: str, source: str = "all", limit: int = 10,
     # overflow="fold" keeps the full slug visible (wraps instead of
     # ellipsis-truncating). Browse.sh slugs end in a `-XXXXXX` hash that
     # is part of the actual identifier — truncating it makes copy-paste
-    # into `hermes skills install` fail.
+    # into `auraforge skills install` fail.
     table.add_column("Identifier", style="dim", overflow="fold", no_wrap=False)
 
     for r in results:
@@ -484,7 +484,7 @@ def do_browse(page: int = 1, page_size: int = 20, source: str = "all",
     table.add_column("Description", max_width=44)
     table.add_column("Source", style="dim", width=12)
     table.add_column("Trust", width=10)
-    # The identifier is what you pass to `hermes skills install`. Browse used
+    # The identifier is what you pass to `auraforge skills install`. Browse used
     # to omit it entirely, so users couldn't act on what they saw without a
     # second `search`. overflow="fold" keeps long slugs copy-pasteable.
     table.add_column("Identifier", style="dim", overflow="fold", no_wrap=False)
@@ -752,7 +752,7 @@ def do_install(identifier: str, category: str = "", force: bool = False,
         if bundle.source == "official":
             c.print(Panel(
                 "[bold bright_cyan]This is an official optional skill maintained by Nous Research.[/]\n\n"
-                "It ships with hermes-agent but is not activated by default.\n"
+                "It ships with aura-forge-agent but is not activated by default.\n"
                 "Installing will copy it to your skills directory where the agent can use it.\n\n"
                 f"Files will be at: [cyan]{display_hermes_home()}/skills/{category + '/' if category else ''}{bundle.name}/[/]",
                 title="Official Skill",
@@ -992,8 +992,8 @@ def do_list(source_filter: str = "all",
         enabled_only: If True, hide disabled skills from the output.
 
     Enabled/disabled state is resolved against the currently active profile's
-    config — ``hermes -p <profile> skills list`` reads that profile's
-    ``skills.disabled`` list because ``-p`` swaps ``HERMES_HOME`` at process
+    config — ``auraforge -p <profile> skills list`` reads that profile's
+    ``skills.disabled`` list because ``-p`` swaps ``AURA_FORGE_HOME`` at process
     start.  No explicit profile flag needed here.
     """
     from tools.skills_hub import HubLockFile, ensure_hub_dirs
@@ -1113,7 +1113,7 @@ def do_update(name: Optional[str] = None, console: Optional[Console] = None,
     destroy the user's work (``do_install(force=True)`` rmtree-replaces the
     directory). Those are skipped by default and only overwritten when
     ``force=True``. Mirrors the user-modified protection bundled skills
-    already get from ``hermes update`` (ported from
+    already get from ``auraforge update`` (ported from
     paperclipai/paperclip#10978's explicit-merge-mode rule: destructive
     replacement must be an explicit caller choice, never a rerun default).
     """
@@ -1301,7 +1301,7 @@ def do_reset(name: str, restore: bool = False,
 
 def do_list_modified(console: Optional[Console] = None,
                      as_json: bool = False) -> None:
-    """List bundled skills the user has edited (which `hermes update` keeps)."""
+    """List bundled skills the user has edited (which `auraforge update` keeps)."""
     from tools.skills_sync import list_user_modified_bundled_skills
 
     c = console or _console
@@ -1318,7 +1318,7 @@ def do_list_modified(console: Optional[Console] = None,
         return
 
     c.print(f"\n[bold]{len(modified)} user-modified bundled skill(s)[/] "
-            "[dim](kept as-is by `hermes update`):[/]")
+            "[dim](kept as-is by `auraforge update`):[/]")
     for entry in modified:
         c.print(f"  [yellow]~[/] {entry['name']}")
     c.print()
@@ -1442,7 +1442,7 @@ def do_opt_in(sync: bool = False,
     """Remove the opt-out marker so bundled-skill seeding resumes.
 
     With ``sync``, immediately re-seed bundled skills instead of waiting for
-    the next ``hermes update``.
+    the next ``auraforge update``.
     """
     from tools.skills_sync import set_bundled_skills_opt_out, sync_skills
 
@@ -1811,7 +1811,7 @@ def do_snapshot_import(input_path: str, force: bool = False,
 # ---------------------------------------------------------------------------
 
 def skills_command(args) -> None:
-    """Router for `hermes skills <subcommand>` — called from hermes_cli/main.py."""
+    """Router for `auraforge skills <subcommand>` — called from hermes_cli/main.py."""
     action = getattr(args, "skills_action", None)
 
     if action == "browse":

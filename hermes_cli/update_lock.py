@@ -2,7 +2,7 @@
 
 Three different surfaces can start an update of the same install tree:
 
-* ``hermes update`` from a terminal,
+* ``auraforge update`` from a terminal,
 * the dashboard's Update button (``POST /api/hermes/update`` →
   ``_spawn_hermes_action(["update"])``, detached),
 * the desktop's Update button, which hands off to the Tauri
@@ -13,7 +13,7 @@ Until now only the Tauri updater published an "update in progress" marker
 (``UpdateMarkerGuard`` in ``apps/bootstrap-installer/src-tauri/src/update.rs``),
 and only the Electron desktop consumed it (``electron/update-marker.ts``, to
 gate local backend startup). Nothing stopped two *updaters* from running at
-once — so a dashboard-spawned ``hermes update`` and an installer-driven
+once — so a dashboard-spawned ``auraforge update`` and an installer-driven
 ``git checkout`` could mutate the same checkout concurrently, rewriting source
 under a live interpreter and leaving the tree half-updated.
 
@@ -21,7 +21,7 @@ This module makes that same marker the single lock for **all** update
 entrypoints instead of adding a fourth mechanism. Format and location are
 unchanged and remain byte-compatible with the Rust and Electron readers:
 
-    <HERMES_HOME>/.hermes-update-in-progress   body: "<pid>\\n<started_at_unix>"
+    <AURA_FORGE_HOME>/.hermes-update-in-progress   body: "<pid>\\n<started_at_unix>"
 
 A marker only counts as a live update when its pid is alive AND it is younger
 than :data:`UPDATE_MARKER_MAX_AGE_MS` — mirroring ``readLiveUpdateMarker`` so a
@@ -29,7 +29,7 @@ crashed updater self-heals instead of wedging every future update. A stale
 marker is removed on read by whoever notices it first.
 
 One layering wrinkle: the Tauri updater holds this marker for its WHOLE run and
-then spawns ``hermes update`` as a child stage. Without a handoff the child
+then spawns ``auraforge update`` as a child stage. Without a handoff the child
 sees its own parent's live marker and refuses — the GUI update deadlocks
 against itself on every attempt ("Aura Forge is still running", retry forever).
 Two mechanisms recognize the orchestrating parent, and either suffices:
@@ -67,7 +67,7 @@ UPDATE_MARKER_MAX_AGE_SECONDS = 20 * 60
 MARKER_NAME = ".hermes-update-in-progress"
 
 # Set by an orchestrating updater (the Tauri `hermes-setup --update` flow) to
-# its own pid before spawning `hermes update` as a child stage. The parent
+# its own pid before spawning `auraforge update` as a child stage. The parent
 # holds the marker for its whole run, so without this the child refuses its
 # own parent's lock and the GUI update can never complete. See update_child_env
 # in apps/bootstrap-installer/src-tauri/src/update.rs — keep the name in sync.
@@ -86,7 +86,7 @@ def update_marker_path() -> Path:
     """Path of the shared update marker.
 
     Uses the *process* Aura Forge home (never the context-local profile override):
-    the Rust updater resolves ``$HERMES_HOME`` or the platform default, and the
+    the Rust updater resolves ``$AURA_FORGE_HOME`` or the platform default, and the
     desktop pins that same value into the updater's env. A profile-scoped path
     here would put the lock somewhere the other two owners never look.
     """
@@ -140,7 +140,7 @@ def _handoff_pid() -> int | None:
 def _is_ancestor_pid(pid: int) -> bool:
     """True when ``pid`` is a live ancestor (parent chain) of this process.
 
-    The orchestrating updater spawns ``hermes update`` as a (grand)child, so a
+    The orchestrating updater spawns ``auraforge update`` as a (grand)child, so a
     live marker owned by one of our ancestors can only be the claim we are
     already running under — an unrelated concurrent updater is never in our
     parent chain. This heals the fleet of staged ``hermes-setup`` binaries
@@ -237,7 +237,7 @@ class UpdateLock:
 
         A live holder whose pid matches :data:`HANDOFF_PID_ENV` — or is a
         process ancestor of ours — is our own orchestrating parent (the Tauri
-        updater spawning `hermes update` as a stage): we run under ITS claim
+        updater spawning `auraforge update` as a stage): we run under ITS claim
         rather than refusing or re-writing the marker, and ``release`` leaves
         the parent's marker untouched. The ancestry path exists because staged
         updaters older than the HANDOFF_PID_ENV export never send the env var.

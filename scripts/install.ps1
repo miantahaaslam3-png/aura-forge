@@ -3203,7 +3203,7 @@ function Install-HermesCommandLaunchers {
 }
 
 function Set-PathVariable {
-    Write-Info "Setting up hermes command..."
+    Write-Info "Setting up Aura Forge command..."
     
     if ($NoVenv) {
         $hermesBin = "$InstallDir"
@@ -3236,7 +3236,7 @@ function Set-PathVariable {
         if ($cleaned.Count -ne $items.Count) {
             $currentPath = $cleaned -join ";"
             [Environment]::SetEnvironmentVariable("Path", $currentPath, "User")
-            Write-Info "Removed legacy launcher entries from user PATH (kept hermes via $hermesBin)"
+            Write-Info "Removed legacy launcher entries from user PATH (kept Aura Forge via $hermesBin)"
         }
     }
     
@@ -3264,7 +3264,7 @@ function Set-PathVariable {
     # Update current session
     $env:Path = "$hermesBin;$env:Path"
     
-    Write-Success "hermes command ready"
+    Write-Success "Aura Forge command ready"
 }
 
 function Write-BootstrapMarker {

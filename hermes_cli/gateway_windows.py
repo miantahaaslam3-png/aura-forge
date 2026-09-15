@@ -90,12 +90,12 @@ def _assert_windows() -> None:
 
 
 def _preserve_hermes_home_path(path: str | Path) -> str:
-    """Render Hermes-owned paths under the configured HERMES_HOME spelling.
+    """Render Hermes-owned paths under the configured AURA_FORGE_HOME spelling.
 
     Windows installs may keep ``%LOCALAPPDATA%\\hermes`` as a symlink/junction to
     another drive. Runtime state should still identify itself by the configured
     AppData path, so launcher files must not bake in the resolved target when a
-    path lives under HERMES_HOME.
+    path lives under AURA_FORGE_HOME.
     """
     candidate = Path(path)
     try:
@@ -316,7 +316,7 @@ def get_task_script_path() -> Path:
     """The generated ``gateway.cmd`` wrapper kept beside the VBS launcher.
 
     Lives under ``%LOCALAPPDATA%\\hermes\\gateway-service\\<task_name>.cmd``
-    (or ``<HERMES_HOME>/gateway-service/<task_name>.cmd`` so per-profile
+    (or ``<AURA_FORGE_HOME>/gateway-service/<task_name>.cmd`` so per-profile
     Aura Forge installs stay self-contained).
     """
     _assert_windows()
@@ -363,10 +363,10 @@ def _legacy_startup_entry_path() -> Path:
 def _stable_gateway_working_dir(project_root: Path) -> str:
     """Return a stable cwd for detached/startup gateway runs.
 
-    Mirror the POSIX service invariant: anchor at ``HERMES_HOME`` whenever it
+    Mirror the POSIX service invariant: anchor at ``AURA_FORGE_HOME`` whenever it
     exists so Scheduled Task / Startup launches do not fail at the ``cd`` step
     after a transient checkout or worktree is moved away. Fall back to the
-    source checkout only if ``HERMES_HOME`` cannot be used yet. Preserve the
+    source checkout only if ``AURA_FORGE_HOME`` cannot be used yet. Preserve the
     configured spelling instead of resolving symlinks so AppData installs backed
     by a junction/symlink still identify themselves as AppData.
     """
@@ -397,14 +397,14 @@ def _build_gateway_cmd_script(
 
     The script:
       - cd's into a stable working directory
-      - exports HERMES_HOME, PYTHONIOENCODING, VIRTUAL_ENV
+      - exports AURA_FORGE_HOME, PYTHONIOENCODING, VIRTUAL_ENV
       - invokes ``python -m hermes_cli.main [--profile X] gateway run``
 
     The .cmd is a compatibility/manual-run artifact: service persistence
     (Scheduled Task, Startup folder) routes through the ``.vbs`` launcher,
     which runs this same command line hidden (window style 0).  Run by hand
     in a real terminal, the console interpreter keeps the gateway attached
-    to that terminal like a normal foreground ``hermes gateway run``.
+    to that terminal like a normal foreground ``auraforge gateway run``.
 
     We intentionally do NOT inline PATH overrides here — cmd.exe inherits
     the per-user PATH the Scheduled Task was created with, and forcibly
@@ -412,7 +412,7 @@ def _build_gateway_cmd_script(
     """
     lines = ["@echo off", f"rem {_TASK_DESCRIPTION}"]
     lines.append(f"cd /d {_quote_cmd_script_arg(working_dir)}")
-    lines.append(f'set "HERMES_HOME={hermes_home}"')
+    lines.append(f'set "AURA_FORGE_HOME={hermes_home}"')
     lines.append('set "PYTHONIOENCODING=utf-8"')
     lines.append('set "HERMES_GATEWAY_DETACHED=1"')
     python_exe_path, venv_dir, extra_pythonpath = _resolve_detached_python(python_path)
@@ -497,7 +497,7 @@ def _build_gateway_vbs_script(
         "Dim sh, env, existing_pp",
         'Set sh = CreateObject("WScript.Shell")',
         'Set env = sh.Environment("PROCESS")',
-        f"env.Item({_quote_vbs_string('HERMES_HOME')}) = {_quote_vbs_string(hermes_home)}",
+        f"env.Item({_quote_vbs_string('AURA_FORGE_HOME')}) = {_quote_vbs_string(hermes_home)}",
         f"env.Item({_quote_vbs_string('PYTHONIOENCODING')}) = {_quote_vbs_string('utf-8')}",
         f"env.Item({_quote_vbs_string('HERMES_GATEWAY_DETACHED')}) = {_quote_vbs_string('1')}",
         f"env.Item({_quote_vbs_string('VIRTUAL_ENV')}) = {_quote_vbs_string(_preserve_hermes_home_path(venv_dir))}",
@@ -811,7 +811,7 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
     argv.extend(["gateway", "run"])
 
     env_overlay = {
-        "HERMES_HOME": hermes_home,
+        "AURA_FORGE_HOME": hermes_home,
         "PYTHONIOENCODING": "utf-8",
         "HERMES_GATEWAY_DETACHED": "1",
         "VIRTUAL_ENV": _preserve_hermes_home_path(venv_dir),
@@ -838,7 +838,7 @@ def windowless_gateway_restart_spec(
     pythonw.exe rewrite here produced a console-less gateway whose every
     console-subsystem child allocated a visible conhost).  This helper now
     only normalizes the interpreter via ``_resolve_detached_python`` and
-    supplies the stable cwd + env overlay (HERMES_HOME, VIRTUAL_ENV,
+    supplies the stable cwd + env overlay (AURA_FORGE_HOME, VIRTUAL_ENV,
     PYTHONPATH) so the respawn doesn't depend on the watcher's transient
     working directory.
 
@@ -884,7 +884,7 @@ def windowless_gateway_restart_spec(
         "VIRTUAL_ENV": str(venv_dir),
     }
     if hermes_home:
-        env_overlay["HERMES_HOME"] = hermes_home
+        env_overlay["AURA_FORGE_HOME"] = hermes_home
     _prepend_pythonpath(
         env_overlay,
         [project_root, *extra_pythonpath] if extra_pythonpath else [project_root],
@@ -1029,7 +1029,7 @@ def _install_startup_fallback(script_path: Path, start_now: bool, detail: str) -
     print(f"✓ Installed Windows login item: {entry}")
     print(f"  Task script: {script_path}")
 
-    # Re-running `hermes -p <profile> gateway install` must be safe.
+    # Re-running `auraforge -p <profile> gateway install` must be safe.
     # Startup-folder fallback only installs login persistence. Starting is
     # controlled by the pre-UAC start_now answer so all user decisions happen
     # before any elevation prompt.
@@ -1151,7 +1151,7 @@ def install(
         print(f"✓ Installed Windows login item: {entry}")
         print(f"  Task script: {script_path}")
 
-        # Re-running `hermes -p <profile> gateway install` must be safe.
+        # Re-running `auraforge -p <profile> gateway install` must be safe.
         # Startup-folder fallback only installs login persistence. Starting is
         # controlled by the pre-UAC start_now answer so all user decisions happen
         # before any elevation prompt.
@@ -1706,5 +1706,5 @@ def restart() -> None:
     if not _wait_for_gateway_ready(timeout_s=15.0):
         raise RuntimeError(
             "Gateway restart did not produce a running gateway process. "
-            "Check logs/gateway.log and run `hermes gateway status`."
+            "Check logs/gateway.log and run `auraforge gateway status`."
         )

@@ -1,4 +1,4 @@
-"""``hermes mcp`` subcommand parser.
+"""``auraforge mcp`` subcommand parser.
 
 Extracted from ``hermes_cli/main.py:main()`` (god-file Phase 2 follow-up).
 Handler injected to avoid importing ``main``.
@@ -47,7 +47,7 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
     # subparser's args.command attribute, which the dispatcher reads to
     # route to cmd_mcp.  Without an explicit dest, argparse derives
     # dest="command" from the flag name and sets it to None when the
-    # flag is omitted, causing `hermes mcp add ...` to fall through to
+    # flag is omitted, causing `auraforge mcp add ...` to fall through to
     # interactive chat.
     mcp_add_p.add_argument(
         "--command", dest="mcp_command", help="Stdio command (e.g. npx)"
@@ -107,7 +107,7 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
     # ── Catalog (Nous-approved MCPs shipped with the repo) ─────────────────
     mcp_sub.add_parser(
         "picker",
-        help="Interactive catalog picker (also the default for `hermes mcp`)",
+        help="Interactive catalog picker (also the default for `auraforge mcp`)",
     )
     mcp_sub.add_parser(
         "catalog",
@@ -115,7 +115,7 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
     )
     mcp_install_p = mcp_sub.add_parser(
         "install",
-        help="Install a catalog MCP by name (e.g. `hermes mcp install n8n`)",
+        help="Install a catalog MCP by name (e.g. `auraforge mcp install n8n`)",
     )
     mcp_install_p.add_argument(
         "identifier",

@@ -1,4 +1,4 @@
-"""``hermes acp`` subcommand parser.
+"""``auraforge acp`` subcommand parser.
 
 Extracted from ``hermes_cli/main.py:main()`` (god-file Phase 2 follow-up).
 Handler injected to avoid importing ``main``.
@@ -38,7 +38,7 @@ def build_acp_parser(subparsers, *, cmd_acp: Callable) -> None:
     acp_parser.add_argument(
         "--setup-browser",
         action="store_true",
-        help="Install agent-browser + Playwright Chromium into ~/.hermes/node/ "
+        help="Install agent-browser + Playwright Chromium into ~/.aura-forge/node/ "
              "for browser tool support (idempotent).",
     )
     acp_parser.add_argument(

@@ -36,7 +36,7 @@ def redact_key(key: str) -> str:
     """Redact an API key for display.
 
     Thin wrapper over :func:`agent.redact.mask_secret`. Preserves the
-    "(not set)" placeholder in dim color to match ``hermes config``'s
+    "(not set)" placeholder in dim color to match ``auraforge config``'s
     output (previously this variant was missing the DIM color —
     consolidated via PR that also introduced ``mask_secret``).
     """
@@ -113,9 +113,9 @@ from hermes_constants import is_termux as _is_termux
 
 
 def _estop_status_line():
-    """One-line pause banner for `hermes status`, or None when not paused.
+    """One-line pause banner for `auraforge status`, or None when not paused.
 
-    Cheap: a single stat on $HERMES_HOME/ESTOP via agent.estop.
+    Cheap: a single stat on $AURA_FORGE_HOME/ESTOP via agent.estop.
     """
     try:
         from agent.estop import get_state
@@ -126,7 +126,7 @@ def _estop_status_line():
         return None
     reason = state.get("reason")
     suffix = f" — reason: {reason}" if reason else ""
-    return f"⏸️  PAUSED (global emergency stop{suffix}; `hermes resume` to lift)"
+    return f"⏸️  PAUSED (global emergency stop{suffix}; `auraforge resume` to lift)"
 
 
 def show_status(args):
@@ -231,7 +231,7 @@ def show_status(args):
             get_qwen_auth_status,
             get_minimax_oauth_auth_status,
         )
-        # Read-only display: use the refresh-free snapshot so `hermes status`
+        # Read-only display: use the refresh-free snapshot so `auraforge status`
         # never performs an OAuth refresh or burns a single-use refresh token.
         nous_status = get_nous_auth_status_local()
         codex_status = get_codex_auth_status()
@@ -299,7 +299,7 @@ def show_status(args):
     codex_logged_in = bool(codex_status.get("logged_in"))
     print(
         f"  {'OpenAI Codex':<12}  {check_mark(codex_logged_in)} "
-        f"{'logged in' if codex_logged_in else 'not logged in (run: hermes model)'}"
+        f"{'logged in' if codex_logged_in else 'not logged in (run: auraforge model)'}"
     )
     codex_auth_file = codex_status.get("auth_store")
     if codex_auth_file:
@@ -328,7 +328,7 @@ def show_status(args):
     minimax_logged_in = bool(minimax_status.get("logged_in"))
     print(
         f"  {'MiniMax OAuth':<12}  {check_mark(minimax_logged_in)} "
-        f"{'logged in' if minimax_logged_in else 'not logged in (run: hermes auth add minimax-oauth)'}"
+        f"{'logged in' if minimax_logged_in else 'not logged in (run: auraforge auth add minimax-oauth)'}"
     )
     minimax_region = minimax_status.get("region")
     if minimax_logged_in and minimax_region:
@@ -350,7 +350,7 @@ def show_status(args):
     xai_oauth_logged_in = bool(xai_oauth_status.get("logged_in"))
     print(
         f"  {'xAI OAuth':<12}  {check_mark(xai_oauth_logged_in)} "
-        f"{'logged in' if xai_oauth_logged_in else 'not logged in (run: hermes auth add xai-oauth)'}"
+        f"{'logged in' if xai_oauth_logged_in else 'not logged in (run: auraforge auth add xai-oauth)'}"
     )
     xai_auth_file = xai_oauth_status.get("auth_store")
     if xai_auth_file:
@@ -418,7 +418,7 @@ def show_status(args):
             if key_val:
                 break
         configured = bool(key_val)
-        label = "configured" if configured else "not configured (run: hermes model)"
+        label = "configured" if configured else "not configured (run: auraforge model)"
         print(f"  {pname:<16} {check_mark(configured)} {label}")
 
     # LM Studio reachability — only probe when it's the active provider so
@@ -470,7 +470,7 @@ def show_status(args):
             persist_enabled = persist.lower() in {"1", "true", "yes", "on"}
         auth_status = describe_vercel_auth()
         sdk_ok = importlib.util.find_spec("vercel") is not None
-        sdk_label = "installed" if sdk_ok else "missing (install: pip install 'hermes-agent[vercel]')"
+        sdk_label = "installed" if sdk_ok else "missing (install: pip install 'aura-forge-agent[vercel]')"
         print(f"  Runtime:      {runtime}")
         print(f"  SDK:          {check_mark(sdk_ok)} {sdk_label}")
         print(f"  Auth:         {check_mark(auth_status.ok)} {auth_status.label}")
@@ -480,7 +480,7 @@ def show_status(args):
         print("  Processes:    live processes do not survive cleanup, snapshots, or sandbox recreation")
     else:
         # Plugin-registered terminal backends: show availability via the
-        # provider's doctor rows (fail-soft — never break `hermes status`).
+        # provider's doctor rows (fail-soft — never break `auraforge status`).
         try:
             from hermes_cli.plugins import discover_plugins
 
@@ -734,6 +734,6 @@ def show_status(args):
 
     print()
     print(color("─" * 60, Colors.DIM))
-    print(color("  Run 'hermes doctor' for detailed diagnostics", Colors.DIM))
-    print(color("  Run 'hermes setup' to configure", Colors.DIM))
+    print(color("  Run 'auraforge doctor' for detailed diagnostics", Colors.DIM))
+    print(color("  Run 'auraforge setup' to configure", Colors.DIM))
     print()

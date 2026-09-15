@@ -1,4 +1,4 @@
-"""Runtime-backed validation behind ``hermes plugins doctor``.
+"""Runtime-backed validation behind ``auraforge plugins doctor``.
 
 The Doctor originated in #46456 / contributor PR #46457 by 峯岸 亮
 (@zapabob).  This core command keeps that contribution's manifest/import/
@@ -37,7 +37,7 @@ def _doctor_runtime(plugin_path: Path):
     """Load one plugin through the real runtime and restore global state.
 
     This is deliberately private Doctor machinery, not a standalone plugin
-    test framework. Registration code executes under a temporary HERMES_HOME
+    test framework. Registration code executes under a temporary AURA_FORGE_HOME
     with outbound socket connects blocked.
     """
     temporary_home = tempfile.TemporaryDirectory(prefix="hermes-plugin-doctor-")
@@ -58,7 +58,7 @@ def _doctor_runtime(plugin_path: Path):
         patch.dict(
             os.environ,
             {
-                "HERMES_HOME": str(home),
+                "AURA_FORGE_HOME": str(home),
                 "HERMES_BUNDLED_PLUGINS": str(bundled),
                 "HERMES_ENABLE_PROJECT_PLUGINS": "0",
             },

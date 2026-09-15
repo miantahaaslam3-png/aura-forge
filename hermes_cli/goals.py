@@ -700,7 +700,7 @@ def _bootstrap_session_db(home: str, done: threading.Event) -> None:
         # caller's scoped home, so the constructed SessionDB must point at
         # that home's state.db too. Without the override, a multiplexed
         # worker thread resolves the process env (the default profile's
-        # HERMES_HOME). It then caches the wrong profile's DB under this
+        # AURA_FORGE_HOME). It then caches the wrong profile's DB under this
         # profile's key.
         token = set_hermes_home_override(home)
         try:
@@ -718,7 +718,7 @@ def _bootstrap_session_db(home: str, done: threading.Event) -> None:
 
 
 def _get_session_db() -> Optional[Any]:
-    """Return a SessionDB instance for the current HERMES_HOME.
+    """Return a SessionDB instance for the current AURA_FORGE_HOME.
 
     SessionDB has no built-in singleton, but opening a new connection per
     /goal call would thrash the file. We cache one instance per
@@ -2032,7 +2032,7 @@ class GoalManager:
                 "message": (
                     f"⏸ Goal paused — judge API returned errors "
                     f"({state.consecutive_transport_failures} turns). "
-                    "Check the goal_judge provider/key in ~/.hermes/config.yaml:\n"
+                    "Check the goal_judge provider/key in ~/.aura-forge/config.yaml:\n"
                     "  auxiliary:\n"
                     "    goal_judge:\n"
                     "      provider: deepseek\n"
@@ -2062,7 +2062,7 @@ class GoalManager:
                 "message": (
                     f"⏸ Goal paused — the judge model ({state.consecutive_parse_failures} turns) "
                     "isn't returning the required JSON verdict. Route the judge to a stricter "
-                    "model in ~/.hermes/config.yaml:\n"
+                    "model in ~/.aura-forge/config.yaml:\n"
                     "  auxiliary:\n"
                     "    goal_judge:\n"
                     "      provider: openrouter\n"
@@ -2179,7 +2179,7 @@ def run_kanban_goal_loop(
     """Drive a kanban worker through a Ralph-style goal loop.
 
     The dispatcher spawns a goal-mode worker exactly like a normal worker
-    (``hermes -p <profile> chat -q "work kanban task <id>"``). The worker's
+    (``auraforge -p <profile> chat -q "work kanban task <id>"``). The worker's
     first turn has already run by the time this is called; ``first_response``
     is that turn's reply. From here we:
 

@@ -1,4 +1,4 @@
-"""``hermes slack`` subcommand parser.
+"""``auraforge slack`` subcommand parser.
 
 Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
@@ -39,7 +39,7 @@ def build_slack_parser(subparsers, *, cmd_slack: Callable) -> None:
         default=None,
         metavar="PATH",
         help="Write manifest to a file instead of stdout. With no PATH "
-        "writes to $HERMES_HOME/slack-manifest.json.",
+        "writes to $AURA_FORGE_HOME/slack-manifest.json.",
     )
     slack_manifest.add_argument(
         "--name",

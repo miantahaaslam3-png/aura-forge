@@ -6,7 +6,7 @@ author: Ben Barclay (benbarclay), Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Email, Inbox, Triage, Replies, Productivity]
     related_skills: [himalaya, google-workspace]
 ---

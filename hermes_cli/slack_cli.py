@@ -1,6 +1,6 @@
-"""``hermes slack ...`` CLI subcommands.
+"""``auraforge slack ...`` CLI subcommands.
 
-Today only ``hermes slack manifest`` is implemented — it generates the
+Today only ``auraforge slack manifest`` is implemented — it generates the
 Slack app manifest JSON for registering every gateway command as a native
 Slack slash (``/btw``, ``/stop``, ``/model``, …) so users get the same
 first-class slash UX Discord and Telegram already have.
@@ -168,7 +168,7 @@ def slack_manifest_command(args) -> int:
 
     Flags (all parsed in ``hermes_cli/main.py``):
       --write [PATH]  Write to file instead of stdout (default path:
-                      ``$HERMES_HOME/slack-manifest.json``)
+                      ``$AURA_FORGE_HOME/slack-manifest.json``)
       --name NAME     Override the bot display name (default: "Aura Forge")
       --description DESC  Override the bot description
       --long-description TEXT  Override the long app description (175-4,000 characters)
@@ -274,7 +274,7 @@ def slack_manifest_command(args) -> int:
             "     slash commands changed.\n"
             "  4. Make sure Socket Mode is enabled and you have a bot token\n"
             "     (xoxb-...) and app token (xapp-...) configured via\n"
-            "     `hermes setup`.\n",
+            "     `auraforge setup`.\n",
             file=sys.stderr,
         )
     else:

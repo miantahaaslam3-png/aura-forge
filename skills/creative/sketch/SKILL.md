@@ -6,7 +6,7 @@ author: Aura Forge Agent (adapted from gsd-build/get-shit-done)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [sketch, mockup, design, ui, prototype, html, variants, exploration, wireframe, comparison]
     related_skills: [spike, claude-design, popular-web-designs, excalidraw]
 ---
@@ -26,7 +26,7 @@ Load this when the user says things like "sketch this screen", "show me what X c
 
 ## If the user has the full GSD system installed
 
-If `gsd-sketch` shows up as a sibling skill (installed via `npx get-shit-done-cc --hermes`), you can use **`gsd-sketch`** for the fuller workflow: persistent `.planning/sketches/` with MANIFEST, frontier mode analysis, consistency audits across past sketches, and integration with the rest of GSD. This skill is the lightweight standalone version — one-off sketching without the state machinery.
+If `gsd-sketch` shows up as a sibling skill (installed via `npx get-shit-done-cc --auraforge`), you can use **`gsd-sketch`** for the fuller workflow: persistent `.planning/sketches/` with MANIFEST, frontier mode analysis, consistency audits across past sketches, and integration with the rest of GSD. This skill is the lightweight standalone version — one-off sketching without the state machinery.
 
 > **Note:** The upstream GSD project ([gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)) is **archived / no longer maintained** on GitHub. The npm package (`get-shit-done-cc`) still installs, but treat it as an archived community project — this standalone `sketch` skill is the maintained path and needs nothing extra.
 
@@ -217,4 +217,4 @@ Repeat for each variant, then present the comparison table.
 
 ## Attribution
 
-Adapted from the GSD (Get Shit Done) project's `/gsd-sketch` workflow — MIT © 2025 Lex Christopherson ([gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)). The upstream GSD repo is now **archived/unmaintained** on GitHub; the `get-shit-done-cc` npm package still installs (`npx get-shit-done-cc --hermes --global`) and ships persistent sketch state, theme/variant pattern references, and consistency-audit workflows, but treat it as an archived community project.
+Adapted from the GSD (Get Shit Done) project's `/gsd-sketch` workflow — MIT © 2025 Lex Christopherson ([gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done)). The upstream GSD repo is now **archived/unmaintained** on GitHub; the `get-shit-done-cc` npm package still installs (`npx get-shit-done-cc --auraforge --global`) and ships persistent sketch state, theme/variant pattern references, and consistency-audit workflows, but treat it as an archived community project.

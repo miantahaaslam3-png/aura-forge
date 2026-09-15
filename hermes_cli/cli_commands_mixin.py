@@ -448,7 +448,7 @@ class CLICommandsMixin:
         try:
             result = export_profile(name, output)
             print(f"  ✓ Exported '{name}' to {result}")
-            print("  Share it: the other user runs /import or `hermes profile import <archive>`.")
+            print("  Share it: the other user runs /import or `auraforge profile import <archive>`.")
         except (ValueError, FileNotFoundError) as e:
             print(f"  Error: {e}")
 
@@ -595,7 +595,7 @@ class CLICommandsMixin:
         _cprint(f"  Agent: {'running' if agent_running else 'idle'}")
 
     def _handle_journey_command(self, cmd_original: str) -> None:
-        """Handle /journey — the learning timeline (see `hermes journey`).
+        """Handle /journey — the learning timeline (see `auraforge journey`).
 
         The read-only views (default + ``list``) render Rich color, which
         patch_stdout would swallow as raw escapes; capture with forced ANSI and
@@ -1009,7 +1009,7 @@ class CLICommandsMixin:
             self._session_db.fail_handoff(self.session_id, "timed out waiting for gateway")
         except Exception:
             pass
-        _cprint("  Timed out waiting for the gateway. Is `hermes gateway` running?")
+        _cprint("  Timed out waiting for the gateway. Is `auraforge gateway` running?")
         _cprint("  Your CLI session is intact.")
         return True
 
@@ -1043,7 +1043,7 @@ class CLICommandsMixin:
                 # #34584.
                 self._pending_resume_sessions = self._list_recent_sessions(limit=10)
                 return
-            _cprint("  Tip:   Use /history or `hermes sessions list` to find sessions.")
+            _cprint("  Tip:   Use /history or `auraforge sessions list` to find sessions.")
             return
 
         # Any explicit /resume <target> supersedes a previously-armed bare
@@ -1073,7 +1073,7 @@ class CLICommandsMixin:
         session_meta = self._session_db.get_session(target_id)
         if not session_meta:
             _cprint(f"  Session not found: {target}")
-            _cprint("  Use /sessions or `hermes sessions list` to see available sessions.")
+            _cprint("  Use /sessions or `auraforge sessions list` to see available sessions.")
             return
 
         # If the target is the empty head of a compression chain, redirect to
@@ -1193,7 +1193,7 @@ class CLICommandsMixin:
 
         # Retarget the process + tool cwd to where the session was started, so a
         # mid-chat /resume (and /sessions <id>, which delegates here) lands in the
-        # same directory as a startup `hermes -c`/`--resume`. The startup resume
+        # same directory as a startup `auraforge -c`/`--resume`. The startup resume
         # paths already call this; without it, the terminal/code-exec tools and
         # relative-path resolution keep operating in the wrong repo. Idempotent
         # and a no-op when the session recorded no cwd. See #38562.
@@ -1256,9 +1256,9 @@ class CLICommandsMixin:
         fresh worktree without leaving the session. Creating one retargets the
         terminal/file tools (``TERMINAL_CWD`` + process cwd) at the new tree;
         the launcher's exit cleanup applies (kept only when it has unpushed
-        commits, same as ``hermes -w``).
+        commits, same as ``auraforge -w``).
 
-        ``prune`` is the same attended reclaim as ``hermes worktree prune``
+        ``prune`` is the same attended reclaim as ``auraforge worktree prune``
         (hermes_cli/worktree_gc.py): never deletes tracked changes, unique
         unpushed commits, or in-use trees; archives untracked-only scratch.
         """
@@ -1360,13 +1360,13 @@ class CLICommandsMixin:
             if not wt_info:
                 return  # _setup_worktree already printed the failure
             # Retarget the session's terminal/file tools at the new tree, the
-            # same way `hermes -w` and session-resume cwd restore do.
+            # same way `auraforge -w` and session-resume cwd restore do.
             try:
                 os.chdir(wt_info["path"])
             except OSError as e:
                 print(f"  ⚠ Created worktree but could not enter it: {e}")
             os.environ["TERMINAL_CWD"] = wt_info["path"]
-            # Register for the same keep-if-unpushed cleanup as `hermes -w`.
+            # Register for the same keep-if-unpushed cleanup as `auraforge -w`.
             # Only one worktree is tracked as "active" per process; an earlier
             # one keeps its own atexit registration (explicit info arg).
             import atexit
@@ -2056,7 +2056,7 @@ class CLICommandsMixin:
     def _handle_curator_command(self, cmd: str):
         """Handle /curator slash command.
 
-        Delegates to hermes_cli.curator so the CLI and the `hermes curator`
+        Delegates to hermes_cli.curator so the CLI and the `auraforge curator`
         subcommand share the same handler set.
         """
         import shlex
@@ -2360,7 +2360,7 @@ class CLICommandsMixin:
     def _handle_bundles_command(self, cmd: str) -> None:
         """In-session ``/bundles`` — show installed skill bundles.
 
-        Mirrors ``hermes bundles list`` but renders inside the running
+        Mirrors ``auraforge bundles list`` but renders inside the running
         CLI so users can discover what's available without dropping out
         of their session. Bundles are loaded via ``/<bundle-name>``.
         """
@@ -2394,7 +2394,7 @@ class CLICommandsMixin:
                 ChatConsole().print(f"        [dim]· {_escape(s)}[/]")
         _cprint(
             f"\n  {_DIM}Invoke a bundle with /<slug>. "
-            f"Manage with `hermes bundles`.{_RST}"
+            f"Manage with `auraforge bundles`.{_RST}"
         )
 
     def _handle_browser_command(self, cmd: str):
@@ -2683,7 +2683,7 @@ class CLICommandsMixin:
         ``/heartbeat every 10m Check the deployment`` sets the session's one
         recurring instruction; the idle watchdog injects it as a normal user
         turn whenever due. Session-scoped and in-process — for durable
-        cross-process schedules use `hermes cron`.
+        cross-process schedules use `auraforge cron`.
         """
         from cli import _DIM, _RST, _cprint
         from hermes_cli.heartbeat import parse_interval, format_interval
@@ -2758,7 +2758,7 @@ class CLICommandsMixin:
         _cprint(
             f"  {_DIM}Fires as a normal turn whenever the session is idle and the "
             f"interval has elapsed. /heartbeat pause | resume | clear to manage; "
-            f"lives only while this Aura Forge process runs — use `hermes cron` for "
+            f"lives only while this Aura Forge process runs — use `auraforge cron` for "
             f"durable schedules.{_RST}"
         )
 
@@ -3825,7 +3825,7 @@ class CLICommandsMixin:
         """Handle /update — update Aura Forge Agent to the latest version.
 
         In the classic CLI this exits the session and relaunches as
-        ``hermes update`` so the user sees update output directly and gets
+        ``auraforge update`` so the user sees update output directly and gets
         the new version on next launch.
 
         Returns ``True`` when the update was confirmed (caller should trigger
@@ -3849,7 +3849,7 @@ class CLICommandsMixin:
         ]
         raw = self._prompt_text_input_modal(
             title="⚕  Update Aura Forge Agent",
-            detail="This will exit the current session and run `hermes update`.",
+            detail="This will exit the current session and run `auraforge update`.",
             choices=choices,
         )
         if raw is None:

@@ -3,7 +3,7 @@ Aura Forge Agent Uninstaller.
 
 Provides options for:
 - Full uninstall: Remove everything including configs and data
-- Keep data: Remove code but keep ~/.hermes/ (configs, sessions, logs)
+- Keep data: Remove code but keep ~/.aura-forge/ (configs, sessions, logs)
 """
 
 import os
@@ -60,13 +60,13 @@ def remove_path_from_shell_configs():
             content = config_path.read_text(encoding="utf-8")
             original_content = content
             
-            # Remove lines containing hermes-agent or hermes PATH entries
+            # Remove lines containing aura-forge-agent or hermes PATH entries
             new_lines = []
             skip_next = False
             
             for line in content.split('\n'):
                 # Skip the "# Aura Forge Agent" comment and following line
-                if '# Aura Forge Agent' in line or '# hermes-agent' in line:
+                if '# Aura Forge Agent' in line or '# aura-forge-agent' in line:
                     skip_next = True
                     continue
                 if skip_next and ('hermes' in line.lower() and 'PATH' in line):
@@ -114,10 +114,10 @@ def remove_wrapper_script():
     wrapper_paths = [
         Path.home() / ".local" / "bin" / "hermes",
         Path.home() / ".local" / "bin" / "hermes-acp",
-        Path.home() / ".local" / "bin" / "hermes-agent",
+        Path.home() / ".local" / "bin" / "aura-forge-agent",
         Path("/usr/local/bin/hermes"),
         Path("/usr/local/bin/hermes-acp"),
-        Path("/usr/local/bin/hermes-agent"),
+        Path("/usr/local/bin/aura-forge-agent"),
     ]
     
     removed = []
@@ -126,7 +126,7 @@ def remove_wrapper_script():
             try:
                 # Check if it's our wrapper (contains hermes_cli reference)
                 content = wrapper.read_text(encoding="utf-8")
-                if 'hermes_cli' in content or 'hermes-agent' in content:
+                if 'hermes_cli' in content or 'aura-forge-agent' in content:
                     wrapper.unlink()
                     removed.append(wrapper)
             except Exception as e:
@@ -152,7 +152,7 @@ def remove_node_symlinks(hermes_home: Path) -> list:
     """Remove the node/npm/npx symlinks the installer placed on PATH.
 
     The POSIX installer (``scripts/install.sh`` / ``scripts/lib/node-bootstrap.sh``)
-    symlinks node/npm/npx into the same directory as the ``hermes`` command:
+    symlinks node/npm/npx into the same directory as the ``auraforge`` command:
 
     - ``/usr/local/bin/`` on root FHS installs (Linux, uid 0)
     - ``$PREFIX/bin/`` on Termux
@@ -201,7 +201,7 @@ def uninstall_gateway_service():
     - Linux: user + system systemd services (with proper DBUS env setup)
     - macOS: launchd plists
     - Windows: Scheduled Task + Startup-folder fallback, via ``gateway_windows``
-    - All platforms: standalone ``hermes gateway run`` processes
+    - All platforms: standalone ``auraforge gateway run`` processes
     - Termux/Android: skips systemd (no systemd on Android), still kills standalone processes
     """
     import platform
@@ -311,20 +311,20 @@ def uninstall_gateway_service():
 # The installer (``scripts/install.ps1``) does four Windows-only things that
 # ``remove_path_from_shell_configs`` / ``remove_wrapper_script`` don't cover:
 #
-#   1. Sets User-scope env vars ``HERMES_HOME`` and ``HERMES_GIT_BASH_PATH``
+#   1. Sets User-scope env vars ``AURA_FORGE_HOME`` and ``AURA_FORGE_GIT_BASH_PATH``
 #      via ``[Environment]::SetEnvironmentVariable(..., "User")``.  These
 #      don't live in ~/.bashrc — they're in the Windows registry at
 #      HKCU\Environment.
 #   2. Prepends to User-scope ``PATH`` (same registry location) entries
-#      like ``%LOCALAPPDATA%\hermes\git\cmd``, ``%LOCALAPPDATA%\hermes\git\bin``,
-#      ``%LOCALAPPDATA%\hermes\git\usr\bin``, ``%LOCALAPPDATA%\hermes\node``.
+#      like ``%LOCALAPPDATA%\aura-forge\git\cmd``, ``%LOCALAPPDATA%\aura-forge\git\bin``,
+#      ``%LOCALAPPDATA%\aura-forge\git\usr\bin``, ``%LOCALAPPDATA%\aura-forge\node``.
 #      Again not in any rc file — only accessible via the registry or the
 #      .NET [Environment] API.
-#   3. Downloads PortableGit to ``%LOCALAPPDATA%\hermes\git\`` and Node to
-#      ``%LOCALAPPDATA%\hermes\node\`` as user-scoped, isolated copies.
+#   3. Downloads PortableGit to ``%LOCALAPPDATA%\aura-forge\git\`` and Node to
+#      ``%LOCALAPPDATA%\aura-forge\node\`` as user-scoped, isolated copies.
 #      These are ~200MB combined and serve no purpose after uninstall.
-#   4. On the ``hermes dashboard`` + gateway paths, drops files into
-#      ``%LOCALAPPDATA%\hermes\gateway-service\`` and sometimes
+#   4. On the ``auraforge dashboard`` + gateway paths, drops files into
+#      ``%LOCALAPPDATA%\aura-forge\gateway-service\`` and sometimes
 #      ``%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\`` — the
 #      latter is handled by ``gateway_windows.uninstall()`` already.
 #
@@ -346,11 +346,11 @@ def _hermes_path_markers(hermes_home: Path, *, include_managed_bin: bool = False
     """
     root = str(hermes_home).rstrip("\\/")
     # Match on prefix so sub-entries (git\cmd, git\bin, git\usr\bin, node, etc.)
-    # all get swept.  Also match the bare hermes-agent install dir.
-    markers = [root + "\\hermes-agent", root + "\\git", root + "\\node", root + "\\venv"]
+    # all get swept.  Also match the bare aura-forge-agent install dir.
+    markers = [root + "\\aura-forge-agent", root + "\\git", root + "\\node", root + "\\venv"]
     if include_managed_bin:
         markers.append(root + "\\bin")
-    # Also match if HERMES_HOME was customised to somewhere else — find-and-nuke
+    # Also match if AURA_FORGE_HOME was customised to somewhere else — find-and-nuke
     # any entry whose path component contains "hermes".  We don't want to catch
     # unrelated entries like "chermes-foo" or "ephermeral", so we look for
     # backslash-hermes as a word-ish boundary.
@@ -403,7 +403,7 @@ def remove_path_from_windows_registry(hermes_home: Path, *, include_managed_bin:
 
 
 def remove_hermes_env_vars_windows() -> list[str]:
-    """Delete HERMES_HOME and HERMES_GIT_BASH_PATH from User-scope env vars."""
+    """Delete AURA_FORGE_HOME and AURA_FORGE_GIT_BASH_PATH from User-scope env vars."""
     try:
         import winreg
     except ImportError:
@@ -413,7 +413,7 @@ def remove_hermes_env_vars_windows() -> list[str]:
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0,
                             winreg.KEY_READ | winreg.KEY_WRITE) as key:
-            for name in ("HERMES_HOME", "HERMES_GIT_BASH_PATH"):
+            for name in ("AURA_FORGE_HOME", "AURA_FORGE_GIT_BASH_PATH"):
                 try:
                     winreg.QueryValueEx(key, name)
                 except FileNotFoundError:
@@ -445,12 +445,12 @@ def remove_portable_tooling_windows(hermes_home: Path) -> list[Path]:
 
 
 def remove_windows_bin_launchers(*, windows: bool | None = None) -> list[Path]:
-    """Delete the ``hermes`` launchers install.ps1 staged in the managed
+    """Delete the ``auraforge`` launchers install.ps1 staged in the managed
     binary dir (the default Aura Forge root's ``bin``, next to the managed uv).
 
     Every uninstall mode deletes the code checkout, so the launchers —
     which invoke ``<checkout>\\venv\\Scripts`` — would otherwise dangle:
-    ``hermes`` in a new terminal resolves to a launcher whose target is
+    ``auraforge`` in a new terminal resolves to a launcher whose target is
     gone and errors, which reads worse than command-not-found. The managed
     uv (uv*.exe) in the same dir is left for keep-data reinstalls.
 
@@ -527,11 +527,11 @@ def _discover_named_profiles():
 
 def _uninstall_profile(profile) -> None:
     """Fully uninstall a single named profile: stop its gateway service,
-    remove its alias wrapper, and wipe its HERMES_HOME directory.
+    remove its alias wrapper, and wipe its AURA_FORGE_HOME directory.
 
-    We shell out to ``hermes -p <name> gateway stop|uninstall`` because
+    We shell out to ``auraforge -p <name> gateway stop|uninstall`` because
     service names, unit paths, and plist paths are all derived from the
-    current HERMES_HOME and can't be easily switched in-process.
+    current AURA_FORGE_HOME and can't be easily switched in-process.
     """
     import sys as _sys
     name = profile.name
@@ -540,7 +540,7 @@ def _uninstall_profile(profile) -> None:
     log_info(f"Uninstalling profile '{name}'...")
 
     # 1. Stop and remove this profile's gateway service.
-    #    Use `python -m hermes_cli.main` so we don't depend on a `hermes`
+    #    Use `python -m hermes_cli.main` so we don't depend on a `auraforge`
     #    wrapper that may be half-removed mid-uninstall.
     hermes_invocation = [_sys.executable, "-m", "hermes_cli.main", "--profile", name]
     for subcmd in ("stop", "uninstall"):
@@ -566,7 +566,7 @@ def _uninstall_profile(profile) -> None:
         except Exception as e:
             log_warn(f"  Could not remove alias {alias_path}: {e}")
 
-    # 3. Wipe the profile's HERMES_HOME directory.
+    # 3. Wipe the profile's AURA_FORGE_HOME directory.
     try:
         if profile_home.exists():
             shutil.rmtree(profile_home)
@@ -578,9 +578,9 @@ def _uninstall_profile(profile) -> None:
 def run_gui_uninstall(args):
     """GUI-only uninstall: remove the Chat GUI, leave the agent + data intact.
 
-    Mirrors ``hermes uninstall --gui``. Removes the desktop app's built
+    Mirrors ``auraforge uninstall --gui``. Removes the desktop app's built
     artifacts, the packaged app bundle (best-effort), and the Electron
-    userData dir — nothing under ``$HERMES_HOME`` config/sessions/.env, and
+    userData dir — nothing under ``$AURA_FORGE_HOME`` config/sessions/.env, and
     never the Python agent or its venv.
     """
     from hermes_cli.gui_uninstall import (
@@ -616,7 +616,7 @@ def run_gui_uninstall(args):
     print()
     if agent_is_installed(hermes_home):
         print(color("Kept intact:", Colors.GREEN, Colors.BOLD))
-        print(f"  • The Aura Forge agent at {hermes_home / 'hermes-agent'}")
+        print(f"  • The Aura Forge agent at {hermes_home / 'aura-forge-agent'}")
         print(f"  • Your config, sessions, and secrets under {hermes_home}")
         print()
 
@@ -652,8 +652,8 @@ def run_uninstall(args):
     Run the uninstall process.
     
     Options:
-    - Full uninstall: removes code + ~/.hermes/ (configs, data, logs)
-    - Keep data: removes code but keeps ~/.hermes/ for future reinstall
+    - Full uninstall: removes code + ~/.aura-forge/ (configs, data, logs)
+    - Keep data: removes code but keeps ~/.aura-forge/ for future reinstall
     """
     project_root = get_project_root()
     hermes_home = get_hermes_home()
@@ -667,7 +667,7 @@ def run_uninstall(args):
         return
 
     # Detect named profiles when uninstalling from the default root —
-    # offer to clean them up too instead of leaving zombie HERMES_HOMEs
+    # offer to clean them up too instead of leaving zombie AURA_FORGE_HOMEs
     # and systemd units behind.
     is_default_profile = _is_default_hermes_home(hermes_home)
     named_profiles = _discover_named_profiles() if is_default_profile else []
@@ -739,7 +739,7 @@ def run_uninstall(args):
 
     # When doing a full uninstall from the default profile, also offer to
     # remove any named profiles — stopping their gateway services, unlinking
-    # their alias wrappers, and wiping their HERMES_HOME dirs. Otherwise
+    # their alias wrappers, and wiping their AURA_FORGE_HOME dirs. Otherwise
     # those leave zombie services and data behind.
     remove_profiles = False
     if full_uninstall and named_profiles:
@@ -831,9 +831,9 @@ def _perform_uninstall(
     paths so the destructive sequence lives in exactly one place.
 
     Steps: stop gateway → strip PATH (rc files + Windows registry) → remove the
-    ``hermes`` wrapper + node symlinks → remove the desktop Chat GUI artifacts →
+    ``auraforge`` wrapper + node symlinks → remove the desktop Chat GUI artifacts →
     delete the code checkout → (Windows) remove PortableGit/Node → optionally
-    wipe ``$HERMES_HOME`` data and named profiles on full uninstall.
+    wipe ``$AURA_FORGE_HOME`` data and named profiles on full uninstall.
     """
     print()
     print(color("Uninstalling...", Colors.CYAN, Colors.BOLD))
@@ -874,7 +874,7 @@ def _perform_uninstall(
         else:
             log_info("No Hermes-owned PATH entries in User environment")
 
-        log_info("Removing HERMES_HOME / HERMES_GIT_BASH_PATH User env vars...")
+        log_info("Removing AURA_FORGE_HOME / AURA_FORGE_GIT_BASH_PATH User env vars...")
         removed_env = remove_hermes_env_vars_windows()
         if removed_env:
             for name in removed_env:
@@ -893,7 +893,7 @@ def _perform_uninstall(
 
     # 3a. Remove the Windows launchers from the managed binary dir. Both
     #     modes delete the code checkout below, so a surviving launcher
-    #     would dangle — `hermes` in a new terminal would resolve and then
+    #     would dangle — `auraforge` in a new terminal would resolve and then
     #     error on its missing venv target, worse than command-not-found.
     if _is_windows():
         log_info("Removing Windows hermes launchers...")
@@ -922,7 +922,7 @@ def _perform_uninstall(
     #     checkout — should go with it. uninstall_gui() never touches config /
     #     sessions / .env, so it's safe in keep-data mode; on full uninstall the
     #     step-5 rmtree(hermes_home) would sweep the in-tree artifacts anyway,
-    #     but the packaged app + Electron userData live OUTSIDE HERMES_HOME and
+    #     but the packaged app + Electron userData live OUTSIDE AURA_FORGE_HOME and
     #     must be cleaned explicitly here.
     log_info("Removing desktop Chat GUI artifacts...")
     try:
@@ -940,7 +940,7 @@ def _perform_uninstall(
     # We need to be careful here
     try:
         if project_root.exists():
-            # If the install is inside ~/.hermes/, just remove the hermes-agent subdir
+            # If the install is inside ~/.aura-forge/, just remove the aura-forge-agent subdir
             if hermes_home in project_root.parents or project_root.parent == hermes_home:
                 shutil.rmtree(project_root)
                 log_success(f"Removed {project_root}")
@@ -954,7 +954,7 @@ def _perform_uninstall(
 
     # 4b. Remove Windows-only installer artifacts that are NOT user data:
     #     PortableGit, bundled Node, gateway-service dir.  Installer put them
-    #     under HERMES_HOME but they're install tooling, not config — safe to
+    #     under AURA_FORGE_HOME but they're install tooling, not config — safe to
     #     remove even in "keep data" mode.  If we're doing a full uninstall
     #     the step-5 rmtree(hermes_home) would sweep them anyway; calling
     #     this helper there is a no-op since they'll already be gone.
@@ -967,10 +967,10 @@ def _perform_uninstall(
         else:
             log_info("No Windows installer artifacts to remove")
     
-    # 5. Optionally remove ~/.hermes/ data directory (and named profiles)
+    # 5. Optionally remove ~/.aura-forge/ data directory (and named profiles)
     if full_uninstall:
         # 5a. Stop and remove each named profile's gateway service and
-        #     alias wrapper. The profile HERMES_HOME dirs live under
+        #     alias wrapper. The profile AURA_FORGE_HOME dirs live under
         #     ``<default>/profiles/<name>/`` and will be swept away by the
         #     rmtree below, but services + alias scripts live OUTSIDE the
         #     default root and have to be cleaned up explicitly.
@@ -1002,9 +1002,9 @@ def _perform_uninstall(
         print()
         print("To reinstall later with your existing settings:")
         if _is_windows():
-            print(color("  iex (irm https://hermes-agent.nousresearch.com/install.ps1)", Colors.DIM))
+            print(color("  iex (irm https://aura-forge-agent.nousresearch.com/install.ps1)", Colors.DIM))
         else:
-            print(color("  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash", Colors.DIM))
+            print(color("  curl -fsSL https://aura-forge-agent.nousresearch.com/install.sh | bash", Colors.DIM))
         print()
 
     if _is_windows():

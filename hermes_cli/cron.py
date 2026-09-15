@@ -251,7 +251,7 @@ def cron_tick():
         # (#87644). For the one-shot CLI surface, report cleanly instead of
         # dumping a traceback; the gateway ticker loop handles its own retry.
         print(color(f"✗ Cron tick failed: {exc}", Colors.RED))
-        print("  Check `hermes cron status` and the gateway log for details.")
+        print("  Check `auraforge cron status` and the gateway log for details.")
         return 1
     return 0
 
@@ -284,9 +284,9 @@ _INCIDENT_STATE_COLORS = {
 def cron_incidents(args) -> int:
     """List or acknowledge durable cron failure incidents.
 
-    ``hermes cron incidents [--state <s>]`` lists incidents (the stored error
+    ``auraforge cron incidents [--state <s>]`` lists incidents (the stored error
     is redacted and truncated at write time, safe for terminal display);
-    ``hermes cron incidents ack <id>`` closes one so its failure ping stays
+    ``auraforge cron incidents ack <id>`` closes one so its failure ping stays
     silent until the error signature changes.
     """
     from cron.incidents import ack_incident, list_incidents
@@ -732,7 +732,7 @@ def cron_resume(args) -> int:
 
 
 def cron_notepad(args) -> int:
-    """Handle ``hermes cron notepad <job_id> [get|set|delete|list]``.
+    """Handle ``auraforge cron notepad <job_id> [get|set|delete|list]``.
 
     The per-job durable KV scratchpad (``cron/notepad.py``). This CLI is the
     write path — a running cron agent updates its own notepad by invoking

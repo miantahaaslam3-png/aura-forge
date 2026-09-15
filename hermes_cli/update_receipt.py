@@ -7,8 +7,8 @@ Two additive capabilities, both designed so a failure inside them can never
 break an update (every public entry point is exception-swallowing):
 
 1. **Update receipt** — a machine-readable JSON record of what one
-   ``hermes update`` run discovered, did, skipped (and why), written to
-   ``<HERMES_HOME>/logs/update_receipts/``. Silent-failure classes this
+   ``auraforge update`` run discovered, did, skipped (and why), written to
+   ``<AURA_FORGE_HOME>/logs/update_receipts/``. Silent-failure classes this
    makes visible: #88848 (helper died after "success" printed), #74973
    (restart silently skipped), #85753 (restart phase never ran), #81193
    (desktop shows failure for a successful update).
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 _RECEIPT_DIR_NAME = "update_receipts"
 _RECEIPT_KEEP = 20  # keep the last N receipts per profile home
 
-# Module-level current receipt. ``hermes update`` is a single-threaded CLI
+# Module-level current receipt. ``auraforge update`` is a single-threaded CLI
 # command; a module singleton lets the 7k-line updater record steps from
 # any depth without threading a handle through every helper.
 _current: Optional["UpdateReceipt"] = None
@@ -54,7 +54,7 @@ def _utc_now_iso() -> str:
 
 
 class UpdateReceipt:
-    """Collects the observable facts of one ``hermes update`` run."""
+    """Collects the observable facts of one ``auraforge update`` run."""
 
     def __init__(self) -> None:
         self.data: dict[str, Any] = {
@@ -237,7 +237,7 @@ def finalize_pending_update_receipt(
 ) -> Optional[Path]:
     """Command-boundary safety net: persist a still-open receipt, if any.
 
-    ``hermes update`` has many early-termination paths (Windows
+    ``auraforge update`` has many early-termination paths (Windows
     concurrent-instance preflight, venv-holder refusal, head-pinned no-op,
     fetch failure — all ``sys.exit``) that predate the inner finalize
     call sites. Any receipt still open when the update COMMAND unwinds is

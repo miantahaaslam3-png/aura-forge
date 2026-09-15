@@ -1,4 +1,4 @@
-"""CLI handlers for ``hermes secrets bitwarden ...``.
+"""CLI handlers for ``auraforge secrets bitwarden ...``.
 
 Subcommands:
     setup    — interactive wizard: install bws, prompt for token + project, test fetch
@@ -26,7 +26,7 @@ from rich.table import Table
 # NOTE: the Bitwarden backend (``agent.secret_sources.bitwarden``) pulls in
 # ``cryptography`` at module-import time.  On Windows the resulting
 # ``cryptography._rust.pyd`` is mapped into the running process — and when
-# that process is ``hermes update``, the self-lock preflight detects the
+# that process is ``auraforge update``, the self-lock preflight detects the
 # loaded native module and defers (#86781).  Keep the backend import lazy:
 # this module is registered parse-time from ``hermes_cli.main`` and must not
 # touch ``bw`` until a handler actually runs.
@@ -77,7 +77,7 @@ def register_cli(parent_parser: argparse.ArgumentParser) -> None:
     """Attach the ``bitwarden`` subcommand tree to a parent parser.
 
     Called from ``hermes_cli.main`` as part of building the top-level
-    ``hermes secrets`` parser.
+    ``auraforge secrets`` parser.
     """
     sub = parent_parser.add_subparsers(dest="secrets_bw_command")
 
@@ -463,7 +463,7 @@ def cmd_token(args: argparse.Namespace) -> int:
             console.print(
                 f"[yellow]Warning: configured project {project_id} is not visible "
                 "to this machine account.  Grant it access in the Bitwarden web "
-                "app or re-run `hermes secrets bitwarden setup` to pick a "
+                "app or re-run `auraforge secrets bitwarden setup` to pick a "
                 "different project.[/yellow]"
             )
 
@@ -479,7 +479,7 @@ def cmd_token(args: argparse.Namespace) -> int:
     if not bw_cfg.get("enabled"):
         console.print(
             "[yellow]Note: the Bitwarden integration is currently disabled — "
-            "run `hermes secrets bitwarden setup` (or set "
+            "run `auraforge secrets bitwarden setup` (or set "
             "secrets.bitwarden.enabled: true) to turn it on.[/yellow]"
         )
     return 0
@@ -493,7 +493,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
     if not bw_cfg.get("enabled"):
         console.print(
             "[yellow]Bitwarden integration is disabled.  Run "
-            "`hermes secrets bitwarden setup` first.[/yellow]"
+            "`auraforge secrets bitwarden setup` first.[/yellow]"
         )
         return 1
 

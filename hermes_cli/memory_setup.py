@@ -25,7 +25,7 @@ def _provider_pip_dependencies(provider_name: str, declared: list) -> list:
     some providers install mode-dependent extras at setup time that the
     manifest can't express. Hindsight's ``local_embedded`` mode installs
     ``hindsight-all`` (daemon + embedder + client) during
-    ``hermes memory setup`` — if the update-time refresh only reinstalled
+    ``auraforge memory setup`` — if the update-time refresh only reinstalled
     the declared ``hindsight-client``, the embedded daemon would stay
     broken after a venv rebuild stripped ``hindsight-embed`` (#70636).
     """
@@ -109,7 +109,7 @@ def _install_dependencies(provider_name: str, *, force: bool = False) -> None:
     When ``force`` is true, every declared dependency is handed to the
     installer even if its import currently succeeds — the resolver then
     reinstalls anything missing or version-drifted and no-ops on satisfied
-    ranges. This is how ``hermes update`` heals the active memory provider
+    ranges. This is how ``auraforge update`` heals the active memory provider
     after a venv rebuild/sync removed or downgraded its bridge packages
     (#53272, #70636).
     """
@@ -287,7 +287,7 @@ def cmd_setup(args) -> None:
 
     if not providers:
         print("\n  No memory provider plugins detected.")
-        print("  Install a plugin to ~/.hermes/plugins/ and try again.\n")
+        print("  Install a plugin to ~/.aura-forge/plugins/ and try again.\n")
         return
 
     # Build picker items
@@ -433,7 +433,7 @@ def _write_env_vars(
     through the same input-validation gate as every other ``.env`` writer:
     the ``_ENV_VAR_NAME_RE`` regex (no malformed identifiers), the
     ``_ENV_VAR_NAME_DENYLIST`` (no ``LD_PRELOAD`` / ``PYTHONPATH`` /
-    ``HERMES_HOME`` / etc.), CR/LF stripping on the value, and the atomic
+    ``AURA_FORGE_HOME`` / etc.), CR/LF stripping on the value, and the atomic
     0o600-from-creation write (no TOCTOU permission window). This function
     previously wrote via ``Path.write_text`` directly, bypassing all of
     that: a memory-provider plugin schema declaring ``env_var: "LD_PRELOAD"``
@@ -548,14 +548,14 @@ def cmd_status(args) -> None:
                             line += f"  → {url}"
                         print(line)
                 print(
-                    "  Note: systemd/gateway services do not inherit ~/.hermes/.env —"
+                    "  Note: systemd/gateway services do not inherit ~/.aura-forge/.env —"
                 )
                 print(
                     "        set any variables above in the service environment."
                 )
         else:
             print("\n  Plugin:    NOT installed ✗")
-            print(f"  Install the '{provider_name}' memory plugin to ~/.hermes/plugins/")
+            print(f"  Install the '{provider_name}' memory plugin to ~/.aura-forge/plugins/")
 
     if providers:
         print("\n  Installed plugins:")

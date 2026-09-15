@@ -41,9 +41,9 @@ There is **no general OAuth 2.0 authorization server**. There is no
 against. There is no shared cookie or session that browser-Portal-login
 extends to other apps on the same machine.
 
-What Aura Forge Agent has that *feels* like OAuth — `hermes login --provider nous`
-opening a browser, user signs in, token lands in `~/.hermes/auth.json` — is a
-**Hermes-specific browser flow**. Under the hood it produces a credential
+What Aura Forge Agent has that *feels* like OAuth — `auraforge login --provider nous`
+opening a browser, user signs in, token lands in `~/.auraforge/auth.json` — is a
+**Aura Forge-specific browser flow**. Under the hood it produces a credential
 Aura Forge uses as a bearer. It is not a public OAuth provider that Karakeep et al.
 can implement a client for, because it isn't an OAuth provider at all from the
 outside.
@@ -55,7 +55,7 @@ outside.
 Yes. The pattern is a **local credential-broker proxy**. Even without a public
 OAuth flow, an app on the user's machine can:
 
-1. Read Aura Forge's existing Portal credential out of `~/.hermes/auth.json`.
+1. Read Aura Forge's existing Portal credential out of `~/.auraforge/auth.json`.
 2. Expose a local OpenAI-compatible endpoint at `http://localhost:NNNN/v1`.
 3. Forward incoming requests to `inference-api.nousresearch.com/v1` with that
    bearer attached.

@@ -6,7 +6,7 @@ author: Aura Forge Agent + Teknium
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Research, Citations, Grounding, Sources, Web, Reports]
     category: research
     related_skills: [research-paper-writing, arxiv, ocr-and-documents]
@@ -50,13 +50,13 @@ None beyond the standard toolset. `scripts/sources.py` is stdlib-only Python 3.
 Retrieval comes from whatever is configured: `web_search`, `web_extract`,
 `browser_navigate`, or `terminal` (curl, CLIs).
 
-Ledger location: `$HERMES_HOME/cache/citations/ledger.json` (profile-aware).
+Ledger location: `$AURA_FORGE_HOME/cache/citations/ledger.json` (profile-aware).
 Override per task with `--ledger <path>` or `HERMES_CITATION_LEDGER`.
 
 ## How to Run
 
 ```bash
-S=~/.hermes/skills/research/grounded-citations/scripts/sources.py
+S=~/.auraforge/skills/research/grounded-citations/scripts/sources.py
 
 python "$S" reset                                  # start a clean ledger
 python "$S" add https://example.com/a --title "A"  # prints: [1]

@@ -1,4 +1,4 @@
-"""CLI subcommand: ``hermes send`` — pipe text from shell scripts to any
+"""CLI subcommand: ``auraforge send`` — pipe text from shell scripts to any
 configured messaging platform (Telegram, Discord, Slack, Signal, SMS, etc.).
 
 This is a thin wrapper around ``tools.send_message_tool.send_message_tool``
@@ -168,7 +168,7 @@ def _list_targets(platform_filter: Optional[str], *, json_mode: bool) -> int:
     # a working send target. The directory only contains platforms the
     # gateway has discovered channels for; a platform configured via env /
     # config.yaml that has never run channel discovery (e.g. a fresh SimpleX
-    # setup used only for outbound `hermes send`) would otherwise be
+    # setup used only for outbound `auraforge send`) would otherwise be
     # invisible, leaving users guessing at platform names.
     try:
         from gateway.config import load_gateway_config
@@ -202,8 +202,8 @@ def _list_targets(platform_filter: Optional[str], *, json_mode: bool) -> int:
 
     if not platforms:
         print("No messaging platforms configured or no channels discovered yet.")
-        print("Set one up with `hermes gateway setup`, or run the gateway once so")
-        print("channel discovery can populate ~/.hermes/channel_directory.json.")
+        print("Set one up with `auraforge gateway setup`, or run the gateway once so")
+        print("channel discovery can populate ~/.aura-forge/channel_directory.json.")
         return _SUCCESS_EXIT
 
     # Human display — when unfiltered, reuse the shared formatter the agent
@@ -230,22 +230,22 @@ def _list_targets(platform_filter: Optional[str], *, json_mode: bool) -> int:
 
 
 def _load_hermes_env() -> None:
-    """Populate ``os.environ`` from ``~/.hermes/.env`` AND bridge top-level
+    """Populate ``os.environ`` from ``~/.aura-forge/.env`` AND bridge top-level
     ``config.yaml`` keys into the environment so the underlying gateway
     config loader sees platform credentials and home channel IDs.
 
     ``send_message_tool`` reads tokens and home-channel IDs via
     ``os.getenv(...)`` on each call. The gateway process does two things at
-    startup that ``hermes send`` must replicate when invoked standalone:
+    startup that ``auraforge send`` must replicate when invoked standalone:
 
-    1. ``load_dotenv(~/.hermes/.env)`` — brings bot tokens into the env.
-    2. Bridge top-level simple values from ``~/.hermes/config.yaml`` into
+    1. ``load_dotenv(~/.aura-forge/.env)`` — brings bot tokens into the env.
+    2. Bridge top-level simple values from ``~/.aura-forge/config.yaml`` into
        ``os.environ`` (without overriding existing env vars). This is where
        ``TELEGRAM_HOME_CHANNEL`` and friends live when the user saved them
-       via ``hermes config set``.
+       via ``auraforge config set``.
 
     See ``gateway/run.py`` for the canonical version of this bridge — we
-    intentionally reimplement the minimum needed here so ``hermes send``
+    intentionally reimplement the minimum needed here so ``auraforge send``
     doesn't pull in the full gateway module just to resolve a home channel.
     """
     # Step 1: dotenv
@@ -328,7 +328,7 @@ def _load_hermes_env() -> None:
 def cmd_send(args: argparse.Namespace) -> None:
     """Entry point wired into the top-level argparse dispatcher."""
 
-    # Bridge ~/.hermes/.env and ~/.hermes/config.yaml into os.environ so the
+    # Bridge ~/.aura-forge/.env and ~/.aura-forge/config.yaml into os.environ so the
     # gateway config loader (invoked downstream by send_message_tool and by
     # the channel directory) can see platform credentials and home channels.
     _load_hermes_env()
@@ -371,7 +371,7 @@ def cmd_send(args: argparse.Namespace) -> None:
     if subject:
         message = f"{subject}\n\n{message.lstrip()}"
 
-    # Import lazily so `hermes send --help` stays fast and does not pull in
+    # Import lazily so `auraforge send --help` stays fast and does not pull in
     # the full tool registry / gateway config stack.
     from tools.send_message_tool import send_message_tool
 
@@ -408,7 +408,7 @@ def register_send_subparser(subparsers) -> argparse.ArgumentParser:
         description=(
             "Pipe text from any shell script to any messaging platform Aura Forge "
             "is already configured for. Reuses the gateway's platform "
-            "credentials (~/.hermes/.env + ~/.hermes/config.yaml) — no LLM, "
+            "credentials (~/.aura-forge/.env + ~/.aura-forge/config.yaml) — no LLM, "
             "no agent loop, no running gateway required for bot-token "
             "platforms like Telegram/Discord/Slack/Signal."
         ),
@@ -476,7 +476,7 @@ def register_send_subparser(subparsers) -> argparse.ArgumentParser:
         dest="list_targets",
         action="store_true",
         default=False,
-        help="List available targets. Optional positional filter: `hermes send --list telegram`.",
+        help="List available targets. Optional positional filter: `auraforge send --list telegram`.",
     )
 
     parser.add_argument(

@@ -1,4 +1,4 @@
-"""``hermes sessions`` command — extracted from ``hermes_cli/main.py``.
+"""``auraforge sessions`` command — extracted from ``hermes_cli/main.py``.
 
 Mechanical move (main.py decomposition): ``cmd_sessions`` was a ``def`` nested
 inside ``main()``'s body; its dispatch on ``args.sessions_action`` is lifted
@@ -55,14 +55,14 @@ def _confirm_prompt(prompt: str) -> bool:
         return False
 
 
-#: Default age floor for `hermes sessions prune --never-active`.  Deliberately
+#: Default age floor for `auraforge sessions prune --never-active`.  Deliberately
 #: generous: the rows are worthless but harmless, and a young never-active row
 #: may simply be a chat that nobody has replied to yet.
 _NEVER_ACTIVE_DEFAULT_DAYS = 30.0
 
 
 def _prune_never_active_keyed(db, args):
-    """`hermes sessions prune --never-active` — drop leaked/dead keyed rows.
+    """`auraforge sessions prune --never-active` — drop leaked/dead keyed rows.
 
     Targets keyed gateway rows that were opened and never used at all.  The
     population is dominated by escaped test fixtures (#82770), which the
@@ -908,7 +908,7 @@ def cmd_sessions(args, sessions_parser=None):
         )
 
         # Preserve the historical default ONLY for a truly bare
-        # `hermes sessions prune`: no time window and no filters at all
+        # `auraforge sessions prune`: no time window and no filters at all
         # means "older than 90 days". ANY filter — including --source —
         # suppresses the implicit cutoff, so `prune --source cron`
         # matches ALL cron sessions regardless of age. The preview +
@@ -978,9 +978,9 @@ def cmd_sessions(args, sessions_parser=None):
                 _verb_word = "deleted" if action == "prune" else "archived"
                 _optin = (
                     "Pass --include-pinned to delete them anyway, or unpin "
-                    "first with `hermes sessions unpin <id>`."
+                    "first with `auraforge sessions unpin <id>`."
                     if action == "prune"
-                    else "Unpin first with `hermes sessions unpin <id>` to include them."
+                    else "Unpin first with `auraforge sessions unpin <id>` to include them."
                 )
                 print(
                     f"Note: {_pinned_skipped} pinned session{_suffix} also match "
@@ -1000,7 +1000,7 @@ def cmd_sessions(args, sessions_parser=None):
             print(
                 f"Note: {skipped_open} open session{suffix} also match these "
                 "filters but will be skipped because prune only deletes ended "
-                "sessions. Use `hermes sessions delete <id>` "
+                "sessions. Use `auraforge sessions delete <id>` "
                 "to remove one explicitly."
             )
         verb = "Delete" if action == "prune" else "Archive"
@@ -1387,7 +1387,7 @@ def cmd_sessions(args, sessions_parser=None):
         )
         if result.get("vacuumed") is False:
             print("  (VACUUM was skipped or failed — run "
-                  "`hermes sessions optimize` later to reclaim freed space.)")
+                  "`auraforge sessions optimize` later to reclaim freed space.)")
 
     elif action == "repair-routing":
         records = db.find_orphaned_gateway_sessions(

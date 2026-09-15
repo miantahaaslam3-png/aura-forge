@@ -1,4 +1,4 @@
-"""CLI handlers for ``hermes egress ...``.
+"""CLI handlers for ``auraforge egress ...``.
 
 Subcommands:
     install  — download the pinned iron-proxy binary
@@ -9,8 +9,8 @@ Subcommands:
     disable  — flip ``proxy.enabled`` to False (does not stop a running proxy)
     config   — print the generated proxy.yaml path (for debugging / external review)
 
-The top-level command is ``hermes egress``.  Note that the inbound OAuth
-reverse-proxy command (``hermes proxy``) lives elsewhere in
+The top-level command is ``auraforge egress``.  Note that the inbound OAuth
+reverse-proxy command (``auraforge proxy``) lives elsewhere in
 ``hermes_cli/main.py`` — different direction, different purpose.
 """
 
@@ -37,11 +37,11 @@ def register_cli(parent_parser: argparse.ArgumentParser) -> None:
     """Attach the egress subcommand tree to a parent parser.
 
     Called from ``hermes_cli.main`` as part of building the top-level
-    ``hermes egress`` parser.
+    ``auraforge egress`` parser.
     """
 
     # dest='egress_command' — keeps this subparser tree disjoint from the
-    # inbound OAuth ``hermes proxy`` subparser (which uses dest='proxy_command').
+    # inbound OAuth ``auraforge proxy`` subparser (which uses dest='proxy_command').
     # No runtime collision today since they live in separate parser trees,
     # but a future grep-and-refactor on ``proxy_command`` would otherwise
     # hit both handlers.
@@ -91,7 +91,7 @@ def register_cli(parent_parser: argparse.ArgumentParser) -> None:
     setup.add_argument(
         "--no-restart", dest="restart", action="store_false",
         help="Do not restart a running daemon after setup; you'll need to run "
-             "`hermes egress restart` yourself for changes to take effect.",
+             "`auraforge egress restart` yourself for changes to take effect.",
     )
     setup.set_defaults(func=cmd_setup)
 
@@ -197,7 +197,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
                 "secrets.bitwarden.enabled is false.[/red]"
             )
             console.print(
-                "  Run `hermes secrets bitwarden setup` first, or omit "
+                "  Run `auraforge secrets bitwarden setup` first, or omit "
                 "--from-bitwarden."
             )
             return 1
@@ -242,16 +242,16 @@ def cmd_setup(args: argparse.Namespace) -> int:
             return 1
     else:
         # Env-based discovery reads os.environ.  Operators commonly keep their
-        # provider keys only in ~/.hermes/.env (loaded automatically when the
+        # provider keys only in ~/.aura-forge/.env (loaded automatically when the
         # agent runs, but NOT exported into an interactive shell).  Fall back
-        # to loading that file so `hermes egress setup` finds the same keys the
+        # to loading that file so `auraforge egress setup` finds the same keys the
         # agent would — otherwise a user with keys solely in .env sees a
         # confusing "no provider keys found" when the keys clearly "exist".
         loaded = _load_env_file_into_environ()
         if loaded:
             console.print(
                 f"  [dim]Loaded {loaded} provider key name(s) from "
-                f"~/.hermes/.env for discovery.[/dim]"
+                f"~/.aura-forge/.env for discovery.[/dim]"
             )
 
     discovered = ip.discover_provider_mappings(
@@ -421,7 +421,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     mappings_path = ip.write_mappings(mappings)
     # Mint (or keep) the management-API bearer key.  The generated config
     # enables a loopback management listener whose /v1/reload lets
-    # `hermes egress reload` apply future ruleset changes without a
+    # `auraforge egress reload` apply future ruleset changes without a
     # restart; the daemon requires the key env var to be non-empty at
     # startup, so make sure the token exists before first start.
     ip.ensure_management_token()
@@ -440,7 +440,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     proxy_cfg.setdefault("enforce_on_docker", True)
     # CRITICAL: do NOT silently downgrade credential_source on re-run.
     # If the operator previously configured `bitwarden` mode (e.g. for
-    # rotation), running `hermes egress setup` again WITHOUT
+    # rotation), running `auraforge egress setup` again WITHOUT
     # --from-bitwarden must not rewrite credential_source to "env" —
     # that silently breaks the Bitwarden rotation guarantee the docs
     # make.  Require an explicit --no-bitwarden to switch back.
@@ -549,7 +549,7 @@ def cmd_start(args: argparse.Namespace) -> int:
     proxy_cfg = cfg.get("proxy") or {}
     if not proxy_cfg.get("enabled"):
         console.print(
-            "[yellow]proxy.enabled is false — run `hermes egress setup` "
+            "[yellow]proxy.enabled is false — run `auraforge egress setup` "
             "first.[/yellow]"
         )
         return 1
@@ -587,7 +587,7 @@ def cmd_start(args: argparse.Namespace) -> int:
             )
             console.print(
                 "  Re-enable it (`secrets.bitwarden.enabled: true`), switch "
-                "back to env credentials with `hermes egress setup "
+                "back to env credentials with `auraforge egress setup "
                 "--no-bitwarden`, or set `proxy.allow_env_fallback: true` "
                 "to opt into the host-env fallback."
             )
@@ -622,7 +622,7 @@ def cmd_start(args: argparse.Namespace) -> int:
             )
             console.print(
                 "  Either export the access token, or run "
-                "`hermes egress setup --no-bitwarden` to switch back to "
+                "`auraforge egress setup --no-bitwarden` to switch back to "
                 "env-based credentials."
             )
             return 1
@@ -632,8 +632,8 @@ def cmd_start(args: argparse.Namespace) -> int:
                 "secrets.bitwarden.project_id is empty.[/red]"
             )
             console.print(
-                "  Run `hermes secrets bitwarden setup` to configure the "
-                "project, or switch back via `hermes egress setup "
+                "  Run `auraforge secrets bitwarden setup` to configure the "
+                "project, or switch back via `auraforge egress setup "
                 "--no-bitwarden`."
             )
             return 1
@@ -694,7 +694,7 @@ def cmd_reload(args: argparse.Namespace) -> int:
     proxy.yaml WITHOUT restarting the daemon — no dropped connections, no
     restart window.  When the change involves new upstream SECRETS (a
     Bitwarden rotation, a newly added provider key), use
-    ``hermes egress restart`` instead: the daemon reads real credentials
+    ``auraforge egress restart`` instead: the daemon reads real credentials
     from its own environment at spawn time, and a reload does not
     re-populate that env.
     """
@@ -710,7 +710,7 @@ def cmd_reload(args: argparse.Namespace) -> int:
     )
     console.print(
         "[dim]Note: new upstream secrets (rotated keys, new providers) "
-        "still need `hermes egress restart` — the daemon reads real "
+        "still need `auraforge egress restart` — the daemon reads real "
         "credentials from its environment at spawn time.[/dim]"
     )
     return 0
@@ -758,9 +758,9 @@ def format_status_text(*, show_tokens: bool = False) -> str:
             lines.append(f"  - {name}")
 
     if bool(proxy_cfg.get("enabled")) and not status.configured:
-        lines.extend(["", "Next: run `hermes egress setup` to mint tokens and write proxy.yaml."])
+        lines.extend(["", "Next: run `auraforge egress setup` to mint tokens and write proxy.yaml."])
     elif bool(proxy_cfg.get("enabled")) and not (status.pid and status.listening):
-        lines.extend(["", "Next: run `hermes egress start` before launching Docker sandboxes."])
+        lines.extend(["", "Next: run `auraforge egress start` before launching Docker sandboxes."])
 
     return "\n".join(lines)
 
@@ -848,7 +848,7 @@ def cmd_config(args: argparse.Namespace) -> int:
     status = ip.get_status()
     if status.config_path is None:
         console.print(
-            "[yellow](no config generated — run `hermes egress setup`)[/yellow]"
+            "[yellow](no config generated — run `auraforge egress setup`)[/yellow]"
         )
         return 1
     console.print(str(status.config_path))
@@ -861,10 +861,10 @@ def cmd_config(args: argparse.Namespace) -> int:
 
 
 def _load_env_file_into_environ() -> int:
-    """Backfill provider keys from ``~/.hermes/.env`` into ``os.environ``.
+    """Backfill provider keys from ``~/.aura-forge/.env`` into ``os.environ``.
 
-    ``hermes egress setup`` discovers providers by reading ``os.environ``, but
-    many operators keep their keys ONLY in ``~/.hermes/.env`` (which the agent
+    ``auraforge egress setup`` discovers providers by reading ``os.environ``, but
+    many operators keep their keys ONLY in ``~/.aura-forge/.env`` (which the agent
     loads at runtime but which is NOT exported into an interactive shell).
     Without this, ``setup`` reports "no provider keys found" even though the
     keys plainly exist — a confusing first-run papercut.

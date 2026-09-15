@@ -31,8 +31,8 @@ def _scan_dashboard_processes(
 ) -> list[tuple[int, str]]:
     """Return matching ``dashboard``/``serve`` processes with their cmdlines.
 
-    ``hermes dashboard`` is a long-lived server process commonly started and
-    forgotten.  When ``hermes update`` replaces files on disk, the running
+    ``auraforge dashboard`` is a long-lived server process commonly started and
+    forgotten.  When ``auraforge update`` replaces files on disk, the running
     process keeps the old Python backend in memory while the JS bundle on
     disk is updated, causing a silent frontend/backend mismatch (e.g. new
     auth headers the old backend doesn't recognise → every API call 401s).
@@ -44,7 +44,7 @@ def _scan_dashboard_processes(
 
     *exclude_pids* is an optional set of PIDs that must never be returned.
     This is used by the Aura Forge Desktop Electron app to protect its own
-    backend child process: when the desktop spawns ``hermes serve`` as
+    backend child process: when the desktop spawns ``auraforge serve`` as
     a backend and triggers an auto-update, the update must not kill the
     backend that the desktop itself manages.  The desktop sets the
     environment variable ``HERMES_DESKTOP_CHILD_PID`` on the spawned
@@ -57,7 +57,7 @@ def _scan_dashboard_processes(
         "hermes dashboard",
         "hermes_cli.main dashboard",
         "hermes_cli/main.py dashboard",
-        # The headless backend (`hermes serve`) is the same long-lived server
+        # The headless backend (`auraforge serve`) is the same long-lived server
         # under a different command name — the desktop app spawns it. Reap it
         # on update for the same frontend/backend-mismatch reason.
         "hermes serve",
@@ -145,7 +145,7 @@ def _scan_dashboard_processes(
         ]
 
     # Spawn-ledger augmentation (#63206/#81564): the substring patterns above
-    # miss profiled launches — `hermes --profile p serve --host <ip>` contains
+    # miss profiled launches — `auraforge --profile p serve --host <ip>` contains
     # neither "hermes serve" nor "hermes_cli.main serve". Every serve/
     # dashboard registers itself in the machine spawn ledger at startup with
     # live-verified (pid, create_time), so ledger rows are positive identity,
@@ -172,11 +172,11 @@ def _scan_dashboard_processes(
 
 
 def _hermes_home_for_pid(pid: int) -> str | None:
-    """Best-effort ``HERMES_HOME`` from *pid*'s environment."""
+    """Best-effort ``AURA_FORGE_HOME`` from *pid*'s environment."""
     try:
         import psutil
 
-        home = psutil.Process(pid).environ().get("HERMES_HOME")
+        home = psutil.Process(pid).environ().get("AURA_FORGE_HOME")
         if home:
             return home
     except Exception:
@@ -186,7 +186,7 @@ def _hermes_home_for_pid(pid: int) -> str | None:
     except (OSError, PermissionError):
         return None
     for part in raw.split(b"\x00"):
-        if part.startswith(b"HERMES_HOME="):
+        if part.startswith(b"AURA_FORGE_HOME="):
             return part.split(b"=", 1)[1].decode("utf-8", errors="replace") or None
     return None
 
@@ -196,7 +196,7 @@ def _is_ephemeral_port_zero_backend(argv: list[str]) -> bool:
 
     Ephemeral-port backends are owned by Aura Forge Desktop (or become PPID-1
     orphans after a prior update respawn).  Replaying them after
-    ``hermes update`` multiplies listening backends because ``--port 0``
+    ``auraforge update`` multiplies listening backends because ``--port 0``
     always binds a fresh free port.  Covers both ``serve`` and the legacy
     ``dashboard --no-open`` fallback older Desktop runtimes use.
     """
@@ -239,9 +239,9 @@ def _normalize_dashboard_cmdline(argv: list[str]) -> tuple[str, ...]:
 def _profile_key_for_respawn(
     argv: list[str], hermes_home: str | None = None
 ) -> str:
-    """Stable owner key: ``HERMES_HOME`` when known, else ``--profile`` / ``-p``.
+    """Stable owner key: ``AURA_FORGE_HOME`` when known, else ``--profile`` / ``-p``.
 
-    ``HERMES_HOME`` ending in ``profiles/<name>`` is normalized to
+    ``AURA_FORGE_HOME`` ending in ``profiles/<name>`` is normalized to
     ``profile:<name>`` so it shares a cap with an explicit ``--profile``
     flag for the same profile (#78821).  Non-profile homes (including
     distinct ``…/.hermes`` roots) keep a resolved ``home:`` key so
@@ -291,7 +291,7 @@ def _filter_dashboard_respawn_candidates(
     *,
     own_home: str | None = None,
 ) -> list[list[str]]:
-    """Select which killed manual backends to respawn after ``hermes update``.
+    """Select which killed manual backends to respawn after ``auraforge update``.
 
     Each candidate is ``(pid, argv, hermes_home)``.  *own_home* is the
     updating install's home; it defaults to this process's
@@ -303,7 +303,7 @@ def _filter_dashboard_respawn_candidates(
        lifecycle.  These are also the PPID-1 orphans that previously
        multiplied across updates because ``--port 0`` always binds a
        fresh free port.
-    2. Never replay a backend from a **foreign** ``HERMES_HOME``.  The
+    2. Never replay a backend from a **foreign** ``AURA_FORGE_HOME``.  The
        respawn below is argv-only (no ``env=`` replay), so a foreign
        backend would come back running on the *updating* install's home
        and steal the foreign install's fixed port, leaving its own
@@ -312,10 +312,10 @@ def _filter_dashboard_respawn_candidates(
        supervisor/user.  An unreadable home (``None``) stays eligible —
        keep the pre-#94030 behaviour when we cannot tell.
     3. Dedupe by normalized cmdline (identical argv → one respawn).
-    4. Cap at most one managed backend per profile / ``HERMES_HOME``.
+    4. Cap at most one managed backend per profile / ``AURA_FORGE_HOME``.
 
     Intentionally does **not** blanket-skip every PPID-1 process: a prior
-    ``hermes update`` respawn detaches with ``start_new_session=True``, so
+    ``auraforge update`` respawn detaches with ``start_new_session=True``, so
     fixed-port manual backends are reparented to init and must still be
     eligible for the next update's #40449 restart.
     """
@@ -358,10 +358,10 @@ def _kill_stale_dashboard_processes(
     restart_managed: bool = False,
     already_restarted_units: "set[str] | None" = None,
 ) -> dict[str, list]:
-    """Kill running ``hermes dashboard`` / ``hermes serve`` processes.
+    """Kill running ``auraforge dashboard`` / ``auraforge serve`` processes.
 
-    Called at the end of ``hermes update`` (default ``reason``) and also
-    from ``hermes dashboard --stop`` (which overrides ``reason``).  The
+    Called at the end of ``auraforge update`` (default ``reason``) and also
+    from ``auraforge dashboard --stop`` (which overrides ``reason``).  The
     dashboard has no service manager, so after a code update the running
     process is guaranteed to be serving stale Python against a
     freshly-updated JS bundle.  Leaving it alive produces silent
@@ -374,7 +374,7 @@ def _kill_stale_dashboard_processes(
 
     Manually-started dashboards are not auto-restarted because we don't know
     the original launch args (--host, --port, --insecure, --tui, --no-open).
-    When ``restart_managed`` is true (the ``hermes update`` path), a detected
+    When ``restart_managed`` is true (the ``auraforge update`` path), a detected
     ``hermes-dashboard.service`` is restarted through systemd; any OTHER
     killed PID that was supervised by a systemd unit (custom unit names —
     e.g. a remote backend's ``hermes-serve.service``) has its owning unit
@@ -382,7 +382,7 @@ def _kill_stale_dashboard_processes(
     stop and ``Restart=on-failure`` would never fire (#68934).
 
     *already_restarted_units* names units (no ``.service`` suffix) the
-    caller already restarted directly — e.g. ``hermes update``'s systemd
+    caller already restarted directly — e.g. ``auraforge update``'s systemd
     fleet-restart loop, which restarts ``hermes-serve*`` units before this
     function runs. Without excluding them, a Serve-only install's freshly
     restarted process is found again here and restarted a second time for
@@ -423,7 +423,7 @@ def _kill_stale_dashboard_processes(
     # Before killing, snapshot systemd cgroup info for each PID so we can
     # restart supervised services after the kill (the cgroup disappears
     # along with the process).  Only meaningful on Linux, and only when the
-    # caller asked for restarts (the `hermes update` path) — `--stop` must
+    # caller asked for restarts (the `auraforge update` path) — `--stop` must
     # stay a stop, not a restart.
     pid_cgroup: dict[int, str | None] = {}
     pid_service: dict[int, str | None] = {}
@@ -437,7 +437,7 @@ def _kill_stale_dashboard_processes(
             if not pid_service[pid]:
                 # Manually-started process: preserve its exact argv so we
                 # can respawn it after the update (#40449, #68934).
-                # Snapshot HERMES_HOME before the kill so per-profile caps
+                # Snapshot AURA_FORGE_HOME before the kill so per-profile caps
                 # still work after the process is gone (#78821).
                 cmdline = _m()._dashboard_cmdline_for_pid(pid)
                 if cmdline:
@@ -592,14 +592,14 @@ def _detect_concurrent_hermes_instances(
     Windows blocks DELETE/REPLACE on a running .exe — and even RENAME on the
     same .exe when another process opened it without ``FILE_SHARE_DELETE``.
     The Aura Forge Desktop Electron app spawns ``hermes.EXE`` as a backend child,
-    so during ``hermes update`` the user-invoked process and the desktop's
+    so during ``auraforge update`` the user-invoked process and the desktop's
     child both hold the same file. The quarantine rename then fails with
     ``[WinError 32]`` and uv inherits the lock.
 
     This helper enumerates processes whose ``exe`` matches one of the venv's
     shims (``hermes.exe`` / ``hermes-gateway.exe``) and returns ``(pid,
     process_name)`` pairs. The caller's own PID and its entire ancestor
-    chain are excluded so the running ``hermes update`` invocation never
+    chain are excluded so the running ``auraforge update`` invocation never
     reports itself — this matters on Windows where the setuptools .exe
     launcher (``hermes.exe``) is a separate process from the Python
     interpreter it loads (``python.exe``).
@@ -630,7 +630,7 @@ def _detect_concurrent_hermes_instances(
     # setuptools-generated hermes.exe launcher is a separate native process
     # that spawns python.exe (the interpreter that runs our code).
     # os.getpid() returns the Python PID, but the launcher (which holds the
-    # file lock) is the parent. Without excluding it, every ``hermes update``
+    # file lock) is the parent. Without excluding it, every ``auraforge update``
     # reports its own launcher as a concurrent instance — a false positive
     # (issues #29341, #34795).
     #
@@ -771,9 +771,9 @@ def _exclude_pids_from_env() -> set[int]:
 # --- SSH remote-backend lock ownership -------------------------------------
 #
 # ``backend.lock.json`` is the ownership record the Desktop SSH runtime writes
-# on the *remote* host for every ``hermes serve`` backend it spawns over SSH
+# on the *remote* host for every ``auraforge serve`` backend it spawns over SSH
 # (see apps/desktop/electron/remote-lifecycle.ts). A backend started from
-# another client/machine — e.g. a MacBook driving a ``hermes serve`` on a Mac
+# another client/machine — e.g. a MacBook driving a ``auraforge serve`` on a Mac
 # Mini over SSH — is a *legitimate, lock-owned* backend even though it has no
 # parent on this host (sshd has long since exited, reparenting it to pid 1).
 #
@@ -795,8 +795,8 @@ _HEX16 = _HEX32
 
 
 def _hermes_home_dir() -> Path:
-    """Resolved Aura Forge home (HERMES_HOME override or ~/.hermes)."""
-    override = os.environ.get("HERMES_HOME", "").strip()
+    """Resolved Aura Forge home (AURA_FORGE_HOME override or ~/.hermes)."""
+    override = os.environ.get("AURA_FORGE_HOME", "").strip()
     if override:
         return Path(override).expanduser()
     return Path.home() / ".hermes"
@@ -838,7 +838,7 @@ def _valid_lockfile_payload(parsed: object, ownership_id: str) -> bool:
         if not isinstance(value, str) or len(value) > 1024:
             return False
     # logPath is written as ``{lock_root}/{ownershipId}/{spawnNonce}.log``. We
-    # only check the suffix so a relocated HERMES_HOME (different leading path)
+    # only check the suffix so a relocated AURA_FORGE_HOME (different leading path)
     # doesn't falsely reject a legitimate remote-owned backend — a false reject
     # here would re-introduce the exact kill we're fixing.
     log_path = parsed["logPath"]
@@ -925,7 +925,7 @@ def _reap_orphaned_desktop_local_serves(
     lock_owned_pids_fn=None,
     process_age_seconds_fn=None,
 ) -> dict[str, list]:
-    """Kill leftover Desktop-local ``hermes serve`` backends with no parent.
+    """Kill leftover Desktop-local ``auraforge serve`` backends with no parent.
 
     When Electron dies uncleanly (crash / SIGKILL / update handoff), local
     ``serve --host 127.0.0.1 --port 0`` children can be reparented to pid 1 and

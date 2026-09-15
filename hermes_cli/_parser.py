@@ -15,7 +15,7 @@ from functools import lru_cache
 
 
 # `--profile` / `-p` is consumed by ``main._apply_profile_override`` before
-# argparse runs (it sets ``HERMES_HOME`` and strips itself from ``sys.argv``),
+# argparse runs (it sets ``AURA_FORGE_HOME`` and strips itself from ``sys.argv``),
 # so it isn't on the parser. Listed here so all "carry over on relaunch"
 # metadata lives in one file.
 PRE_ARGPARSE_INHERITED_FLAGS: list[tuple[str, bool]] = [
@@ -52,7 +52,7 @@ def top_level_value_flag_sets() -> tuple[frozenset[str], frozenset[str]]:
     Introspects ``build_top_level_parser()`` (every option with nargs != 0)
     so the argv scanners in ``main.py`` (``_first_positional_argv``,
     ``_apply_profile_override``) can never drift from the argparse surface —
-    the exact drift that made ``hermes --reasoning high chat …`` misread
+    the exact drift that made ``auraforge --reasoning high chat …`` misread
     ``high`` as the subcommand and forced eager plugin discovery (#93530).
     Mirrors the ``update_cmd._holder_value_flags`` precedent, including the
     handwritten-snapshot fallback for a broken parser import. Cached per
@@ -97,21 +97,21 @@ Examples:
     hermes --resume <session_id>  Resume a specific session by ID
     hermes --resume latest        Resume the most recent session (same as -c)
     hermes --tui --resume latest --in ./dir   Resume ./dir's latest session in the TUI
-    hermes setup                  Run setup wizard
+    auraforge setup                  Run setup wizard
     hermes logout                 Clear stored authentication
-    hermes auth add <provider>    Add a pooled credential
-    hermes auth list              List pooled credentials
-    hermes auth remove <p> <t>    Remove pooled credential by index, id, or label
-    hermes auth reset <provider>  Clear exhaustion status for a provider
-    hermes model                  Select default model
+    auraforge auth add <provider>    Add a pooled credential
+    auraforge auth list              List pooled credentials
+    auraforge auth remove <p> <t>    Remove pooled credential by index, id, or label
+    auraforge auth reset <provider>  Clear exhaustion status for a provider
+    auraforge model                  Select default model
     hermes fallback [list]        Show fallback provider chain
-    hermes fallback add           Add a fallback provider (same picker as `hermes model`)
+    hermes fallback add           Add a fallback provider (same picker as `auraforge model`)
     hermes fallback remove        Remove a fallback provider from the chain
-    hermes config                 View configuration
-    hermes config edit            Edit config in $EDITOR
-    hermes config set model gpt-4 Set a config value
+    auraforge config                 View configuration
+    auraforge config edit            Edit config in $EDITOR
+    auraforge config set model gpt-4 Set a config value
     hermes gateway                Run messaging gateway
-    hermes -s hermes-agent-dev,github-auth
+    hermes -s aura-forge-agent-dev,github-auth
     hermes -w                     Start in isolated git worktree
     hermes gateway install        Install gateway background service
     hermes sessions list          List past sessions
@@ -177,7 +177,7 @@ def build_top_level_parser():
     # --model / --provider are accepted at the top level so they can pair
     # with -z without needing the `chat` subcommand.  If neither -z nor a
     # subcommand consumes them, they fall through harmlessly as None.
-    # Mirrors `hermes chat --model ... --provider ...` semantics.
+    # Mirrors `auraforge chat --model ... --provider ...` semantics.
     _inherited_flag(
         parser,
         "-m",
@@ -195,7 +195,7 @@ def build_top_level_parser():
         help=(
             "Provider override for this invocation (e.g. openrouter, anthropic). "
             "Applies to -z/--oneshot and --tui. The persistent provider lives in config.yaml "
-            "under model.provider — use `hermes setup` or edit the file to change it."
+            "under model.provider — use `auraforge setup` or edit the file to change it."
         ),
     )
     _inherited_flag(
@@ -300,7 +300,7 @@ def build_top_level_parser():
         "--ignore-user-config",
         action="store_true",
         default=False,
-        help="Ignore ~/.hermes/config.yaml and fall back to built-in defaults (credentials in .env are still loaded)",
+        help="Ignore ~/.aura-forge/config.yaml and fall back to built-in defaults (credentials in .env are still loaded)",
     )
     _inherited_flag(
         parser,
@@ -387,7 +387,7 @@ def build_top_level_parser():
         "--image", help="Optional local image path to attach to a single query"
     )
     # `default=argparse.SUPPRESS` on flags that are ALSO declared on the
-    # top-level parser: when the user writes `hermes -m foo chat`, argparse
+    # top-level parser: when the user writes `auraforge -m foo chat`, argparse
     # first sets `args.model = "foo"` from the top-level parser, then
     # dispatches to the chat subparser. Without SUPPRESS the chat subparser's
     # own default (`None`) would silently clobber the top-level value because
@@ -562,7 +562,7 @@ def build_top_level_parser():
         "--ignore-user-config",
         action="store_true",
         default=argparse.SUPPRESS,
-        help="Ignore ~/.hermes/config.yaml and fall back to built-in defaults (credentials in .env are still loaded). Useful for isolated CI runs, reproduction, and third-party integrations.",
+        help="Ignore ~/.aura-forge/config.yaml and fall back to built-in defaults (credentials in .env are still loaded). Useful for isolated CI runs, reproduction, and third-party integrations.",
     )
     _inherited_flag(
         chat_parser,

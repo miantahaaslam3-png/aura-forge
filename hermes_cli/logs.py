@@ -1,8 +1,8 @@
-"""``hermes logs`` — view and filter Aura Forge log files.
+"""``auraforge logs`` — view and filter Aura Forge log files.
 
 Supports tailing, following, session filtering, level filtering,
 component filtering, and relative time ranges.  All log files live
-under ``~/.hermes/logs/``.
+under ``~/.aura-forge/logs/``.
 
 Usage examples::
 

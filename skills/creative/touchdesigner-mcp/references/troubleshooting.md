@@ -137,7 +137,7 @@ actual = str(n.width) + 'x' + str(n.height)
 
 ### Config location
 
-`$HERMES_HOME/config.yaml` (defaults to `~/.hermes/config.yaml` when `HERMES_HOME` is unset)
+`$AURA_FORGE_HOME/config.yaml` (defaults to `~/.auraforge/config.yaml` when `AURA_FORGE_HOME` is unset)
 
 ### MCP entry format
 

@@ -6,7 +6,7 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [design, design-system, tokens, ui, accessibility, wcag, tailwind, dtcg, google]
     related_skills: [popular-web-designs, claude-design, excalidraw, architecture-diagram]
 ---

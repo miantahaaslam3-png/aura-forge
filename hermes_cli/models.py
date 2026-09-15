@@ -1,8 +1,8 @@
 """
 Canonical model catalogs and lightweight validation helpers.
 
-Add, remove, or reorder entries here — both `hermes setup` and
-`hermes` provider-selection will pick up the change automatically.
+Add, remove, or reorder entries here — both `auraforge setup` and
+`auraforge` provider-selection will pick up the change automatically.
 """
 
 from __future__ import annotations
@@ -179,7 +179,7 @@ def _codex_curated_models() -> list[str]:
     """Derive the openai-codex curated list from codex_models.py.
 
     Single source of truth: DEFAULT_CODEX_MODELS + forward-compat synthesis.
-    This keeps the gateway /model picker in sync with the CLI `hermes model`
+    This keeps the gateway /model picker in sync with the CLI `auraforge model`
     flow without maintaining a separate static list.
     """
     from hermes_cli.codex_models import DEFAULT_CODEX_MODELS, _finalize_codex_models
@@ -188,7 +188,7 @@ def _codex_curated_models() -> list[str]:
 
 # Static fallback for xAI when the models.dev disk cache is empty (fresh
 # install, offline first run, etc.). Mirrors the xAI-direct model IDs from
-# $HERMES_HOME/models_dev_cache.json as of 2026-04-28. Whenever xAI renames
+# $AURA_FORGE_HOME/models_dev_cache.json as of 2026-04-28. Whenever xAI renames
 # or retires a model, the disk cache picks it up on the next refresh and the
 # fallback here only matters until that refresh lands.
 #
@@ -243,7 +243,7 @@ def _xai_finalize_catalog(ids: list[str]) -> list[str]:
 def _xai_curated_models() -> list[str]:
     """Offline curated floor for xAI / xAI OAuth pickers.
 
-    Reads $HERMES_HOME/models_dev_cache.json directly (no network). Falls
+    Reads $AURA_FORGE_HOME/models_dev_cache.json directly (no network). Falls
     back to ``_XAI_STATIC_FALLBACK`` when the cache is empty or unreadable.
     """
     try:
@@ -1069,7 +1069,7 @@ def fetch_nous_recommended_models(
     ``force_refresh=True`` to bypass the in-process cache.
 
     A successful live fetch is also persisted to a per-base disk cache
-    (``$HERMES_HOME/cache/nous_recommended_cache.json``) as last-known-good.
+    (``$AURA_FORGE_HOME/cache/nous_recommended_cache.json``) as last-known-good.
     When the live fetch fails (network, parse, non-2xx) and the in-process
     cache is empty, the disk copy is returned instead of ``{}`` — so a
     transient Portal hiccup no longer silently drops the free/paid model
@@ -1203,18 +1203,18 @@ def get_nous_recommended_aux_model(
 # ---------------------------------------------------------------------------
 # Canonical provider list — single source of truth for provider identity.
 # Every code path that lists, displays, or iterates providers derives from
-# this list:  hermes model, /model, list_authenticated_providers.
+# this list:  auraforge model, /model, list_authenticated_providers.
 #
 # Fields:
 #   slug        — internal provider ID (used in config.yaml, --provider flag)
 #   label       — short display name
-#   tui_desc    — longer description for the `hermes model` interactive picker
+#   tui_desc    — longer description for the `auraforge model` interactive picker
 # ---------------------------------------------------------------------------
 
 class ProviderEntry(NamedTuple):
     slug: str
     label: str
-    tui_desc: str   # detailed description for `hermes model` TUI
+    tui_desc: str   # detailed description for `auraforge model` TUI
 
 CANONICAL_PROVIDERS: list[ProviderEntry] = [
     ProviderEntry("nous",           "Nous Portal",              "Nous Portal (Everything your agent needs, 300+ models with bundled tool use)"),
@@ -1286,7 +1286,7 @@ _PROVIDER_LABELS["custom"] = "Custom endpoint"  # special case: not a named prov
 #
 # Some vendors expose several Aura Forge provider slugs (one per endpoint /
 # auth method: global API, China API, OAuth coding plan, ...). Listing every
-# slug as a top-level row in the interactive `hermes model` / setup wizard /
+# slug as a top-level row in the interactive `auraforge model` / setup wizard /
 # Telegram `/model` pickers makes that list long and noisy.
 #
 # These groups fold related slugs under one top-level row in INTERACTIVE
@@ -1328,7 +1328,7 @@ def provider_group_for_slug(slug: str) -> str:
 def group_providers(slugs):
     """Fold a flat ordered slug iterable into picker rows by provider group.
 
-    DISPLAY ONLY. Used by every interactive picker (``hermes model``, the
+    DISPLAY ONLY. Used by every interactive picker (``auraforge model``, the
     setup wizard, the Telegram ``/model`` keyboard) so grouping is identical
     across surfaces.
 
@@ -1539,7 +1539,7 @@ def pick_silent_default_model(model_ids: list[str], provider: str = "openrouter"
 #
 # This is deliberately a network-free lookup for the hot resolution path
 # (cache-only catalog read). The *interactive* default (GUI onboarding /
-# ``hermes model``) uses the richer free/paid-tier-aware resolver — see
+# ``auraforge model``) uses the richer free/paid-tier-aware resolver — see
 # ``get_recommended_default_model`` in hermes_cli/web_server.py and
 # ``partition_nous_models_by_tier`` — which can hit the Portal.
 _SILENT_DEFAULT_PROVIDERS: frozenset[str] = frozenset({"nous", "openrouter"})
@@ -1549,11 +1549,11 @@ def get_default_model_for_provider(provider: str) -> str:
     """Return a cost-safe default model for a provider, or "" if unknown.
 
     Used as a NON-INTERACTIVE fallback when a provider is configured but no
-    model was ever selected (e.g. ``hermes auth add openai-codex`` without
-    ``hermes model``, or a profile that sets ``provider`` with no ``model``).
+    model was ever selected (e.g. ``auraforge auth add openai-codex`` without
+    ``auraforge model``, or a profile that sets ``provider`` with no ``model``).
 
     For most providers this is the first entry in ``_PROVIDER_MODELS`` — the
-    same model the ``hermes model`` picker offers first. For metered aggregators
+    same model the ``auraforge model`` picker offers first. For metered aggregators
     whose curated list is ordered most-capable-first, that entry is also the
     most EXPENSIVE one, so silently defaulting to it is a billing footgun.
     Those providers (``_SILENT_DEFAULT_PROVIDERS``) resolve through the
@@ -1584,7 +1584,7 @@ def _openrouter_model_is_free(pricing: Any) -> bool:
 def _openrouter_model_supports_tools(item: Any) -> bool:
     """Return True when the model's ``supported_parameters`` advertise tool calling.
 
-    hermes-agent is tool-calling-first — every provider path assumes the model
+    aura-forge-agent is tool-calling-first — every provider path assumes the model
     can invoke tools. Models that don't advertise ``tools`` in their
     ``supported_parameters`` (e.g. image-only or completion-only models) cannot
     be driven by the agent loop and would fail at the first tool call.
@@ -1669,7 +1669,7 @@ _openrouter_reasoning_caps_failed_at: float | None = None
 #
 # The in-process caches are always cold in a short-lived process, and every
 # consumer is on a hot path that must never block on HTTP — so without a disk
-# copy, `hermes -p`, a cron job, or a freshly booted gateway answers
+# copy, `auraforge -p`, a cron job, or a freshly booted gateway answers
 # "capability unknown" for its whole first turn and falls back to the
 # conservative wire shape. Persisting the parsed catalog makes every run after
 # the first correct from its first turn.
@@ -2079,7 +2079,7 @@ def fetch_openrouter_models(
         live_item = live_by_id.get(preferred_id)
         if live_item is None:
             continue
-        # Hide models that don't advertise tool-calling support — hermes-agent
+        # Hide models that don't advertise tool-calling support — aura-forge-agent
         # requires it and surfacing them leads to immediate runtime failures
         # when the user selects them. Ported from Kilo-Org/kilocode#9068.
         if not _openrouter_model_supports_tools(live_item):
@@ -2749,7 +2749,7 @@ def list_available_providers() -> list[dict[str, str]]:
     Checks which providers have valid credentials configured.
 
     Derives the provider list from :data:`CANONICAL_PROVIDERS` (single
-    source of truth shared with ``hermes model``, ``/model``, etc.).
+    source of truth shared with ``auraforge model``, ``/model``, etc.).
     """
     # Derive display order from canonical list + custom
     provider_order = [p.slug for p in CANONICAL_PROVIDERS] + ["custom"]
@@ -3708,8 +3708,8 @@ def _resolve_copilot_catalog_api_key() -> str:
       2. ``read_credential_pool("copilot")`` — a token (typically a
          ``gho_*`` from device-code login, or a fine-grained PAT) stored in
          ``auth.json`` under ``credential_pool.copilot[]``. The pool is
-         populated by ``hermes auth add copilot`` and by ``_seed_from_env``
-         when the env var is set in ``~/.hermes/.env``.
+         populated by ``auraforge auth add copilot`` and by ``_seed_from_env``
+         when the env var is set in ``~/.aura-forge/.env``.
 
     Without (2), users whose only Copilot credential is in the pool see
     the ``/model`` picker fall back to a stale hardcoded list because the
@@ -4037,7 +4037,7 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
             # moderation and legacy chat models — none of which belong in the
             # agent model picker. For official hosts, intersect the live list
             # with our curated agentic catalog so ``/model`` matches what
-            # ``hermes model`` shows.
+            # ``auraforge model`` shows.
             from hermes_cli.providers import is_official_openai_host
 
             is_default_openai = is_official_openai_host(base)
@@ -4184,7 +4184,7 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
 # HTTP roundtrips just to render the provider list.
 #
 # Cache strategy:
-#   - One JSON file at $HERMES_HOME/provider_models_cache.json
+#   - One JSON file at $AURA_FORGE_HOME/provider_models_cache.json
 #   - Per-provider entries keyed by (provider, credential fingerprint)
 #   - Credential fingerprint = sha256 of env-var values that the provider
 #     normally reads. Swap your OPENAI_API_KEY and the entry invalidates.
@@ -4286,7 +4286,7 @@ def _credential_fingerprint(provider: str) -> str:
     for that provider. We hash AT LEAST the api-key + base-url env vars
     declared in ``PROVIDER_REGISTRY``. For OAuth-backed providers
     (codex, copilot, anthropic-via-claude-code, nous portal), the
-    relevant tokens live in ``$HERMES_HOME/auth.json`` and external
+    relevant tokens live in ``$AURA_FORGE_HOME/auth.json`` and external
     credential files. Rather than parse every shape, we additionally
     fold the mtime of those files into the fingerprint so refreshes
     after re-auth bust the cache.
@@ -4311,7 +4311,7 @@ def _credential_fingerprint(provider: str) -> str:
 
     # Effective configured endpoint: config.yaml's model.base_url changes the
     # endpoint discovery probes (data-residency hosts) without touching any
-    # env var, so it must change the fingerprint too or `hermes config set
+    # env var, so it must change the fingerprint too or `auraforge config set
     # model.base_url ...` keeps serving the previous endpoint's cached
     # catalog until TTL expiry.
     if provider in ("openai", "openai-api"):
@@ -4520,7 +4520,7 @@ def clear_provider_models_cache(provider: Optional[str] = None) -> None:
 
     ``provider=None`` wipes everything; otherwise only that provider's
     entry is removed. Used by ``/model --refresh`` and
-    ``hermes model --refresh``.
+    ``auraforge model --refresh``.
     """
     try:
         # Native Ollama tags are keyed by root URL rather than provider slug.
@@ -5477,7 +5477,7 @@ def opencode_zen_free_headers() -> dict:
         _v = "0"
     return {
         "Authorization": "",
-        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "HTTP-Referer": "https://aura-forge-agent.nousresearch.com",
         "X-Title": "Aura Forge Agent",
         "User-Agent": f"HermesAgent/{_v}",
     }
@@ -5725,7 +5725,7 @@ def probe_api_models(
     tried: list[str] = []
     headers: dict[str, str] = {"User-Agent": _HERMES_USER_AGENT}
     if urllib.parse.urlparse(normalized).hostname == "generativelanguage.googleapis.com":
-        headers["X-Goog-Api-Client"] = f"hermes-agent/{_HERMES_VERSION}"
+        headers["X-Goog-Api-Client"] = f"aura-forge-agent/{_HERMES_VERSION}"
     if api_key and api_mode == "anthropic_messages":
         headers["x-api-key"] = api_key
         headers["anthropic-version"] = "2023-06-01"
@@ -6369,7 +6369,7 @@ def validate_requested_model(
                 return {"accepted": True, "persist": True, "recognized": True, "message": None}
             return {
                 "accepted": False, "persist": False, "recognized": False,
-                "message": f"MoA preset `{requested}` was not found. Run `hermes moa list`.",
+                "message": f"MoA preset `{requested}` was not found. Run `auraforge moa list`.",
             }
         except Exception as exc:
             return {

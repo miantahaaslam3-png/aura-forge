@@ -164,7 +164,7 @@ def persist_personality(value: Any) -> bool:
     """Persist the personality selection — the ONLY sanctioned write path.
 
     Writes the canonical name (or '') to ``display.personality`` in the active
-    HERMES_HOME config.yaml atomically, preserving comments and ordering.
+    AURA_FORGE_HOME config.yaml atomically, preserving comments and ordering.
     Never touches ``agent.system_prompt``. Returns True on success.
     """
     name = normalize_personality_name(value)

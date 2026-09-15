@@ -6,9 +6,9 @@ author: Aura Forge Agent + Teknium
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Coding-Agent, Claude, Anthropic, Code-Review, Refactoring, PTY, Automation]
-    related_skills: [codex, hermes-agent, opencode]
+    related_skills: [codex, auraforge-agent, opencode]
 ---
 
 # Claude Code — Aura Forge Orchestration Guide

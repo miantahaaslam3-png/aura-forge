@@ -1,4 +1,4 @@
-"""``hermes security`` subcommand parser.
+"""``auraforge security`` subcommand parser.
 
 Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
@@ -18,7 +18,7 @@ def build_security_parser(subparsers, *, cmd_security: Callable) -> None:
         description=(
             "On-demand vulnerability scan against OSV.dev. Covers the Aura Forge "
             "venv (installed PyPI dists), Python deps declared by plugins under "
-            "~/.hermes/plugins/, and pinned npx/uvx MCP servers in config.yaml. "
+            "~/.aura-forge/plugins/, and pinned npx/uvx MCP servers in config.yaml. "
             "Does NOT scan globally-installed packages or editor/browser extensions."
         ),
     )

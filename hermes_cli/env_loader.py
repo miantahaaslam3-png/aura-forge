@@ -32,7 +32,7 @@ _WARNED_UTF32_PATHS: set[str] = set()
 
 # Map of env-var name → source label ("bitwarden", etc.) for credentials
 # that were injected by an external secret source during load_hermes_dotenv().
-# Used by setup / `hermes model` flows to label detected credentials so
+# Used by setup / `auraforge model` flows to label detected credentials so
 # users understand WHERE a key came from when their .env doesn't contain it
 # directly (otherwise the "credentials detected ✓" line looks identical to
 # the .env case and they don't know Bitwarden is wired up).
@@ -41,7 +41,7 @@ _SECRET_SOURCES: dict[str, str] = {}
 # across profiles and may be overwritten by a later home's source apply.
 _SECRET_SOURCE_VALUES_BY_HOME: dict[str, dict[str, str]] = {}
 
-# HERMES_HOME paths we've already pulled external secrets for during this
+# AURA_FORGE_HOME paths we've already pulled external secrets for during this
 # process.  ``load_hermes_dotenv()`` is called at module-import time from
 # several hot modules (cli.py, hermes_cli/main.py, run_agent.py,
 # trajectory_compressor.py, gateway/run.py, ...), so without this guard the
@@ -128,7 +128,7 @@ def _clear_known_keys_missing_from_dotenv(path: Path) -> None:
     ``tests/hermes_cli/test_dump_env_visibility.py``), and a startup scrub
     cannot distinguish a shell export from parent-process leakage. Clearing
     the full known-key set would delete user-exported credentials on every
-    ``hermes`` invocation.
+    ``auraforge`` invocation.
 
     Cross-profile *credential* isolation is handled at read time by
     ``agent.secret_scope.get_secret`` (scope authoritative under
@@ -217,7 +217,7 @@ def _hydrate_profile_secret_sources(home: Path) -> dict[str, str]:
         if op_env.exists():
             for _name, _value in load_env_file(op_env).items():
                 local_env.setdefault(_name, _value)
-        local_env["HERMES_HOME"] = str(home)
+        local_env["AURA_FORGE_HOME"] = str(home)
         report = apply_all(cfg, home, environ=local_env)
     except Exception:  # noqa: BLE001 — preserve fail-open startup behavior
         return {}
@@ -239,7 +239,7 @@ def _hydrate_profile_secret_sources(home: Path) -> dict[str, str]:
 
 
 def reset_secret_source_cache() -> None:
-    """Forget which HERMES_HOME paths have already had external secrets applied.
+    """Forget which AURA_FORGE_HOME paths have already had external secrets applied.
 
     The first call to ``_apply_external_secret_sources(home_path)`` in a
     process pulls from Bitwarden (or other configured backend), records the
@@ -333,7 +333,7 @@ def _sanitize_loaded_credentials() -> None:
             "rich-text editor, or web page that substituted lookalike\n"
             "  Unicode glyphs for ASCII letters. If authentication fails "
             "(e.g. \"API key not valid\"), re-copy the key from the\n"
-            "  provider's dashboard and run `hermes setup` (or edit the "
+            "  provider's dashboard and run `auraforge setup` (or edit the "
             ".env file in a plain-text editor).",
             file=sys.stderr,
         )
@@ -476,7 +476,7 @@ def load_hermes_dotenv(
     """Load Aura Forge environment files with user config taking precedence.
 
     Behavior:
-    - `~/.hermes/.env` overrides stale shell-exported values when present.
+    - `~/.aura-forge/.env` overrides stale shell-exported values when present.
     - project `.env` acts as a dev fallback and only fills missing values when
       the user env exists.
     - if no user env exists, the project `.env` also overrides stale shell vars.
@@ -486,7 +486,7 @@ def load_hermes_dotenv(
     """
     loaded: list[Path] = []
 
-    home_path = Path(hermes_home or os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+    home_path = Path(hermes_home or os.getenv("AURA_FORGE_HOME", Path.home() / ".hermes"))
     user_env = home_path / ".env"
     project_env_path = Path(project_env) if project_env else None
 
@@ -526,7 +526,7 @@ def load_hermes_dotenv(
     #    invocation that must not import optional secret-manager libraries
     #    (Bitwarden → cryptography → ``_rust.pyd``) into the process that
     #    replaces that same environment on Windows (#73381, #86735).
-    # 2. A fresh ``hermes update`` retry just completed a deferred dependency
+    # 2. A fresh ``auraforge update`` retry just completed a deferred dependency
     #    install before importing this module.  Do not remap native
     #    secret-source dependencies in that same updater process or the
     #    self-lock preflight will recreate the marker and exit 2 again.
@@ -540,8 +540,8 @@ def load_hermes_dotenv(
 
     # config.yaml is the documented source of truth for terminal.* settings,
     # but the dotenv loads above run with override=True — so a stale
-    # TERMINAL_ENV=docker left in ~/.hermes/.env (e.g. written by an older
-    # `hermes setup` before the user switched terminal.backend in config.yaml)
+    # TERMINAL_ENV=docker left in ~/.aura-forge/.env (e.g. written by an older
+    # `auraforge setup` before the user switched terminal.backend in config.yaml)
     # silently wins again on every reload. Startup launchers bridge
     # config→env once, but long-lived processes (gateway per-turn reload,
     # cron standalone runs) call load_hermes_dotenv() repeatedly and used to
@@ -566,7 +566,7 @@ def _reapply_terminal_config_bridge(home_path: Path) -> None:
     config.yaml's ``terminal`` section override env values; a config.yaml
     without a terminal section leaves .env/shell selections untouched.
 
-    Scoped to the process HERMES_HOME: the shared bridge reads the
+    Scoped to the process AURA_FORGE_HOME: the shared bridge reads the
     process-global config, so re-applying it for a *different* profile's
     ``load_hermes_dotenv(hermes_home=...)`` call would bridge the wrong
     profile's config. Fail-open — a config problem must never break dotenv
@@ -585,7 +585,7 @@ def _reapply_terminal_config_bridge(home_path: Path) -> None:
 def _apply_managed_env() -> None:
     """Apply the managed-scope .env last, with override, so it beats user/shell.
 
-    Managed scope is machine-global (independent of HERMES_HOME / profile). v1
+    Managed scope is machine-global (independent of AURA_FORGE_HOME / profile). v1
     enforcement is "applied last with override=True" — at the end of startup load
     ``os.environ`` holds the managed value for every managed key, beating both the
     user ``.env`` and any pre-existing shell export. This deliberately inverts the
@@ -625,7 +625,7 @@ def _apply_external_secret_sources(home_path: Path) -> None:
     The heavy lifting (source ordering, mapped-beats-bulk precedence,
     first-claim-wins conflict handling, override semantics, provenance)
     lives in ``agent.secret_sources.registry.apply_all``; this wrapper
-    owns the once-per-HERMES_HOME guard, the post-apply ASCII
+    owns the once-per-AURA_FORGE_HOME guard, the post-apply ASCII
     sanitization sweep, the ``_SECRET_SOURCES`` provenance map that
     UI surfaces read, and the startup status lines.
 
@@ -700,7 +700,7 @@ def _apply_external_secret_sources(home_path: Path) -> None:
         # user-supplied and might have the same copy-paste corruption as
         # a manually edited .env (see #6843).
         _sanitize_loaded_credentials()
-        # Remember where each var came from so setup / `hermes model`
+        # Remember where each var came from so setup / `auraforge model`
         # flows can label detected credentials with "(from Bitwarden)" /
         # "(from 1Password)" — otherwise users see "credentials ✓" with
         # no hint the value came from a vault rather than .env.
@@ -767,7 +767,7 @@ def _load_secrets_config(home_path: Path) -> dict:
     if not config_path.exists():
         return {}
     # Prefer the shared (mtime, size)-keyed raw-config cache — this is the
-    # first config.yaml read in a normal `hermes` startup, so populating the
+    # first config.yaml read in a normal `auraforge` startup, so populating the
     # shared cache here lets main.py's early bridge and hermes_logging reuse
     # the same parse (one parse per process instead of 3-4). Falls back to a
     # direct isolated parse if the shared reader is unavailable, preserving
@@ -794,7 +794,7 @@ def _load_secrets_config(home_path: Path) -> dict:
 
 
 def _process_hermes_home() -> Path:
-    """The HERMES_HOME the shared config cache is keyed to."""
+    """The AURA_FORGE_HOME the shared config cache is keyed to."""
     try:
         from hermes_constants import get_hermes_home
 

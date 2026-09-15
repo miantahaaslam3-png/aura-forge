@@ -24,10 +24,10 @@ from hermes_constants import display_hermes_home
 from hermes_constants import agent_browser_runnable
 
 PROJECT_ROOT = get_project_root()
-HERMES_HOME = get_hermes_home()
-_DHH = display_hermes_home()  # user-facing display path (e.g. ~/.hermes or ~/.hermes/profiles/coder)
+AURA_FORGE_HOME = get_hermes_home()
+_DHH = display_hermes_home()  # user-facing display path (e.g. ~/.hermes or ~/.aura-forge/profiles/coder)
 
-# Load environment variables from ~/.hermes/.env so API key checks work
+# Load environment variables from ~/.aura-forge/.env so API key checks work
 _env_path = get_env_path()
 load_hermes_dotenv(hermes_home=_env_path.parent, project_env=PROJECT_ROOT / ".env")
 
@@ -97,7 +97,7 @@ def _sqlite_upgrade_hint(install_method: str | None = None) -> str:
     elif method == "apt":
         action = f"run `{recommended_update_command_for_method(method)}`"
     else:
-        action = "run `hermes update`"
+        action = "run `auraforge update`"
     return (
         f"({action}; fixed versions: 3.51.3+ / 3.50.7 / 3.44.6 — "
         "see https://sqlite.org/wal.html#walresetbug)"
@@ -196,7 +196,7 @@ def _report_database_journal_modes(
     from hermes_state import _wal_reset_repair_hint, is_sqlite_wal_reset_vulnerable
 
     vulnerable = is_sqlite_wal_reset_vulnerable(version_info)
-    home = hermes_home if hermes_home is not None else HERMES_HOME
+    home = hermes_home if hermes_home is not None else AURA_FORGE_HOME
     try:
         databases = _hermes_database_paths(home)
     except Exception as exc:
@@ -262,7 +262,7 @@ def _termux_install_all_fallback_notes() -> list[str]:
 
 
 def _has_provider_env_config(content: str) -> bool:
-    """Return True when ~/.hermes/.env contains provider auth/base URL settings."""
+    """Return True when ~/.aura-forge/.env contains provider auth/base URL settings."""
     return any(key in content for key in _PROVIDER_ENV_HINTS)
 
 
@@ -726,7 +726,7 @@ def _check_version_consistency(issues: list[str]) -> None:
     """Verify pyproject.toml version matches hermes_cli.__version__.
 
     A git conflict resolution (reset/merge) can revert one file without the
-    other, leaving ``hermes --version`` reporting a stale version while
+    other, leaving ``auraforge --version`` reporting a stale version while
     ``pyproject.toml`` is current. Detect that drift so users can re-sync.
     Silent no-op for installed wheels where pyproject.toml isn't present.
     """
@@ -788,7 +788,7 @@ def _check_s6_supervision(issues: list[str]) -> None:
 
     profiles = mgr.list_profile_gateways()
     if not profiles:
-        check_info("No per-profile gateways registered yet — create one with `hermes profile create <name>`")
+        check_info("No per-profile gateways registered yet — create one with `auraforge profile create <name>`")
         return
 
     up_count = sum(1 for p in profiles if mgr.is_running(f"gateway-{p}"))
@@ -830,7 +830,7 @@ def check_certificates(should_fix: bool = False, issues: "list | None" = None) -
         check_fail("SSL CA certificate bundle is broken", first_error)
         if issues is not None:
             issues.append(
-                "Repair the CA bundle: run `hermes doctor --fix`, or "
+                "Repair the CA bundle: run `auraforge doctor --fix`, or "
                 f"`{sys.executable} -m pip install --force-reinstall certifi`"
             )
         return
@@ -1088,7 +1088,7 @@ def check_macos_tcc_grants() -> None:
             "macOS TCC grants will reset after every update",
             "the desktop bundle's designated requirement is cdhash-pinned "
             "(pre-#73681 build) — rebuilds invalidate all permission grants. "
-            "Run `hermes update` to get the stable identifier-pinned signing "
+            "Run `auraforge update` to get the stable identifier-pinned signing "
             "identity, then re-grant permissions once.",
         )
         return
@@ -1103,7 +1103,7 @@ def check_macos_tcc_grants() -> None:
         check_ok(
             "macOS TCC signing identity is stable",
             "(identifier-pinned DR; grants survive rebuilds — for the strongest "
-            "anchor, see `hermes desktop --setup-tcc-identity`)",
+            "anchor, see `auraforge desktop --setup-tcc-identity`)",
         )
     check_info(
         "If macOS still re-prompts for permissions (toggle shows ON): the stored "
@@ -1238,10 +1238,10 @@ def run_doctor(args):
     ack_target = getattr(args, 'ack', None)
 
     # Doctor runs from the interactive CLI, so CLI-gated tool availability
-    # checks (like cronjob management) should see the same context as `hermes`.
+    # checks (like cronjob management) should see the same context as `auraforge`.
     os.environ.setdefault("HERMES_INTERACTIVE", "1")
 
-    # Handle `hermes doctor --ack <id>` as a fast path. Persist the ack and
+    # Handle `auraforge doctor --ack <id>` as a fast path. Persist the ack and
     # return without running the rest of the diagnostics — the user has
     # already seen the advisory and just wants to silence it.
     if ack_target:
@@ -1266,7 +1266,7 @@ def run_doctor(args):
         else:
             print(color(
                 f"  ✗ Failed to persist ack for {ack_target}. "
-                f"Check ~/.hermes/config.yaml is writable.",
+                f"Check ~/.aura-forge/config.yaml is writable.",
                 Colors.RED,
             ))
             sys.exit(1)
@@ -1310,7 +1310,7 @@ def run_doctor(args):
                     f"Resolve security advisory {hit.advisory.id}: "
                     f"uninstall {hit.package}=={hit.installed_version} and "
                     f"rotate credentials, then run "
-                    f"`hermes doctor --ack {hit.advisory.id}`."
+                    f"`auraforge doctor --ack {hit.advisory.id}`."
                 )
             # Acked-but-still-installed: show as informational so the user
             # knows the package is still on disk after the ack.
@@ -1455,8 +1455,8 @@ def run_doctor(args):
     _section("Configuration Files")
     # Managed scope (administrator-pinned config/env), when present.
     managed_scope_check()
-    # Check ~/.hermes/.env (primary location for user config)
-    env_path = HERMES_HOME / '.env'
+    # Check ~/.aura-forge/.env (primary location for user config)
+    env_path = AURA_FORGE_HOME / '.env'
     if env_path.exists():
         check_ok(f"{_DHH}/.env file exists")
         
@@ -1471,7 +1471,7 @@ def run_doctor(args):
             check_ok("API key or custom endpoint configured")
         else:
             check_warn(f"No API key found in {_DHH}/.env")
-            issues.append("Run 'hermes setup' to configure API keys")
+            issues.append("Run 'auraforge setup' to configure API keys")
     else:
         # Also check project root as fallback
         fallback_env = PROJECT_ROOT / '.env'
@@ -1490,14 +1490,14 @@ def run_doctor(args):
                 except OSError:
                     pass
                 check_ok(f"Created empty {_DHH}/.env")
-                check_info("Run 'hermes setup' to configure API keys")
+                check_info("Run 'auraforge setup' to configure API keys")
                 fixed_count += 1
             else:
-                check_info("Run 'hermes setup' to create one")
-                issues.append("Run 'hermes setup' to create .env")
+                check_info("Run 'auraforge setup' to create one")
+                issues.append("Run 'auraforge setup' to create .env")
     
-    # Check ~/.hermes/config.yaml (primary) or project cli-config.yaml (fallback)
-    config_path = HERMES_HOME / 'config.yaml'
+    # Check ~/.aura-forge/config.yaml (primary) or project cli-config.yaml (fallback)
+    config_path = AURA_FORGE_HOME / 'config.yaml'
     if config_path.exists():
         check_ok(f"{_DHH}/config.yaml exists")
 
@@ -1603,7 +1603,7 @@ def run_doctor(args):
                         (
                             f"model.provider '{provider_raw}' is unknown. "
                             f"Valid providers: {known_list}. "
-                            f"Fix: run 'hermes config set model.provider <valid_provider>'"
+                            f"Fix: run 'auraforge config set model.provider <valid_provider>'"
                         ),
                         issues,
                     )
@@ -1683,11 +1683,11 @@ def run_doctor(args):
                     if not configured:
                         _fail_and_issue(
                             f"model.provider '{runtime_provider}' is set but no API key is configured",
-                            "(check ~/.hermes/.env or run 'hermes setup')",
+                            "(check ~/.aura-forge/.env or run 'auraforge setup')",
                             (
                                 f"No credentials found for provider '{runtime_provider}'. "
-                                f"Run 'hermes setup' or set the provider's API key in {_DHH}/.env, "
-                                f"or switch providers with 'hermes config set model.provider <name>'"
+                                f"Run 'auraforge setup' or set the provider's API key in {_DHH}/.env, "
+                                f"or switch providers with 'auraforge config set model.provider <name>'"
                             ),
                             issues,
                         )
@@ -1716,7 +1716,7 @@ def run_doctor(args):
                 check_warn("config.yaml not found", "(using defaults)")
 
     # Check config version and stale keys
-    config_path = HERMES_HOME / 'config.yaml'
+    config_path = AURA_FORGE_HOME / 'config.yaml'
     if config_path.exists():
         try:
             from hermes_cli.config import check_config_version, migrate_config
@@ -1733,9 +1733,9 @@ def run_doctor(args):
                         fixed_count += 1
                     except Exception as mig_err:
                         check_warn(f"Auto-migration failed: {mig_err}")
-                        issues.append("Run 'hermes setup' to migrate config")
+                        issues.append("Run 'auraforge setup' to migrate config")
                 else:
-                    issues.append("Run 'hermes doctor --fix' or 'hermes setup' to migrate config")
+                    issues.append("Run 'auraforge doctor --fix' or 'auraforge setup' to migrate config")
             else:
                 check_ok(f"Config version up to date (v{current_ver})")
         except Exception:
@@ -1775,7 +1775,7 @@ def run_doctor(args):
                     check_ok("Migrated stale root-level keys into model section")
                     fixed_count += 1
                 else:
-                    issues.append("Stale root-level provider/base_url in config.yaml — run 'hermes doctor --fix'")
+                    issues.append("Stale root-level provider/base_url in config.yaml — run 'auraforge doctor --fix'")
         except Exception:
             pass
 
@@ -1812,7 +1812,7 @@ def run_doctor(args):
                 check_warn(
                     f"HERMES_MAX_ITERATIONS={env_ghost} in .env shadows "
                     f"agent.max_turns={cfg_max_turns} in config.yaml",
-                    "(stale ghost from an earlier `hermes setup` run)",
+                    "(stale ghost from an earlier `auraforge setup` run)",
                 )
                 if should_fix:
                     if remove_env_value("HERMES_MAX_ITERATIONS"):
@@ -1830,7 +1830,7 @@ def run_doctor(args):
                 else:
                     issues.append(
                         "Stale HERMES_MAX_ITERATIONS in .env shadows config.yaml — "
-                        "run 'hermes doctor --fix'"
+                        "run 'auraforge doctor --fix'"
                     )
         except Exception:
             pass
@@ -1969,7 +1969,7 @@ def run_doctor(args):
         pass
 
     _section("Directory Structure")
-    hermes_home = HERMES_HOME
+    hermes_home = AURA_FORGE_HOME
     if hermes_home.exists():
         check_ok(f"{_DHH} directory exists")
     elif should_fix:
@@ -2085,7 +2085,7 @@ def run_doctor(args):
                         )
                 else:
                     issues.append(
-                        "state.db FTS write corruption — run 'hermes doctor --fix' "
+                        "state.db FTS write corruption — run 'auraforge doctor --fix' "
                         "(or 'hermes sessions repair') to rebuild the FTS index"
                     )
         except Exception as e:
@@ -2131,7 +2131,7 @@ def run_doctor(args):
                         )
                 else:
                     issues.append(
-                        "state.db schema malformed — run 'hermes doctor --fix' "
+                        "state.db schema malformed — run 'auraforge doctor --fix' "
                         "(or 'hermes sessions repair') to recover hidden sessions"
                     )
             else:
@@ -2188,7 +2188,7 @@ def run_doctor(args):
                     check_ok(f"WAL checkpoint performed ({wal_size // 1024}K → {new_size // 1024}K)")
                     fixed_count += 1
                 else:
-                    issues.append("Large WAL file — run 'hermes doctor --fix' to checkpoint")
+                    issues.append("Large WAL file — run 'auraforge doctor --fix' to checkpoint")
             elif wal_size > 10 * 1024 * 1024:  # 10 MB
                 check_info(f"WAL file is {wal_size // (1024*1024)} MB (normal for active sessions)")
         except Exception:
@@ -2246,7 +2246,7 @@ def run_doctor(args):
                         check_ok(f"Fixed symlink: {_cmd_link_display}/hermes → {_venv_bin}")
                         fixed_count += 1
                     else:
-                        issues.append(f"Broken symlink at {_cmd_link_display}/hermes — run 'hermes doctor --fix'")
+                        issues.append(f"Broken symlink at {_cmd_link_display}/hermes — run 'auraforge doctor --fix'")
             elif _cmd_link.exists():
                 # It's a regular file, not a symlink — possibly a wrapper script
                 check_ok(f"{_cmd_link_display}/hermes exists (non-symlink)")
@@ -2270,7 +2270,7 @@ def run_doctor(args):
                         )
                         manual_issues.append(f"Add {_cmd_link_display} to your PATH")
                 else:
-                    issues.append(f"Missing {_cmd_link_display}/hermes symlink — run 'hermes doctor --fix'")
+                    issues.append(f"Missing {_cmd_link_display}/hermes symlink — run 'auraforge doctor --fix'")
 
     _section("External Tools")
     # Git
@@ -2425,8 +2425,8 @@ def run_doctor(args):
         else:
             _fail_and_issue(
                 "vercel SDK not installed",
-                "(pip install 'hermes-agent[vercel]')",
-                "Install the Vercel optional dependency: pip install 'hermes-agent[vercel]'",
+                "(pip install 'aura-forge-agent[vercel]')",
+                "Install the Vercel optional dependency: pip install 'aura-forge-agent[vercel]'",
                 issues,
             )
 
@@ -2506,7 +2506,7 @@ def run_doctor(args):
             if should_fix:
                 # Doctor can't tell from here whether npx's cache already
                 # has agent-browser warm — just fire the same warm-up
-                # `hermes update` does, so a session's first browser call
+                # `auraforge update` does, so a session's first browser call
                 # doesn't pay the registry fetch either way.
                 from tools.browser_tool import warm_agent_browser_npx_cache
                 if warm_agent_browser_npx_cache():
@@ -2519,7 +2519,7 @@ def run_doctor(args):
         elif _resolved_ab:
             # Found on PATH but won't run — almost always a dangling global
             # symlink left behind by agent-browser's npm postinstall after a
-            # `hermes update` wiped node_modules (issue #48521).
+            # `auraforge update` wiped node_modules (issue #48521).
             check_warn(
                 "agent-browser found but not runnable",
                 f"(broken symlink at {_resolved_ab}? run: npx agent-browser --version)",
@@ -2542,7 +2542,7 @@ def run_doctor(args):
         if agent_browser_ok and not _is_termux():
             try:
                 # Lazy import: browser_tool is a ~150KB module we don't want
-                # to eagerly load in every `hermes doctor` invocation.
+                # to eagerly load in every `auraforge doctor` invocation.
                 from tools.browser_tool import (
                     _chromium_installed,
                     _is_camofox_mode,
@@ -2599,7 +2599,7 @@ def run_doctor(args):
         # glob (which pulls in Electron, node-pty, etc.) is never resolved
         # for a routine security check. The web and ui-tui workspaces are
         # audited separately via --workspace flags. See #38772.
-        # The WhatsApp bridge may live under a writable HERMES_HOME mirror
+        # The WhatsApp bridge may live under a writable AURA_FORGE_HOME mirror
         # instead of the (possibly read-only) install tree in Docker — resolve
         # it through the shared helper so we audit the dir that actually holds
         # node_modules. See #49561.
@@ -2750,7 +2750,7 @@ def run_doctor(args):
                     [(color("✗", Colors.RED), "OpenRouter API",
                       color("(out of credits — payment required)", Colors.DIM))],
                     ["OpenRouter account has insufficient credits. "
-                     "Fix: run 'hermes config set model.provider <provider>' "
+                     "Fix: run 'auraforge config set model.provider <provider>' "
                      "to switch providers, or fund your OpenRouter account "
                      "at https://openrouter.ai/settings/credits"],
                 )
@@ -2889,7 +2889,7 @@ def run_doctor(args):
             # ``ACCESS_TOKEN_TYPE_UNSUPPORTED`` — that header is reserved for
             # OAuth 2 access tokens, not plain API keys. Plain keys use
             # ``x-goog-api-key`` (or ``?key=``). Without this, a perfectly valid
-            # GOOGLE_API_KEY/GEMINI_API_KEY always shows red in ``hermes doctor``.
+            # GOOGLE_API_KEY/GEMINI_API_KEY always shows red in ``auraforge doctor``.
             if url and base_url_host_matches(url, "generativelanguage.googleapis.com"):
                 headers.pop("Authorization", None)
                 headers["x-goog-api-key"] = key
@@ -3093,7 +3093,7 @@ def run_doctor(args):
     # Set on the parent thread before submitting work so the env-var
     # mutation never races with another worker. has_aws_credentials() in
     # the bedrock probe already gates on real env-var creds, so IMDS is
-    # never the legitimate source for `hermes doctor`.
+    # never the legitimate source for `auraforge doctor`.
     _imds_prev = os.environ.get("AWS_EC2_METADATA_DISABLED")
     os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
     try:
@@ -3166,12 +3166,12 @@ def run_doctor(args):
         api_disabled = _missing_api_key_toolsets_for_summary(unavailable)
         web_not_ready = any(status != "ok" for status, _, _ in web_rows)
         if api_disabled or web_not_ready:
-            issues.append("Run 'hermes setup' to configure missing API keys for full tool access")
+            issues.append("Run 'auraforge setup' to configure missing API keys for full tool access")
     except Exception as e:
         check_warn("Could not check tool availability", f"({e})")
     
     _section("Skills Hub")
-    hub_dir = HERMES_HOME / "skills" / ".hub"
+    hub_dir = AURA_FORGE_HOME / "skills" / ".hub"
     if hub_dir.exists():
         check_ok("Skills Hub directory exists")
         lock_file = hub_dir / "lock.json"
@@ -3215,7 +3215,7 @@ def run_doctor(args):
     _active_memory_provider = ""
     try:
         from hermes_cli.config import read_user_config_raw as _read_raw_mem
-        _mem_cfg_path = HERMES_HOME / "config.yaml"
+        _mem_cfg_path = AURA_FORGE_HOME / "config.yaml"
         if _mem_cfg_path.exists():
             # Raw-file diagnostic (+ managed overlay below, unchanged).
             _raw_cfg = _read_raw_mem(_mem_cfg_path)
@@ -3357,7 +3357,7 @@ def run_doctor(args):
         pass
 
     # Opt-in live backend probes run AFTER all static checks, only with
-    # `hermes doctor --live` (real network calls; bounded + read-only).
+    # `auraforge doctor --live` (real network calls; bounded + read-only).
     try:
         from hermes_cli.doctor_live import maybe_run_live_checks
         maybe_run_live_checks(args, manual_issues)
@@ -3386,7 +3386,7 @@ def run_doctor(args):
             print(f"  {i}. {issue}")
         print()
         if not should_fix:
-            print(color("  Tip: run 'hermes doctor --fix' to auto-fix what's possible.", Colors.DIM))
+            print(color("  Tip: run 'auraforge doctor --fix' to auto-fix what's possible.", Colors.DIM))
     else:
         print(color("─" * 60, Colors.GREEN))
         print(color("  All checks passed! 🎉", Colors.GREEN, Colors.BOLD))

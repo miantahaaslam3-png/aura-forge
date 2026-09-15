@@ -6,7 +6,7 @@ author: Aura Forge Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  auraforge:
     tags: [Research, Archives, Wayback, Paywall, WAF, Fallback]
     related_skills: [grounded-citations]
 ---

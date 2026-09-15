@@ -1,4 +1,4 @@
-"""``hermes sync`` subcommand parser — Skill Sync.
+"""``auraforge sync`` subcommand parser — Skill Sync.
 
 Cloned from ``hermes_cli/subcommands/cron.py`` — same injected-handler shape
 (``func=cmd_sync``) so this module does not import ``main`` (cycle avoidance).

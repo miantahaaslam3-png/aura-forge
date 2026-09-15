@@ -7,12 +7,12 @@ credentials untouched.
 
 Where this fits relative to the existing pieces:
 
-* ``hermes profile export/import`` — local backup / restore for a profile
+* ``auraforge profile export/import`` — local backup / restore for a profile
   on your own machine. NOT a distribution format. Stays as-is.
-* ``hermes skills install <url>`` — the URL install pattern we're mirroring,
+* ``auraforge skills install <url>`` — the URL install pattern we're mirroring,
   but at the profile granularity.
 
-Subcommands (all live under ``hermes profile``, not a parallel tree):
+Subcommands (all live under ``auraforge profile``, not a parallel tree):
 
     hermes profile install <source> [--name N] [--alias] [--force] [--yes]
     hermes profile update  <name>  [--force-config] [--yes]
@@ -114,7 +114,7 @@ USER_OWNED_EXCLUDE: frozenset = frozenset({
     "browser_screenshots", "checkpoints", "sandboxes",
     "backups", "cache",
     # Infrastructure
-    "hermes-agent", ".worktrees", "profiles", "bin", "node_modules",
+    "aura-forge-agent", ".worktrees", "profiles", "bin", "node_modules",
     # User customization namespace
     "local",
 })
@@ -411,7 +411,7 @@ def _stage_source(source: str, workdir: Path) -> Tuple[Path, str]:
     """Resolve *source* to a local directory containing distribution.yaml.
 
     Returns ``(staged_dir, provenance)`` where ``provenance`` is stored in the
-    installed manifest's ``source:`` field so ``hermes profile update`` can
+    installed manifest's ``source:`` field so ``auraforge profile update`` can
     re-pull from the same place.
 
     Accepts:
@@ -681,7 +681,7 @@ def install_distribution(
         if plan.existing and not force:
             raise DistributionError(
                 f"Profile '{plan.manifest.name}' already exists at {plan.target_dir}. "
-                "Use `hermes profile update` to upgrade in place, "
+                "Use `auraforge profile update` to upgrade in place, "
                 "or pass --force to overwrite."
             )
 
@@ -729,12 +729,12 @@ def update_distribution(
     if existing_manifest is None:
         raise DistributionError(
             f"Profile '{canon}' is not a distribution (no {MANIFEST_FILENAME}). "
-            "Only profiles installed via `hermes profile install` can be updated."
+            "Only profiles installed via `auraforge profile install` can be updated."
         )
     if not existing_manifest.source:
         raise DistributionError(
             f"Profile '{canon}' has no recorded source.  Re-install with "
-            "`hermes profile install <source> --name {canon} --force`."
+            "`auraforge profile install <source> --name {canon} --force`."
         )
 
     with tempfile.TemporaryDirectory(prefix="hermes_dist_update_") as tmp:

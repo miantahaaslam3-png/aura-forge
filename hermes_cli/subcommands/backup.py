@@ -1,4 +1,4 @@
-"""``hermes backup`` subcommand parser.
+"""``auraforge backup`` subcommand parser.
 
 Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
@@ -18,7 +18,7 @@ def build_backup_parser(subparsers, *, cmd_backup: Callable) -> None:
         "backup",
         help="Back up Aura Forge home directory to a zip file",
         description="Create a zip archive of your entire Aura Forge configuration, "
-        "skills, sessions, and data (excludes the hermes-agent codebase). "
+        "skills, sessions, and data (excludes the aura-forge-agent codebase). "
         "Use --quick for a fast snapshot of just critical state files.",
     )
     backup_parser.add_argument(

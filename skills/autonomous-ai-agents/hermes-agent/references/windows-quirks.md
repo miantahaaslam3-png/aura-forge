@@ -18,7 +18,7 @@ To inspect how your terminal reports a keystroke, run
 
 **HTTP 400 "No models provided" on first run** — `config.yaml` was saved with
 a UTF-8 BOM (Notepad does this). Re-save as UTF-8 without BOM;
-`hermes config edit` writes correctly.
+`auraforge config edit` writes correctly.
 
 ### `execute_code` / Sandbox
 
@@ -32,7 +32,7 @@ echo `os.environ` inside an `execute_code` block to confirm `SYSTEMROOT` is set.
 ### Testing on Windows
 
 `scripts/run_tests.sh` is POSIX-only (expects `.venv/bin/activate`); the
-Hermes-installed `venv/Scripts/` has no pip/pytest (stripped for size).
+Aura Forge-installed `venv/Scripts/` has no pip/pytest (stripped for size).
 Install pytest into a system Python and run directly (the repo no longer
 uses pytest-xdist; the canonical runner does per-file subprocess isolation,
 which the POSIX-only wrapper handles):

@@ -1,4 +1,4 @@
-"""``hermes worktree`` — audit and reclaim accumulated git worktrees/branches.
+"""``auraforge worktree`` — audit and reclaim accumulated git worktrees/branches.
 
 Attended counterpart of the silent startup pruner (see
 ``hermes_cli/worktree_gc.py`` for the policy and shared invariants). Usage:
@@ -55,7 +55,7 @@ def cmd_worktree(args) -> int:
             )
         print(
             f"\n{len(records)} tree(s), {_fmt_size(total_mb)} total — "
-            f"{_fmt_size(reapable_mb)} reclaimable now via `hermes worktree prune`."
+            f"{_fmt_size(reapable_mb)} reclaimable now via `auraforge worktree prune`."
         )
         branch_records = worktree_gc.audit_branches(repo_root)
         deletable = [b for b in branch_records if b.verdict == "delete"]
