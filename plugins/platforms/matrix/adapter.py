@@ -1921,7 +1921,7 @@ class MatrixAdapter(BasePlatformAdapter):
                     await crypto_db.start()
                     self._crypto_db = crypto_db
 
-                    _acct_id = self._user_id or "hermes"
+                    _acct_id = self._user_id or "auraforge"
                     # Use the resolved client.device_id (from whoami or password
                     # login), not self._device_id (the configured value), because
                     # #71543 makes the token's real device win over a stale

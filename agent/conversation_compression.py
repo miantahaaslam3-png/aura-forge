@@ -2109,7 +2109,7 @@ def check_compression_model_feasibility(agent: Any) -> None:
                 msg = (
                     "⚠ No auxiliary LLM provider configured — context "
                     "compression will drop middle turns without a summary. "
-                    "Run `hermes setup` or set OPENROUTER_API_KEY."
+                    "Run `auraforge setup` or set OPENROUTER_API_KEY."
                 )
             agent._compression_warning = msg
             agent._emit_status(msg)
@@ -2789,8 +2789,8 @@ def compress_context(
     # Aura Forge' summarizer would only rewrite a local mirror without shrinking
     # the actual thread (#36801). Route compaction to the app server's own
     # thread/compact mechanism. Behavior is controlled by
-    # ``compression.codex_app_server_auto`` (native|hermes|off).
-    # The memory-provider context handoff below is intentionally Hermes-only:
+    # ``compression.codex_app_server_auto`` (native|auraforge|off).
+    # The memory-provider context handoff below is intentionally Aura Forge-only:
     # the app server does not expose its native summary prompt, so there is no
     # truthful injection point for ``on_pre_compress()`` return text here.
     # `is True` (not bool()): unit tests drive this path with bare MagicMock
@@ -3025,7 +3025,7 @@ def compress_context(
                     "compression lock subsystem unavailable for session=%s "
                     "— proceeding without lock. This usually means a stale "
                     "in-memory module after an update; restart the process "
-                    "(or `hermes update`) to resync.",
+                    "(or `auraforge update`) to resync.",
                     _lock_sid,
                 )
             _lock_acquired = True  # acquired-but-unlocked compatibility path
@@ -4540,9 +4540,9 @@ def compress_context(
                 )
 
         # Notify the context engine that a compaction boundary occurred. Plugin
-        # engines (e.g. hermes-lcm) use boundary_reason="compression" to preserve
+        # engines (e.g. auraforge-lcm) use boundary_reason="compression" to preserve
         # DAG lineage / checkpoint per-session state across the boundary instead of
-        # re-initializing fresh. See hermes-lcm#68. Built-in ContextCompressor
+        # re-initializing fresh. See auraforge-lcm#68. Built-in ContextCompressor
         # ignores kwargs. Fires in BOTH modes: rotation passes old→new ids; in-place
         # passes the SAME id (the boundary is real even though the id didn't move).
         if _context_engine_boundary_committed:
@@ -4718,9 +4718,9 @@ def _compress_context_via_codex_app_server(
     auto_mode = str(
         getattr(agent, "codex_app_server_auto_compaction", "native") or "native"
     ).lower()
-    if auto_mode not in {"native", "hermes", "off"}:
+    if auto_mode not in {"native", "auraforge", "off"}:
         auto_mode = "native"
-    if not force and auto_mode != "hermes":
+    if not force and auto_mode != "auraforge":
         logger.info(
             "codex app-server compaction skipped: mode=%s force=false "
             "(session=%s messages=%d tokens=~%s)",

@@ -136,7 +136,7 @@ def _reply_anchor_for_event(event) -> str | None:
     """Return reply_to id for platforms that need reply semantics.
 
     Telegram forum/supergroup topics should be routed by topic metadata, not by
-    replying to the triggering message. Hermes-created Telegram private-chat
+    replying to the triggering message. Aura Forge-created Telegram private-chat
     topic lanes prefer replying to the triggering user message so the answer
     stays attached to the active lane; synthetic/resumed sends fall back to
     ``direct_messages_topic_id`` metadata when no message id is available.
@@ -655,7 +655,7 @@ def streaming_tts_should_skip_whole_file(
 
 GATEWAY_SECRET_CAPTURE_UNSUPPORTED_MESSAGE = (
     "Secure secret entry is not supported over messaging. "
-    "Load this skill in the local CLI to be prompted, or add the key to ~/.hermes/.env manually."
+    "Load this skill in the local CLI to be prompted, or add the key to ~/.auraforge/.env manually."
 )
 
 
@@ -1376,7 +1376,7 @@ def _media_delivery_denied_paths() -> List[Path]:
     # delivery (read/exfil) side can't trail the write side: a credential the
     # agent is forbidden to write or read must also never be auto-attached to a
     # chat reply. Enumerated explicitly per-file rather than denying the whole
-    # tree, so skills/, logs/, and ad-hoc agent-written files under ~/.hermes
+    # tree, so skills/, logs/, and ad-hoc agent-written files under ~/.auraforge
     # stay deliverable (see #32090, #34425).
     _ROOT_CREDENTIAL_FILES = (
         ".env",
@@ -1428,7 +1428,7 @@ def _path_under_denied_prefix(resolved: Path) -> bool:
     on a root-run gateway ``$HOME=/root`` and the operator's own deliverables
     (``/root/work/proposal.docx``) live directly under it. The credential
     sub-directories inside home (``~/.ssh``, ``~/.aws``, ...) and Aura Forge
-    secrets (``~/.hermes/.env``, ``auth.json``) are *separate, more-specific*
+    secrets (``~/.auraforge/.env``, ``auth.json``) are *separate, more-specific*
     denied paths, so they stay blocked regardless of this exception — it can
     only un-block a plain file sitting in the running user's home tree, never a
     credential location or another user's home.
@@ -1649,7 +1649,7 @@ def _docker_persistent_home_host_roots(session_key: str = "") -> List[Path]:
 def _cache_dir_container_mounts() -> List[Tuple[Path, Path]]:
     """(host, container) pairs for the auto-mounted Aura Forge cache dirs.
 
-    The agent legitimately sees generated artifacts at ``/root/.hermes/...``
+    The agent legitimately sees generated artifacts at ``/root/.auraforge/...``
     (``agent_visible_image`` from image_generate, cache-dir reads) and will
     naturally emit those container paths in MEDIA tags. These mounts are
     longer prefixes than the ``/root`` home mount, so longest-prefix matching
@@ -1692,14 +1692,14 @@ def _translate_docker_container_media_path(candidate: Path, session_key: str = "
     """Translate a container-absolute path to its host path when possible.
 
     Uses longest-prefix match across configured ``docker_volumes``, the
-    auto-mounted Aura Forge cache dirs (``/root/.hermes/...``), the session's
+    auto-mounted Aura Forge cache dirs (``/root/.auraforge/...``), the session's
     persistent Docker ``/workspace`` host root, and the persistent ``/root``
     home mount.
     """
     if not candidate.is_absolute():
         return None
 
-    # In-process gateways (Desktop backend, `hermes serve`) may not have
+    # In-process gateways (Desktop backend, `auraforge serve`) may not have
     # bridged terminal.* config into TERMINAL_* env vars — run the idempotent
     # bridge so the mount parsing below sees the active backend and volumes
     # (same guard _binary_reference_block applies for inbound attachments).
@@ -1719,16 +1719,16 @@ def _translate_docker_container_media_path(candidate: Path, session_key: str = "
         for ws_root in _default_docker_workspace_host_roots(session_key):
             mounts.append((ws_root, Path("/workspace")))
     # Synthetic /root mounts for the persistent home bind. Cache mounts above
-    # are longer prefixes, so /root/.hermes/... still translates to the host
+    # are longer prefixes, so /root/.auraforge/... still translates to the host
     # cache — this only catches stray home writes like /root/out.png.
     if not any(c.as_posix() == "/root" for _, c in mounts):
-        # /root/.hermes/* that did NOT match a cache mount is the container's
+        # /root/.auraforge/* that did NOT match a cache mount is the container's
         # credential/secret surface (.env, auth.json, ... are individually
         # bind-mounted from the real host stores). Translating those through
         # the home mount would resolve to sandbox-home copies OUTSIDE the
         # host-side credential denylist prefixes — refuse instead so the
         # normal "container path doesn't exist on host" rejection applies.
-        if not candidate.as_posix().startswith("/root/.hermes"):
+        if not candidate.as_posix().startswith("/root/.auraforge"):
             for home_root in _docker_persistent_home_host_roots(session_key):
                 mounts.append((home_root, Path("/root")))
 
@@ -1773,7 +1773,7 @@ def validate_media_delivery_path(path: str, session_key: str = "") -> Optional[s
 
     Strict mode (opt-in via ``gateway.strict`` in ``config.yaml`` or
     ``HERMES_MEDIA_DELIVERY_STRICT=1``): the file MUST live under a
-    Hermes-managed cache, under an operator-allowlisted root
+    Aura Forge-managed cache, under an operator-allowlisted root
     (``HERMES_MEDIA_ALLOW_DIRS``), or be freshly produced inside the
     configured recency window. Suitable for public-facing bots where
     prompt injection from one user shouldn't be able to exfiltrate the
@@ -1826,11 +1826,11 @@ def validate_media_delivery_path(path: str, session_key: str = "") -> Optional[s
 
     # Non-strict mode (default): accept anything not on the denylist.
     # The denylist still blocks /etc, /proc, ~/.ssh, ~/.aws, and the
-    # credential/secret stores under the Aura Forge root (~/.hermes/.env,
+    # credential/secret stores under the Aura Forge root (~/.auraforge/.env,
     # auth.json, .anthropic_oauth.json, google_token.json, pairing/, ...) —
     # so the obvious prompt-injection / credential-exfil sites
     # (``MEDIA:/etc/passwd``, ``MEDIA:~/.ssh/id_rsa``,
-    # ``MEDIA:~/.hermes/google_token.json``) remain rejected.
+    # ``MEDIA:~/.auraforge/google_token.json``) remain rejected.
     if not _media_delivery_strict_mode():
         if _path_under_denied_prefix(resolved):
             return None
@@ -2509,8 +2509,8 @@ class TextDebounceState:
 
 _PLAINTEXT_GATEWAY_RESTART_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"^(?:please\s+)?restart\s+(?:the\s+)?gateway[.!?\s]*$", re.IGNORECASE),
-    re.compile(r"^(?:please\s+)?restart\s+(?:the\s+)?hermes\s+gateway[.!?\s]*$", re.IGNORECASE),
-    re.compile(r"^(?:please\s+)?restart\s+hermes[.!?\s]*$", re.IGNORECASE),
+    re.compile(r"^(?:please\s+)?restart\s+(?:the\s+)?auraforge\s+gateway[.!?\s]*$", re.IGNORECASE),
+    re.compile(r"^(?:please\s+)?restart\s+auraforge[.!?\s]*$", re.IGNORECASE),
 )
 
 
@@ -3684,7 +3684,7 @@ class BasePlatformAdapter(ABC):
             holder += f" (PID {owner_pid})" if owner_pid else ""
             remedy = (
                 f" Stop that gateway first "
-                f"(hermes --profile {owner_profile} gateway stop)."
+                f"(auraforge --profile {owner_profile} gateway stop)."
             )
         else:
             holder = f" (PID {owner_pid})" if owner_pid else ""
@@ -5035,7 +5035,7 @@ class BasePlatformAdapter(ABC):
 
         Serialized tool results frequently embed a previous reply's text, e.g.::
 
-            {"result": "MEDIA:/Users/x/.hermes/media/generated/stale.png"}
+            {"result": "MEDIA:/Users/x/.auraforge/media/generated/stale.png"}
 
         Here the ``MEDIA:`` is part of stored text, not an outbound directive,
         but the bare-path branch of ``MEDIA_TAG_CLEANUP_RE`` would still match it

@@ -263,7 +263,7 @@ class TestExecuteCodeModeIntegration(unittest.TestCase):
     def test_project_mode_interpreter_is_venv_python(self):
         """Project mode: sys.executable inside the child is the venv's python
         when VIRTUAL_ENV is set to a real venv."""
-        # The hermes-agent venv is always active during tests, so this also
+        # The auraforge-agent venv is always active during tests, so this also
         # happens to equal sys.executable of the parent. What we're asserting
         # is: resolver picked a venv-bin/python path, not that it differs
         # from sys.executable.
@@ -480,7 +480,7 @@ class TestPythonEnvironmentPrefix(unittest.TestCase):
     def test_failure_is_not_cached(self):
         """A transient probe failure must not stick — the next call retries.
 
-        A sticky cached failure would silently drop the hermes root from
+        A sticky cached failure would silently drop the auraforge root from
         every subsequent execute_code call in the process.
         """
         with patch("subprocess.run",
@@ -513,7 +513,7 @@ class TestUsesHermesPythonEnvironment(unittest.TestCase):
         """sys.executable short-circuits — no subprocess probe on the default path.
 
         Guards the strict-mode invariant: a flaky probe (timeout under load)
-        must never drop the hermes root for the interpreter Aura Forge itself runs.
+        must never drop the auraforge root for the interpreter Aura Forge itself runs.
         """
         with patch("subprocess.run",
                    side_effect=subprocess.TimeoutExpired(cmd=[], timeout=5)) as mock_run:
@@ -540,11 +540,11 @@ class TestUsesHermesPythonEnvironment(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PYTHONPATH composition — hermes root included only for same-env interpreters
+# PYTHONPATH composition — auraforge root included only for same-env interpreters
 # ---------------------------------------------------------------------------
 
 class TestPythonPathComposition(unittest.TestCase):
-    """Verify hermes root inclusion in PYTHONPATH depends on env match.
+    """Verify auraforge root inclusion in PYTHONPATH depends on env match.
 
     Patches ``_uses_hermes_python_environment`` directly so these tests are
     independent of subprocess availability — the unit tests above already
@@ -598,18 +598,18 @@ class TestPythonPathComposition(unittest.TestCase):
         return os.path.dirname(tools_dir)
 
     def test_hermes_root_included_when_same_env(self):
-        """When interpreter is in the Aura Forge env, hermes root is in PYTHONPATH."""
+        """When interpreter is in the Aura Forge env, auraforge root is in PYTHONPATH."""
         pythonpath, _ = self._capture_pythonpath(same_env=True)
         parts = pythonpath.split(os.pathsep)
         self.assertIn(self._hermes_root(), parts,
-                      "hermes root must be in PYTHONPATH for same-env interpreters")
+                      "auraforge root must be in PYTHONPATH for same-env interpreters")
 
     def test_hermes_root_excluded_when_external_env(self):
-        """When interpreter is external, hermes root must NOT be in PYTHONPATH."""
+        """When interpreter is external, auraforge root must NOT be in PYTHONPATH."""
         pythonpath, _ = self._capture_pythonpath(same_env=False)
         parts = pythonpath.split(os.pathsep)
         self.assertNotIn(self._hermes_root(), parts,
-                         "hermes root must not leak into an external interpreter's PYTHONPATH")
+                         "auraforge root must not leak into an external interpreter's PYTHONPATH")
 
     def test_staging_dir_always_first(self):
         """The staging tmpdir must always be the first PYTHONPATH entry."""

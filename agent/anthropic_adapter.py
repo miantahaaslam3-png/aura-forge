@@ -568,7 +568,7 @@ def _is_kimi_family_endpoint(base_url: str | None, model: str | None = None) -> 
 
     Used to decide whether to drop Anthropic's ``thinking`` kwarg and to
     preserve unsigned reasoning_content-derived thinking blocks on replay.
-    See hermes-agent#13848, #17057.
+    See auraforge-agent#13848, #17057.
     """
     if _is_kimi_coding_endpoint(base_url):
         return True
@@ -597,7 +597,7 @@ def _is_deepseek_anthropic_endpoint(base_url: str | None) -> bool:
     policy used for Kimi's ``/coding`` endpoint.  The match is pinned to
     the ``/anthropic`` path so the OpenAI-compatible ``api.deepseek.com``
     base URL (which never reaches this adapter) is not misclassified.
-    See hermes-agent#16748.
+    See auraforge-agent#16748.
     """
     if not base_url_host_matches(base_url or "", "api.deepseek.com"):
         return False
@@ -796,7 +796,7 @@ def _build_anthropic_client_with_bearer_hook(
     kwargs = {
         "timeout": timeout_obj,
         "http_client": http_client,
-        # Delegate retry to hermes's outer loop (honors Retry-After); the SDK
+        # Delegate retry to auraforge's outer loop (honors Retry-After); the SDK
         # default max_retries=2 ignores it and double-retries. (#26293)
         "max_retries": 0,
         # The SDK requires *something* for api_key/auth_token. Our
@@ -887,7 +887,7 @@ def build_anthropic_client(
     _read_timeout = timeout if (isinstance(timeout, (int, float)) and timeout > 0) else 900.0
     kwargs = {
         "timeout": Timeout(timeout=float(_read_timeout), connect=10.0),
-        # Delegate all rate-limit / 5xx retry to hermes's outer conversation
+        # Delegate all rate-limit / 5xx retry to auraforge's outer conversation
         # loop, which honors Retry-After. The SDK default (max_retries=2) uses
         # its own 1-2s backoff that ignores Retry-After and double-retries
         # inside our loop — burning request slots against a bucket that won't
@@ -916,12 +916,12 @@ def build_anthropic_client(
         # team asked us to identify ourselves properly so they can attribute
         # traffic correctly. Send the same attribution header set we send to
         # OpenRouter, Vercel AI Gateway, and Fireworks:
-        # HTTP-Referer + X-Title + HermesAgent User-Agent.
+        # HTTP-Referer + X-Title + Aura ForgeAgent User-Agent.
         kwargs["api_key"] = api_key
         kwargs["default_headers"] = {
-            "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+            "HTTP-Referer": "https://auraforge-agent.nousresearch.com",
             "X-Title": "Aura Forge Agent",
-            "User-Agent": f"HermesAgent/{_HERMES_VERSION}",
+            "User-Agent": f"Aura ForgeAgent/{_HERMES_VERSION}",
             **( {"anthropic-beta": ",".join(common_betas)} if common_betas else {} )
         }
     elif _requires_bearer_auth(normalized_base_url):
@@ -966,15 +966,15 @@ def build_anthropic_client(
         # route builds its client right here and never sees the profile. Merge
         # the same set on top of whatever auth branch ran above.
         headers = dict(kwargs.get("default_headers") or {})
-        headers.setdefault("HTTP-Referer", "https://hermes-agent.nousresearch.com")
+        headers.setdefault("HTTP-Referer", "https://auraforge-agent.nousresearch.com")
         headers.setdefault("X-Title", "Aura Forge Agent")
-        headers.setdefault("User-Agent", f"HermesAgent/{_HERMES_VERSION}")
+        headers.setdefault("User-Agent", f"Aura ForgeAgent/{_HERMES_VERSION}")
         kwargs["default_headers"] = headers
 
     client = _anthropic_sdk.Anthropic(**kwargs)
     # Bearer-only construction leaves ``api_key`` unset, so the SDK fills it
     # from ``ANTHROPIC_API_KEY`` (Aura Forge loads that into the process env from
-    # ``~/.hermes/.env``). The result is dual auth —
+    # ``~/.auraforge/.env``). The result is dual auth —
     # ``X-Api-Key: sk-ant-…`` *and* ``Authorization: Bearer <portal-jwt>`` —
     # on every Portal / MiniMax / OAuth Messages request. Clear the env-filled
     # key whenever we intentionally authenticated via auth_token alone.
@@ -1015,7 +1015,7 @@ def build_anthropic_bedrock_client(region: str):
     return _anthropic_sdk.AnthropicBedrock(
         aws_region=region,
         timeout=Timeout(timeout=900.0, connect=10.0),
-        # Delegate retry to hermes's outer loop (honors Retry-After); the SDK
+        # Delegate retry to auraforge's outer loop (honors Retry-After); the SDK
         # default max_retries=2 ignores it and double-retries. (#26293)
         max_retries=0,
         default_headers={"anthropic-beta": ",".join([*_COMMON_BETAS, _CONTEXT_1M_BETA])},
@@ -1390,7 +1390,7 @@ def _resolve_anthropic_pool_token() -> Optional[str]:
 
     Read-only: enumerates with ``clear_expired=False, refresh=False`` so a bare
     token *resolve* (which runs from diagnostic/read-only call sites such as
-    ``account_usage`` and ``hermes models``) never mutates ``~/.hermes/auth.json``
+    ``account_usage`` and ``auraforge models``) never mutates ``~/.auraforge/auth.json``
     or makes a network refresh call. Refresh-on-expiry is owned by the API call
     path's pool recovery, not the resolver.
     """
@@ -1434,7 +1434,7 @@ def resolve_anthropic_token() -> Optional[str]:
       3. ANTHROPIC_API_KEY env var (explicit regular API key)
       4. Claude Code credentials (~/.claude.json or ~/.claude/.credentials.json)
          — with automatic refresh if expired and a refresh token is available
-      5. Anthropic credential_pool OAuth entry (~/.hermes/auth.json)
+      5. Anthropic credential_pool OAuth entry (~/.auraforge/auth.json)
 
     Returns the token string or None.
     """
@@ -1448,7 +1448,7 @@ def resolve_anthropic_token() -> Optional[str]:
             creds_loaded = True
         return creds
 
-    # 1. Hermes-managed OAuth/setup token env var
+    # 1. Aura Forge-managed OAuth/setup token env var
     token = _getenv("ANTHROPIC_TOKEN").strip()
     if token:
         preferred = _prefer_refreshable_claude_code_token(token, _read_creds())
@@ -1526,9 +1526,9 @@ def run_oauth_setup_token() -> Optional[str]:
     return None
 
 
-# ── Hermes-native PKCE OAuth flow ────────────────────────────────────────
+# ── Aura Forge-native PKCE OAuth flow ────────────────────────────────────────
 # Mirrors the flow used by Claude Code, pi-ai, and OpenCode.
-# Stores credentials in ~/.hermes/.anthropic_oauth.json (our own file).
+# Stores credentials in ~/.auraforge/.anthropic_oauth.json (our own file).
 
 _OAUTH_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
 # Anthropic migrated the OAuth token endpoint to platform.claude.com;
@@ -1570,7 +1570,7 @@ def _generate_pkce() -> tuple:
 
 
 def run_hermes_oauth_login_pure() -> Optional[Dict[str, Any]]:
-    """Run Hermes-native OAuth PKCE flow and return credential state."""
+    """Run Aura Forge-native OAuth PKCE flow and return credential state."""
     import secrets
     import time
     import webbrowser
@@ -1700,7 +1700,7 @@ def run_hermes_oauth_login_pure() -> Optional[Dict[str, Any]]:
 
 
 def read_hermes_oauth_credentials() -> Optional[Dict[str, Any]]:
-    """Read Hermes-managed OAuth credentials from ~/.hermes/.anthropic_oauth.json."""
+    """Read Aura Forge-managed OAuth credentials from ~/.auraforge/.anthropic_oauth.json."""
     oauth_file = _get_hermes_oauth_file()
     if oauth_file.exists():
         try:
@@ -2288,7 +2288,7 @@ def _convert_assistant_message(m: Dict[str, Any]) -> Dict[str, Any]:
     # Kimi's /coding endpoint (Anthropic protocol) requires assistant
     # tool-call messages to carry reasoning_content when thinking is
     # enabled server-side.  Preserve it as a thinking block so Kimi
-    # can validate the message history.  See hermes-agent#13848.
+    # can validate the message history.  See auraforge-agent#13848.
     #
     # Accept empty string "" — _copy_reasoning_content_for_api()
     # injects "" as a tier-3 fallback for Kimi tool-call messages
@@ -2462,7 +2462,7 @@ def _strip_orphaned_tool_blocks(result: List[Dict[str, Any]]) -> None:
         # Anthropic rejects the replayed turn with HTTP 400 "thinking blocks in
         # the latest assistant message cannot be modified".  Flag the turn so
         # _manage_thinking_signatures can demote the dead signature instead of
-        # replaying it verbatim.  See hermes-agent: extended-thinking + parallel
+        # replaying it verbatim.  See auraforge-agent: extended-thinking + parallel
         # tool batch interrupted mid-flight → non-retryable 400 crash-loop.
         if len(kept) != len(m["content"]) and any(
             isinstance(b, dict) and b.get("type") in {"thinking", "redacted_thinking"}
@@ -2561,8 +2561,8 @@ def _manage_thinking_signatures(
     and will reject them outright.  Kimi's /coding and DeepSeek's /anthropic
     endpoints speak the Anthropic protocol upstream but require unsigned
     thinking blocks (synthesised from ``reasoning_content``) to round-trip on
-    replayed assistant tool-call messages.  See hermes-agent#13848 (Kimi) and
-    hermes-agent#16748 (DeepSeek).
+    replayed assistant tool-call messages.  See auraforge-agent#13848 (Kimi) and
+    auraforge-agent#16748 (DeepSeek).
 
     Nous Portal's ``/v1/messages`` route is the exception among third-party
     hosts: it proxies Claude to Anthropic/Vertex/Bedrock and validates the
@@ -3001,7 +3001,7 @@ def build_anthropic_kwargs(
                 text = block.get("text", "")
                 text = text.replace("Aura Forge Agent", "Claude Code")
                 text = text.replace("Aura Forge agent", "Claude Code")
-                text = text.replace("hermes-agent", "claude-code")
+                text = text.replace("auraforge-agent", "claude-code")
                 text = text.replace("Nous Research", "Anthropic")
                 block["text"] = text
 
@@ -3014,7 +3014,7 @@ def build_anthropic_kwargs(
         #    from plan-billing to the extra-usage lane; ``mcp__foo`` is accepted).
         #
         #    Two cases, both must land on the double-underscore ``mcp__`` form:
-        #      a) bare Hermes-native tools (``read_file``)  -> ``mcp__read_file``
+        #      a) bare Aura Forge-native tools (``read_file``)  -> ``mcp__read_file``
         #      b) native MCP server tools registered under their full
         #         single-underscore ``mcp_<server>_<tool>`` name
         #         (``mcp_linear_get_issue``) -> ``mcp__linear_get_issue``

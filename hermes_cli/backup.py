@@ -1,5 +1,5 @@
 """
-Backup and import commands for hermes CLI.
+Backup and import commands for auraforge CLI.
 
 `auraforge backup` creates a zip archive of the entire ~/.aura-forge/ directory
 (excluding the aura-forge-agent repo and transient files).
@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from hermes_constants import get_default_hermes_root, get_hermes_home, display_hermes_home
+from hermes_constants import get_default_hermes_root, get_aura_forge_home, display_aura_forge_home
 from utils import (
     _preserve_file_mode,
     _preserve_file_owner,
@@ -180,9 +180,9 @@ class _SQLiteBackupTimeout(RuntimeError):
 
 
 @contextmanager
-def _backup_operation_lock(hermes_home: Path, timeout_seconds: float = 0.25):
+def _backup_operation_lock(aura_forge_home: Path, timeout_seconds: float = 0.25):
     """Acquire one cross-process backup slot for full and quick snapshots."""
-    lock_path = hermes_home / ".backup.lock"
+    lock_path = aura_forge_home / ".backup.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     handle = lock_path.open("a+b")
     acquired = False
@@ -327,7 +327,7 @@ def _iter_external_files(base: Path) -> List[Path]:
 
 
 def _should_exclude(rel_path: Path) -> bool:
-    """Return True if *rel_path* (relative to hermes root) should be skipped."""
+    """Return True if *rel_path* (relative to Aura Forge root) should be skipped."""
     parts = rel_path.parts
 
     for part in parts:
@@ -805,10 +805,10 @@ def _run_backup_locked(args, hermes_root: Path) -> None:
             # If user gave a directory, put the zip inside it
             if out_path.is_dir():
                 stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-                out_path = out_path / f"hermes-backup-{stamp}.zip"
+                out_path = out_path / f"auraforge-backup-{stamp}.zip"
         else:
             stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-            out_path = Path.home() / f"hermes-backup-{stamp}.zip"
+            out_path = Path.home() / f"auraforge-backup-{stamp}.zip"
 
         # Ensure the suffix is .zip
         if out_path.suffix.lower() != ".zip":
@@ -826,7 +826,7 @@ def _run_backup_locked(args, hermes_root: Path) -> None:
     # Collect files
     scan_started = time.monotonic()
     logger.info("backup phase=scan status=started")
-    print(f"Scanning {display_hermes_home()} ...")
+    print(f"Scanning {display_aura_forge_home()} ...")
     files_to_add: list[tuple[Path, Path]] = []  # (absolute, relative)
     skipped_dirs = set()
 
@@ -975,7 +975,7 @@ def _run_backup_locked(args, hermes_root: Path) -> None:
     if external_to_add:
         print(
             f"\n  Included {len(external_to_add)} memory-provider file(s) "
-            f"stored outside {display_hermes_home()}."
+            f"stored outside {display_aura_forge_home()}."
         )
 
     if skipped_external:
@@ -999,7 +999,7 @@ def _run_backup_locked(args, hermes_root: Path) -> None:
             print(f"  ... and {len(errors) - 10} more")
 
     if not errors:
-        print(f"\nRestore with: hermes import {out_path.name}")
+        print(f"\nRestore with: auraforge import {out_path.name}")
 
 
 # ---------------------------------------------------------------------------
@@ -1015,7 +1015,7 @@ def _validate_backup_zip(zf: zipfile.ZipFile) -> tuple[bool, str]:
     if not names:
         return False, "zip archive is empty"
 
-    # Look for telltale files that a hermes home would have
+    # Look for telltale files that a auraforge home would have
     markers = {"config.yaml", ".env", "state.db"}
     found = set()
     for n in names:
@@ -1036,7 +1036,7 @@ def _validate_backup_zip(zf: zipfile.ZipFile) -> tuple[bool, str]:
 def _detect_prefix(zf: zipfile.ZipFile) -> str:
     """Detect if the zip has a common directory prefix wrapping all entries.
 
-    Some tools zip as `.hermes/config.yaml` instead of `config.yaml`.
+    Some tools zip as `.auraforge/config.yaml` instead of `config.yaml`.
     Returns the prefix to strip (empty string if none).
     """
     names = [n for n in zf.namelist() if not n.endswith("/")]
@@ -1050,8 +1050,8 @@ def _detect_prefix(zf: zipfile.ZipFile) -> str:
     first_parts = {p[0] for p in parts_list if len(p) > 1}
     if len(first_parts) == 1:
         prefix = first_parts.pop()
-        # Only strip if it looks like a hermes dir name
-        if prefix in {".hermes", "hermes"}:
+        # Only strip if it looks like a auraforge dir name
+        if prefix in {".aura-forge", "auraforge"}:
             return prefix + "/"
 
     return ""
@@ -1108,7 +1108,7 @@ def _extract_member_atomically(
     Permission bits *and* ownership are carried across the replace so routing
     through mkstemp does not change the file the caller would otherwise have
     produced.  ``os.replace`` swaps in a temp file owned by the *writing* user,
-    so without the chown a ``sudo hermes import`` would silently re-own every
+    so without the chown a ``sudo auraforge import`` would silently re-own every
     restored file to root — on the disaster-recovery path, and on exactly the
     Docker/NAS installs ``utils._restore_file_owner`` documents.  Both concerns
     delegate to the shared ``utils`` helpers rather than being re-derived here.
@@ -1207,7 +1207,7 @@ def run_import(args) -> None:
         file_count = len(members)
 
         print(f"Backup contains {file_count} files")
-        print(f"Target: {display_hermes_home()}")
+        print(f"Target: {display_aura_forge_home()}")
 
         if prefix:
             print(f"Detected archive prefix: {prefix!r} (will be stripped)")
@@ -1321,12 +1321,12 @@ def run_import(args) -> None:
         # Summary
         print()
         print(f"Import complete: {restored} files restored in {elapsed:.1f}s")
-        print(f"  Target: {display_hermes_home()}")
+        print(f"  Target: {display_aura_forge_home()}")
 
         if restored_external:
             print(
                 f"\n  Restored {restored_external} memory-provider file(s) to "
-                f"their original location(s) outside {display_hermes_home()}."
+                f"their original location(s) outside {display_aura_forge_home()}."
             )
 
         if errors:
@@ -1385,19 +1385,19 @@ def run_import(args) -> None:
                 # hermes_cli.profiles might not be available (fresh install)
                 if any(profiles_dir.iterdir()):
                     print("\n  Profiles detected but aliases could not be created.")
-                    print("  Run: hermes profile list  (after installing hermes)")
+                    print("  Run: auraforge profile list  (after installing auraforge)")
 
         # Guidance
         print()
         if not (hermes_root / "aura-forge-agent").is_dir():
             print("Note: The aura-forge-agent codebase was not included in the backup.")
-            print("  If this is a fresh install, run: hermes update")
+            print("  If this is a fresh install, run: auraforge update")
 
         if restored_profiles:
             gw_profiles = [n for n, _ in restored_profiles]
             print("\nTo re-enable gateway services for profiles:")
             for pname in gw_profiles:
-                print(f"  hermes -p {pname} gateway install")
+                print(f"  auraforge -p {pname} gateway install")
 
         # Bring the restored install to life: the backup may contain bot
         # tokens and registered cron jobs, but they're inert without a
@@ -1413,13 +1413,13 @@ def run_import(args) -> None:
                 ensure_gateway_service(context="import")
         except Exception:
             print("\nStart the gateway to activate cron jobs and messaging:")
-            print("  hermes gateway install")
+            print("  auraforge gateway install")
 
         print("Done. Your Aura Forge configuration has been restored.")
 
 
 # ---------------------------------------------------------------------------
-# Quick state snapshots (used by /snapshot slash command and hermes backup --quick)
+# Quick state snapshots (used by /snapshot slash command and auraforge backup --quick)
 # ---------------------------------------------------------------------------
 
 # Critical state files to include in quick snapshots (relative to AURA_FORGE_HOME).
@@ -1466,23 +1466,23 @@ _QUICK_STATE_FILES = (
 _QUICK_DEFAULT_KEEP = 20
 
 
-def _quick_snapshot_root(hermes_home: Optional[Path] = None) -> Path:
-    home = hermes_home or get_hermes_home()
+def _quick_snapshot_root(aura_forge_home: Optional[Path] = None) -> Path:
+    home = aura_forge_home or get_aura_forge_home()
     return home / _QUICK_SNAPSHOTS_DIR
 
 
 def create_quick_snapshot(
     label: Optional[str] = None,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
     keep: Optional[int] = None,
     max_file_size: Optional[int] = None,
 ) -> Optional[str]:
     """Create one atomic quick snapshot while holding the shared backup slot."""
-    home = hermes_home or get_hermes_home()
+    home = aura_forge_home or get_aura_forge_home()
     with _backup_operation_lock(home):
         return _create_quick_snapshot_locked(
             label=label,
-            hermes_home=home,
+            aura_forge_home=home,
             keep=keep,
             max_file_size=max_file_size,
         )
@@ -1490,7 +1490,7 @@ def create_quick_snapshot(
 
 def _create_quick_snapshot_locked(
     label: Optional[str] = None,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
     keep: Optional[int] = None,
     max_file_size: Optional[int] = None,
 ) -> Optional[str]:
@@ -1512,7 +1512,7 @@ def _create_quick_snapshot_locked(
     Returns:
         Snapshot ID (timestamp-based), or None if no files found.
     """
-    home = hermes_home or get_hermes_home()
+    home = aura_forge_home or get_aura_forge_home()
     root = _quick_snapshot_root(home)
 
     def _too_large(path: Path, rel_name: str) -> bool:
@@ -1647,7 +1647,7 @@ def _create_quick_snapshot_locked(
         )
         print(
             "  ⚠ If sessions disappear after update, check "
-            f"{root} and run: hermes snapshot list"
+            f"{root} and run: auraforge snapshot list"
         )
         logger.error(
             "Quick snapshot failed to capture DB file(s): %s",
@@ -1717,10 +1717,10 @@ def _create_quick_snapshot_locked(
 
 def list_quick_snapshots(
     limit: int = 20,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     """List existing quick state snapshots, most recent first."""
-    root = _quick_snapshot_root(hermes_home)
+    root = _quick_snapshot_root(aura_forge_home)
     if not root.exists():
         return []
 
@@ -1743,14 +1743,14 @@ def list_quick_snapshots(
 
 def restore_quick_snapshot(
     snapshot_id: str,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> bool:
     """Restore state from a quick snapshot.
 
     Overwrites current state files with the snapshot's copies.
     Returns True if at least one file was restored.
     """
-    home = hermes_home or get_hermes_home()
+    home = aura_forge_home or get_aura_forge_home()
     root = _quick_snapshot_root(home)
 
     # Security: reject snapshot_id values that contain path separators or
@@ -1855,7 +1855,7 @@ def _count_cron_jobs(path: Path) -> Optional[int]:
 
 def restore_cron_jobs_if_emptied(
     snapshot_id: str,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> Optional[Dict[str, Any]]:
     """Safety net for silent cron-job loss across ``auraforge update``.
 
@@ -1878,7 +1878,7 @@ def restore_cron_jobs_if_emptied(
     Args:
         snapshot_id: The pre-update quick-snapshot id (from
             :func:`create_quick_snapshot`).
-        hermes_home: Override for the Aura Forge home directory (tests).
+        aura_forge_home: Override for the Aura Forge home directory (tests).
 
     Returns:
         ``None`` when no action was taken (the common, healthy path). On a
@@ -1888,7 +1888,7 @@ def restore_cron_jobs_if_emptied(
     if not snapshot_id:
         return None
 
-    home = hermes_home or get_hermes_home()
+    home = aura_forge_home or get_aura_forge_home()
     live_path = home / _CRON_JOBS_REL
 
     live_count = _count_cron_jobs(live_path)
@@ -1939,13 +1939,13 @@ def _sibling_profile_homes(invoking_home: Path) -> list[tuple[str, Path]]:
     homes: list[tuple[str, Path]] = []
     try:
         from hermes_cli.profiles import (
-            _get_default_hermes_home,
+            _get_default_aura_forge_home,
             _get_profiles_root,
             _PROFILE_ID_RE,
         )
 
         invoking = invoking_home.resolve()
-        default_home = _get_default_hermes_home()
+        default_home = _get_default_aura_forge_home()
         if default_home.is_dir() and default_home.resolve() != invoking:
             homes.append(("default", default_home))
         root = _get_profiles_root()
@@ -1978,12 +1978,12 @@ def create_pre_update_snapshots_all_profiles(
     siblings that snapshotted successfully. Never raises.
     """
     results: Dict[str, str] = {}
-    home = invoking_home or get_hermes_home()
+    home = invoking_home or get_aura_forge_home()
     for name, profile_home in _sibling_profile_homes(home):
         try:
             snap_id = create_quick_snapshot(
                 label="pre-update",
-                hermes_home=profile_home,
+                aura_forge_home=profile_home,
                 keep=keep,
                 max_file_size=max_file_size,
             )
@@ -2010,14 +2010,14 @@ def restore_cron_jobs_all_profiles(
     restored: list[Dict[str, Any]] = []
     if not profile_snapshots:
         return restored
-    home = invoking_home or get_hermes_home()
+    home = invoking_home or get_aura_forge_home()
     by_name = dict(_sibling_profile_homes(home))
     for name, snap_id in profile_snapshots.items():
         profile_home = by_name.get(name)
         if profile_home is None:
             continue
         try:
-            result = restore_cron_jobs_if_emptied(snap_id, hermes_home=profile_home)
+            result = restore_cron_jobs_if_emptied(snap_id, aura_forge_home=profile_home)
         except Exception as exc:
             logger.debug("Cron restore check for profile %s failed: %s", name, exc)
             continue
@@ -2055,20 +2055,20 @@ def _prune_quick_snapshots(root: Path, keep: int = _QUICK_DEFAULT_KEEP) -> int:
 
 def prune_quick_snapshots(
     keep: int = _QUICK_DEFAULT_KEEP,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> int:
     """Manually prune quick snapshots. Returns count deleted."""
-    return _prune_quick_snapshots(_quick_snapshot_root(hermes_home), keep=keep)
+    return _prune_quick_snapshots(_quick_snapshot_root(aura_forge_home), keep=keep)
 
 
 def run_quick_backup(args) -> None:
-    """CLI entry point for hermes backup --quick."""
+    """CLI entry point for auraforge backup --quick."""
     label = getattr(args, "label", None)
     snap_id = create_quick_snapshot(label=label)
     if snap_id:
         print(f"State snapshot created: {snap_id}")
         snaps = list_quick_snapshots()
-        print(f"  {len(snaps)} snapshot(s) stored in {display_hermes_home()}/state-snapshots/")
+        print(f"  {len(snaps)} snapshot(s) stored in {display_aura_forge_home()}/state-snapshots/")
         print(f"  Restore with: /snapshot restore {snap_id}")
     else:
         print("No state files found to snapshot.")
@@ -2191,8 +2191,8 @@ _PRE_UPDATE_PREFIX = "pre-update-"
 _PRE_UPDATE_DEFAULT_KEEP = 5
 
 
-def _pre_update_backup_dir(hermes_home: Optional[Path] = None) -> Path:
-    home = hermes_home or get_hermes_home()
+def _pre_update_backup_dir(aura_forge_home: Optional[Path] = None) -> Path:
+    home = aura_forge_home or get_aura_forge_home()
     return home / _PRE_UPDATE_BACKUPS_DIR
 
 
@@ -2234,7 +2234,7 @@ def _prune_pre_update_backups(backup_dir: Path, keep: int) -> int:
 
 
 def create_pre_update_backup(
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
     keep: int = _PRE_UPDATE_DEFAULT_KEEP,
 ) -> Optional[Path]:
     """Create a full zip backup of AURA_FORGE_HOME under ``backups/``.
@@ -2247,7 +2247,7 @@ def create_pre_update_backup(
     found or the backup could not be created.  Never raises — the caller
     (``auraforge update``) should continue even if the backup fails.
     """
-    hermes_root = hermes_home or get_default_hermes_root()
+    hermes_root = aura_forge_home or get_default_hermes_root()
     if not hermes_root.is_dir():
         return None
 
@@ -2306,7 +2306,7 @@ def _prune_pre_migration_backups(backup_dir: Path, keep: int) -> int:
 
 
 def create_pre_migration_backup(
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
     keep: int = _PRE_MIGRATION_DEFAULT_KEEP,
 ) -> Optional[Path]:
     """Create a full zip backup of AURA_FORGE_HOME under ``backups/`` before a
@@ -2322,7 +2322,7 @@ def create_pre_migration_backup(
     to back up (fresh install) or the write failed.  Never raises — the
     caller decides whether to abort or proceed.
     """
-    hermes_root = hermes_home or get_default_hermes_root()
+    hermes_root = aura_forge_home or get_default_hermes_root()
     if not hermes_root.is_dir():
         return None
 

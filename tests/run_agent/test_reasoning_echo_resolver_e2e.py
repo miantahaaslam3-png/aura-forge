@@ -31,7 +31,7 @@ from run_agent import AIAgent
 
 def _write_home(tmp_path, monkeypatch, reasoning_echo: bool):
     """Point HERMES_HOME at a temp profile declaring a named custom provider."""
-    home = tmp_path / "hermes"
+    home = tmp_path / "auraforge"
     home.mkdir()
     lines = [
         "model:",

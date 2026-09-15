@@ -61,10 +61,10 @@ def test_guard_handles_absolute_cwd_path():
 
     original = sys.path[:]
     try:
-        sys.path[:] = ["/home/user/tg-ws-proxy", "/opt/hermes", "/usr/lib"]
-        hermes_bootstrap.harden_import_path(src_root="/opt/hermes")
-        assert sys.path[0] == "/opt/hermes"
-        assert sys.path.index("/opt/hermes") < sys.path.index(
+        sys.path[:] = ["/home/user/tg-ws-proxy", "/opt/auraforge", "/usr/lib"]
+        hermes_bootstrap.harden_import_path(src_root="/opt/auraforge")
+        assert sys.path[0] == "/opt/auraforge"
+        assert sys.path.index("/opt/auraforge") < sys.path.index(
             "/home/user/tg-ws-proxy"
         )
     finally:

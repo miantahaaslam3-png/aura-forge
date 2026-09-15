@@ -1,7 +1,7 @@
 """Auto-installation of LSP server binaries.
 
 Tries to install missing servers using whatever package manager is
-appropriate.  All installs go to a Hermes-owned bin staging dir,
+appropriate.  All installs go to a Aura Forge-owned bin staging dir,
 ``<HERMES_HOME>/lsp/bin/``, so we don't pollute the user's global
 toolchain.
 
@@ -10,7 +10,7 @@ Strategies:
 - ``auto`` — attempt to install with the best available package
   manager.  This is the default.
 - ``manual`` — never install; if a binary is missing, the server is
-  silently skipped and the user is told about it via ``hermes lsp
+  silently skipped and the user is told about it via ``auraforge lsp
   status``.
 - ``off`` — same as ``manual`` for now (kept distinct so we can
   evolve behavior later, e.g. logging differently).
@@ -107,7 +107,7 @@ INSTALL_RECIPES: Dict[str, Dict[str, Any]] = {
     # PowerShell — PowerShellEditorServices ships as a GitHub release
     # zip driven by a pwsh bootstrap script, not a single binary.  We
     # require a manual bundle install and probe for the pwsh host so
-    # `hermes lsp status` reports the host's presence.
+    # `auraforge lsp status` reports the host's presence.
     "powershell": {"strategy": "manual", "pkg": "", "bin": "pwsh"},
 }
 
@@ -123,7 +123,7 @@ def _is_windows() -> bool:
 
 
 def hermes_lsp_bin_dir() -> Path:
-    """Return the Hermes-owned bin staging dir for LSP servers."""
+    """Return the Aura Forge-owned bin staging dir for LSP servers."""
     from hermes_constants import get_hermes_home
 
     p = get_hermes_home() / "lsp" / "bin"
@@ -342,7 +342,7 @@ def _install_go(pkg: str, bin_name: str) -> Optional[str]:
 
 
 def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
-    """Install a Python package into a hermes-owned target dir.
+    """Install a Python package into a auraforge-owned target dir.
 
     We avoid polluting the user's site-packages by using
     ``pip install --target``.  Bins go into
@@ -392,7 +392,7 @@ def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
 def detect_status(pkg: str) -> str:
     """Return ``installed``, ``missing``, or ``manual-only`` for a package.
 
-    Used by the ``hermes lsp status`` CLI to give users a quick
+    Used by the ``auraforge lsp status`` CLI to give users a quick
     overview of what's available without spawning anything.
     """
     recipe = INSTALL_RECIPES.get(pkg)

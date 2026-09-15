@@ -16,7 +16,7 @@ pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="live Windows E2
 
 
 def test_fleet_config_migration_live_windows(tmp_path, monkeypatch):
-    active = tmp_path / "hermes-home"
+    active = tmp_path / "auraforge-home"
     profiles = active / "profiles"
     for name, ver in [("research", 12), ("work", 25)]:
         home = profiles / name

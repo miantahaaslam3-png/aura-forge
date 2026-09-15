@@ -394,7 +394,7 @@ def _apply_active_turn_redirect(agent: Any, messages: List[Dict[str, Any]], text
     "Provider returned an empty response" storms that no retry, nudge, or
     empty-recovery branch can escape (July 2026: four sessions bricked this
     way; every reasoning-free checkpoint that week was untouched — same
-    mechanism as the ~/.hermes/prefill.json incident, 20/20 blocked with
+    mechanism as the ~/.auraforge/prefill.json incident, 20/20 blocked with
     assistant-exposed CoT vs 0/20 without). The interrupted reasoning was
     incomplete by definition; the model regenerates it on the retried turn.
     If a future path needs to preserve interrupted thinking, carry it in a
@@ -702,7 +702,7 @@ def _billing_or_entitlement_message(
                 "/model <model> --provider <provider>.",
                 # The exhaustion latch replays the stored error without issuing
                 # a request, so a real fix looks like it didn't work.
-                "Retry with a fresh credential state: `hermes auth reset anthropic`. Until "
+                "Retry with a fresh credential state: `auraforge auth reset anthropic`. Until "
                 "that cooldown clears, this error can be replayed from cache without "
                 "contacting the API.",
             ]
@@ -1262,7 +1262,7 @@ _EMPTY_TOOL_RESPONSE_NUDGE = (
 # share one trailer to keep the guidance from drifting between the two sites.
 _CONTENT_POLICY_RECOVERY_HINT = (
     "Try rephrasing the request, narrowing the context, or "
-    "adding a fallback provider with `hermes fallback add`."
+    "adding a fallback provider with `auraforge fallback add`."
 )
 
 
@@ -1892,7 +1892,7 @@ def run_conversation(
     agent._last_compression_attempt_recorded = False
     agent._last_compression_attempt_in_place = None
 
-    # Adopt any ~/.hermes/.env credential/base-url edits made since the last
+    # Adopt any ~/.auraforge/.env credential/base-url edits made since the last
     # turn — a Settings save updates .env but not this worker's client, which
     # was built at agent init (#67821). No-op when .env is unchanged.
     try:
@@ -4998,7 +4998,7 @@ def run_conversation(
                     if not _print_nous_entitlement_guidance(agent, "Nous model access"):
                         print(f"{agent.log_prefix}   Most likely: Portal OAuth expired, account out of credits, or agent key revoked.")
                     print(f"{agent.log_prefix}   Troubleshooting:")
-                    print(f"{agent.log_prefix}     • Re-authenticate: hermes auth add nous")
+                    print(f"{agent.log_prefix}     • Re-authenticate: auraforge auth add nous")
                     print(f"{agent.log_prefix}     • Check credits / billing: https://portal.nousresearch.com")
                     print(f"{agent.log_prefix}     • Verify stored credentials: {_dhh}/auth.json")
                     print(f"{agent.log_prefix}     • Switch providers temporarily: /model <model> --provider openrouter")
@@ -5033,7 +5033,7 @@ def run_conversation(
                         # means Azure rejected the JWT (RBAC role missing,
                         # az login expired, IMDS unreachable, etc.).
                         print(f"{agent.log_prefix}   Auth method: Microsoft Entra ID (httpx event hook)")
-                        print(f"{agent.log_prefix}   Run `hermes doctor` for credential-chain diagnostics, or")
+                        print(f"{agent.log_prefix}   Run `auraforge doctor` for credential-chain diagnostics, or")
                         print(f"{agent.log_prefix}   `az login` if your developer session expired.")
                     else:
                         auth_method = "Bearer (OAuth/setup-token)" if _is_oauth_token(key) else "x-api-key (API key)"
@@ -5042,12 +5042,12 @@ def run_conversation(
                     print(f"{agent.log_prefix}   Troubleshooting:")
                     from hermes_constants import display_hermes_home as _dhh_fn
                     _dhh = _dhh_fn()
-                    print(f"{agent.log_prefix}     • Check ANTHROPIC_TOKEN in {_dhh}/.env for Hermes-managed OAuth/setup tokens")
+                    print(f"{agent.log_prefix}     • Check ANTHROPIC_TOKEN in {_dhh}/.env for Aura Forge-managed OAuth/setup tokens")
                     print(f"{agent.log_prefix}     • Check ANTHROPIC_API_KEY in {_dhh}/.env for API keys or legacy token values")
                     print(f"{agent.log_prefix}     • For API keys: verify at https://platform.claude.com/settings/keys")
                     print(f"{agent.log_prefix}     • For Claude Code: run 'claude /login' to refresh, then retry")
-                    print(f"{agent.log_prefix}     • Legacy cleanup: hermes config set ANTHROPIC_TOKEN \"\"")
-                    print(f"{agent.log_prefix}     • Clear stale keys: hermes config set ANTHROPIC_API_KEY \"\"")
+                    print(f"{agent.log_prefix}     • Legacy cleanup: auraforge config set ANTHROPIC_TOKEN \"\"")
+                    print(f"{agent.log_prefix}     • Clear stale keys: auraforge config set ANTHROPIC_API_KEY \"\"")
 
                 # Thinking block signature recovery.
                 #
@@ -5293,7 +5293,7 @@ def run_conversation(
                             f"it is missing its vendor prefix."
                         )
                         agent._buffer_vprint(
-                            f"      Did you mean '{_suggestion}'?  Re-pick it with `hermes model`."
+                            f"      Did you mean '{_suggestion}'?  Re-pick it with `auraforge model`."
                         )
 
                 # Check for interrupt before deciding to retry
@@ -5678,7 +5678,7 @@ def run_conversation(
                         force=True,
                     )
                     agent._vprint(
-                        f"{agent.log_prefix}      Use the `copilot` provider with a Copilot subscription token (`hermes",
+                        f"{agent.log_prefix}      Use the `copilot` provider with a Copilot subscription token (`auraforge",
                         force=True,
                     )
                     agent._vprint(
@@ -6041,7 +6041,7 @@ def run_conversation(
                     _overflow_input = messages
                     # Option A (LCM issue 441): pass the OVERHEAD-AWARE request size (msgs + tool
                     # schemas + system), not the tool-blind message count, so LCM forced-overflow
-                    # recovery arms on the TRUE request that overflowed. See hermes-lcm engine
+                    # recovery arms on the TRUE request that overflowed. See auraforge-lcm engine
                     # _should_force_overflow_recovery. (approx_tokens stays for the status display.)
                     messages, active_system_prompt = agent._compress_context(
                         messages, system_message,
@@ -6270,14 +6270,14 @@ def run_conversation(
                                 agent._vprint(f"{agent.log_prefix}   💡 Codex OAuth token was rejected (HTTP 401). Your token may have been", force=True)
                                 agent._vprint(f"{agent.log_prefix}      refreshed by another client (Codex CLI, VS Code). To fix:", force=True)
                                 agent._vprint(f"{agent.log_prefix}      1. Run `codex` in your terminal to generate fresh tokens.", force=True)
-                                agent._vprint(f"{agent.log_prefix}      2. Then run `hermes auth` to re-authenticate.", force=True)
+                                agent._vprint(f"{agent.log_prefix}      2. Then run `auraforge auth` to re-authenticate.", force=True)
                             elif _provider == "xai-oauth":
                                 agent._vprint(f"{agent.log_prefix}   💡 xAI OAuth token was rejected (HTTP 401). To fix:", force=True)
-                                agent._vprint(f"{agent.log_prefix}      re-authenticate with xAI Grok OAuth (SuperGrok / Premium+) from `hermes model`.", force=True)
+                                agent._vprint(f"{agent.log_prefix}      re-authenticate with xAI Grok OAuth (SuperGrok / Premium+) from `auraforge model`.", force=True)
                             else:  # nous
                                 agent._vprint(f"{agent.log_prefix}   💡 Nous Portal OAuth token was rejected (HTTP 401). Your token may be", force=True)
                                 agent._vprint(f"{agent.log_prefix}      expired, revoked, or your account may be out of credits. To fix:", force=True)
-                                agent._vprint(f"{agent.log_prefix}      1. Re-authenticate: hermes portal", force=True)
+                                agent._vprint(f"{agent.log_prefix}      1. Re-authenticate: auraforge portal", force=True)
                                 agent._vprint(f"{agent.log_prefix}      2. Check your portal account: https://portal.nousresearch.com", force=True)
                                 # ``:free`` is OpenRouter slug syntax; Nous Portal will reject
                                 # the model name even after a successful re-auth.
@@ -6287,7 +6287,7 @@ def run_conversation(
                                     agent._vprint(f"{agent.log_prefix}         Nous catalog model, or run `/model openrouter:{_model}` to use OpenRouter.", force=True)
                         else:
                             agent._vprint(f"{agent.log_prefix}   💡 Your API key was rejected by the provider. Check:", force=True)
-                            agent._vprint(f"{agent.log_prefix}      • Is the key valid? Run: hermes setup", force=True)
+                            agent._vprint(f"{agent.log_prefix}      • Is the key valid? Run: auraforge setup", force=True)
                             agent._vprint(f"{agent.log_prefix}      • Does your account have access to {_model}?", force=True)
                             if base_url_host_matches(str(_base), "openrouter.ai"):
                                 agent._vprint(f"{agent.log_prefix}      • Check credits: https://openrouter.ai/settings/credits", force=True)
@@ -6312,7 +6312,7 @@ def run_conversation(
                             force=True,
                         )
                         agent._vprint(
-                            f"{agent.log_prefix}        hermes fallback add   (interactive picker — same as `hermes model`)",
+                            f"{agent.log_prefix}        auraforge fallback add   (interactive picker — same as `auraforge model`)",
                             force=True,
                         )
                     # TLS certificate failures are environment problems, not
@@ -6536,7 +6536,7 @@ def run_conversation(
                         agent._vprint(
                             f"{agent.log_prefix}      1. Set "
                             f"`providers.{_provider}.models.{_model}.stale_timeout_seconds: 900` "
-                            f"in `~/.hermes/config.yaml` to extend the per-call "
+                            f"in `~/.auraforge/config.yaml` to extend the per-call "
                             f"timeout. (Aura Forge's built-in floor is 600s for "
                             f"known reasoning models — if you still see this "
                             f"after raising, the upstream cap is even shorter.)",
@@ -8524,7 +8524,7 @@ def run_conversation(
                 _turn_exit_reason = "interpreter_shutdown"
                 final_response = (
                     "Session is shutting down. Your conversation can be "
-                    "resumed with: hermes --resume <session-id>"
+                    "resumed with: auraforge --resume <session-id>"
                 )
                 # Don't append the assistant message here — a thinking-prefill
                 # or interim assistant may already be the tail, and appending

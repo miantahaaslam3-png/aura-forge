@@ -24,7 +24,7 @@ import cron.jobs as J
 
 @pytest.fixture
 def cron_store(tmp_path, monkeypatch):
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     (hermes_home / "cron").mkdir(parents=True)
     monkeypatch.setenv("HERMES_HOME", str(hermes_home))
     monkeypatch.setattr(J, "HERMES_DIR", hermes_home)

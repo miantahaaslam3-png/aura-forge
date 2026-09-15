@@ -5,7 +5,7 @@ Usage:
   scripts/profile-tui.py [--session SID] [--hold KEY] [--seconds N] [--rate HZ]
 
 Defaults: picks the session with the most messages, holds PageUp for 8s at
-~30 Hz (matching xterm key-repeat), summarizes ~/.hermes/perf.log on exit.
+~30 Hz (matching xterm key-repeat), summarizes ~/.auraforge/perf.log on exit.
 
 The --tui build must exist (run `npm run build` in ui-tui first). This script
 launches `node dist/entry.js` directly with HERMES_TUI_RESUME set so it
@@ -13,7 +13,7 @@ bypasses the hermes_cli wrapper — we want repeatable timing, not the CLI's
 session-picker flow.
 
 Environment overrides:
-  HERMES_PERF_LOG     (default ~/.hermes/perf.log)
+  HERMES_PERF_LOG     (default ~/.auraforge/perf.log)
   HERMES_PERF_NODE    (default node from $PATH)
   HERMES_TUI_DIR      (default: <repo>/ui-tui relative to this script)
 
@@ -42,7 +42,7 @@ try:
 except ImportError:
     def get_hermes_home() -> Path:  # type: ignore[misc]
         val = (os.environ.get("HERMES_HOME") or "").strip()
-        return Path(val) if val else Path.home() / ".hermes"
+        return Path(val) if val else Path.home() / ".auraforge"
 
 DEFAULT_TUI_DIR = Path(
     os.environ.get("HERMES_TUI_DIR")
@@ -536,7 +536,7 @@ def loop_mode(args: argparse.Namespace) -> int:
 
     tui_dir = Path(args.tui_dir).resolve()
     src_root = tui_dir / "src"
-    pkg_root = tui_dir / "packages" / "hermes-ink" / "src"
+    pkg_root = tui_dir / "packages" / "auraforge-ink" / "src"
 
     def collect_mtimes() -> dict[str, float]:
         mtimes: dict[str, float] = {}

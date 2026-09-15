@@ -110,7 +110,7 @@ def test_new_named_creates_and_retargets(repo):
     assert os.environ["TERMINAL_CWD"] == str(wt)
     assert os.path.realpath(os.getcwd()) == os.path.realpath(str(wt))
     assert cli_mod._active_worktree is not None
-    assert cli_mod._active_worktree["branch"] == "hermes/fix-login"
+    assert cli_mod._active_worktree["branch"] == "auraforge/fix-login"
     # Same file contents as the base commit.
     assert (wt / "a.txt").read_text() == "hello\n"
 
@@ -131,7 +131,7 @@ def test_new_unnamed_uses_random_hermes_prefix(repo):
     out = _run(_Stub(), "/worktree new")
     assert "Worktree ready" in out
     name = os.path.basename(cli_mod._active_worktree["path"])
-    assert name.startswith("hermes-")
+    assert name.startswith("auraforge-")
 
 
 @requires_git

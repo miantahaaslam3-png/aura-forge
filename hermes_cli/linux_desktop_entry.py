@@ -1,4 +1,4 @@
-"""Install and remove the Linux desktop entry (``hermes.desktop``).
+"""Install and remove the Linux desktop entry (``auraforge.desktop``).
 
 ``auraforge desktop`` builds and launches the Electron app. On Linux, a
 freshly-built app has no launcher presence: no menu item, no icon. This
@@ -8,7 +8,7 @@ module writes the XDG desktop entry that gives it one.
 Two values must be absolute for the entry to work:
 
   - ``Exec`` — the launcher runs without shell ``PATH`` customizations, so
-    a bare ``auraforge desktop`` fails when hermes lives in ``~/.local/bin``
+    a bare ``auraforge desktop`` fails when auraforge lives in ``~/.local/bin``
     or a venv. Resolve the real binary and write its full path.
   - ``Icon`` — an unqualified icon name needs an indexed icon theme. The
     spec allows an absolute path instead, so point at the app icon in the
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-DESKTOP_ENTRY_NAME = "hermes.desktop"
+DESKTOP_ENTRY_NAME = "auraforge.desktop"
 
 
 def is_supported() -> bool:
@@ -48,7 +48,7 @@ def _xdg_data_home() -> Path:
 
 
 def desktop_entry_path() -> Path:
-    """Where the ``hermes.desktop`` entry lives."""
+    """Where the ``auraforge.desktop`` entry lives."""
     return _xdg_data_home() / "applications" / DESKTOP_ENTRY_NAME
 
 
@@ -189,7 +189,7 @@ def install_desktop_entry(project_root: Path) -> Optional[Path]:
     icon = icon_path(project_root)
     # Use the themed name when the checkout has no icon (a lite or
     # packaged install). A broken absolute path renders as no icon.
-    icon_value = str(icon) if icon.is_file() else "hermes"
+    icon_value = str(icon) if icon.is_file() else "auraforge"
     contents = render_desktop_entry(resolve_exec_command(), icon_value)
 
     try:

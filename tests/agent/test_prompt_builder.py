@@ -492,10 +492,10 @@ class TestBuildContextFilesPrompt:
         assert "Project Context" in result
 
     def test_hermes_md_still_wins_over_agents_override(self, tmp_path):
-        (tmp_path / ".hermes.md").write_text("Hermes-first context.")
+        (tmp_path / ".auraforge.md").write_text("Aura Forge-first context.")
         (tmp_path / "AGENTS.override.md").write_text("Override context.")
         result = build_context_files_prompt(cwd=str(tmp_path))
-        assert "Hermes-first context" in result
+        assert "Aura Forge-first context" in result
         assert "Override context" not in result
 
     def test_skips_agents_md_in_install_tree_on_fallback(self, monkeypatch, tmp_path):
@@ -528,7 +528,7 @@ class TestBuildContextFilesPrompt:
 
 
 
-    # --- .hermes.md / HERMES.md discovery ---
+    # --- .auraforge.md / AURA_FORGE.md discovery ---
 
 
 
@@ -568,23 +568,23 @@ class TestBuildContextFilesPrompt:
 
 
 # =========================================================================
-# .hermes.md helper functions
+# .auraforge.md helper functions
 # =========================================================================
 
 
 class TestFindHermesMd:
     def test_finds_in_cwd(self, tmp_path):
-        (tmp_path / ".hermes.md").write_text("rules")
-        assert _find_hermes_md(tmp_path) == tmp_path / ".hermes.md"
+        (tmp_path / ".auraforge.md").write_text("rules")
+        assert _find_hermes_md(tmp_path) == tmp_path / ".auraforge.md"
 
 
 
     def test_walks_to_git_root(self, tmp_path):
         (tmp_path / ".git").mkdir()
-        (tmp_path / ".hermes.md").write_text("root rules")
+        (tmp_path / ".auraforge.md").write_text("root rules")
         sub = tmp_path / "a" / "b"
         sub.mkdir(parents=True)
-        assert _find_hermes_md(sub) == tmp_path / ".hermes.md"
+        assert _find_hermes_md(sub) == tmp_path / ".auraforge.md"
 
 
 
@@ -592,14 +592,14 @@ class TestFindHermesMd:
         """Outside a git repo, only cwd is checked — parents are NOT walked.
 
         Walking parents with no git root to stop the loop would climb all
-        the way to / and pick up a .hermes.md planted in /tmp, /home, or /
+        the way to / and pick up a .auraforge.md planted in /tmp, /home, or /
         on a shared system — a cross-user prompt-injection vector.
         """
         from unittest.mock import patch
 
         parent = tmp_path / "parent"
         parent.mkdir()
-        (parent / ".hermes.md").write_text("planted by another user")
+        (parent / ".auraforge.md").write_text("planted by another user")
         cwd = parent / "work"
         cwd.mkdir()
         # No git root anywhere up the tree.
@@ -886,7 +886,7 @@ class TestBuildSkillsSystemPromptConditional:
         skill_dir = tmp_path / "skills" / "iot" / "openhue"
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text(
-            "---\nname: openhue\ndescription: Hue lights\nmetadata:\n  hermes:\n    requires_toolsets: [terminal]\n---\n"
+            "---\nname: openhue\ndescription: Hue lights\nmetadata:\n  auraforge:\n    requires_toolsets: [terminal]\n---\n"
         )
         result = build_skills_system_prompt(
             available_tools=set(),
@@ -902,7 +902,7 @@ class TestBuildSkillsSystemPromptConditional:
         skill_dir = tmp_path / "skills" / "search" / "duckduckgo"
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text(
-            "---\nname: duckduckgo\ndescription: Free web search\nmetadata:\n  hermes:\n    fallback_for_toolsets: [web]\n---\n"
+            "---\nname: duckduckgo\ndescription: Free web search\nmetadata:\n  auraforge:\n    fallback_for_toolsets: [web]\n---\n"
         )
         result = build_skills_system_prompt()
         assert "duckduckgo" in result

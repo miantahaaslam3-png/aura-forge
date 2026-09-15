@@ -2,13 +2,13 @@
 Aura Forge CLI - Unified command-line interface for Aura Forge Agent.
 
 Provides subcommands for:
-- hermes chat          - Interactive chat (same as ./hermes)
-- hermes gateway       - Run gateway in foreground
-- hermes gateway start - Start gateway service
-- hermes gateway stop  - Stop gateway service
+- auraforge chat          - Interactive chat (same as ./auraforge)
+- auraforge gateway       - Run gateway in foreground
+- auraforge gateway start - Start gateway service
+- auraforge gateway stop  - Stop gateway service
 - auraforge setup         - Interactive setup wizard
-- hermes status        - Show status of all components
-- hermes cron          - Manage cron jobs
+- auraforge status        - Show status of all components
+- auraforge cron          - Manage cron jobs
 """
 
 import os

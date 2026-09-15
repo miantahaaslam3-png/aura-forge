@@ -5,7 +5,7 @@ Layer context (Aug 2026, after the 12-minute Windows update hang): reapers
 previously inferred process lineage from PPIDs and cmdline shape. These
 primitives make identity positive instead: spawners stamp children
 (HERMES_SPAWN), long-lived processes self-register (pid, create_time,
-purpose, spawner) in spawn-ledger.json, and `hermes update` reaps holders the
+purpose, spawner) in spawn-ledger.json, and `auraforge update` reaps holders the
 ledger PROVES are orphaned backends — in any update context, no hand-off
 contract needed.
 
@@ -91,8 +91,8 @@ def test_desktop_style_tag_parses():
 
 
 def test_install_id_stable_and_path_scoped():
-    a = pi.install_id(Path("/opt/hermes"))
-    assert a == pi.install_id(Path("/opt/hermes"))
+    a = pi.install_id(Path("/opt/auraforge"))
+    assert a == pi.install_id(Path("/opt/auraforge"))
     assert a != pi.install_id(Path("/opt/other"))
     assert len(a) == 12
 

@@ -22,7 +22,7 @@ import pytest
 @pytest.fixture
 def hermes_env(tmp_path, monkeypatch):
     """Isolate HERMES_HOME for each test so jobs/scripts don't leak."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     (home / "scripts").mkdir()
     (home / "cron").mkdir()
@@ -334,7 +334,7 @@ def test_run_job_script_accepts_pathlike_script_path(hermes_env):
 @pytest.mark.parametrize(
     "error",
     [
-        "Script timed out after 900s: /home/u/.hermes/scripts/nightly.sh",
+        "Script timed out after 900s: /home/u/.auraforge/scripts/nightly.sh",
         "Script failed: curl returned 429 from api.example.com",
         "Script failed: gpg authentication failed for key",
         "Script failed: ReadTimeout contacting localhost",

@@ -297,7 +297,7 @@ def _fetch_with_timeout(
     blows its budget is reported as ``TIMEOUT`` and its (eventual)
     result is discarded.  The thread itself may linger until process
     exit — acceptable for a startup-only path, and strictly better than
-    an unbounded hang on every ``hermes`` invocation.
+    an unbounded hang on every ``auraforge`` invocation.
     """
     timeout = source.fetch_timeout_seconds(cfg)
     executor = concurrent.futures.ThreadPoolExecutor(
@@ -388,8 +388,8 @@ def _ordered_enabled_sources(
 def _active_profile_name(home_path: Optional[Path]) -> str:
     """Best-effort active profile name for profile-scoped secret aliases.
 
-    A named profile's HERMES_HOME is ``~/.hermes/profiles/<name>``; the
-    default profile (``~/.hermes``) returns "".
+    A named profile's HERMES_HOME is ``~/.auraforge/profiles/<name>``; the
+    default profile (``~/.auraforge``) returns "".
     """
     if home_path is not None:
         resolved = Path(home_path)

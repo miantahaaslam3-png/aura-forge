@@ -187,15 +187,15 @@ def get_default_hermes_root() -> Path:
     """Return the root Aura Forge directory for profile-level operations.
 
     In standard deployments this is the platform-native Aura Forge home
-    (``~/.hermes`` on POSIX, ``%LOCALAPPDATA%\\hermes`` on native Windows).
+    (``~/.auraforge`` on POSIX, ``%LOCALAPPDATA%\\auraforge`` on native Windows).
 
     In Docker or custom deployments where ``HERMES_HOME`` points outside
-    ``~/.hermes`` (e.g. ``/opt/data``), returns ``HERMES_HOME`` directly
+    ``~/.auraforge`` (e.g. ``/opt/data``), returns ``HERMES_HOME`` directly
     — that IS the root.
 
     In profile mode where ``HERMES_HOME`` is ``<root>/profiles/<name>``,
     returns ``<root>`` so that ``profile list`` can see all profiles.
-    Works both for standard (``~/.hermes/profiles/coder``) and Docker
+    Works both for standard (``~/.auraforge/profiles/coder``) and Docker
     (``/opt/data/profiles/coder``) layouts.
 
     Import-safe — no dependencies beyond stdlib.
@@ -214,7 +214,7 @@ def get_default_hermes_root() -> Path:
         env_path = Path(env_home)
         try:
             env_path.resolve().relative_to(native_home.resolve())
-            # HERMES_HOME is under ~/.hermes (normal or profile mode)
+            # HERMES_HOME is under ~/.auraforge (normal or profile mode)
             result = native_home
         except ValueError:
             # Docker / custom deployment.
@@ -243,17 +243,17 @@ _HERMES_HOME_MARKERS = ("config.yaml", ".env", "state.db")
 
 
 def _is_hermes_profiles_root(profiles_dir: Path) -> bool:
-    """Return True when *profiles_dir* is a canonical ``<hermes-home>/profiles``.
+    """Return True when *profiles_dir* is a canonical ``<auraforge-home>/profiles``.
 
     Anchors named-profile recognition so it only fires for directories that
-    provably live under a Aura Forge home: the classic ``~/.hermes`` layout, a
-    root carrying Hermes-home marker files (Docker/custom ``HERMES_HOME``
+    provably live under a Aura Forge home: the classic ``~/.auraforge`` layout, a
+    root carrying Aura Forge-home marker files (Docker/custom ``HERMES_HOME``
     like ``/opt/data``), a ``profiles/.deleted`` tombstone directory (only
-    ever created by ``hermes profile delete``), or the process's resolved
+    ever created by ``auraforge profile delete``), or the process's resolved
     default Aura Forge root.
     """
     root = profiles_dir.parent
-    if root.name == ".hermes":
+    if root.name == ".auraforge":
         return True
     try:
         if (profiles_dir / _DELETED_PROFILES_DIR).is_dir():
@@ -277,7 +277,7 @@ def named_profile_home(path: str | Path) -> Path | None:
     not start with ``.`` AND the ``profiles`` directory's parent is a real
     Aura Forge home (see :func:`_is_hermes_profiles_root`). A default Aura Forge home
     whose path merely contains a ``profiles`` segment
-    (e.g. ``/tmp/foo/profiles/notahome/.hermes``) is not a named profile,
+    (e.g. ``/tmp/foo/profiles/notahome/.auraforge``) is not a named profile,
     and neither is an unrelated custom home like
     ``/srv/profiles/buildcache`` — those must keep mkdir-ing normally.
     ``.../profiles/worker/logs`` still resolves to ``.../profiles/worker``.
@@ -292,7 +292,7 @@ def named_profile_home(path: str | Path) -> Path | None:
             return candidate
         # Stop at a default Aura Forge home so a coincidental ``profiles/``
         # ancestor is not treated as a named-profile root.
-        if candidate.name == ".hermes":
+        if candidate.name == ".auraforge":
             return None
     return None
 
@@ -423,10 +423,10 @@ def get_hermes_dir(
 
 
 def iter_hermes_node_dirs(home: Path | None = None) -> list[Path]:
-    """Return Hermes-managed Node.js directories in preferred lookup order.
+    """Return Aura Forge-managed Node.js directories in preferred lookup order.
 
     Windows installs from ``scripts/install.ps1`` unpack portable Node directly
-    into ``%LOCALAPPDATA%\\hermes\\node``. POSIX installs use
+    into ``%LOCALAPPDATA%\\auraforge\\node``. POSIX installs use
     ``$HERMES_HOME/node/bin``. Include both shapes on every platform so mixed
     or migrated installs still work.
     """
@@ -463,18 +463,18 @@ _NODE_BOOTSTRAP_SCRIPT = Path(__file__).resolve().parent / "scripts" / "lib" / "
 
 # Install tree root (this file lives at <install_root>/hermes_constants.py).
 # Used by secure_parent_dir() to skip chmod on the install dir — chmodding it
-# 0700 breaks hermes-user traversal in Docker (UID 10000). See #25821, #93050.
+# 0700 breaks auraforge-user traversal in Docker (UID 10000). See #25821, #93050.
 _INSTALL_ROOT = Path(__file__).resolve().parent
 
 
 def node_tool_runnable(path: str | None) -> bool:
     """Return True only when *path* is a Node/npm/npx binary that actually runs.
 
-    Hermes-managed Node trees live under ``$HERMES_HOME/node`` (or a profile's
+    Aura Forge-managed Node trees live under ``$HERMES_HOME/node`` (or a profile's
     ``HERMES_HOME``). A partial upgrade or interrupted install can leave
     ``bin/npm`` behind while ``lib/cli.js`` is missing — the wrapper exists but
     immediately throws ``MODULE_NOT_FOUND``. ``find_hermes_node_executable``
-    used to trust file presence alone, so ``hermes update`` would pick that
+    used to trust file presence alone, so ``auraforge update`` would pick that
     broken npm and fail the Node refresh / web UI build.
 
     Probe with ``--version`` (same pattern as :func:`agent_browser_runnable`) so
@@ -507,7 +507,7 @@ def node_tool_runnable(path: str | None) -> bool:
 
 
 def hermes_managed_node_tree_present(home: Path | None = None) -> bool:
-    """Return True when any Hermes-managed node/npm/npx shim exists on disk."""
+    """Return True when any Aura Forge-managed node/npm/npx shim exists on disk."""
     names = set()
     for command in ("node", "npm", "npx"):
         names.update(_candidate_node_command_names(command))
@@ -601,8 +601,8 @@ def _print_managed_node_in_use_notice() -> None:
         return
     _managed_node_in_use_notice_printed = True
     print(
-        "→ Hermes-managed Node.js is in use by a running app; deferring its "
-        "upgrade until the app is closed (re-run `hermes update` afterwards).",
+        "→ Aura Forge-managed Node.js is in use by a running app; deferring its "
+        "upgrade until the app is closed (re-run `auraforge update` afterwards).",
         flush=True,
     )
 
@@ -621,7 +621,7 @@ def _heal_managed_node_windows(home: Path | None = None) -> bool | None:
     The live tree is never deleted before its replacement is ready, so an
     interrupted heal cannot gut the running installation. Windows allows
     renaming a tree whose executables are running (images are mapped with
-    ``FILE_SHARE_DELETE`` — the same mechanism as the hermes.exe quarantine);
+    ``FILE_SHARE_DELETE`` — the same mechanism as the auraforge.exe quarantine);
     when the OS refuses the rename, that refusal *is* the in-use signal and
     the heal defers instead of forcing the write and crashing with
     ``PermissionError: [WinError 5]`` on ``npm.cmd`` (#80926).
@@ -796,7 +796,7 @@ def _bootstrap_managed_node_posix() -> bool:
 
 
 def bootstrap_hermes_managed_node() -> str | None:
-    """Install a Hermes-managed Node tree and return its npm path.
+    """Install a Aura Forge-managed Node tree and return its npm path.
 
     Used when the only Node/npm on the machine belongs to the user (system,
     nvm, brew, Nix) and cannot satisfy the repo's ``engines`` requirements —
@@ -832,7 +832,7 @@ def bootstrap_hermes_managed_node() -> str | None:
 
 
 def heal_hermes_managed_node() -> bool:
-    """Redownload Hermes-managed Node when the tree exists but is broken.
+    """Redownload Aura Forge-managed Node when the tree exists but is broken.
 
     Runs at most once per process. POSIX installs shell out to
     ``heal_managed_node`` in ``scripts/lib/node-bootstrap.sh``; Windows
@@ -916,7 +916,7 @@ def _managed_node_tree_outdated(home: Path | None = None) -> bool:
 
 
 def find_hermes_node_executable(command: str) -> str | None:
-    """Return a Hermes-managed Node/npm executable path, healing broken trees.
+    """Return a Aura Forge-managed Node/npm executable path, healing broken trees.
 
     Outdated trees (node major below ``_HERMES_NODE_TARGET_MAJOR``) heal the
     same way broken ones do — the once-per-process heal redownloads the target
@@ -956,7 +956,7 @@ def find_node_executable_on_path(command: str) -> str | None:
 
     ``shutil.which("npm")`` can resolve an extensionless npm shim before the
     ``.cmd`` shim on Windows. Python's CreateProcess cannot execute that shim
-    directly, so prefer the launchable variants explicitly for Hermes-owned
+    directly, so prefer the launchable variants explicitly for Aura Forge-owned
     subprocesses.
     """
     if sys.platform != "win32":
@@ -980,9 +980,9 @@ def find_node_executable_on_path(command: str) -> str | None:
 
 
 def find_node_executable(command: str) -> str | None:
-    """Resolve a Node.js command, preferring healthy Hermes-managed installs.
+    """Resolve a Node.js command, preferring healthy Aura Forge-managed installs.
 
-    This is for Hermes-owned subprocesses that should not be broken by a bad,
+    This is for Aura Forge-owned subprocesses that should not be broken by a bad,
     missing, or elevation-triggering system Node/npm on PATH. When a managed
     tree exists but cannot be healed, returns ``None`` instead of falling back
     to system npm on PATH.
@@ -996,7 +996,7 @@ def find_node_executable(command: str) -> str | None:
 
 
 def with_hermes_node_path(env: dict[str, str] | None = None) -> dict[str, str]:
-    """Return *env* with Hermes-managed Node directories prepended to PATH."""
+    """Return *env* with Aura Forge-managed Node directories prepended to PATH."""
     merged = dict(os.environ if env is None else env)
     existing = merged.get("PATH", "")
     parts = [p for p in existing.split(os.pathsep) if p]
@@ -1015,7 +1015,7 @@ def agent_browser_runnable(path: str | None) -> bool:
     agent-browser's npm ``postinstall`` re-points a *global* install symlink
     (e.g. ``/opt/homebrew/bin/agent-browser``) at our local
     ``node_modules/agent-browser/bin/...`` binary, which then disappears on the
-    next ``hermes update`` — leaving a **dangling symlink** that ``which`` still
+    next ``auraforge update`` — leaving a **dangling symlink** that ``which`` still
     reports but exec fails on with exit 127 (issue #48521). Callers that trust
     such a path silently break every browser tool.
 
@@ -1110,19 +1110,19 @@ def display_hermes_home() -> str:
 
     Uses ``~/`` shorthand for readability::
 
-        default:  ``~/.hermes``
-        profile:  ``~/.hermes/profiles/coder``
-        custom:   ``/opt/hermes-custom``
+        default:  ``~/.auraforge``
+        profile:  ``~/.auraforge/profiles/coder``
+        custom:   ``/opt/auraforge-custom``
 
     Use this in **user-facing** print/log messages instead of hardcoding
-    ``~/.hermes``.  For code that needs a real ``Path``, use
+    ``~/.auraforge``.  For code that needs a real ``Path``, use
     :func:`get_hermes_home` instead.
     """
     home = get_hermes_home()
     try:
         # as_posix(): on Windows, str() of a relative Path renders
         # backslashes, producing mixed-separator chimeras like
-        # ``~/AppData\Local\hermes/skills/`` once callers append
+        # ``~/AppData\Local\auraforge/skills/`` once callers append
         # sub-paths. ``~/`` shorthand implies POSIX rendering; keep the
         # whole string consistent (forward slashes work everywhere,
         # including Windows shells and Python APIs).
@@ -1139,7 +1139,7 @@ def secure_parent_dir(path: Path) -> None:
     prevent catastrophic host bricking when ``HERMES_HOME`` or other path
     env vars resolve to an unexpected location.
 
-    Also refuses to chmod the hermes-agent install tree (the directory this
+    Also refuses to chmod the auraforge-agent install tree (the directory this
     module lives in, and anything below it): restricting the install dir to
     0700 locks the runtime user out of traversing it when it does not own
     the dir, as in the Docker image. A warning is logged when this happens.
@@ -1151,7 +1151,7 @@ def secure_parent_dir(path: Path) -> None:
     # Refuse root and its direct children (/usr, /home, /var, /tmp, …).
     if parent == Path("/") or len(parent.parts) < 3:
         return
-    # Refuse the install tree root. chmodding it 0700 breaks hermes-user
+    # Refuse the install tree root. chmodding it 0700 breaks auraforge-user
     # traversal in Docker (UID 10000) and any other install where the
     # runtime user doesn't own the install dir. See #25821, #93050.
     if parent == _INSTALL_ROOT or _INSTALL_ROOT in parent.parents:
@@ -1163,8 +1163,8 @@ def secure_parent_dir(path: Path) -> None:
 
         logging.getLogger(__name__).warning(
             "Not restricting permissions on %s: it is inside the "
-            "hermes-agent install directory (%s). Credential files are "
-            "normally stored under the hermes home directory instead.",
+            "auraforge-agent install directory (%s). Credential files are "
+            "normally stored under the auraforge home directory instead.",
             parent,
             _INSTALL_ROOT,
         )
@@ -1830,7 +1830,7 @@ def partial_update_hint(exc: BaseException) -> list[str]:
     ``ImportError: cannot import name 'X' from 'y'`` on every startup.
 
     Users hit this as an opaque crash with no indication that the *install*,
-    rather than their config, is the problem — and `hermes update` is exactly
+    rather than their config, is the problem — and `auraforge update` is exactly
     the command they need but are least likely to trust after a failed update.
     Return the guidance so callers can print it alongside the raw error.
 
@@ -1851,6 +1851,6 @@ def partial_update_hint(exc: BaseException) -> list[str]:
         "This looks like a partially-updated install: one module was refreshed "
         "and a related one was not.",
         "Re-run the update to bring the whole tree to the same version:",
-        "    hermes update",
-        "If that also fails, reinstall: https://hermes-agent.nousresearch.com",
+        "    auraforge update",
+        "If that also fails, reinstall: https://auraforge-agent.nousresearch.com",
     ]

@@ -125,7 +125,7 @@ def _voice_capture_install_hint() -> str:
     if _is_termux_environment():
         return "pkg install python-numpy portaudio && python -m pip install sounddevice"
     # If we're running inside a venv (e.g. the bundled Aura Forge venv at
-    # ~/.hermes/profiles/<name>/hermes-agent/venv/), `pip install` on the
+    # ~/.auraforge/profiles/<name>/auraforge-agent/venv/), `pip install` on the
     # user's PATH won't reach the right site-packages — the bare hint sends
     # them off to whichever Python their shell resolves first, which on macOS
     # is often a system Python under Rosetta with a totally separate wheel
@@ -447,7 +447,7 @@ def _get_beep_volume() -> float:
     """Read ``voice.beep_volume`` from config.yaml; clamps to 0.0-1.0.
 
     Defaults to 0.3 when the key is missing, invalid, or when the config
-    system can't be imported (e.g. broken ~/.hermes/config.yaml during a
+    system can't be imported (e.g. broken ~/.auraforge/config.yaml during a
     partial install). Failures fall back silently so the audio cue never
     breaks the voice loop on a degenerate config.
     """
@@ -1727,7 +1727,7 @@ def _play_audio_file_impl(file_path: str) -> bool:
                 if _win_tmp_wsl:
                     # Unique suffix prevents concurrent TTS playback collision.
                     _unique = uuid.uuid4().hex[:8]
-                    _wsl_wav = os.path.join(_win_tmp_wsl, f"hermes-tts-{_unique}.wav")
+                    _wsl_wav = os.path.join(_win_tmp_wsl, f"auraforge-tts-{_unique}.wav")
                     _win_wav = subprocess.check_output(
                         ["wslpath", "-w", _wsl_wav],
                         stderr=subprocess.DEVNULL, timeout=3,

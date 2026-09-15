@@ -8,7 +8,7 @@ Discovers, loads, and manages plugins from four sources:
    ``memory/`` and ``context_engine/`` subdirs are excluded — they have their
    own discovery paths)
 2. **User plugins**   – ``~/.aura-forge/plugins/<name>/``
-3. **Project plugins** – ``./.hermes/plugins/<name>/`` (opt-in via
+3. **Project plugins** – ``./.auraforge/plugins/<name>/`` (opt-in via
    ``HERMES_ENABLE_PROJECT_PLUGINS``)
 4. **Pip plugins**     – packages that expose the ``hermes_agent.plugins``
    entry-point group.
@@ -56,10 +56,10 @@ from pathlib import Path
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Tuple, Type, Union)
 
 from hermes_constants import (
-    get_hermes_home,
-    hermes_home_key,
-    reset_hermes_home_override,
-    set_hermes_home_override,
+    get_aura_forge_home,
+    aura_forge_home_key,
+    reset_aura_forge_home_override,
+    set_aura_forge_home_override,
 )
 from registration_lifecycle import replacement_coordinator
 from utils import env_var_enabled, fast_safe_load
@@ -562,8 +562,8 @@ MAX_SYSTEM_PROMPT_SECTIONS = 32
 MAX_SYSTEM_PROMPT_SECTIONS_TOTAL_CHARS = 8_000
 _SYSTEM_PROMPT_SECTION_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 _SYSTEM_PROMPT_SECTION_HEADING_PREFIX = "## Plugin Context: "
-PLUGIN_SECTIONS_START = "<!-- hermes-plugin-sections:start -->"
-PLUGIN_SECTIONS_END = "<!-- hermes-plugin-sections:end -->"
+PLUGIN_SECTIONS_START = "<!-- auraforge-plugin-sections:start -->"
+PLUGIN_SECTIONS_END = "<!-- auraforge-plugin-sections:end -->"
 
 
 def is_valid_system_prompt_section_id(value: Any) -> bool:
@@ -575,7 +575,7 @@ def format_system_prompt_section(section_id: str, content: str) -> str:
     """Render an auditable, length-framed block recoverable from the full prompt."""
     return (
         f"{_SYSTEM_PROMPT_SECTION_HEADING_PREFIX}{section_id}\n"
-        f"<!-- hermes-plugin-section-chars:{len(content)} -->\n\n"
+        f"<!-- auraforge-plugin-section-chars:{len(content)} -->\n\n"
         f"{content}"
     )
 
@@ -586,8 +586,8 @@ def format_system_prompt_sections(sections: list) -> str:
         return ""
     blocks = [format_system_prompt_section(item.id, item.content) for item in sections]
     return f"{PLUGIN_SECTIONS_START}\n" + "\n\n".join(blocks) + f"\n{PLUGIN_SECTIONS_END}"
-# Reserved event namespace prefix — only core may publish ``hermes:<event>``.
-HERMES_EVENT_NAMESPACE = "hermes"
+# Reserved event namespace prefix — only core may publish ``auraforge:<event>``.
+HERMES_EVENT_NAMESPACE = "auraforge"
 
 # Max inter-plugin event dispatch recursion depth. A subscriber may itself
 # call ``ctx.emit``; this bound stops mutually-emitting plugins from looping
@@ -618,11 +618,11 @@ def _serialized_replacement(method):
 @contextmanager
 def _plugin_home_scope(home: Path):
     """Bind discovery and loading to the manager's immutable Aura Forge home."""
-    token = set_hermes_home_override(home)
+    token = set_aura_forge_home_override(home)
     try:
         yield
     finally:
-        reset_hermes_home_override(token)
+        reset_aura_forge_home_override(token)
 
 
 def _env_enabled(name: str) -> bool:
@@ -721,7 +721,7 @@ _KNOWN_MANIFEST_FIELDS: Set[str] = {
     "manifest_version", "api_version", "requires_plugins",
     "python_dependencies", "config_schema", "license", "homepage", "tags",
     # owned by sibling sub-issues but reserved so their manifests don't warn
-    "capabilities", "emits", "listens", "hermes", "depends",
+    "capabilities", "emits", "listens", "auraforge", "depends",
 }
 
 # Highest manifest schema version this Aura Forge understands.
@@ -1391,7 +1391,7 @@ class PluginState:
     @property
     def data_dir(self) -> Path:
         """Profile-scoped directory matching portable plugins' PLUGIN_DATA."""
-        return get_hermes_home() / "plugin-data" / self._data_namespace
+        return get_aura_forge_home() / "plugin-data" / self._data_namespace
 
     @property
     def path(self) -> Path:
@@ -3497,8 +3497,8 @@ class PluginContext:
         a plugin may only publish under its own namespace.
 
         Passing an already-namespaced name (anything containing ``':'``,
-        including ``hermes:x`` or a foreign ``other:x``) is rejected with a
-        ``ValueError`` and a logged warning — fail-closed. The ``hermes:``
+        including ``auraforge:x`` or a foreign ``other:x``) is rejected with a
+        ``ValueError`` and a logged warning — fail-closed. The ``auraforge:``
         prefix is reserved for core.
 
         Delivery is fire-and-forget through a host-owned, single-worker queue:
@@ -3543,7 +3543,7 @@ class PluginContext:
     def subscribe(self, event: str, callback: Callable) -> None:
         """Subscribe *callback* to a fully-qualified event name.
 
-        *event* is the full ``<plugin_key>:<event>`` name (or ``hermes:<event>``
+        *event* is the full ``<plugin_key>:<event>`` name (or ``auraforge:<event>``
         if core ever emits). Subscribing is unrestricted — any plugin may
         listen to any published event; only *emitting* is namespace-gated.
 
@@ -3742,7 +3742,7 @@ class PluginManager:
         # Capture the home immutably. Unload can run from a different ambient
         # profile context, but every inverse must target the registration's
         # original scope.
-        self.scope_key = scope_key or hermes_home_key()
+        self.scope_key = scope_key or aura_forge_home_key()
         self.home_path = Path(self.scope_key)
         self._discovery_lock = threading.RLock()
         self._plugins: Dict[str, LoadedPlugin] = {}
@@ -3800,8 +3800,8 @@ class PluginManager:
         # Multi-profile constraint (#65593): several process-global registries
         # (tools, platforms, providers) are shared across profiles while
         # multiple PluginManager instances may coexist in one process (keyed
-        # by resolved hermes home). The ledger is therefore keyed per manager
-        # — i.e. per (hermes_home, plugin_id) — and every release/restore
+        # by resolved auraforge home). The ledger is therefore keyed per manager
+        # — i.e. per (aura_forge_home, plugin_id) — and every release/restore
         # closure is identity-conditional, so one profile's unload can never
         # clear another profile's registrations. Registry overlays keyed by
         # scope_key (see tools/registry.py and gateway/platform_registry.py)
@@ -4434,7 +4434,7 @@ class PluginManager:
                 )
                 continue
 
-            # Built-in backends auto-load — they ship with hermes and must
+            # Built-in backends auto-load — they ship with auraforge and must
             # just work. Selection among them (e.g. which image_gen backend
             # services calls) is driven by ``<category>.provider`` config,
             # enforced by the tool wrapper.
@@ -4525,7 +4525,7 @@ class PluginManager:
             name=clean,
             present=present_fn,
             plugin_id=plugin_id,
-            profile_home=str(get_hermes_home().resolve()),
+            profile_home=str(get_aura_forge_home().resolve()),
         )
         logger.info("Plugin %s registered approval transport: %s", plugin_id, clean)
 
@@ -4534,7 +4534,7 @@ class PluginManager:
         registered = self._approval_transports.get(str(name).strip().lower())
         if registered is None:
             return None
-        if registered.profile_home != str(get_hermes_home().resolve()):
+        if registered.profile_home != str(get_aura_forge_home().resolve()):
             return None
         return registered
 
@@ -4568,16 +4568,16 @@ class PluginManager:
         manifests.extend(bundled_platforms)
 
         # 2. User plugins (~/.aura-forge/plugins/)
-        user_dir = get_hermes_home() / "plugins"
+        user_dir = get_aura_forge_home() / "plugins"
         logger.debug("Scanning user plugins: %s", user_dir)
         user_manifests = self._scan_directory(user_dir, source="user")
         logger.debug("  user: %d manifest(s)", len(user_manifests))
         manifests.extend(user_manifests)
 
-        # 3. Project plugins (./.hermes/plugins/), only when explicitly opted
+        # 3. Project plugins (./.auraforge/plugins/), only when explicitly opted
         # in. This must match the full discovery gate exactly.
         if _env_enabled("HERMES_ENABLE_PROJECT_PLUGINS"):
-            project_dir = Path.cwd() / ".hermes" / "plugins"
+            project_dir = Path.cwd() / ".aura-forge" / "plugins"
             logger.debug("Scanning project plugins: %s", project_dir)
             project_manifests = self._scan_directory(project_dir, source="project")
             logger.debug("  project: %d manifest(s)", len(project_manifests))
@@ -4632,7 +4632,7 @@ class PluginManager:
 
                 if _discover_mcp(
                     Path(manifest.path),
-                    get_hermes_home()
+                    get_aura_forge_home()
                     / "plugin-data"
                     / (manifest.skill_namespace or lookup_key),
                     [],
@@ -5380,7 +5380,7 @@ class PluginManager:
 
             package = load_agent_plugin(
                 Path(manifest.path),
-                get_hermes_home() / "plugin-data" / manifest.skill_namespace,
+                get_aura_forge_home() / "plugin-data" / manifest.skill_namespace,
             )
             ctx = PluginContext(manifest, self)
             for diagnostic in package.diagnostics:
@@ -5474,7 +5474,7 @@ class PluginManager:
         # Evict any stale sys.modules entries for this slug before
         # (re-)importing. A same-slug module may already be cached here
         # from a different Aura Forge home (profile switch reusing a slug
-        # like "hermes-lcm") or from an earlier force=True reload in the
+        # like "auraforge-lcm") or from an earlier force=True reload in the
         # same home. Replacing only sys.modules[module_name] below is not
         # enough: the plugin's own relative imports (`from . import foo`)
         # are cached separately under "module_name + '.' + submodule",
@@ -5662,7 +5662,7 @@ class PluginManager:
 
                     thread = threading.Thread(
                         target=_runner,
-                        name=f"hermes-hook-{callback_name}"[:40],
+                        name=f"auraforge-hook-{callback_name}"[:40],
                         daemon=True,
                     )
                     thread.start()
@@ -5773,7 +5773,7 @@ class PluginManager:
         worker = threading.Thread(
             target=self._event_worker_loop,
             args=(dispatch_queue,),
-            name="hermes-plugin-events",
+            name="auraforge-plugin-events",
             daemon=True,
         )
         self._event_worker = worker
@@ -6146,9 +6146,9 @@ _plugin_manager: Optional[PluginManager] = None
 # Keyed cache: resolved Aura Forge home -> PluginManager. Aura Forge supports
 # multiple profiles via different AURA_FORGE_HOME directories, and a single
 # long-lived process (gateway multiplexer, test session, embedder) can
-# switch between them via ``set_hermes_home_override()`` — which is a
+# switch between them via ``set_aura_forge_home_override()`` — which is a
 # ContextVar and deliberately does NOT touch os.environ (see
-# hermes_constants.set_hermes_home_override). A process-wide single-slot
+# hermes_constants.set_aura_forge_home_override). A process-wide single-slot
 # cache leaks one profile's plugin/context-engine state into another. We
 # key the cache by the *resolved* home path so re-entering a previously
 # seen profile reuses its manager (and picks up any modules it already
@@ -6160,18 +6160,18 @@ _plugin_managers_lock = threading.RLock()
 def _plugin_home_key() -> Path:
     """Return the profile/home key for process-global plugin state.
 
-    Plugins are discovered from ``get_hermes_home() / "plugins"`` and some
-    plugins (notably context engines such as hermes-lcm) capture that home
+    Plugins are discovered from ``get_aura_forge_home() / "plugins"`` and some
+    plugins (notably context engines such as auraforge-lcm) capture that home
     at registration time for profile-scoped storage. A long-lived process
     can temporarily switch Aura Forge home (env var *or* the context-local
-    ``set_hermes_home_override()``) while serving another profile, so the
+    ``set_aura_forge_home_override()``) while serving another profile, so the
     plugin manager must be scoped to the active Aura Forge home instead of
     being one process-wide singleton.
     """
     try:
-        return get_hermes_home().expanduser().resolve()
+        return get_aura_forge_home().expanduser().resolve()
     except Exception:
-        return get_hermes_home().expanduser()
+        return get_aura_forge_home().expanduser()
 
 
 def _clear_plugin_submodules(manager: Optional[PluginManager]) -> None:
@@ -6213,7 +6213,7 @@ def get_plugin_manager() -> PluginManager:
     Managers are cached per resolved home so repeated calls within the
     same profile reuse discovery state (normal performance), while a
     profile switch — via ``AURA_FORGE_HOME`` or the context-local
-    ``set_hermes_home_override()`` — gets its own manager with its own
+    ``set_aura_forge_home_override()`` — gets its own manager with its own
     plugin submodules, instead of silently inheriting another profile's
     context engine or stale relative-import state.
     """
@@ -6234,7 +6234,7 @@ def get_plugin_manager() -> PluginManager:
 
         manager = _plugin_managers_by_home.get(current_home)
         if manager is None:
-            manager = PluginManager(scope_key=hermes_home_key(current_home))
+            manager = PluginManager(scope_key=aura_forge_home_key(current_home))
             _plugin_managers_by_home[current_home] = manager
 
         _plugin_manager = manager
@@ -6343,8 +6343,8 @@ def _join_background_discovery(timeout: float = 30.0) -> None:
 
 
 def _plugin_toolset_keys_cache_path():
-    from hermes_constants import get_hermes_home
-    return get_hermes_home() / "cache" / "plugin_toolset_keys.json"
+    from hermes_constants import get_aura_forge_home
+    return get_aura_forge_home() / "cache" / "plugin_toolset_keys.json"
 
 
 def _persist_plugin_toolset_keys() -> None:
@@ -7083,7 +7083,7 @@ def resolve_plugin_command_result(result: Any) -> Any:
 
     thread = threading.Thread(
         target=_runner,
-        name="hermes-plugin-command-await",
+        name="auraforge-plugin-command-await",
         daemon=True,
     )
     thread.start()
@@ -7125,7 +7125,7 @@ def get_plugin_subscriptions() -> Dict[str, List[Callable]]:
     """Return the inter-plugin event bus subscription registry.
 
     Returns a snapshot mapping each fully-qualified event name
-    (``<plugin_key>:<event>`` or ``hermes:<event>``) to subscriber callbacks in
+    (``<plugin_key>:<event>`` or ``auraforge:<event>``) to subscriber callbacks in
     registration order. Owner ledger metadata stays private to the manager.
     Triggers idempotent plugin discovery before reading the snapshot.
     """

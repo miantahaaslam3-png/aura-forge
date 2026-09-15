@@ -429,7 +429,7 @@ def pick_foreign_session(
     if not sys.stdin.isatty():
         print(
             "Non-interactive terminal — pass the file path directly:\n"
-            "  hermes sessions import --from claude|codex <path>"
+            "  auraforge sessions import --from claude|codex <path>"
         )
         return None
     try:
@@ -485,5 +485,5 @@ def run_sessions_import(args, db=None) -> Optional[str]:
         return None
     label = _SOURCE_LABELS.get(source, source)
     print(f"✓ Imported {label} session as {session_id}")
-    print(f"  Continue it with:  hermes --resume {session_id}")
+    print(f"  Continue it with:  auraforge --resume {session_id}")
     return session_id

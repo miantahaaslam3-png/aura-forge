@@ -118,7 +118,7 @@ kimi = KimiProfile(
     fixed_temperature=OMIT_TEMPERATURE,
     default_max_tokens=32000,
     default_headers={
-        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "HTTP-Referer": "https://auraforge-agent.nousresearch.com",
         "X-Title": "Aura Forge Agent",
         "User-Agent": f"HermesAgent/{_HERMES_VERSION}",
     },
@@ -133,7 +133,7 @@ kimi_cn = KimiProfile(
     fixed_temperature=OMIT_TEMPERATURE,
     default_max_tokens=32000,
     default_headers={
-        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "HTTP-Referer": "https://auraforge-agent.nousresearch.com",
         "X-Title": "Aura Forge Agent",
         "User-Agent": f"HermesAgent/{_HERMES_VERSION}",
     },

@@ -2,9 +2,9 @@
 
 Scans four sources for memory provider plugins:
 
-1. Bundled providers: ``plugins/memory/<name>/`` (shipped with hermes-agent)
+1. Bundled providers: ``plugins/memory/<name>/`` (shipped with auraforge-agent)
 2. User-installed providers: ``$HERMES_HOME/plugins/<name>/``
-3. Project-local providers: ``./.hermes/plugins/<name>/``, opt-in via
+3. Project-local providers: ``./.auraforge/plugins/<name>/``, opt-in via
    ``HERMES_ENABLE_PROJECT_PLUGINS``
 4. Pip-installed providers: ``hermes_agent.memory_providers`` entry points
 
@@ -88,7 +88,7 @@ def _get_user_plugins_dir() -> Optional[Path]:
 
 
 def _get_project_plugins_dir() -> Optional[Path]:
-    """Return ``./.hermes/plugins/`` or None if unavailable or not opted in.
+    """Return ``./.auraforge/plugins/`` or None if unavailable or not opted in.
 
     Gated on ``HERMES_ENABLE_PROJECT_PLUGINS`` exactly as the general
     ``PluginManager`` gates its own project scan — a repository you merely
@@ -99,7 +99,7 @@ def _get_project_plugins_dir() -> Optional[Path]:
 
         if not _env_enabled("HERMES_ENABLE_PROJECT_PLUGINS"):
             return None
-        d = Path.cwd() / ".hermes" / "plugins"
+        d = Path.cwd() / ".auraforge" / "plugins"
         return d if d.is_dir() else None
     except Exception:
         return None
@@ -141,7 +141,7 @@ def _iter_provider_dirs() -> List[Tuple[str, Path]]:
             dirs.append((child.name, child))
 
     # 2. User-installed providers ($HERMES_HOME/plugins/<name>/)
-    # 3. Project-local providers (./.hermes/plugins/<name>/), opt-in
+    # 3. Project-local providers (./.auraforge/plugins/<name>/), opt-in
     for source_dir in (_get_user_plugins_dir(), _get_project_plugins_dir()):
         if not source_dir:
             continue
@@ -184,7 +184,7 @@ def find_provider_dir(name: str) -> Optional[Path]:
     ``plugins/memory/config_schema.py``) and ``cli.py`` (loaded by
     ``discover_plugin_cli_commands`` at argparse time). Without a directory, a
     pip-installed provider silently loses its dashboard config panel and its
-    ``hermes <provider>`` subcommands — working, but a second-class citizen next
+    ``auraforge <provider>`` subcommands — working, but a second-class citizen next
     to a directory install.
     """
     # Bundled
@@ -569,7 +569,7 @@ class _ProviderCollector:
         and resolved path recorded here.
 
         Gated on ``register_skills`` so merely *inspecting* an inactive
-        provider — ``hermes memory status``, the setup picker — leaves no
+        provider — ``auraforge memory status``, the setup picker — leaves no
         registry side effects behind.
         """
         if not self._register_skills:
@@ -633,7 +633,7 @@ class _ProviderCollector:
 
         Lazy because the common case — a provider that only calls
         ``register_memory_provider`` — must not pay for importing the general
-        plugin manager, which discovery touches on every hermes startup.
+        plugin manager, which discovery touches on every auraforge startup.
         """
         if self._context is None:
             from hermes_cli.plugins import PluginContext, PluginManifest, get_plugin_manager

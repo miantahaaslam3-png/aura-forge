@@ -1,7 +1,7 @@
 """Tests for real-profile browsing: resolvers, snapshot, launch routing, consent.
 
 The consent path never drives the live default profile: it snapshots into
-``~/.hermes/browser-profile/<browser>/`` and launches the user's real binary
+``~/.auraforge/browser-profile/<browser>/`` and launches the user's real binary
 on the copy with a devtools port (see hermes_cli.browser_connect). These tests
 exercise the real functions with real file I/O wherever possible — the mocks
 are limited to OS detection and process launch.
@@ -73,7 +73,7 @@ class TestSnapshotRealProfile:
     def test_fresh_snapshot_copies_auth_and_skips_caches(self, tmp_path, monkeypatch):
         import hermes_cli.browser_connect as bc
         src = self._make_profile(tmp_path / "real")
-        home = tmp_path / "hermes-home"
+        home = tmp_path / "auraforge-home"
         monkeypatch.setattr(bc, "get_hermes_home", lambda: home)
 
         dst, err = bc.snapshot_real_profile("chrome", src=str(src))
@@ -93,7 +93,7 @@ class TestSnapshotRealProfile:
     def test_existing_snapshot_refreshes_auth_files_only(self, tmp_path, monkeypatch):
         import hermes_cli.browser_connect as bc
         src = self._make_profile(tmp_path / "real")
-        home = tmp_path / "hermes-home"
+        home = tmp_path / "auraforge-home"
         monkeypatch.setattr(bc, "get_hermes_home", lambda: home)
 
         dst, err = bc.snapshot_real_profile("chrome", src=str(src))
@@ -477,7 +477,7 @@ class TestSnapshotIsCredentialStore:
 
     def test_read_guard_blocks_snapshot(self, tmp_path, monkeypatch):
         import agent.file_safety as fs
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".auraforge"
         (home / "browser-profile" / "chrome" / "Default").mkdir(parents=True)
         cookies = home / "browser-profile" / "chrome" / "Default" / "Cookies"
         cookies.write_text("secret-cookie-db")
@@ -487,7 +487,7 @@ class TestSnapshotIsCredentialStore:
 
     def test_read_guard_allows_normal_file(self, tmp_path, monkeypatch):
         import agent.file_safety as fs
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".auraforge"
         home.mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(home))
         normal = tmp_path / "notes.txt"

@@ -21,7 +21,7 @@ from types import SimpleNamespace
 from typing import Any, Literal
 from unittest.mock import patch
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 
 class _DoctorLoadError(RuntimeError):
@@ -40,7 +40,7 @@ def _doctor_runtime(plugin_path: Path):
     test framework. Registration code executes under a temporary AURA_FORGE_HOME
     with outbound socket connects blocked.
     """
-    temporary_home = tempfile.TemporaryDirectory(prefix="hermes-plugin-doctor-")
+    temporary_home = tempfile.TemporaryDirectory(prefix="auraforge-plugin-doctor-")
     stack = ExitStack()
     home = Path(temporary_home.name)
     bundled = home / "bundled-plugins"
@@ -186,7 +186,7 @@ def resolve_plugin_path(target: str | os.PathLike[str] | None = None) -> Path:
         return direct.resolve()
 
     candidates: list[Path] = []
-    user_root = get_hermes_home() / "plugins"
+    user_root = get_aura_forge_home() / "plugins"
     candidates.append(user_root / raw)
     try:
         from hermes_cli.plugins import get_bundled_plugins_dir
@@ -201,7 +201,7 @@ def resolve_plugin_path(target: str | os.PathLike[str] | None = None) -> Path:
         )
     except Exception:
         pass
-    candidates.append(Path.cwd() / ".hermes" / "plugins" / raw)
+    candidates.append(Path.cwd() / ".aura-forge" / "plugins" / raw)
     for candidate in candidates:
         if candidate.is_dir():
             return candidate.resolve()

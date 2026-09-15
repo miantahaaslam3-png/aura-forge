@@ -4,7 +4,7 @@ One shared admission gate for every surface that can start an in-place
 ``auraforge update`` mutation (CLI apply, CLI --check, dashboard update
 endpoint). The decision layers:
 
-1. **Baked provenance marker** (``/etc/hermes/image-provenance.json``,
+1. **Baked provenance marker** (``/etc/auraforge/image-provenance.json``,
    written by the image build — see :mod:`hermes_cli.image_provenance`):
    authoritative ground truth that this filesystem came from an immutable
    image. Fail-closed: a present-but-malformed marker still refuses.

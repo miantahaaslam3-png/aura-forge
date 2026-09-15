@@ -106,10 +106,10 @@ def active_profile_may_override_home(hermes_root: str) -> bool:
 
 
 def _resolved_home() -> str:
-    hermes_home = os.environ.get("AURA_FORGE_HOME", "").strip()
-    if hermes_home:
-        return hermes_home
-    return os.path.join(os.path.expanduser("~"), ".hermes")
+    aura_forge_home = os.environ.get("AURA_FORGE_HOME", "").strip()
+    if aura_forge_home:
+        return aura_forge_home
+    return os.path.join(os.path.expanduser("~"), ".aura-forge")
 
 
 def container_mode_may_be_active() -> bool:
@@ -126,17 +126,17 @@ def container_mode_may_be_active() -> bool:
     if is_container_startup_environment():
         return False
 
-    hermes_home = os.environ.get("AURA_FORGE_HOME", "").strip()
-    if hermes_home:
-        if os.path.exists(os.path.join(hermes_home, ".container-mode")):
+    aura_forge_home = os.environ.get("AURA_FORGE_HOME", "").strip()
+    if aura_forge_home:
+        if os.path.exists(os.path.join(aura_forge_home, ".container-mode")):
             return True
-        parent_name = os.path.basename(os.path.dirname(os.path.normpath(hermes_home)))
+        parent_name = os.path.basename(os.path.dirname(os.path.normpath(aura_forge_home)))
         return (
             parent_name != "profiles"
-            and active_profile_may_override_home(hermes_home)
+            and active_profile_may_override_home(aura_forge_home)
         )
 
-    default_home = os.path.join(os.path.expanduser("~"), ".hermes")
+    default_home = os.path.join(os.path.expanduser("~"), ".aura-forge")
     if active_profile_may_override_home(default_home):
         return True
     return os.path.exists(os.path.join(default_home, ".container-mode"))

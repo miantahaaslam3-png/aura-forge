@@ -1,4 +1,4 @@
-"""Remote session kernels (tools/code_kernel_remote.py) — hermes-agent#96873.
+"""Remote session kernels (tools/code_kernel_remote.py) — auraforge-agent#96873.
 
 These tests drive execute_in_remote_kernel against a scripted fake env that
 implements the same contract as docker/ssh/modal envs (run-to-completion

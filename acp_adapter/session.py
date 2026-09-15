@@ -1,6 +1,6 @@
 """ACP session manager — maps ACP sessions to Aura Forge AIAgent instances.
 
-Sessions are persisted to the shared SessionDB (``~/.hermes/state.db``) so they
+Sessions are persisted to the shared SessionDB (``~/.auraforge/state.db``) so they
 survive process restarts and appear in ``session_search``.  When the editor
 reconnects after idle/restart, the ``load_session`` / ``resume_session`` calls
 find the persisted session in the database and restore the full conversation
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def _translate_acp_cwd(cwd: str) -> str:
     """Translate Windows ACP cwd values when Aura Forge itself is running in WSL.
 
-    Windows ACP clients can launch ``hermes acp`` inside WSL while still sending
+    Windows ACP clients can launch ``auraforge acp`` inside WSL while still sending
     editor workspaces as Windows drive paths (``E:\\Projects``) or
     ``\\\\wsl.localhost\\`` UNC paths. Store and execute against the POSIX form so
     agents, tools, and persisted ACP sessions all agree on the usable workspace.
@@ -143,7 +143,7 @@ def _expand_acp_enabled_toolsets(
 ) -> List[str]:
     """Return ACP toolsets plus explicit MCP server toolsets for this session."""
     expanded: List[str] = []
-    for name in list(toolsets or ["hermes-acp"]):
+    for name in list(toolsets or ["auraforge-acp"]):
         if name and name not in expanded:
             expanded.append(name)
 
@@ -198,7 +198,7 @@ class SessionManager:
                            Used by tests. When omitted, a real AIAgent is created
                            using the current Aura Forge runtime provider configuration.
             db:            Optional SessionDB instance. When omitted, the default
-                           SessionDB (``~/.hermes/state.db``) is lazily created.
+                           SessionDB (``~/.auraforge/state.db``) is lazily created.
         """
         self._sessions: Dict[str, SessionState] = {}
         self._lock = Lock()
@@ -635,7 +635,7 @@ class SessionManager:
         kwargs = {
             "platform": "acp",
             "enabled_toolsets": _expand_acp_enabled_toolsets(
-                ["hermes-acp"],
+                ["auraforge-acp"],
                 mcp_server_names=configured_mcp_servers,
             ),
             "quiet_mode": True,

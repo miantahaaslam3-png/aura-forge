@@ -2,7 +2,7 @@
 
 Provider profiles can live in three places:
 
-1. Bundled plugins: ``plugins/model-providers/<name>/`` (shipped with hermes-agent)
+1. Bundled plugins: ``plugins/model-providers/<name>/`` (shipped with auraforge-agent)
 2. User plugins: ``$HERMES_HOME/plugins/model-providers/<name>/``
 3. Pip-installed plugins: distributions exposing a ``hermes_agent.plugins``
    entry point (``module:func`` callable or a self-registering ``module``)
@@ -300,7 +300,7 @@ def _discover_providers() -> None:
     #    genuinely new providers.
     _discover_entry_point_providers()
 
-    # 1. Bundled plugins — shipped with hermes-agent.
+    # 1. Bundled plugins — shipped with auraforge-agent.
     if _BUNDLED_PLUGINS_DIR.is_dir():
         for child in sorted(_BUNDLED_PLUGINS_DIR.iterdir()):
             if not child.is_dir() or child.name.startswith(("_", ".")):

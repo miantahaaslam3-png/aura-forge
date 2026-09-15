@@ -431,7 +431,7 @@ async def _lifespan(app: "FastAPI"):
     record_boot_fingerprint()
 
     # Desktop-spawned backends (HERMES_DESKTOP=1) fire cron jobs themselves,
-    # since the app has no gateway running the scheduler. Server `hermes
+    # since the app has no gateway running the scheduler. Server `auraforge
     # dashboard` is unaffected — it relies on its own gateway.
     cron_stop: "threading.Event | None" = None
     cron_thread: "threading.Thread | None" = None
@@ -545,7 +545,7 @@ def _resolve_session_token() -> str:
 
 
 _SESSION_TOKEN = _resolve_session_token()
-_SESSION_HEADER_NAME = "X-Hermes-Session-Token"
+_SESSION_HEADER_NAME = "X-Aura Forge-Session-Token"
 _SSH_OWNER_NONCE: Optional[str] = None
 _SSH_RUNTIME_PURELIB: Optional[Tuple[str, int, int]] = None
 _SSH_RUNTIME_MARKER: Optional[str] = None
@@ -576,7 +576,7 @@ def _apply_ssh_owner_nonce(nonce: Optional[str]) -> None:
         # reported repro (`rm -rf venv && uv venv`) can land on the same
         # inode and pass undetected (proven live during salvage).
         try:
-            marker = os.path.join(purelib, f".hermes-ssh-runtime-{nonce}")
+            marker = os.path.join(purelib, f".auraforge-ssh-runtime-{nonce}")
             with open(marker, "w", encoding="utf-8") as fh:
                 fh.write(f"pid={os.getpid()}\n")
             _SSH_RUNTIME_MARKER = marker
@@ -694,7 +694,7 @@ def _require_token(request: Request) -> None:
 
     * **Loopback / ``--insecure`` mode** (``auth_required`` False): the
       ephemeral ``_SESSION_TOKEN`` is injected into the SPA HTML and echoed
-      back via ``X-Hermes-Session-Token`` (or the legacy ``Bearer`` header).
+      back via ``X-Aura Forge-Session-Token`` (or the legacy ``Bearer`` header).
       Validate it here.
     * **Gated / OAuth mode** (``auth_required`` True): ``_SESSION_TOKEN`` is
       NOT injected (the SPA authenticates with a session cookie), so there is
@@ -731,7 +731,7 @@ _LOOPBACK_HOST_VALUES: frozenset = frozenset({
 def _dashboard_public_hosts() -> frozenset[str]:
     """Return the exact hostname declared by ``dashboard.public_url``.
 
-    ``public_url`` is already Hermes' canonical browser-facing URL behind a
+    ``public_url`` is already Aura Forge' canonical browser-facing URL behind a
     reverse proxy. Reusing its validated hostname here keeps OAuth redirects,
     HTTP Host validation, and WebSocket Origin validation on one source of
     truth. Malformed or unset values fail closed as an empty set.
@@ -765,7 +765,7 @@ def should_require_auth(host: str, allow_public: bool = False) -> bool:
     the gate. It is accepted for backward-compat with old launch scripts and
     desktop shells but is ignored: a non-loopback bind ALWAYS requires an auth
     provider (OAuth or the bundled password provider). This closes the
-    unauthenticated-public-dashboard hole behind the June 2026 ``hermes-0day``
+    unauthenticated-public-dashboard hole behind the June 2026 ``auraforge-0day``
     MCP-persistence campaign, where ``--insecure --host 0.0.0.0`` left the
     config/MCP/agent surface open to internet scanners.
     """
@@ -1328,7 +1328,7 @@ _SCHEMA_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "updates.non_interactive_local_changes": {
         "type": "select",
         "description": (
-            "When the chat app / gateway updates Hermes (no terminal prompt), "
+            "When the chat app / gateway updates Aura Forge (no terminal prompt), "
             "what to do with uncommitted local source edits. 'stash' keeps them "
             "and re-applies them after the update; 'discard' throws them away. "
             "Terminal updates always ask, regardless of this setting."
@@ -1338,7 +1338,7 @@ _SCHEMA_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "updates.refresh_cua_driver": {
         "type": "boolean",
         "description": (
-            "Refresh an already-installed cua-driver during hermes update. "
+            "Refresh an already-installed cua-driver during auraforge update. "
             "Disable this on non-admin macOS accounts where /Applications is "
             "not writable."
         ),
@@ -1803,7 +1803,7 @@ def _normalize_main_model_assignment(provider: str, model: str) -> tuple[str, st
 
     The Models page has two assignment paths and only one of them was safe:
 
-    - The "Change" picker sends a real Hermes provider slug — fine.
+    - The "Change" picker sends a real Aura Forge provider slug — fine.
     - The per-card "Use as → Main model" menu sends ``entry.provider``
       from the analytics rows, falling back to the model's VENDOR prefix
       (``modelVendor("anthropic/claude-opus-4.6") == "anthropic"``) when
@@ -1816,8 +1816,8 @@ def _normalize_main_model_assignment(provider: str, model: str) -> tuple[str, st
 
     Two repairs, both at this single chokepoint so every caller inherits:
 
-    1. Vendor-name → Hermes-provider mapping: when the provider string is
-       not a known Hermes provider/alias (e.g. ``moonshotai``, ``x-ai`` is
+    1. Vendor-name → Aura Forge-provider mapping: when the provider string is
+       not a known Aura Forge provider/alias (e.g. ``moonshotai``, ``x-ai`` is
        known but ``poolside`` isn't) but the model is a vendor-prefixed
        aggregator slug, keep the user's CURRENT aggregator if they're on
        one, else fall back to openrouter.
@@ -1865,7 +1865,7 @@ def _normalize_main_model_assignment(provider: str, model: str) -> tuple[str, st
 
     # A named custom provider that didn't resolve above (typo, config
     # mismatch, entry missing from custom_providers/providers) must still
-    # not be treated as a stray vendor prefix -- it isn't a known Hermes
+    # not be treated as a stray vendor prefix -- it isn't a known Aura Forge
     # provider/alias, but it also isn't the analytics-vendor case this
     # fallback exists for. Match only the durable named-custom syntax
     # (bare "custom" bucket, or "custom:<name>" per
@@ -2054,7 +2054,7 @@ def _count_status_active_sessions() -> int:
     This is best-effort status garnish, not a critical path.  Opens read-only
     (via the shared stale-schema heal, same as every other dashboard read
     path) so /api/status never routinely writes to state.db while another
-    Hermes process is using it.
+    Aura Forge process is using it.
     """
     from hermes_state import _default_db_path
 
@@ -2194,7 +2194,7 @@ def _is_sensitive_filename(name: str) -> bool:
     """Return True for a basename the managed-files API must never expose.
 
     Covers ``.env`` / ``.env.<suffix>`` / ``.envrc`` variants plus the
-    canonical Hermes credential-store basenames (see
+    canonical Aura Forge credential-store basenames (see
     ``_SENSITIVE_MANAGED_FILE_BASENAMES`` above).
 
     Case-insensitive so ``.ENV`` / ``.Env.local`` / ``Auth.JSON`` on
@@ -2517,7 +2517,7 @@ def _dashboard_local_update_managed_externally() -> bool:
     still behave like their actual install method in the CLI.
 
     However, when the install method is ``git`` (a bind-mounted checkout inside
-    a container — e.g. the hermes-webui image sharing the Hermes source tree),
+    a container — e.g. the auraforge-webui image sharing the Aura Forge source tree),
     the dashboard's ``auraforge update`` button is the correct update path and
     should not be suppressed. Other containerized install methods remain
     externally managed unless their apply path is proven safe inside the
@@ -2555,7 +2555,7 @@ def _managed_files_policy(request: Request, *, create_root: bool = True) -> Mana
     # Remote/OAuth access does not imply a hosted container. Users can expose a
     # local dashboard through the auth gate (for example a macOS launchd install)
     # and still expect the Files page to browse their local home directory. Lock
-    # to /opt/data only when the installation's Hermes root is actually /opt/data
+    # to /opt/data only when the installation's Aura Forge root is actually /opt/data
     # (the container/hosted layout) or when HERMES_DASHBOARD_FILES_ROOT is set.
     if _default_hermes_root_is_opt_data():
         root = _ensure_managed_root(_HOSTED_MANAGED_FILES_ROOT) if create_root else _HOSTED_MANAGED_FILES_ROOT
@@ -2700,7 +2700,7 @@ def _decode_chat_image_upload(payload: ChatImageUpload) -> tuple[bytes, str, str
 async def upload_chat_image(payload: ChatImageUpload, profile: Optional[str] = None):
     """Persist a browser-provided chat image where the embedded TUI can read it.
 
-    The dashboard /chat page runs Hermes inside an xterm.js PTY. Browser
+    The dashboard /chat page runs Aura Forge inside an xterm.js PTY. Browser
     clipboard image bytes are not visible to the server-side clipboard, so the
     page uploads them here, then drives the TUI's ``/image <path>`` command
     with the returned gateway-visible path. Files land under
@@ -3092,7 +3092,7 @@ async def fs_read_text(path: str):
 async def fs_write_text(payload: FsWriteText):
     """Overwrite (or create) a UTF-8 text file for the in-app spot editor.
 
-    Mirrors the local Electron ``hermes:fs:writeText`` hardening: the path is
+    Mirrors the local Electron ``auraforge:fs:writeText`` hardening: the path is
     resolved + validated by ``_fs_path``, the parent directory must already
     exist (we never build directory trees), only regular files may be replaced,
     and the payload is size-capped. The write is staged to a sibling temp file
@@ -3121,7 +3121,7 @@ async def fs_write_text(payload: FsWriteText):
     if not target.parent.is_dir():
         raise HTTPException(status_code=400, detail="Parent directory does not exist")
 
-    tmp = target.with_name(f".{target.name}.hermes-tmp-{os.getpid()}")
+    tmp = target.with_name(f".{target.name}.auraforge-tmp-{os.getpid()}")
     try:
         tmp.write_text(text, encoding="utf-8")
         os.replace(tmp, target)
@@ -3514,7 +3514,7 @@ _TOPOLOGY_CACHE_LOCK = threading.Lock()
 _TOPOLOGY_CACHE_TTL = 10.0
 
 # Stable install identity for /api/status. One random opaque id per physical
-# install, minted on first read and persisted under the ROOT Hermes home
+# install, minted on first read and persisted under the ROOT Aura Forge home
 # (get_default_hermes_root()) — NOT the profile-scoped AURA_FORGE_HOME — so every
 # profile served by the same install reports the same id. Clients (the desktop
 # connection registry) use it to recognize that two registered addresses
@@ -3530,7 +3530,7 @@ _INSTALL_ID_LOCK = threading.Lock()
 
 
 def _read_or_create_install_id() -> Optional[str]:
-    """Read (or mint + persist) the install id under the root Hermes home.
+    """Read (or mint + persist) the install id under the root Aura Forge home.
 
     Returns ``None`` only when the id can neither be read nor persisted (e.g.
     a read-only filesystem) — an unpersisted id would violate the stability
@@ -4113,7 +4113,7 @@ async def get_status(profile: Optional[str] = None):
         # process table, so keep it off the event loop.
         #
         # Split by sensitivity: profile NAMES (``profiles``) and the gateway
-        # ``gateway_mode`` are low-sensitivity PRODUCT surface — Hermes Cloud
+        # ``gateway_mode`` are low-sensitivity PRODUCT surface — Aura Forge Cloud
         # renders the profile list in the Portal, which reads this endpoint over
         # the network (a gated bind), so they must survive the auth gate. The
         # per-gateway ``gateways[]`` detail carries host ports (deployment
@@ -4200,7 +4200,7 @@ async def get_system_stats():
 
     OS / Python / host identity from stdlib; CPU / memory / disk / uptime from
     psutil when available, with graceful degradation when it isn't.  Read-only
-    and non-sensitive (no env values, no paths beyond the hermes home root).
+    and non-sensitive (no env values, no paths beyond the auraforge home root).
     """
     import platform as _platform
 
@@ -4545,7 +4545,7 @@ _ACTION_LOG_FILES: Dict[str, str] = {
     "gateway-restart": "gateway-restart.log",
     "gateway-start": "gateway-start.log",
     "gateway-stop": "gateway-stop.log",
-    "hermes-update": "hermes-update.log",
+    "auraforge-update": "auraforge-update.log",
     "doctor": "action-doctor.log",
     "security-audit": "action-security-audit.log",
     "backup": "action-backup.log",
@@ -4592,7 +4592,7 @@ GATEWAY_RESTART_COOLDOWN_SECONDS = 10.0
 _LAST_GATEWAY_RESTART: Optional[Tuple[float, subprocess.Popen, Tuple[str, ...]]] = None
 
 _UPDATE_ACTION_COMPLETED_RE = re.compile(
-    r"^=== hermes-update completed ([0-9a-f]{32}) ===$"
+    r"^=== auraforge-update completed ([0-9a-f]{32}) ===$"
 )
 
 # ``name`` → completed synthetic action result for actions the server handled
@@ -4797,7 +4797,7 @@ def _durable_completed_update_action_id(lines: List[str]) -> Optional[str]:
     completed_action_id: Optional[str] = None
 
     for index, line in enumerate(lines):
-        if line.startswith("=== hermes update started "):
+        if line.startswith("=== auraforge update started "):
             last_start = index
 
         match = _UPDATE_ACTION_COMPLETED_RE.fullmatch(line.strip())
@@ -4816,7 +4816,7 @@ def _gateway_subcommand(profile: Optional[str], verb: str) -> List[str]:
 
 
 def _gateway_display_command(profile: Optional[str], verb: str) -> str:
-    return " ".join(["hermes", *_gateway_subcommand(profile, verb)])
+    return " ".join(["auraforge", *_gateway_subcommand(profile, verb)])
 
 
 # Kept in sync with the corresponding frontend validation in ChannelsPage.tsx.
@@ -5047,20 +5047,20 @@ async def gateway_drain(request: Request):
     }
 
 
-@app.post("/api/hermes/update")
+@app.post("/api/auraforge/update")
 async def update_hermes():
     """Kick off ``auraforge update`` in the background."""
     if _dashboard_local_update_managed_externally():
         message = (
-            "Hermes updates are managed outside this dashboard in "
+            "Aura Forge updates are managed outside this dashboard in "
             "containerized environments. The built-in local updater is "
             "disabled here."
         )
-        _record_completed_action("hermes-update", message, exit_code=1)
+        _record_completed_action("auraforge-update", message, exit_code=1)
         return {
             "ok": False,
             "pid": None,
-            "name": "hermes-update",
+            "name": "auraforge-update",
             "error": "dashboard_update_managed_externally",
             "message": message,
             "update_command": "managed outside dashboard",
@@ -5077,7 +5077,7 @@ async def update_hermes():
 
     refusal = evaluate_update_admission(PROJECT_ROOT)
     if refusal is not None:
-        _record_completed_action("hermes-update", refusal.message, exit_code=1)
+        _record_completed_action("auraforge-update", refusal.message, exit_code=1)
         record_refusal_receipt(refusal)
         error_code = {
             "docker": "docker_update_unsupported",
@@ -5089,21 +5089,21 @@ async def update_hermes():
         return {
             "ok": False,
             "pid": None,
-            "name": "hermes-update",
+            "name": "auraforge-update",
             "error": error_code,
             "message": refusal.message,
             "update_command": refusal.update_command,
         }
 
-    existing = _ACTION_PROCS.get("hermes-update")
+    existing = _ACTION_PROCS.get("auraforge-update")
     if existing is not None and existing.poll() is None:
         response = {
             "ok": True,
             "pid": existing.pid,
-            "name": "hermes-update",
+            "name": "auraforge-update",
             "already_running": True,
         }
-        action_id = _ACTION_IDS.get("hermes-update")
+        action_id = _ACTION_IDS.get("auraforge-update")
         if action_id:
             response["action_id"] = action_id
         return response
@@ -5112,16 +5112,16 @@ async def update_hermes():
     try:
         proc = _spawn_hermes_action(
             ["update"],
-            "hermes-update",
+            "auraforge-update",
             env_overrides={"HERMES_ACTION_ID": action_id},
         )
     except Exception as exc:
-        _log.exception("Failed to spawn hermes update")
+        _log.exception("Failed to spawn auraforge update")
         raise HTTPException(status_code=500, detail=f"Failed to start update: {exc}")
     return {
         "ok": True,
         "pid": proc.pid,
-        "name": "hermes-update",
+        "name": "auraforge-update",
         "action_id": action_id,
     }
 
@@ -5180,17 +5180,17 @@ def _recent_upstream_commits(n: int = 20) -> List[Dict[str, Any]]:
         return []
 
 
-@app.get("/api/hermes/update/check")
+@app.get("/api/auraforge/update/check")
 async def check_hermes_update(force: bool = False):
-    """Report whether a Hermes update is available, without applying it.
+    """Report whether a Aura Forge update is available, without applying it.
 
     Powers the dashboard's "check before you update" flow: the System page
     shows the commit-behind count and asks the user to confirm before
-    ``POST /api/hermes/update`` actually runs ``auraforge update``.
+    ``POST /api/auraforge/update`` actually runs ``auraforge update``.
 
     Returns:
         install_method: 'apt' | 'git' | 'docker' | 'nix' | 'nixos' | 'unknown'
-        current_version: installed Hermes version string
+        current_version: installed Aura Forge version string
         behind: commits behind upstream (>=1), 0 if up to date,
                 -1 if behind by an unknown count, or null if the
                 check could not run (offline, no remote, etc.)
@@ -5215,7 +5215,7 @@ async def check_hermes_update(force: bool = False):
             "can_apply": False,
             "update_command": "managed outside dashboard",
             "message": (
-                "Hermes updates are managed outside this dashboard in "
+                "Aura Forge updates are managed outside this dashboard in "
                 "containerized environments."
             ),
         }
@@ -5238,7 +5238,7 @@ async def check_hermes_update(force: bool = False):
         return payload
     if install_method == "apt":
         payload["message"] = (
-            "Hermes is managed by Termux APT; run `pkg upgrade aura-forge-agent`."
+            "Aura Forge is managed by Termux APT; run `pkg upgrade aura-forge-agent`."
         )
         return payload
 
@@ -5315,7 +5315,7 @@ async def transcribe_audio_upload(
     try:
         suffix = _audio_extension_for_mime(mime_type)
         with tempfile.NamedTemporaryFile(
-            prefix="hermes-desktop-voice-",
+            prefix="auraforge-desktop-voice-",
             suffix=suffix,
             delete=False,
         ) as tmp:
@@ -5796,11 +5796,11 @@ async def get_action_status(name: str, lines: int = 200):
 
     durable_update_action_id = None
     update_receipt_summary = None
-    if name == "hermes-update":
+    if name == "auraforge-update":
         durable_lines = _tail_lines(_ACTION_LOG_DIR / "update.log", 2000)
         durable_update_action_id = _durable_completed_update_action_id(durable_lines)
         if durable_update_action_id:
-            marker = f"=== hermes-update completed {durable_update_action_id} ==="
+            marker = f"=== auraforge-update completed {durable_update_action_id} ==="
             if marker not in tail:
                 tail = [*tail, marker][-requested_lines:]
         # Phase-1 bullet 3 (#91277): the update receipt is the durable,
@@ -5862,7 +5862,7 @@ async def get_action_status(name: str, lines: int = 200):
 def _latest_update_receipt_summary() -> Optional[Dict[str, Any]]:
     """Compact summary of the most recent update receipt, or None.
 
-    Phase-1 bullet 3 (#91277): the receipt (written by EVERY ``hermes
+    Phase-1 bullet 3 (#91277): the receipt (written by EVERY ``auraforge
     update`` run since #91283, including refused and failed ones, with a
     ``latest.json`` pointer) is the durable success signal the Desktop and
     dashboard should read instead of inferring outcomes from liveness
@@ -5892,7 +5892,7 @@ def _latest_update_receipt_summary() -> Optional[Dict[str, Any]]:
         return None
 
 
-@app.get("/api/hermes/update/receipt")
+@app.get("/api/auraforge/update/receipt")
 async def get_update_receipt():
     """The most recent update receipt — the durable update-outcome record.
 
@@ -5962,7 +5962,7 @@ from hermes_cli.web_routers.sessions import (  # noqa: E402,F401 — legacy re-e
 def _normalize_config_for_web(config: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize config for the web UI.
 
-    Hermes supports ``model`` as either a bare string (``"anthropic/claude-sonnet-4"``)
+    Aura Forge supports ``model`` as either a bare string (``"anthropic/claude-sonnet-4"``)
     or a dict (``{default: ..., provider: ..., base_url: ...}``).  The schema is built
     from DEFAULT_CONFIG where ``model`` is a string, but user configs often have the
     dict form.  Normalize to the string form so the frontend schema matches.
@@ -6529,7 +6529,7 @@ def _install_memory_provider_pip_dependencies(dependencies: List[str]) -> List[D
     # Route through the lazy-install pipeline (tools.lazy_deps.install_specs)
     # instead of shelling out to pip against sys.executable directly. That
     # pipeline is environment-aware: on hosted/immutable images the agent venv
-    # under /opt/hermes is sealed read-only, and installs must be redirected
+    # under /opt/auraforge is sealed read-only, and installs must be redirected
     # to the writable durable target on the data volume
     # (HERMES_LAZY_INSTALL_TARGET, e.g. /opt/data/lazy-packages) — the same
     # path every lazy backend already uses. A direct `pip install --python
@@ -6820,10 +6820,10 @@ def _read_memory_provider_existing_values(name: str) -> Dict[str, Any]:
         if isinstance(legacy_cfg, dict):
             values = {**legacy_cfg, **values}
 
-    # Holographic stores under plugins.hermes-memory-store.
+    # Holographic stores under plugins.auraforge-memory-store.
     plugins_cfg = cfg.get("plugins") if isinstance(cfg, dict) else {}
     if name == "holographic" and isinstance(plugins_cfg, dict):
-        holographic_cfg = plugins_cfg.get("hermes-memory-store")
+        holographic_cfg = plugins_cfg.get("auraforge-memory-store")
         if isinstance(holographic_cfg, dict):
             values.update(holographic_cfg)
 
@@ -7414,7 +7414,7 @@ def _dashboard_code_skew_guard() -> Optional[str]:
         f"This dashboard is running code from {boot_rev} but the checkout on "
         f"disk is now {disk_rev}. The model picker would risk a stale-module "
         f"crash — restart the dashboard to load the new code "
-        f"(systemctl --user restart hermes-dashboard, or hermes dashboard --port <port>)"
+        f"(systemctl --user restart auraforge-dashboard, or auraforge dashboard --port <port>)"
     )
 
 
@@ -8890,14 +8890,14 @@ async def reveal_env_var(
 _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "telegram": {
         "name": "Telegram",
-        "description": "Run Hermes from Telegram DMs, groups, and topics.",
+        "description": "Run Aura Forge from Telegram DMs, groups, and topics.",
         "docs_url": "https://core.telegram.org/bots/features#botfather",
         "env_vars": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_USERS", "TELEGRAM_PROXY"),
         "required_env": ("TELEGRAM_BOT_TOKEN",),
     },
     "discord": {
         "name": "Discord",
-        "description": "Connect Hermes to Discord DMs, channels, and threads.",
+        "description": "Connect Aura Forge to Discord DMs, channels, and threads.",
         "docs_url": "https://discord.com/developers/applications",
         "env_vars": (
             "DISCORD_BOT_TOKEN",
@@ -8907,21 +8907,21 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "slack": {
         "name": "Slack",
-        "description": "Use Hermes from Slack via Socket Mode. Add allowed Slack member IDs so connected bots can respond.",
+        "description": "Use Aura Forge from Slack via Socket Mode. Add allowed Slack member IDs so connected bots can respond.",
         "docs_url": "https://api.slack.com/apps",
         "env_vars": ("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_ALLOWED_USERS"),
         "required_env": ("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"),
     },
     "mattermost": {
         "name": "Mattermost",
-        "description": "Connect Hermes to Mattermost channels and direct messages.",
+        "description": "Connect Aura Forge to Mattermost channels and direct messages.",
         "docs_url": "https://mattermost.com/deploy/",
         "env_vars": ("MATTERMOST_URL", "MATTERMOST_TOKEN", "MATTERMOST_ALLOWED_USERS"),
         "required_env": ("MATTERMOST_URL", "MATTERMOST_TOKEN"),
     },
     "matrix": {
         "name": "Matrix",
-        "description": "Use Hermes in Matrix rooms and direct messages.",
+        "description": "Use Aura Forge in Matrix rooms and direct messages.",
         "docs_url": "https://matrix.org/ecosystem/servers/",
         "env_vars": (
             "MATRIX_HOMESERVER",
@@ -8940,7 +8940,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "whatsapp": {
         "name": "WhatsApp",
-        "description": "Use Hermes through the bundled WhatsApp bridge with QR-based auth.",
+        "description": "Use Aura Forge through the bundled WhatsApp bridge with QR-based auth.",
         "docs_url": "https://github.com/tulir/whatsmeow",
         "env_vars": (
             "WHATSAPP_ENABLED",
@@ -8952,14 +8952,14 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "homeassistant": {
         "name": "Home Assistant",
-        "description": "Control your smart home from Hermes via Home Assistant.",
+        "description": "Control your smart home from Aura Forge via Home Assistant.",
         "docs_url": "https://www.home-assistant.io/docs/authentication/",
         "env_vars": ("HASS_URL", "HASS_TOKEN"),
         "required_env": ("HASS_URL", "HASS_TOKEN"),
     },
     "email": {
         "name": "Email",
-        "description": "Talk to Hermes through an IMAP/SMTP mailbox.",
+        "description": "Talk to Aura Forge through an IMAP/SMTP mailbox.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/",
         "env_vars": (
             "EMAIL_ADDRESS",
@@ -8983,14 +8983,14 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "dingtalk": {
         "name": "DingTalk",
-        "description": "Connect Hermes to DingTalk groups (钉钉).",
+        "description": "Connect Aura Forge to DingTalk groups (钉钉).",
         "docs_url": "https://open.dingtalk.com/document/orgapp/the-robot-development-process",
         "env_vars": ("DINGTALK_CLIENT_ID", "DINGTALK_CLIENT_SECRET"),
         "required_env": ("DINGTALK_CLIENT_ID", "DINGTALK_CLIENT_SECRET"),
     },
     "feishu": {
         "name": "Feishu / Lark",
-        "description": "Use Hermes inside Feishu / Lark.",
+        "description": "Use Aura Forge inside Feishu / Lark.",
         "docs_url": "https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/intro",
         "env_vars": (
             "FEISHU_APP_ID",
@@ -9002,7 +9002,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "google_chat": {
         "name": "Google Chat",
-        "description": "Connect Hermes to Google Chat via Cloud Pub/Sub.",
+        "description": "Connect Aura Forge to Google Chat via Cloud Pub/Sub.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/google_chat",
     },
     "wecom": {
@@ -9038,7 +9038,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "bluebubbles": {
         "name": "BlueBubbles (iMessage)",
-        "description": "Use Hermes through iMessage via a BlueBubbles server.",
+        "description": "Use Aura Forge through iMessage via a BlueBubbles server.",
         "docs_url": "https://bluebubbles.app/",
         "env_vars": (
             "BLUEBUBBLES_SERVER_URL",
@@ -9049,7 +9049,7 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "qqbot": {
         "name": "QQ Bot",
-        "description": "Connect Hermes to a QQ Bot from the QQ Open Platform.",
+        "description": "Connect Aura Forge to a QQ Bot from the QQ Open Platform.",
         "docs_url": "https://q.qq.com",
         "env_vars": ("QQ_APP_ID", "QQ_CLIENT_SECRET", "QQ_ALLOWED_USERS"),
         "required_env": ("QQ_APP_ID", "QQ_CLIENT_SECRET"),
@@ -9058,26 +9058,26 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     # plugin registry. Only the docs link needs an override here so the
     # Channels page can point at the Microsoft Teams setup guide.
     "teams": {
-        "description": "Connect Hermes to Microsoft Teams chats via the Bot Framework.",
+        "description": "Connect Aura Forge to Microsoft Teams chats via the Bot Framework.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/teams",
     },
     # Bundled platform plugins: name comes from the plugin registry label;
     # give each a human description (the registry's install_hint is a
     # dependency note, not a description) and a docs link.
     "irc": {
-        "description": "Relay messages between an IRC channel (or DMs) and Hermes.",
+        "description": "Relay messages between an IRC channel (or DMs) and Aura Forge.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/irc",
     },
     "line": {
-        "description": "Use Hermes from LINE via the LINE Messaging API webhook.",
+        "description": "Use Aura Forge from LINE via the LINE Messaging API webhook.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/line",
     },
     "ntfy": {
-        "description": "Chat with Hermes over ntfy push topics (ntfy.sh or self-hosted).",
+        "description": "Chat with Aura Forge over ntfy push topics (ntfy.sh or self-hosted).",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/ntfy",
     },
     "photon": {
-        "description": "Use Hermes through iMessage via Photon's managed Spectrum platform.",
+        "description": "Use Aura Forge through iMessage via Photon's managed Spectrum platform.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/photon",
     },
     "raft": {
@@ -9085,18 +9085,18 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/raft",
     },
     "simplex": {
-        "description": "Talk to Hermes over SimpleX Chat via a local simplex-chat daemon.",
+        "description": "Talk to Aura Forge over SimpleX Chat via a local simplex-chat daemon.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/simplex",
     },
     "yuanbao": {
         "name": "Yuanbao (元宝)",
-        "description": "Connect Hermes to Tencent Yuanbao.",
+        "description": "Connect Aura Forge to Tencent Yuanbao.",
         "docs_url": "",
         "required_env": (),
     },
     "api_server": {
         "name": "API server",
-        "description": "Expose Hermes as an OpenAI-compatible HTTP API for tools like Open WebUI.",
+        "description": "Expose Aura Forge as an OpenAI-compatible HTTP API for tools like Open WebUI.",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/",
         "env_vars": (
             "API_SERVER_ENABLED",
@@ -9122,12 +9122,12 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "whatsapp_cloud": {
         "name": "WhatsApp Cloud API",
-        "description": "Use Hermes via Meta's hosted WhatsApp Cloud API (no local bridge).",
+        "description": "Use Aura Forge via Meta's hosted WhatsApp Cloud API (no local bridge).",
         "docs_url": "https://aura-forge-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud",
     },
     "relay": {
         "name": "Relay (experimental)",
-        "description": "Generic relay adapter fronted by the Hermes Relay connector.",
+        "description": "Generic relay adapter fronted by the Aura Forge Relay connector.",
         "docs_url": "",
         "required_env": (),
     },
@@ -9260,11 +9260,11 @@ _MESSAGING_ENV_FALLBACKS: dict[str, dict[str, Any]] = {
         "password": True,
     },
     "WEIXIN_ACCOUNT_ID": {
-        "description": "iLink Bot account ID obtained through QR login in hermes gateway setup",
+        "description": "iLink Bot account ID obtained through QR login in auraforge gateway setup",
         "prompt": "iLink Bot account ID",
     },
     "WEIXIN_TOKEN": {
-        "description": "iLink Bot token obtained through QR login in hermes gateway setup",
+        "description": "iLink Bot token obtained through QR login in auraforge gateway setup",
         "prompt": "iLink Bot token",
         "password": True,
     },
@@ -10448,7 +10448,7 @@ def _restart_gateway_after_telegram_onboarding(profile: Optional[str] = None) ->
     """Best-effort gateway restart after saving Telegram QR onboarding.
 
     The QR flow naturally pulls users into Telegram on another device. If the
-    saved token waits on a separate dashboard restart click, Hermes appears
+    saved token waits on a separate dashboard restart click, Aura Forge appears
     broken from the chat side. Keep the config save authoritative, but report
     restart failures so the UI can fall back to the existing manual banner.
     """
@@ -10813,7 +10813,7 @@ def _anthropic_oauth_status() -> Dict[str, Any]:
     """Status for the "Anthropic API Key" catalog entry.
 
     Two sources, in priority order:
-    1. ``~/.aura-forge/.anthropic_oauth.json`` — Hermes-managed PKCE flow (what
+    1. ``~/.aura-forge/.anthropic_oauth.json`` — Aura Forge-managed PKCE flow (what
        this entry's Connect button writes)
     2. ``ANTHROPIC_API_KEY`` → ``ANTHROPIC_TOKEN`` → ``CLAUDE_CODE_OAUTH_TOKEN``
        env vars (registry order) — from ``.env``, the shell, or an external
@@ -10844,7 +10844,7 @@ def _anthropic_oauth_status() -> Dict[str, Any]:
         return {
             "logged_in": True,
             "source": "hermes_pkce",
-            "source_label": f"Hermes PKCE ({_get_hermes_oauth_file() if _get_hermes_oauth_file else None})",
+            "source_label": f"Aura Forge PKCE ({_get_hermes_oauth_file() if _get_hermes_oauth_file else None})",
             "token_preview": _truncate_token(hermes_creds.get("accessToken")),
             "expires_at": hermes_creds.get("expiresAt"),
             "has_refresh_token": bool(hermes_creds.get("refreshToken")),
@@ -10887,8 +10887,8 @@ def _claude_code_only_status() -> Dict[str, Any]:
     """Surface Claude Code CLI credentials as their own provider entry.
 
     Independent of the Anthropic entry above so users can see whether their
-    Claude Code subscription tokens are actively flowing into Hermes even
-    when they also have a separate Hermes-managed PKCE login.
+    Claude Code subscription tokens are actively flowing into Aura Forge even
+    when they also have a separate Aura Forge-managed PKCE login.
     """
     try:
         from agent.anthropic_adapter import read_claude_code_credentials
@@ -10912,7 +10912,7 @@ def _copilot_acp_status() -> Dict[str, Any]:
 
     There is no cheap programmatic credential probe for the ACP subprocess, so
     this is a read-only "managed by the Copilot CLI" card (like claude-code):
-    Hermes never claims a login state it can't verify.
+    Aura Forge never claims a login state it can't verify.
     """
     return {
         "logged_in": False,
@@ -11115,11 +11115,11 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
 def _oauth_provider_disconnect_command(provider: Dict[str, Any]) -> Optional[str]:
     """Shell command that clears an external provider's credentials.
 
-    External providers store their credentials outside Hermes, so the disconnect
+    External providers store their credentials outside Aura Forge, so the disconnect
     API deliberately refuses them (we never delete files another CLI owns on the
     user's behalf via a silent API call). For the ones we know how to clear we
     instead hand the GUI a command it can *run in the embedded terminal* — the
-    user sees exactly what executes, and Hermes then stops resolving the token.
+    user sees exactly what executes, and Aura Forge then stops resolving the token.
 
     Claude Code has no scriptable logout (only the interactive ``/logout``), so
     we remove the credential the same way logout does: the macOS Keychain entry
@@ -11143,7 +11143,7 @@ def _oauth_provider_disconnect_hint(provider: Dict[str, Any], status: Dict[str, 
         if _oauth_provider_disconnect_command(provider):
             # The GUI offers a one-click "run in terminal" path; this hint is the
             # fallback wording for surfaces that only show text.
-            return "Managed outside Hermes — run the disconnect command to remove it."
+            return "Managed outside Aura Forge — run the disconnect command to remove it."
         return "Managed by that provider's CLI; remove it there."
     if status.get("source") == "env_var":
         return "Remove the API key from Settings → Keys instead."
@@ -11281,7 +11281,7 @@ async def disconnect_oauth_provider(
                     detail=f"{provider['name']} cannot be disconnected automatically. {disconnect_hint}",
                 )
 
-            # Anthropic clears only the Hermes-managed PKCE file and auth-store entry.
+            # Anthropic clears only the Aura Forge-managed PKCE file and auth-store entry.
             # The separate claude-code catalog row is external/read-only and rejected
             # above so we never pretend to remove ~/.claude/* credentials owned by the CLI.
             if provider_id == "anthropic":
@@ -11358,7 +11358,7 @@ _oauth_sessions: Dict[str, Dict[str, Any]] = {}
 _oauth_sessions_lock = threading.Lock()
 
 # Import OAuth constants from canonical source instead of duplicating.
-# Guarded so hermes web still starts if anthropic_adapter is unavailable;
+# Guarded so auraforge web still starts if anthropic_adapter is unavailable;
 # Phase 2 endpoints will return 501 in that case.
 try:
     from agent.anthropic_adapter import (
@@ -11431,7 +11431,7 @@ def _oauth_session_profile(
 
 
 def _save_anthropic_oauth_creds(access_token: str, refresh_token: str, expires_at_ms: int) -> None:
-    """Persist Anthropic PKCE creds to both Hermes file AND credential pool.
+    """Persist Anthropic PKCE creds to both Aura Forge file AND credential pool.
 
     Mirrors what auth_commands.add_command does so the dashboard flow leaves
     the system in the same state as ``auraforge auth add anthropic``.
@@ -11553,7 +11553,7 @@ def _submit_anthropic_pkce(
             data=exchange_data,
             headers={
                 "Content-Type": "application/json",
-                "User-Agent": "hermes-dashboard/1.0",
+                "User-Agent": "auraforge-dashboard/1.0",
             },
             method="POST",
         )
@@ -12059,7 +12059,7 @@ def _codex_device_code_start_error(resp: Any) -> str:
     if "device" in lower and ("authori" in lower or "enable" in lower):
         message = (
             "OpenAI rejected the device-code login request. Your OpenAI "
-            "account may need device-code authorization enabled before Hermes "
+            "account may need device-code authorization enabled before Aura Forge "
             "can start this dashboard login. Enable device-code authorization "
             "in OpenAI, then return here and click Login again."
         )
@@ -12984,7 +12984,7 @@ def _cron_default_profile() -> str:
     A desktop pool backend runs one process per profile (AURA_FORGE_HOME already
     scoped), but these cron endpoints deliberately route storage through the
     profiles tree via ``_cron_profile_home`` — so a hardcoded ``"default"``
-    fallback would write a non-default profile's job into ``~/.hermes``.
+    fallback would write a non-default profile's job into ``~/.auraforge``.
     Resolve the process's own profile instead. ``custom`` (an unrecognized
     AURA_FORGE_HOME outside the profiles tree) has no profile-dir equivalent, so
     it keeps the legacy ``default`` fallback.
@@ -14512,7 +14512,7 @@ def _dashboard_backup_dir() -> Path:
 
 def _new_dashboard_backup_path() -> Path:
     stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    return _dashboard_backup_dir() / f"hermes-backup-{stamp}-{secrets.token_hex(4)}.zip"
+    return _dashboard_backup_dir() / f"auraforge-backup-{stamp}-{secrets.token_hex(4)}.zip"
 
 
 @app.post("/api/ops/backup")
@@ -14934,7 +14934,7 @@ from hermes_cli.web_routers.skills import (  # noqa: E402,F401 — legacy re-exp
 # provenance).  Keep in sync with create_source_router()'s source list.
 _SKILL_HUB_SOURCE_LABELS = {
     "official": "Official (Nous)",
-    "hermes-index": "Hermes Index",
+    "auraforge-index": "Aura Forge Index",
     "skills-sh": "skills.sh",
     "well-known": "Well-Known",
     "url": "Direct URL",
@@ -15710,7 +15710,7 @@ def _probe_terminal_backend(name: str, terminal_cfg: dict) -> tuple:
 #
 # cua-driver runs on macOS, Windows, and Linux. The desktop card reflects
 # per-OS readiness: on macOS the Accessibility + Screen Recording TCC grants
-# (which attach to cua-driver's OWN identity, com.trycua.driver — not Hermes,
+# (which attach to cua-driver's OWN identity, com.trycua.driver — not Aura Forge,
 # so no app entitlement is involved); elsewhere, driver health from
 # `cua-driver doctor`. The grant flow is macOS-only (no TCC toggles to request
 # on Windows/Linux).
@@ -16448,8 +16448,8 @@ def _ws_auth_mode() -> str:
     return "loopback"
 
 
-_GATEWAY_WS_PROTOCOL = "hermes-gateway-v1"
-_GATEWAY_WS_TICKET_PROTOCOL_PREFIX = "hermes-gateway-ticket."
+_GATEWAY_WS_PROTOCOL = "auraforge-gateway-v1"
+_GATEWAY_WS_TICKET_PROTOCOL_PREFIX = "auraforge-gateway-ticket."
 
 
 def _gateway_ws_ticket_from_subprotocol(ws: "WebSocket") -> tuple[str, str]:
@@ -16642,7 +16642,7 @@ def _resolve_chat_argv(
         profile_dir = _resolve_profile_dir(requested)
 
     argv, cwd = _make_tui_argv(PROJECT_ROOT / "ui-tui", tui_dev=False)
-    # Hermes TUI child: build via the single spawn-env factory (profile-home
+    # Aura Forge TUI child: build via the single spawn-env factory (profile-home
     # contract applied; secrets kept — the spawned agent needs provider creds).
     # An explicit profile scope still overrides AURA_FORGE_HOME before config is
     # bridged into the child environment.
@@ -16892,7 +16892,7 @@ def _active_session_file_for_channel(app: "FastAPI", channel: str) -> Path:
     if existing is not None:
         return existing
 
-    fd, raw_path = tempfile.mkstemp(prefix="hermes-pty-active-", suffix=".json")
+    fd, raw_path = tempfile.mkstemp(prefix="auraforge-pty-active-", suffix=".json")
     os.close(fd)
     path = Path(raw_path)
     files[channel] = path
@@ -16930,14 +16930,14 @@ def _ws_close_reason(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# /api/console — safe Hermes Console command WebSocket.
+# /api/console — safe Aura Forge Console command WebSocket.
 #
 # Unlike /api/pty, this endpoint never spawns a PTY, shell, or full Aura Forge CLI
 # subprocess. It runs the curated console engine in-process and exchanges
 # structured JSON frames with the dashboard xterm overlay.
 # ---------------------------------------------------------------------------
 
-_CONSOLE_PROMPT = "hermes> "
+_CONSOLE_PROMPT = "auraforge> "
 _CONSOLE_COMMAND_TIMEOUT_SECONDS = 60.0
 _CONSOLE_OUTPUT_LIMIT = 50000
 
@@ -16960,7 +16960,7 @@ def _get_console_executor() -> concurrent.futures.ThreadPoolExecutor:
             if _console_executor is None:
                 _console_executor = concurrent.futures.ThreadPoolExecutor(
                     max_workers=_CONSOLE_EXECUTOR_MAX_WORKERS,
-                    thread_name_prefix="hermes-console",
+                    thread_name_prefix="auraforge-console",
                 )
                 # Ensure the pool is torn down on interpreter exit. Don't wait on
                 # in-flight workers: a stuck 60s console command must not block
@@ -17262,7 +17262,7 @@ async def console_ws(ws: WebSocket) -> None:
                         "type": "error",
                         "id": command_id,
                         "message": (
-                            "Command timed out. Hermes Console returned to the prompt."
+                            "Command timed out. Aura Forge Console returned to the prompt."
                         ),
                         "command": line,
                     },
@@ -17540,7 +17540,7 @@ async def pty_ws(ws: WebSocket) -> None:
         await ws.send_text(
             "\r\n\x1b[31mChat unavailable: the embedded terminal requires a "
             "POSIX PTY, which native Windows Python doesn't provide.\x1b[0m\r\n"
-            "\x1b[33mInstall Hermes inside WSL2 to use the dashboard's /chat "
+            "\x1b[33mInstall Aura Forge inside WSL2 to use the dashboard's /chat "
             "tab — the rest of the dashboard works here.\x1b[0m\r\n"
         )
         await ws.close(code=1011)
@@ -17820,7 +17820,7 @@ def _render_active_theme_bootstrap_css() -> str:
     ``ThemeProvider.applyTheme()`` installs once the
     ``/api/dashboard/themes`` round-trip completes.  The goal is to
     eliminate the green flash where the first paint shows the bundle's
-    default Hermes Teal canvas before the SPA flips the configured user
+    default Aura Forge Teal canvas before the SPA flips the configured user
     theme into place.
 
     Built-in themes return an empty string — their full definitions live
@@ -17865,7 +17865,7 @@ def _render_active_theme_bootstrap_css() -> str:
             # the cascade — the rule below re-resolves automatically and
             # never goes stale when the user picks a different theme.
             return (
-                '<style id="hermes-theme-bootstrap">'
+                '<style id="auraforge-theme-bootstrap">'
                 ":root{"
                 f"--background-base:{_esc(bg_hex)};"
                 f"--midground-base:{_esc(mg_hex)};"
@@ -17900,8 +17900,8 @@ def mount_spa(application: FastAPI):
     separate (unauthenticated) token-dispensing endpoint.
 
     When served behind a path-prefix reverse proxy (e.g.
-    ``mission-control.tilos.com/hermes/*`` -> local Caddy -> :9119), the
-    proxy injects ``X-Forwarded-Prefix: /hermes`` on every request. We
+    ``mission-control.tilos.com/auraforge/*`` -> local Caddy -> :9119), the
+    proxy injects ``X-Forwarded-Prefix: /auraforge`` on every request. We
     rewrite the served ``index.html`` so absolute asset URLs (``/assets/...``)
     and the SPA's runtime ``__HERMES_BASE_PATH__`` honour that prefix
     without rebuilding the bundle.
@@ -17912,7 +17912,7 @@ def mount_spa(application: FastAPI):
     _headless = os.environ.get("HERMES_SERVE_HEADLESS") == "1"
     if _headless:
         _msg = (
-            "Headless backend (hermes serve): web UI disabled — use "
+            "Headless backend (auraforge serve): web UI disabled — use "
             "`auraforge dashboard` for the browser UI."
         )
 
@@ -17937,7 +17937,7 @@ def mount_spa(application: FastAPI):
                     f"window.__HERMES_SESSION_TOKEN__={token_js};"
                     "window.__HERMES_AUTH_REQUIRED__=false;"
                     "</script></head><body>"
-                    "Headless backend (hermes serve): web UI disabled — use "
+                    "Headless backend (auraforge serve): web UI disabled — use "
                     "`auraforge dashboard` for the browser UI."
                     "</body></html>",
                     headers={
@@ -17964,7 +17964,7 @@ def mount_spa(application: FastAPI):
     def _serve_index(prefix: str = ""):
         """Return index.html with the session token + base-path injected.
 
-        ``prefix`` is the normalised ``X-Forwarded-Prefix`` (e.g. ``/hermes``)
+        ``prefix`` is the normalised ``X-Forwarded-Prefix`` (e.g. ``/auraforge``)
         or empty string when served at root.
 
         When the OAuth auth gate is active (``app.state.auth_required``),
@@ -18016,7 +18016,7 @@ def mount_spa(application: FastAPI):
         # Theme flash mitigation: when the active theme is a user theme
         # (``AURA_FORGE_HOME/dashboard-themes/<name>.yaml``), inject a minimal
         # critical-CSS block so the first paint uses the target palette.
-        # Without this the SPA paints the default Hermes Teal canvas, then
+        # Without this the SPA paints the default Aura Forge Teal canvas, then
         # ``ThemeProvider`` flips the CSS variables once
         # ``/api/dashboard/themes`` resolves.  Built-in themes are already
         # in the bundle's ``presets.ts`` so no shim is needed for them.
@@ -18032,8 +18032,8 @@ def mount_spa(application: FastAPI):
     # When served behind a path-prefix proxy, the built CSS contains
     # absolute ``url(/fonts/...)`` and ``url(/ds-assets/...)`` references.
     # Browsers resolve those against the document origin, which means
-    # under ``/hermes`` they'd hit ``mission-control.tilos.com/fonts/...``
-    # (the MC Pages app), not the Hermes backend. Intercept CSS asset
+    # under ``/auraforge`` they'd hit ``mission-control.tilos.com/fonts/...``
+    # (the MC Pages app), not the Aura Forge backend. Intercept CSS asset
     # requests BEFORE the StaticFiles mount and rewrite the absolute paths
     # when a prefix is in play.
     @application.get("/assets/{filename}.css")
@@ -18115,8 +18115,8 @@ def mount_spa(application: FastAPI):
 # Built-in dashboard themes — label + description only.  The actual color
 # definitions live in the frontend (web/src/themes/presets.ts).
 _BUILTIN_DASHBOARD_THEMES = [
-    {"name": "default",       "label": "Hermes Teal",         "description": "Classic dark teal — the canonical Hermes look"},
-    {"name": "default-large", "label": "Hermes Teal (Large)", "description": "Hermes Teal with bigger fonts and roomier spacing"},
+    {"name": "default",       "label": "Aura Forge Teal",         "description": "Classic dark teal — the canonical Aura Forge look"},
+    {"name": "default-large", "label": "Aura Forge Teal (Large)", "description": "Aura Forge Teal with bigger fonts and roomier spacing"},
     {"name": "nous-blue",     "label": "Nous Blue",           "description": "Light mode — vivid Nous-blue accents on cream canvas"},
     {"name": "midnight",      "label": "Midnight",            "description": "Deep blue-violet with cool accents"},
     {"name": "ember",     "label": "Ember",          "description": "Warm crimson and bronze — forge vibes"},
@@ -18512,7 +18512,7 @@ def _discover_dashboard_plugins() -> list:
     Checks three plugin sources (same as hermes_cli.plugins):
     1. User plugins:    ~/.aura-forge/plugins/<name>/dashboard/manifest.json
     2. Bundled plugins: <repo>/plugins/<name>/dashboard/manifest.json  (memory/, etc.)
-    3. Project plugins: ./.hermes/plugins/  (only if HERMES_ENABLE_PROJECT_PLUGINS)
+    3. Project plugins: ./.auraforge/plugins/  (only if HERMES_ENABLE_PROJECT_PLUGINS)
     """
     plugins = []
     seen_names: set = set()
@@ -18527,7 +18527,7 @@ def _discover_dashboard_plugins() -> list:
     # #87197: when the process itself is profile-scoped (``--profile <name>``
     # sets ``AURA_FORGE_HOME=<root>/profiles/<name>``), the launch home is the
     # profile directory, which has no ``plugins/`` — user plugins are
-    # installed in the hermes root (``~/.aura-forge/plugins``). Scan the default
+    # installed in the auraforge root (``~/.aura-forge/plugins``). Scan the default
     # root as well (``get_default_hermes_root()`` unwraps
     # ``<root>/profiles/<name>`` → ``<root>`` and returns a custom
     # ``AURA_FORGE_HOME`` unchanged when it *is* the root), mirroring how
@@ -18555,7 +18555,7 @@ def _discover_dashboard_plugins() -> list:
     # semantics (``1`` / ``true`` / ``yes`` / ``on``) so the gate matches
     # ``hermes_cli/plugins.py`` and the documented user contract.
     if env_var_enabled("HERMES_ENABLE_PROJECT_PLUGINS"):
-        search_dirs.append((Path.cwd() / ".hermes" / "plugins", "project"))
+        search_dirs.append((Path.cwd() / ".auraforge" / "plugins", "project"))
 
     for plugins_root, source in search_dirs:
         if not plugins_root.is_dir():
@@ -19151,7 +19151,7 @@ def _mount_plugin_api_routes():
     ``/api/plugins/<name>/``.
 
     Backend import is restricted to ``bundled`` and ``user`` sources.
-    Project plugins (``./.hermes/plugins/``) ship with the CWD and are
+    Project plugins (``./.auraforge/plugins/``) ship with the CWD and are
     therefore attacker-controlled in any threat model where the user
     opens a malicious repo; they can extend the dashboard UI via
     static JS/CSS but their Python ``api`` file is never auto-imported
@@ -19375,7 +19375,7 @@ def _is_serve_orphaned(
     """True when the exact Desktop process that owns this backend is gone.
 
     ``HERMES_PARENT_PID`` is the Electron Desktop PID, not necessarily this
-    Python process's immediate PPID. On Windows the venv ``hermes.exe`` launcher
+    Python process's immediate PPID. On Windows the venv ``auraforge.exe`` launcher
     introduces one or more shim processes, so comparing ``os.getppid()`` to the
     Electron PID incorrectly treats a healthy backend as orphaned and exits 0.
 
@@ -19558,7 +19558,7 @@ def _report_port_in_use(host: str, port: int) -> None:
     _write_machine_sentinel_line(_PORT_IN_USE_SENTINEL.format(port=port))
     print(
         f"  Port {port} on {host} is already in use — likely another "
-        "'hermes serve' / 'hermes dashboard' backend or the Hermes gateway. "
+        "'auraforge serve' / 'auraforge dashboard' backend or the Aura Forge gateway. "
         "Stop the other process, or pass --port <other> "
         "(--port 0 picks a free ephemeral port).",
         flush=True,
@@ -19683,7 +19683,7 @@ def start_server(
     )
 
     # ``--insecure`` no longer disables the auth gate (June 2026 hardening:
-    # the hermes-0day MCP-persistence campaign abused unauthenticated public
+    # the auraforge-0day MCP-persistence campaign abused unauthenticated public
     # dashboards). If a caller still passes it, warn that it is now a no-op
     # rather than silently changing their expectation of an open bind.
     if allow_public and host not in _LOOPBACK_HOST_VALUES:
@@ -20007,9 +20007,9 @@ def start_server(
                 # block-buffered and can surface MINUTES after the flushed
                 # READY sentinel above, which reads as a slow boot in
                 # support bundles when the backend was actually up.
-                print(f"  Hermes backend listening on {host}:{actual_port}", flush=True)
+                print(f"  Aura Forge backend listening on {host}:{actual_port}", flush=True)
             else:
-                print(f"  Hermes Web UI → http://{host}:{actual_port}")
+                print(f"  Aura Forge Web UI → http://{host}:{actual_port}")
             _maybe_open_browser(host, actual_port, open_browser, initial_profile)
 
             # Collapse the peer-hangup teardown flood (#50005). When the Desktop

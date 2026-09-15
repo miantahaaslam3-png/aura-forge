@@ -130,7 +130,7 @@ def test_binary_reference_block_maps_host_attachment_to_container_path(tmp_path:
     """
     from agent.context_references import preprocess_context_references
 
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     attachments = hermes_home / "attachments"
     attachments.mkdir(parents=True)
     payload = attachments / "archive.zip"
@@ -146,8 +146,8 @@ def test_binary_reference_block_maps_host_attachment_to_container_path(tmp_path:
     )
 
     assert result.expanded
-    # Default container base for the docker backend is /root/.hermes.
-    assert "/root/.hermes/attachments/archive.zip" in result.message
+    # Default container base for the docker backend is /root/.auraforge.
+    assert "/root/.auraforge/attachments/archive.zip" in result.message
     assert "binary file, not inlined" in result.message
 
 
@@ -155,7 +155,7 @@ def test_binary_reference_block_keeps_host_path_on_local_backend(tmp_path: Path,
     """Local backend: no translation — the agent's tools run on the host."""
     from agent.context_references import preprocess_context_references
 
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     attachments = hermes_home / "attachments"
     attachments.mkdir(parents=True)
     payload = attachments / "archive.zip"
@@ -172,7 +172,7 @@ def test_binary_reference_block_keeps_host_path_on_local_backend(tmp_path: Path,
 
     assert result.expanded
     assert str(payload) in result.message
-    assert "/root/.hermes/attachments/" not in result.message
+    assert "/root/.auraforge/attachments/" not in result.message
 
 
 
@@ -196,16 +196,16 @@ async def test_blocks_canonical_read_denylist_credential_stores(tmp_path: Path, 
     The narrow in-module list historically missed the real credential stores
     (provider keys, OAuth tokens, MCP tokens, project-local .env). Because the
     gateway routes untrusted remote message text through reference expansion,
-    a chat peer could otherwise attach `@file:~/.hermes/auth.json` and read the
+    a chat peer could otherwise attach `@file:~/.auraforge/auth.json` and read the
     operator's keys into context. These must all be refused, with their secret
     bodies kept out of the expanded message.
     """
     from agent.context_references import preprocess_context_references_async
 
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
 
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     (hermes_home).mkdir(parents=True)
 
     auth_json = hermes_home / "auth.json"
@@ -223,8 +223,8 @@ async def test_blocks_canonical_read_denylist_credential_stores(tmp_path: Path, 
     project_env.write_text("DB_PASSWORD=ENV-SECRET\n", encoding="utf-8")
 
     result = await preprocess_context_references_async(
-        "inspect @file:.hermes/auth.json and @file:.hermes/.anthropic_oauth.json "
-        "and @file:.hermes/mcp-tokens/github.json and @file:project/.env",
+        "inspect @file:.auraforge/auth.json and @file:.auraforge/.anthropic_oauth.json "
+        "and @file:.auraforge/mcp-tokens/github.json and @file:project/.env",
         cwd=tmp_path,
         allowed_root=tmp_path,
         context_length=100_000,
@@ -255,9 +255,9 @@ async def test_canonical_guard_fails_closed_when_lookup_raises(tmp_path: Path, m
     from agent.context_references import preprocess_context_references_async
 
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
 
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     hermes_home.mkdir(parents=True)
     auth_json = hermes_home / "auth.json"
     auth_json.write_text('{"openai": "sk-AUTHJSON-SECRET"}\n', encoding="utf-8")
@@ -268,7 +268,7 @@ async def test_canonical_guard_fails_closed_when_lookup_raises(tmp_path: Path, m
     monkeypatch.setattr("agent.file_safety.get_read_block_error", _boom)
 
     result = await preprocess_context_references_async(
-        "inspect @file:.hermes/auth.json",
+        "inspect @file:.auraforge/auth.json",
         cwd=tmp_path,
         allowed_root=tmp_path,
         context_length=100_000,
@@ -285,7 +285,7 @@ async def test_canonical_guard_fails_closed_when_lookup_raises(tmp_path: Path, m
     "value",
     [
         "/tmp/plain.png",
-        "/Users/me/Library/Application Support/Hermes/composer-images/a.png",
+        "/Users/me/Library/Application Support/Aura Forge/composer-images/a.png",
         r"C:\Users\John Doe\Pictures\cat.png",
         "/tmp/report (final).pdf",
         "/tmp/it's here.png",

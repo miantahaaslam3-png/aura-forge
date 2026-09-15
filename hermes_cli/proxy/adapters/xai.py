@@ -29,7 +29,7 @@ _ALLOWED_PATHS: FrozenSet[str] = frozenset(
 
 
 class XAIGrokAdapter(UpstreamAdapter):
-    """Proxy upstream for xAI Grok via Hermes-managed OAuth credentials."""
+    """Proxy upstream for xAI Grok via Aura Forge-managed OAuth credentials."""
 
     auth_hint = "auraforge auth add xai-oauth --type oauth"
 

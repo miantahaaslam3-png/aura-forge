@@ -323,7 +323,7 @@ class CodexAppServerSession:
                 codex_bin=self._codex_bin, codex_home=self._codex_home
             )
         self._client.initialize(
-            client_name="hermes",
+            client_name="auraforge",
             client_title="Aura Forge Agent",
             client_version=_get_hermes_version(),
         )
@@ -1028,14 +1028,14 @@ class CodexAppServerSession:
         elif method == "mcpServer/elicitation/request":
             # Codex's MCP layer asks the user for structured input on
             # behalf of an MCP server (e.g. tool-call confirmation,
-            # OAuth, form data). For our own hermes-tools callback we
+            # OAuth, form data). For our own auraforge-tools callback we
             # auto-accept — the user already approved Aura Forge' tools
             # by enabling the runtime, and we never expose anything
             # codex's built-in shell can't already do. For other MCP
             # servers we decline so the user explicitly opts in via
             # codex's own auth flow.
             server_name = params.get("serverName") or ""
-            if server_name == "hermes-tools":
+            if server_name == "auraforge-tools":
                 self._client.respond(
                     rid,
                     {"action": "accept", "content": None, "_meta": None},
@@ -1057,7 +1057,7 @@ class CodexAppServerSession:
         """Decide a Codex exec approval request.
 
         This is protocol-level routing only — it carries NO Aura Forge
-        approval-mode/timeout logic. The Hermes-side resolution happens
+        approval-mode/timeout logic. The Aura Forge-side resolution happens
         upstream: ``agent/codex_runtime.py`` derives
         ``auto_approve_exec`` from the canonical
         ``tools.approval.is_approval_bypass_active()`` (which reads
@@ -1260,7 +1260,7 @@ def _approval_choice_to_codex_decision(choice: str) -> str:
     if choice in {"session", "always"}:
         return "acceptForSession"
     # "deny" and "timeout" both map to decline — codex has no wire value for
-    # "prompt expired"; the Hermes-side messaging already distinguishes them.
+    # "prompt expired"; the Aura Forge-side messaging already distinguishes them.
     return "decline"
 
 
@@ -1287,6 +1287,6 @@ def _get_hermes_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("hermes-agent")
+        return version("auraforge-agent")
     except Exception:  # pragma: no cover
         return "0.0.0"

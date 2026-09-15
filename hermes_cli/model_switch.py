@@ -363,16 +363,16 @@ _HERMES_MODEL_WARNING = (
 )
 
 # Match only the real Nous Research Aura Forge 3 / Aura Forge 4 chat families.
-# The previous substring check (`"hermes" in name.lower()`) false-positived on
-# unrelated local Modelfiles like ``hermes-brain:qwen3-14b-ctx16k`` that just
-# happen to carry "hermes" in their tag but are fully tool-capable.
+# The previous substring check (`"auraforge" in name.lower()`) false-positived on
+# unrelated local Modelfiles like ``auraforge-brain:qwen3-14b-ctx16k`` that just
+# happen to carry "auraforge" in their tag but are fully tool-capable.
 #
 # Positive examples the regex must match:
-#   NousResearch/Hermes-3-Llama-3.1-70B, hermes-4-405b, openrouter/hermes3:70b
+#   NousResearch/Aura Forge-3-Llama-3.1-70B, auraforge-4-405b, openrouter/hermes3:70b
 # Negative examples it must NOT match:
-#   hermes-brain:qwen3-14b-ctx16k, qwen3:14b, claude-opus-4-6
+#   auraforge-brain:qwen3-14b-ctx16k, qwen3:14b, claude-opus-4-6
 _NOUS_HERMES_NON_AGENTIC_RE = re.compile(
-    r"(?:^|[/:])hermes[-_ ]?[34](?:[-_.:]|$)",
+    r"(?:^|[/:])auraforge[-_ ]?[34](?:[-_.:]|$)",
     re.IGNORECASE,
 )
 
@@ -2432,7 +2432,7 @@ def _collect_authed_provider_slugs(
     slugs: list[str] = []
     seen: set[str] = set()
 
-    # --- Section 1: Hermes-mapped providers (PROVIDER_TO_MODELS_DEV) ---
+    # --- Section 1: Aura Forge-mapped providers (PROVIDER_TO_MODELS_DEV) ---
     for hermes_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
         _alias_target = _PROVIDER_ALIAS_TABLE.get(hermes_id)
         if (
@@ -2487,7 +2487,7 @@ def _collect_authed_provider_slugs(
             slugs.append(hermes_id)
             seen.add(hermes_id.lower())
 
-    # --- Section 2: Hermes-only providers (HERMES_OVERLAYS) ---
+    # --- Section 2: Aura Forge-only providers (HERMES_OVERLAYS) ---
     _mdev_to_hermes = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
     for pid, overlay in HERMES_OVERLAYS.items():
         if pid.lower() in seen:
@@ -2737,7 +2737,7 @@ def list_authenticated_providers(
 
     data = fetch_models_dev()
 
-    # Build curated model lists keyed by hermes provider ID
+    # Build curated model lists keyed by auraforge provider ID
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
     curated["openrouter"] = [mid for mid, _ in OPENROUTER_MODELS]
     # "nous" pulls from the remote model-catalog manifest published at
@@ -2802,7 +2802,7 @@ def list_authenticated_providers(
         except Exception:
             pass  # best-effort; serial path still works as fallback
 
-    # --- 1. Check Hermes-mapped providers ---
+    # --- 1. Check Aura Forge-mapped providers ---
     from hermes_cli.models import _AGGREGATOR_PROVIDERS as _AGG_PROVIDERS
     from hermes_cli.providers import ALIASES as _PROVIDER_ALIAS_TABLE
     for hermes_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
@@ -2934,7 +2934,7 @@ def list_authenticated_providers(
         seen_slugs.add(slug.lower())
         _record_builtin_endpoint(slug)
 
-    # --- 2. Check Hermes-only providers (nous, openai-codex, copilot, opencode-go) ---
+    # --- 2. Check Aura Forge-only providers (nous, openai-codex, copilot, opencode-go) ---
     from hermes_cli.providers import HERMES_OVERLAYS
     from hermes_cli.auth import PROVIDER_REGISTRY as _auth_registry
 
@@ -3118,7 +3118,7 @@ def list_authenticated_providers(
             "is_user_defined": False,
             "models": top,
             "total_models": total,
-            "source": "hermes",
+            "source": "auraforge",
         })
         seen_slugs.add(pid.lower())
         seen_slugs.add(hermes_slug.lower())

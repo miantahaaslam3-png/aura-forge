@@ -790,7 +790,7 @@ class TestLazyMcpInstall:
                  "cua_driver_runtime_contract_status",
                  return_value=state,
              ), patch("tools.lazy_deps.ensure") as mock_ensure:
-            with pytest.raises(RuntimeError, match="hermes computer-use install"):
+            with pytest.raises(RuntimeError, match="auraforge computer-use install"):
                 cua_backend.CuaDriverBackend().start()
 
         mock_ensure.assert_not_called()
@@ -1373,14 +1373,14 @@ class TestCuaDriverSessionReconnect:
 
         bridge = FakeBridge()
         session = self._make_session(bridge)
-        session._declared_session_id = "hermes-label"
+        session._declared_session_id = "auraforge-label"
 
         result = session.call_tool("list_apps", {})
 
         assert result["isError"] is False
         assert bridge.calls == [
             ("call", "list_apps", {}),
-            ("call", "start_session", {"session": "hermes-label"}),
+            ("call", "start_session", {"session": "auraforge-label"}),
             ("call", "list_apps", {}),
         ]
 
@@ -1635,7 +1635,7 @@ class TestCuaEnvironmentScrubbing:
     def test_cua_session_sanitizes_provider_env_vars(self):
         """_CuaDriverSession lifecycle must sanitize sensitive env vars.
 
-        The cua-driver MCP subprocess should not inherit Hermes-managed
+        The cua-driver MCP subprocess should not inherit Aura Forge-managed
         credentials or other sensitive environment variables — only
         runtime-required vars. Regression test for issue #37878.
 

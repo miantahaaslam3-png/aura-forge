@@ -1,4 +1,4 @@
-"""hermes memory setup|status — configure memory provider plugins.
+"""auraforge memory setup|status — configure memory provider plugins.
 
 Auto-detects installed memory providers via the plugin system.
 Interactive curses-based UI for provider selection, then walks through
@@ -12,7 +12,7 @@ import re
 import sys
 import shlex
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from hermes_cli.secret_prompt import masked_secret_prompt
 
 _CANCELLED = -1
@@ -33,7 +33,7 @@ def _provider_pip_dependencies(provider_name: str, declared: list) -> list:
     if provider_name == "hindsight":
         try:
             import json
-            cfg_path = get_hermes_home() / "hindsight" / "config.json"
+            cfg_path = get_aura_forge_home() / "hindsight" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
             mode = cfg.get("mode", "")
             # "local" is a legacy alias for "local_embedded"
@@ -45,7 +45,7 @@ def _provider_pip_dependencies(provider_name: str, declared: list) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Curses-based interactive picker (same pattern as hermes tools)
+# Curses-based interactive picker (same pattern as auraforge tools)
 # ---------------------------------------------------------------------------
 
 def _curses_select(
@@ -254,7 +254,7 @@ def cmd_setup_provider(provider_name: str) -> None:
 
     if not match:
         print(f"\n  Memory provider '{provider_name}' not found.")
-        print("  Run 'hermes memory setup' to see available providers.\n")
+        print("  Run 'auraforge memory setup' to see available providers.\n")
         return
 
     name, _, provider = match
@@ -268,8 +268,8 @@ def cmd_setup_provider(provider_name: str) -> None:
         config["memory"] = {}
 
     if hasattr(provider, "post_setup"):
-        hermes_home = str(get_hermes_home())
-        provider.post_setup(hermes_home, config)
+        aura_forge_home = str(get_aura_forge_home())
+        provider.post_setup(aura_forge_home, config)
         return
 
     # Fallback: generic schema-based setup (same as cmd_setup)
@@ -324,8 +324,8 @@ def cmd_setup(args) -> None:
     # If the provider has a post_setup hook, delegate entirely to it.
     # The hook handles its own config, connection test, and activation.
     if hasattr(provider, "post_setup"):
-        hermes_home = str(get_hermes_home())
-        provider.post_setup(hermes_home, config)
+        aura_forge_home = str(get_aura_forge_home())
+        provider.post_setup(aura_forge_home, config)
         return
 
     schema = provider.get_config_schema() if hasattr(provider, "get_config_schema") else []
@@ -403,10 +403,10 @@ def cmd_setup(args) -> None:
     save_config(config)
 
     # Write non-secret config to provider's native location
-    hermes_home = str(get_hermes_home())
+    aura_forge_home = str(get_aura_forge_home())
     if provider_config and hasattr(provider, "save_config"):
         try:
-            provider.save_config(provider_config, hermes_home)
+            provider.save_config(provider_config, aura_forge_home)
         except Exception as e:
             print(f"  Failed to write provider config: {e}")
 
@@ -425,7 +425,7 @@ def cmd_setup(args) -> None:
 
 def _write_env_vars(
     env_writes: dict,
-    hermes_home: str | os.PathLike[str] | None = None,
+    aura_forge_home: str | os.PathLike[str] | None = None,
 ) -> None:
     """Persist memory-provider env vars through the canonical ``.env`` writer.
 
@@ -450,16 +450,16 @@ def _write_env_vars(
     intentionally NOT caught — those indicate the wizard cannot safely
     persist any subsequent key either and should propagate.
 
-    ``hermes_home`` may be supplied by plugin ``post_setup`` hooks that
+    ``aura_forge_home`` may be supplied by plugin ``post_setup`` hooks that
     already received an explicit home directory (e.g. a non-default
     profile). It is applied through the context-local Aura Forge home override
     so ``save_env_value`` still owns the validation, sanitization, and
     atomic-write path without mutating global ``os.environ``.
     """
     from hermes_cli.config import save_env_value
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from hermes_constants import reset_aura_forge_home_override, set_aura_forge_home_override
 
-    token = set_hermes_home_override(hermes_home) if hermes_home is not None else None
+    token = set_aura_forge_home_override(aura_forge_home) if aura_forge_home is not None else None
     try:
         for key, val in env_writes.items():
             try:
@@ -468,7 +468,7 @@ def _write_env_vars(
                 print(f"  Skipping {key}: {exc}")
     finally:
         if token is not None:
-            reset_hermes_home_override(token)
+            reset_aura_forge_home_override(token)
 
 
 # ---------------------------------------------------------------------------

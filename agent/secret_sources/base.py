@@ -3,7 +3,7 @@
 A *secret source* resolves credentials from an external secret manager
 (Bitwarden Secrets Manager, 1Password, an OS keystore, a user script, ...)
 into environment-variable-shaped values at process startup, AFTER
-``~/.hermes/.env`` has loaded and BEFORE the rest of Aura Forge reads
+``~/.auraforge/.env`` has loaded and BEFORE the rest of Aura Forge reads
 ``os.environ``.
 
 Scope of the contract (deliberate, please do not widen):
@@ -81,7 +81,7 @@ DEFAULT_CLI_TIMEOUT_SECONDS = 30.0
 class ErrorKind(str, Enum):
     """Machine-readable failure taxonomy for :class:`FetchResult.error`.
 
-    A fixed vocabulary keeps startup warnings and ``hermes secrets status``
+    A fixed vocabulary keeps startup warnings and ``auraforge secrets status``
     uniform across backends, and lets the orchestrator implement
     kind-dependent policy (e.g. a future stale-cache fallback on
     ``NETWORK``/``TIMEOUT`` but not on ``AUTH_FAILED``) exactly once.
@@ -135,7 +135,7 @@ class SecretSource(ABC):
             Lowercase ``[a-z0-9_]+``.  Also the provenance label stored
             for every var this source supplies.
         label: Human-readable name used in startup messages and
-            ``hermes secrets status`` (e.g. ``"Bitwarden Secrets Manager"``).
+            ``auraforge secrets status`` (e.g. ``"Bitwarden Secrets Manager"``).
         shape: ``"mapped"`` when the user explicitly binds env-var names
             to refs (1Password ``env:`` map, command source) or
             ``"bulk"`` when the backend injects whole projects/folders
@@ -212,11 +212,11 @@ class SecretSource(ABC):
     def remediation(self, kind: Optional["ErrorKind"], cfg: dict) -> str:
         """One-line, actionable next step for a failed fetch.
 
-        Called by the startup status printer (and ``hermes secrets ...
+        Called by the startup status printer (and ``auraforge secrets ...
         status``) right after a fetch error is surfaced, so the user sees
         *what to run* next to fix it — not just what broke.  Sources
         should override this to point at their own CLI verbs (e.g.
-        ``hermes secrets bitwarden token`` for AUTH_FAILED).  Return an
+        ``auraforge secrets bitwarden token`` for AUTH_FAILED).  Return an
         empty string to suppress the hint.
 
         Must never raise and must not perform I/O — it's a pure
@@ -224,17 +224,17 @@ class SecretSource(ABC):
         """
         generic = {
             ErrorKind.NOT_CONFIGURED: (
-                f"Run `hermes secrets {self.name} setup` to finish configuration."
+                f"Run `auraforge secrets {self.name} setup` to finish configuration."
             ),
             ErrorKind.BINARY_MISSING: (
-                f"Run `hermes secrets {self.name} setup` to install the helper CLI."
+                f"Run `auraforge secrets {self.name} setup` to install the helper CLI."
             ),
             ErrorKind.AUTH_FAILED: (
-                f"Credentials rejected — run `hermes secrets {self.name} setup` "
+                f"Credentials rejected — run `auraforge secrets {self.name} setup` "
                 "to re-authenticate."
             ),
             ErrorKind.AUTH_EXPIRED: (
-                f"Credentials expired — run `hermes secrets {self.name} setup` "
+                f"Credentials expired — run `auraforge secrets {self.name} setup` "
                 "to re-authenticate."
             ),
             ErrorKind.NETWORK: (

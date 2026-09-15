@@ -1,5 +1,5 @@
 """
-Cron subcommand for hermes CLI.
+Cron subcommand for auraforge CLI.
 
 Handles standalone cron management commands like list, create, edit,
 pause/resume/run/remove, status, and tick.
@@ -121,9 +121,9 @@ def _warn_if_gateway_not_running() -> None:
         return
 
     print(color("  ⚠  Gateway is not running — jobs won't fire automatically.", Colors.YELLOW))
-    print(color("     Start it with: hermes gateway install", Colors.DIM))
-    print(color("                    sudo hermes gateway install --system  # Linux servers", Colors.DIM))
-    print(color("     Check status:  hermes cron status", Colors.DIM))
+    print(color("     Start it with: auraforge gateway install", Colors.DIM))
+    print(color("                    sudo auraforge gateway install --system  # Linux servers", Colors.DIM))
+    print(color("     Check status:  auraforge cron status", Colors.DIM))
 
 
 def cron_list(show_all: bool = False):
@@ -134,7 +134,7 @@ def cron_list(show_all: bool = False):
 
     if not jobs:
         print(color("No scheduled jobs.", Colors.DIM))
-        print(color("Create one with 'hermes cron create ...' or the /cron command in chat.", Colors.DIM))
+        print(color("Create one with 'auraforge cron create ...' or the /cron command in chat.", Colors.DIM))
         return
 
     print()
@@ -297,7 +297,7 @@ def cron_incidents(args) -> int:
         if not incident_id:
             print(
                 color(
-                    "✗ Incident ID required: hermes cron incidents ack <incident_id>",
+                    "✗ Incident ID required: auraforge cron incidents ack <incident_id>",
                     Colors.RED,
                 )
             )
@@ -365,7 +365,7 @@ def cron_incidents(args) -> int:
     print(
         color(
             f"  {len(incidents)} incident(s)  |  ack one with: "
-            "hermes cron incidents ack <id>",
+            "auraforge cron incidents ack <id>",
             Colors.DIM,
         )
     )
@@ -451,7 +451,7 @@ def cron_status():
             ))
             if pids:
                 print(f"  PID: {', '.join(map(str, pids))}")
-            print("  Cron jobs may NOT be firing. Restart: hermes gateway restart")
+            print("  Cron jobs may NOT be firing. Restart: auraforge gateway restart")
         elif hb_age is not None and ok_age is not None and ok_age > STALE_AFTER:
             # Loop is alive (fresh heartbeat) but no tick has SUCCEEDED in a
             # long time → ticks are failing every iteration.
@@ -473,8 +473,8 @@ def cron_status():
                 if "Permission denied" in last_error:
                     print(color(
                         "  Hint: jobs.json may be owned by another user "
-                        "(e.g. rewritten by a root `docker exec hermes "
-                        "hermes cron ...`). Fix ownership to match the "
+                        "(e.g. rewritten by a root `docker exec auraforge "
+                        "auraforge cron ...`). Fix ownership to match the "
                         "gateway user, and prefer `docker exec -u <uid>:<gid>`.",
                         Colors.YELLOW,
                     ))
@@ -497,9 +497,9 @@ def cron_status():
         print(color("✗ Gateway is not running — cron jobs will NOT fire", Colors.RED))
         print()
         print("  To enable automatic execution:")
-        print("    hermes gateway install    # Install as a user service")
-        print("    sudo hermes gateway install --system  # Linux servers: boot-time system service")
-        print("    hermes gateway            # Or run in foreground")
+        print("    auraforge gateway install    # Install as a user service")
+        print("    sudo auraforge gateway install --system  # Linux servers: boot-time system service")
+        print("    auraforge gateway            # Or run in foreground")
 
     print()
 
@@ -753,7 +753,7 @@ def cron_notepad(args) -> int:
     try:
         if action == "set":
             if key is None or value is None:
-                print(color("Usage: hermes cron notepad <job_id> set <key> <value>", Colors.RED))
+                print(color("Usage: auraforge cron notepad <job_id> set <key> <value>", Colors.RED))
                 return 1
             notepad.set_note(job_id, key, value)
             print(color(f"Set notepad key '{key}' for job {job_id}.", Colors.GREEN))
@@ -761,7 +761,7 @@ def cron_notepad(args) -> int:
 
         if action == "get":
             if key is None:
-                print(color("Usage: hermes cron notepad <job_id> get <key>", Colors.RED))
+                print(color("Usage: auraforge cron notepad <job_id> get <key>", Colors.RED))
                 return 1
             stored = notepad.get_note(job_id, key)
             if stored is None:
@@ -772,7 +772,7 @@ def cron_notepad(args) -> int:
 
         if action == "delete":
             if key is None:
-                print(color("Usage: hermes cron notepad <job_id> delete <key>", Colors.RED))
+                print(color("Usage: auraforge cron notepad <job_id> delete <key>", Colors.RED))
                 return 1
             if notepad.delete_note(job_id, key):
                 print(color(f"Deleted notepad key '{key}' for job {job_id}.", Colors.GREEN))
@@ -839,5 +839,5 @@ def cron_command(args):
         return _job_action("remove", args.job_id, "Removed")
 
     print(f"Unknown cron command: {subcmd}")
-    print("Usage: hermes cron [list|create|edit|pause|resume|run|remove|status|runs|tick]")
+    print("Usage: auraforge cron [list|create|edit|pause|resume|run|remove|status|runs|tick]")
     sys.exit(1)

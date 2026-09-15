@@ -26,7 +26,7 @@ from tools.tool_backend_helpers import (
 
 
 _DEFAULT_PLATFORM_TOOLSETS = {
-    "cli": "hermes-cli",
+    "cli": "auraforge-cli",
 }
 
 # Maps a tools_config provider's ``managed_nous_feature`` to the tool-pool
@@ -201,7 +201,7 @@ def _has_agent_browser() -> bool:
         if agent_browser_runnable(shutil.which("agent-browser")):
             return True
 
-        # Hermes-managed Node dirs (Windows installer / POSIX $AURA_FORGE_HOME/node)
+        # Aura Forge-managed Node dirs (Windows installer / POSIX $AURA_FORGE_HOME/node)
         # are prepended to PATH at runtime but usually absent from the *probe*
         # process's PATH. Without this rung a successful install keeps
         # reporting "needs setup" on Windows.

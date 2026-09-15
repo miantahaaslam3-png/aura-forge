@@ -8,8 +8,8 @@ Nous can attribute usage to Aura Forge Agent and bucket it by client release.
 Tag shape (sent in OpenAI-compatible ``extra_body['tags']``):
 
     [
-        "product=hermes-agent",
-        "client=hermes-client-v<__version__>",
+        "product=auraforge-agent",
+        "client=auraforge-client-v<__version__>",
     ]
 
 The version is sourced live from ``hermes_cli.__version__`` so it auto-aligns
@@ -98,9 +98,9 @@ def _hermes_version() -> str:
 def hermes_client_tag() -> str:
     """Return the ``client=...`` tag for Nous Portal requests.
 
-    Format: ``client=hermes-client-v<MAJOR>.<MINOR>.<PATCH>``.
+    Format: ``client=auraforge-client-v<MAJOR>.<MINOR>.<PATCH>``.
     """
-    return f"client=hermes-client-v{_hermes_version()}"
+    return f"client=auraforge-client-v{_hermes_version()}"
 
 
 def conversation_tag(session_id: str) -> str:
@@ -108,7 +108,7 @@ def conversation_tag(session_id: str) -> str:
 
     Format: ``conversation=<session_id>``. ``session_id`` is the canonical
     Aura Forge conversation identifier (``AIAgent.session_id``) — the same value
-    used for ``~/.hermes/sessions/`` storage, session logs, and lineage.
+    used for ``~/.auraforge/sessions/`` storage, session logs, and lineage.
 
     Unlike the product/client tags this is high-cardinality (one value per
     conversation), so it is only appended when a session id is actually
@@ -132,7 +132,7 @@ def nous_portal_tags(session_id: str | None = None) -> List[str]:
     per-call-site plumbing. Callers outside any conversation (e.g. the
     auxiliary client's import-time base tags) get the canonical two-tag set.
     """
-    tags = ["product=hermes-agent", hermes_client_tag()]
+    tags = ["product=auraforge-agent", hermes_client_tag()]
     # Ambient context first: the agent loop publishes the lineage ROOT id
     # (stable across context-compression rotation and delegate subagent
     # trees), which is the better conversation key than a per-segment

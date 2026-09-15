@@ -30,7 +30,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch"
 OSV_VULN_URL = "https://api.osv.dev/v1/vulns/{vid}"
@@ -164,14 +164,14 @@ def _parse_pyproject_pins(text: str) -> list[tuple[str, str]]:
     return pins
 
 
-def _discover_plugins(hermes_home: Path) -> list[Component]:
+def _discover_plugins(aura_forge_home: Path) -> list[Component]:
     """Python deps declared by plugins under ``~/.aura-forge/plugins``.
 
     Plugins typically don't install into the venv (they're directory-based
     with relative imports), so their stated requirements are useful audit
     surface even when the venv scan misses them.
     """
-    plugins_dir = hermes_home / "plugins"
+    plugins_dir = aura_forge_home / "plugins"
     if not plugins_dir.is_dir():
         return []
 
@@ -416,10 +416,10 @@ def _discover_components(
     skip_venv: bool = False,
     skip_plugins: bool = False,
     skip_mcp: bool = False,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> list[Component]:
     """Discover all scannable components across the enabled sources."""
-    home = hermes_home or Path(get_hermes_home())
+    home = aura_forge_home or Path(get_aura_forge_home())
     components: list[Component] = []
     if not skip_venv:
         components.extend(_discover_venv())
@@ -435,7 +435,7 @@ def run_audit(
     skip_venv: bool = False,
     skip_plugins: bool = False,
     skip_mcp: bool = False,
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
     components: Optional[list[Component]] = None,
 ) -> list[Finding]:
     """Query OSV for the given (or freshly discovered) components.
@@ -449,7 +449,7 @@ def run_audit(
             skip_venv=skip_venv,
             skip_plugins=skip_plugins,
             skip_mcp=skip_mcp,
-            hermes_home=hermes_home,
+            aura_forge_home=aura_forge_home,
         )
 
     if not components:
@@ -538,7 +538,7 @@ def _render_json(findings: list[Finding], total_components: int) -> str:
 
 def cmd_security_audit(args: argparse.Namespace) -> int:
     """Implementation of `auraforge security audit`."""
-    home = Path(get_hermes_home())
+    home = Path(get_aura_forge_home())
     skip_venv = bool(getattr(args, "skip_venv", False))
     skip_plugins = bool(getattr(args, "skip_plugins", False))
     skip_mcp = bool(getattr(args, "skip_mcp", False))
@@ -553,7 +553,7 @@ def cmd_security_audit(args: argparse.Namespace) -> int:
         return 2
 
     components = _discover_components(
-        skip_venv=skip_venv, skip_plugins=skip_plugins, skip_mcp=skip_mcp, hermes_home=home
+        skip_venv=skip_venv, skip_plugins=skip_plugins, skip_mcp=skip_mcp, aura_forge_home=home
     )
     total = len(components)
     if total == 0:
@@ -569,7 +569,7 @@ def cmd_security_audit(args: argparse.Namespace) -> int:
             skip_venv=skip_venv,
             skip_plugins=skip_plugins,
             skip_mcp=skip_mcp,
-            hermes_home=home,
+            aura_forge_home=home,
             components=components,
         )
     except RuntimeError as exc:

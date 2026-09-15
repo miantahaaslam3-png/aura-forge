@@ -1,6 +1,6 @@
 """Image-authored deployment provenance for immutable Aura Forge runtimes.
 
-The published image bakes ``/etc/hermes/image-provenance.json`` outside both
+The published image bakes ``/etc/auraforge/image-provenance.json`` outside both
 ``$AURA_FORGE_HOME`` and the mutable checkout.  A bind-mounted checkout (including
 ``.git``) therefore cannot hide the build fact, and environment or config
 values cannot forge it.
@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-IMAGE_PROVENANCE_PATH = Path("/etc/hermes/image-provenance.json")
+IMAGE_PROVENANCE_PATH = Path("/etc/auraforge/image-provenance.json")
 IMAGE_PROVENANCE_SCHEMA = 1
 
 

@@ -13,7 +13,7 @@ Defense against context-window overflow operates at three levels:
 
    The canonical home is ALWAYS host-side:
    ``$HERMES_HOME/cache/spillover/{tool_use_id}.txt`` — alongside the other
-   Hermes-owned caches (images, audio, documents, ...) instead of littering
+   Aura Forge-owned caches (images, audio, documents, ...) instead of littering
    the OS temp dir. This needs no sandbox environment, so it also works for
    sessions that never ran a terminal command (MCP-only, cron, gateway) —
    previously those hit the inline-truncate fallback because
@@ -60,7 +60,7 @@ from tools.budget_config import (
 logger = logging.getLogger(__name__)
 PERSISTED_OUTPUT_TAG = "<persisted-output>"
 PERSISTED_OUTPUT_CLOSING_TAG = "</persisted-output>"
-STORAGE_DIR = "/tmp/hermes-results"
+STORAGE_DIR = "/tmp/auraforge-results"
 SPILLOVER_SUBDIR = "cache/spillover"
 SPILLOVER_MAX_AGE_HOURS = 24
 HEREDOC_MARKER = "HERMES_PERSIST_EOF"
@@ -206,7 +206,7 @@ def _resolve_storage_dir(env) -> str:
             else:
                 if temp_dir:
                     temp_dir = temp_dir.rstrip("/") or "/"
-                    return f"{temp_dir}/hermes-results"
+                    return f"{temp_dir}/auraforge-results"
     return STORAGE_DIR
 
 
@@ -348,7 +348,7 @@ def maybe_persist_tool_result(
     preview, has_more = generate_preview(content, max_chars=config.preview_size)
 
     # Always persist host-side first: $HERMES_HOME/cache/spillover is the
-    # single canonical home for spilled results (with the other Hermes-owned
+    # single canonical home for spilled results (with the other Aura Forge-owned
     # caches, pruned by gateway housekeeping) regardless of backend.
     host_path = _write_to_spillover(content, filename)
 

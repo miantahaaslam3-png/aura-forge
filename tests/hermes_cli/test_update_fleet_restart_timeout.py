@@ -1,7 +1,7 @@
 """Regression for #68523 — one systemctl timeout must not abort fleet restarts.
 
-On hosts with many profile-backed ``hermes-gateway*.service`` units,
-``hermes update`` used to wrap the entire per-scope unit loop in a single
+On hosts with many profile-backed ``auraforge-gateway*.service`` units,
+``auraforge update`` used to wrap the entire per-scope unit loop in a single
 ``except subprocess.TimeoutExpired``. A timeout on unit N skipped units
 N+1…, leaving later gateways on pre-update in-memory modules while the
 checkout on disk was already new (mixed-generation crashes).
@@ -27,21 +27,21 @@ def _list_units_stdout(names: list[str]) -> str:
 class TestFleetRestartTimeoutIsolation:
     def test_timeout_on_middle_unit_continues_remaining_units(self):
         units = [
-            "hermes-gateway-xiaomo1",
-            "hermes-gateway-xiaomo2",
-            "hermes-gateway-xiaomo3",
-            "hermes-gateway-xiaomo4",
-            "hermes-gateway-xiaomo5",
-            "hermes-gateway-xiaomo6",
-            "hermes-gateway-xiaomo7",
-            "hermes-gateway",
+            "auraforge-gateway-xiaomo1",
+            "auraforge-gateway-xiaomo2",
+            "auraforge-gateway-xiaomo3",
+            "auraforge-gateway-xiaomo4",
+            "auraforge-gateway-xiaomo5",
+            "auraforge-gateway-xiaomo6",
+            "auraforge-gateway-xiaomo7",
+            "auraforge-gateway",
         ]
         restarted: list[str] = []
         failed: list[str] = []
         timeout_cmds: list = []
 
         def process_unit(svc_name: str) -> None:
-            if svc_name == "hermes-gateway-xiaomo5":
+            if svc_name == "auraforge-gateway-xiaomo5":
                 raise subprocess.TimeoutExpired(
                     cmd=["systemctl", "--user", "--no-ask-password", "restart", svc_name],
                     timeout=15,
@@ -58,19 +58,19 @@ class TestFleetRestartTimeoutIsolation:
             on_unit_timeout=on_unit_timeout,
         )
 
-        assert failed == ["hermes-gateway-xiaomo5"]
+        assert failed == ["auraforge-gateway-xiaomo5"]
         assert restarted == [
-            "hermes-gateway-xiaomo1",
-            "hermes-gateway-xiaomo2",
-            "hermes-gateway-xiaomo3",
-            "hermes-gateway-xiaomo4",
-            "hermes-gateway-xiaomo6",
-            "hermes-gateway-xiaomo7",
-            "hermes-gateway",
+            "auraforge-gateway-xiaomo1",
+            "auraforge-gateway-xiaomo2",
+            "auraforge-gateway-xiaomo3",
+            "auraforge-gateway-xiaomo4",
+            "auraforge-gateway-xiaomo6",
+            "auraforge-gateway-xiaomo7",
+            "auraforge-gateway",
         ]
         assert set(restarted) | set(failed) == set(units)
         assert timeout_cmds == [
-            ["systemctl", "--user", "--no-ask-password", "restart", "hermes-gateway-xiaomo5"]
+            ["systemctl", "--user", "--no-ask-password", "restart", "auraforge-gateway-xiaomo5"]
         ]
 
     def test_non_gateway_units_in_list_output_are_ignored(self):
@@ -80,7 +80,7 @@ class TestFleetRestartTimeoutIsolation:
             "\n".join(
                 [
                     "ssh.service loaded active running",
-                    "hermes-gateway-coder.service loaded active running",
+                    "auraforge-gateway-coder.service loaded active running",
                     "not-a-service loaded active running",
                     "",
                 ]
@@ -89,20 +89,20 @@ class TestFleetRestartTimeoutIsolation:
             on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
         )
 
-        assert seen == ["hermes-gateway-coder"]
+        assert seen == ["auraforge-gateway-coder"]
 
     def test_hermes_serve_units_are_included(self):
-        # #83438 — hermes update restarted hermes-gateway* units but left
-        # hermes-serve* (the Desktop app's backend) on stale pre-update code.
+        # #83438 — auraforge update restarted auraforge-gateway* units but left
+        # auraforge-serve* (the Desktop app's backend) on stale pre-update code.
         seen: list[str] = []
 
         _for_each_systemd_gateway_unit(
             "\n".join(
                 [
                     "ssh.service loaded active running",
-                    "hermes-serve.service loaded active running",
-                    "hermes-serve-work.service loaded active running",
-                    "hermes-gateway.service loaded active running",
+                    "auraforge-serve.service loaded active running",
+                    "auraforge-serve-work.service loaded active running",
+                    "auraforge-gateway.service loaded active running",
                     "",
                 ]
             ),
@@ -110,16 +110,16 @@ class TestFleetRestartTimeoutIsolation:
             on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
         )
 
-        assert seen == ["hermes-serve", "hermes-serve-work", "hermes-gateway"]
+        assert seen == ["auraforge-serve", "auraforge-serve-work", "auraforge-gateway"]
 
     def test_hermes_server_near_prefix_is_rejected(self):
-        # Review on #83595: a bare ``startswith("hermes-serve")`` gate also
-        # accepts the unrelated ``hermes-server.service``. Only the exact
+        # Review on #83595: a bare ``startswith("auraforge-serve")`` gate also
+        # accepts the unrelated ``auraforge-server.service``. Only the exact
         # base unit or the hyphenated profile family should pass.
         seen: list[str] = []
 
         _for_each_systemd_gateway_unit(
-            _list_units_stdout(["hermes-server"]),
+            _list_units_stdout(["auraforge-server"]),
             process_unit=seen.append,
             on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
         )
@@ -128,33 +128,33 @@ class TestFleetRestartTimeoutIsolation:
 
     def test_hermes_gateway_near_prefix_is_rejected(self):
         # Same strict shape on the gateway side: profile units are
-        # ``hermes-gateway-<profile>``, so a hypothetical
-        # ``hermes-gatewayd.service`` must not enter the restart path.
+        # ``auraforge-gateway-<profile>``, so a hypothetical
+        # ``auraforge-gatewayd.service`` must not enter the restart path.
         seen: list[str] = []
 
         _for_each_systemd_gateway_unit(
-            _list_units_stdout(["hermes-gatewayd", "hermes-gateway-coder"]),
+            _list_units_stdout(["auraforge-gatewayd", "auraforge-gateway-coder"]),
             process_unit=seen.append,
             on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
         )
 
-        assert seen == ["hermes-gateway-coder"]
+        assert seen == ["auraforge-gateway-coder"]
 
 
 class TestGracefulSigusr1Eligibility:
     def test_gateway_units_are_eligible(self):
-        assert _service_unit_supports_graceful_sigusr1_restart("hermes-gateway")
+        assert _service_unit_supports_graceful_sigusr1_restart("auraforge-gateway")
         assert _service_unit_supports_graceful_sigusr1_restart(
-            "hermes-gateway-work"
+            "auraforge-gateway-work"
         )
 
     def test_serve_units_are_not_eligible(self):
-        # hermes-serve doesn't run gateway/run.py, so it never installs the
+        # auraforge-serve doesn't run gateway/run.py, so it never installs the
         # SIGUSR1 handler — sending it the signal would just terminate the
         # process (the default action) instead of draining gracefully.
-        assert not _service_unit_supports_graceful_sigusr1_restart("hermes-serve")
+        assert not _service_unit_supports_graceful_sigusr1_restart("auraforge-serve")
         assert not _service_unit_supports_graceful_sigusr1_restart(
-            "hermes-serve-work"
+            "auraforge-serve-work"
         )
 
     def test_process_errors_other_than_timeout_still_propagate(self):
@@ -163,7 +163,7 @@ class TestGracefulSigusr1Eligibility:
 
         with pytest.raises(RuntimeError, match="not a timeout"):
             _for_each_systemd_gateway_unit(
-                _list_units_stdout(["hermes-gateway"]),
+                _list_units_stdout(["auraforge-gateway"]),
                 process_unit=process_unit,
                 on_unit_timeout=lambda *_: pytest.fail("timeout handler must not run"),
             )
@@ -172,11 +172,11 @@ class TestGracefulSigusr1Eligibility:
 class TestIncompleteFleetRestartWarning:
     def test_warns_with_exact_unrestarted_units(self, capsys):
         _warn_incomplete_gateway_fleet_restart(
-            ["hermes-gateway-xiaomo5", "hermes-gateway-xiaomo6", "hermes-gateway-xiaomo5"]
+            ["auraforge-gateway-xiaomo5", "auraforge-gateway-xiaomo6", "auraforge-gateway-xiaomo5"]
         )
         out = capsys.readouterr().out
         assert "Update incomplete" in out
-        assert out.count("hermes-gateway-xiaomo5") == 1
-        assert "hermes-gateway-xiaomo6" in out
+        assert out.count("auraforge-gateway-xiaomo5") == 1
+        assert "auraforge-gateway-xiaomo6" in out
         assert "pre-update code" in out
 

@@ -17,7 +17,7 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_DIAGNOSTIC_SCOPE = "hermes.gateway.diagnostics"
+_DEFAULT_DIAGNOSTIC_SCOPE = "auraforge.gateway.diagnostics"
 
 _RESOURCE_ATTRIBUTE_KEYS = frozenset({
     "service.name",
@@ -82,7 +82,7 @@ def _runtime_resource_attributes(
     attrs = _safe_resource_attributes(gh.get("resource_attributes"))
     from agent.monitoring.gateway_health import _safe_instance_id
 
-    attrs["service.name"] = "hermes-gateway"
+    attrs["service.name"] = "auraforge-gateway"
     attrs["service.instance.id"] = _safe_instance_id(_install_id(config))
     attrs["telemetry.scope"] = telemetry_scope
     return attrs
@@ -94,7 +94,7 @@ def _diagnostic_log_attributes(event: Dict[str, Any]) -> Dict[str, Any]:
         value = event.get(key)
         if value is None:
             continue
-        attrs[f"hermes.{key}"] = _redact_string(value) if isinstance(value, str) else value
+        attrs[f"auraforge.{key}"] = _redact_string(value) if isinstance(value, str) else value
     return attrs
 
 
@@ -151,7 +151,7 @@ class GatewayHealthExportRuntime:
         if closeables:
             worker = threading.Thread(
                 target=_close,
-                name="hermes-gateway-health-export-shutdown",
+                name="auraforge-gateway-health-export-shutdown",
                 daemon=True,
             )
             worker.start()
@@ -304,7 +304,7 @@ def _read_cron_snapshot():
 def _read_background_work_count() -> int:
     """Count live background/subagent work that ``active_agents`` does NOT include.
 
-    ``hermes.gateway.active_agents`` counts foreground turns + in-flight cron
+    ``auraforge.gateway.active_agents`` counts foreground turns + in-flight cron
     jobs + API runs, but deliberately excludes backgrounded ``delegate_task``
     subagents, ``terminal(background=true)`` processes, kanban workers, and the
     runner's own background tasks (they are tracked only for the scale-to-zero
@@ -366,14 +366,14 @@ def _read_runtime_snapshot(config: Dict[str, Any]):
         base = dict(gateway_snapshot.metrics[0].attributes) if gateway_snapshot.metrics else {}
         gateway_snapshot.metrics.append(
             GatewayMetric(
-                name="hermes.gateway.background_work",
+                name="auraforge.gateway.background_work",
                 value=_read_background_work_count(),
                 attributes=base,
             )
         )
         gateway_snapshot.metrics.append(
             GatewayMetric(
-                name="hermes.gateway.background_delegations",
+                name="auraforge.gateway.background_delegations",
                 value=_read_background_delegations_count(),
                 attributes=base,
             )
@@ -431,26 +431,26 @@ def _start_metric_provider(config: Dict[str, Any], sdk: Dict[str, Any]) -> Any:
         metric_readers=[reader],
         resource=sdk["Resource"].create(resource_attrs),
     )
-    meter = provider.get_meter("hermes.gateway.health")
+    meter = provider.get_meter("auraforge.gateway.health")
     Observation = sdk["Observation"]
 
     metric_names = [
-        "hermes.gateway.up",
-        "hermes.gateway.state",
-        "hermes.gateway.active_agents",
-        "hermes.gateway.busy",
-        "hermes.gateway.drainable",
-        "hermes.gateway.restart_requested",
-        "hermes.gateway.background_work",
-        "hermes.gateway.background_delegations",
-        "hermes.platform.up",
-        "hermes.platform.degraded",
-        "hermes.cron.scheduler.heartbeat_age_seconds",
-        "hermes.cron.scheduler.last_success_age_seconds",
-        "hermes.cron.scheduler.catch_up_occurrences",
-        "hermes.cron.jobs.enabled",
-        "hermes.cron.jobs.running",
-        "hermes.cron.jobs.overdue",
+        "auraforge.gateway.up",
+        "auraforge.gateway.state",
+        "auraforge.gateway.active_agents",
+        "auraforge.gateway.busy",
+        "auraforge.gateway.drainable",
+        "auraforge.gateway.restart_requested",
+        "auraforge.gateway.background_work",
+        "auraforge.gateway.background_delegations",
+        "auraforge.platform.up",
+        "auraforge.platform.degraded",
+        "auraforge.cron.scheduler.heartbeat_age_seconds",
+        "auraforge.cron.scheduler.last_success_age_seconds",
+        "auraforge.cron.scheduler.catch_up_occurrences",
+        "auraforge.cron.jobs.enabled",
+        "auraforge.cron.jobs.running",
+        "auraforge.cron.jobs.overdue",
     ]
 
     def callback(name: str):
@@ -563,7 +563,7 @@ def _start_snapshot_thread(config: Dict[str, Any], stop_event: threading.Event) 
         while not stop_event.wait(interval):
             _emit_snapshot_events(config)
 
-    thread = threading.Thread(target=_run, name="hermes-gateway-health-export", daemon=True)
+    thread = threading.Thread(target=_run, name="auraforge-gateway-health-export", daemon=True)
     thread.start()
     return thread
 
@@ -598,7 +598,7 @@ def start_gateway_health_export(config: Dict[str, Any]) -> GatewayHealthExportRu
         except Exception:
             logger.warning(
                 "monitoring.gateway_health_export.enabled but OTLP SDK is unavailable; "
-                "install 'hermes-agent[otlp]'",
+                "install 'auraforge-agent[otlp]'",
                 exc_info=True,
             )
             return GatewayHealthExportRuntime(enabled=False, reason="otlp_unavailable")

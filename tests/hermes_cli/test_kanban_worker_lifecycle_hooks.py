@@ -30,7 +30,7 @@ WORKER_HOOKS = (
 
 @pytest.fixture
 def kanban_home(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     # Crash detection acts immediately in these tests (no launch grace).

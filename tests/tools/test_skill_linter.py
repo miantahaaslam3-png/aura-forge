@@ -21,7 +21,7 @@ version: 1.0.0
 author: Aura Forge Agent
 license: MIT
 metadata:
-  hermes:
+  auraforge:
     tags: [arxiv, research]
     related_skills: []
 ---
@@ -178,7 +178,7 @@ def test_lint_skill_reads_from_disk(tmp_path):
 
 
 def test_author_caps_warned():
-    content = CLEAN.replace("author: Aura Forge Agent", "author: hermes agent")
+    content = CLEAN.replace("author: Aura Forge Agent", "author: auraforge agent")
     findings = lint_content(content)
     assert "author-caps" in _rules(findings)
 

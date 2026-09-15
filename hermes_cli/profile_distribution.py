@@ -14,9 +14,9 @@ Where this fits relative to the existing pieces:
 
 Subcommands (all live under ``auraforge profile``, not a parallel tree):
 
-    hermes profile install <source> [--name N] [--alias] [--force] [--yes]
-    hermes profile update  <name>  [--force-config] [--yes]
-    hermes profile info    <name>
+    auraforge profile install <source> [--name N] [--alias] [--force] [--yes]
+    auraforge profile update  <name>  [--force-config] [--yes]
+    auraforge profile info    <name>
 
 ``<source>`` is one of:
 
@@ -534,7 +534,7 @@ def plan_install(
     if canon == "default":
         raise DistributionError(
             "Cannot install a distribution as 'default' — that is the built-in "
-            "root profile (~/.hermes).  Pass --name <name> to install under a "
+            "root profile (~/.auraforge).  Pass --name <name> to install under a "
             "new profile."
         )
     manifest.name = canon

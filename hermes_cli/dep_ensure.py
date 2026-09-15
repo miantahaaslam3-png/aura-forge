@@ -80,8 +80,8 @@ def _has_npx_agent_browser() -> bool:
 
 
 def _has_hermes_agent_browser() -> bool:
-    from hermes_constants import get_hermes_home
-    home = get_hermes_home()
+    from hermes_constants import get_aura_forge_home
+    home = get_aura_forge_home()
     if _IS_WINDOWS:
         # npm -g --prefix puts .cmd shims directly in the prefix dir on Windows
         return (home / "node" / "agent-browser.cmd").is_file()
@@ -155,7 +155,7 @@ def ensure_dependency(
             return False
 
     if shell == "powershell":
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
         ps_bin = shutil.which("powershell") or shutil.which("pwsh")
         if not ps_bin:
             if interactive:
@@ -166,7 +166,7 @@ def ensure_dependency(
             "-ExecutionPolicy", "Bypass",
             "-File", str(script),
             "-Ensure", dep,
-            "-HermesHome", str(get_hermes_home()),
+            "-Aura ForgeHome", str(get_aura_forge_home()),
         ]
     else:
         cmd = ["bash", str(script), "--ensure", dep]

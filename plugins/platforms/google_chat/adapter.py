@@ -51,7 +51,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # Heavy google-cloud + googleapiclient imports are deferred to first
 # adapter use. Importing them eagerly here added ~110ms wall and ~33MB
 # RSS to *every* CLI invocation (the plugin loader imports this module at
-# ``model_tools`` import time, so ``hermes status``, ``hermes chat``, etc.
+# ``model_tools`` import time, so ``auraforge status``, ``auraforge chat``, etc.
 # all paid the cost even though they never instantiate the adapter).
 #
 # All names below are module globals that ``_load_google_modules()``
@@ -366,7 +366,7 @@ def _redact_sensitive(text: str) -> str:
 
 
 def _mime_for_message_type(mime: str) -> MessageType:
-    """Map a MIME string to a hermes MessageType.
+    """Map a MIME string to a auraforge MessageType.
 
     Anything not image/audio/video falls through to DOCUMENT so the agent
     still receives the file.
@@ -509,7 +509,7 @@ def card_spec_to_cards_v2(card_spec: Dict[str, Any]) -> Dict[str, Any]:
             rendered_header["imageAltText"] = str(header["image_alt_text"])
         card["header"] = rendered_header
 
-    return {"cardId": str(card_spec.get("card_id") or "hermes-card"), "card": card}
+    return {"cardId": str(card_spec.get("card_id") or "auraforge-card"), "card": card}
 
 
 class _ThreadCountStore:
@@ -722,7 +722,7 @@ class GoogleChatAdapter(BasePlatformAdapter):
             from hermes_constants import get_hermes_home as _get_hermes_home
             _hermes_home = _get_hermes_home()
         except (ModuleNotFoundError, ImportError):
-            _hermes_home = _Path.home() / ".hermes"
+            _hermes_home = _Path.home() / ".auraforge"
         self._thread_count_store = _ThreadCountStore(
             _hermes_home / "google_chat_thread_counts.json"
         )
@@ -916,7 +916,7 @@ class GoogleChatAdapter(BasePlatformAdapter):
     # ------------------------------------------------------------------
     def _bot_id_cache_path(self) -> _Path:
         """Location where the resolved bot user_id is cached across restarts."""
-        base = os.getenv("HERMES_HOME", str(_Path.home() / ".hermes"))
+        base = os.getenv("HERMES_HOME", str(_Path.home() / ".auraforge"))
         return _Path(base) / "google_chat_bot_id.json"
 
     def _load_cached_bot_id(self) -> Optional[str]:
@@ -1815,7 +1815,7 @@ class GoogleChatAdapter(BasePlatformAdapter):
     async def _build_message_event(
         self, msg: Dict[str, Any], envelope: Dict[str, Any]
     ) -> Optional[MessageEvent]:
-        """Parse a Chat API message into a hermes MessageEvent."""
+        """Parse a Chat API message into a auraforge MessageEvent."""
         space = envelope.get("space") or msg.get("space") or {}
         space_name = space.get("name") or ""  # "spaces/XXX"
         space_type = (space.get("type") or space.get("spaceType") or "").upper()
@@ -3432,12 +3432,12 @@ def _env_enablement() -> Optional[Dict[str, Any]]:
 
 
 def interactive_setup() -> None:
-    """Walk the user through Google Chat configuration via ``hermes setup``.
+    """Walk the user through Google Chat configuration via ``auraforge setup``.
 
     The setup wizard at ``hermes_cli/gateway.py`` calls this for plugin
     platforms instead of using the in-tree ``_PLATFORMS`` data block. The
     flow mirrors the in-tree built-ins: print the GCP setup instructions,
-    prompt for env vars, persist them to ``~/.hermes/.env`` so the next
+    prompt for env vars, persist them to ``~/.auraforge/.env`` so the next
     gateway restart picks them up.
     """
     from hermes_cli.cli_output import (
@@ -3460,7 +3460,7 @@ def interactive_setup() -> None:
     print_info("Walkthrough:")
     print_info("  1. Create or select a GCP project; enable Google Chat API + Cloud Pub/Sub API.")
     print_info("  2. Create a Service Account (no project-level IAM role needed).")
-    print_info("  3. Create a Pub/Sub topic (e.g. hermes-chat-events) and a Pull subscription.")
+    print_info("  3. Create a Pub/Sub topic (e.g. auraforge-chat-events) and a Pull subscription.")
     print_info("  4. On the TOPIC: add chat-api-push@system.gserviceaccount.com as Pub/Sub Publisher.")
     print_info("  5. On the SUBSCRIPTION: grant your Service Account Pub/Sub Subscriber.")
     print_info("  6. Download the Service Account JSON key.")
@@ -3519,8 +3519,8 @@ def interactive_setup() -> None:
         save_env_value("GOOGLE_CHAT_HOME_CHANNEL", home.strip())
 
     print()
-    print_success("Google Chat configuration saved to ~/.hermes/.env")
-    print_info("Restart the gateway: hermes gateway restart")
+    print_success("Google Chat configuration saved to ~/.auraforge/.env")
+    print_info("Restart the gateway: auraforge gateway restart")
 
 
 # Strict resource-name pattern.  ``spaces/<id>`` and ``users/<id>`` must
@@ -3542,8 +3542,8 @@ async def _standalone_send(
     """POST a single Google Chat message via the REST API without the SDK.
 
     Used by ``tools/send_message_tool._send_via_adapter`` when the gateway
-    runner is not in this process (e.g. ``hermes cron`` running as a
-    separate process from ``hermes gateway``).  Without this hook,
+    runner is not in this process (e.g. ``auraforge cron`` running as a
+    separate process from ``auraforge gateway``).  Without this hook,
     ``deliver=google_chat`` cron jobs fail with ``No live adapter for
     platform``.
 
@@ -3700,7 +3700,7 @@ def register(ctx) -> None:
         required_env=[
             "GOOGLE_CHAT_SERVICE_ACCOUNT_JSON",
         ],
-        install_hint="Run `hermes setup` to install Google Chat support.",
+        install_hint="Run `auraforge setup` to install Google Chat support.",
         setup_fn=interactive_setup,
         # Env-driven auto-configuration — the core env-populator hook calls
         # this during ``_apply_env_overrides`` and seeds

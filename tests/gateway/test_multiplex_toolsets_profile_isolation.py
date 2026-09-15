@@ -11,7 +11,7 @@ Two defects covered:
    It must now be rejected (404); only a self-referential prefix (naming the
    profile this gateway actually serves) falls through.
 
-E2E-style: real profile homes under a temp HERMES root, real config.yaml
+E2E-style: real profile homes under a temp AURA_FORGE root, real config.yaml
 files read through the canonical loaders, and real aiohttp request routing
 (TestClient) through the profile-prefix middleware. No mocked config reads.
 """
@@ -36,7 +36,7 @@ LOKAJ_KEY = "lokaj-key-1234567890abcdef"
 @pytest.fixture()
 def hermes_root(tmp_path, monkeypatch):
     """Two real profile homes: default (owner) and 'lokaj' (secondary)."""
-    root = tmp_path / "hermes"
+    root = tmp_path / "auraforge"
     lokaj = root / "profiles" / "lokaj"
     lokaj.mkdir(parents=True)
     (root / "config.yaml").write_text(

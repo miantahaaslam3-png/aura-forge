@@ -48,7 +48,7 @@ def catalog_dir(tmp_path, monkeypatch):
 @pytest.fixture(autouse=True)
 def _isolate_hermes_home(tmp_path, monkeypatch):
     """Redirect all config I/O to a temp HERMES_HOME."""
-    hh = tmp_path / "hermes-home"
+    hh = tmp_path / "auraforge-home"
     hh.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(hh))
     monkeypatch.setattr(

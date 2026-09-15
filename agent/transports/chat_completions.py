@@ -306,7 +306,7 @@ class ChatCompletionsTransport(ProviderTransport):
           ``Extra inputs are not permitted, field: 'messages[N].tool_name'``.
           Permissive providers (OpenRouter, MiniMax) silently ignore the
           field, which masked the bug for months.
-        - Hermes-internal scaffolding markers — any top-level message key
+        - Aura Forge-internal scaffolding markers — any top-level message key
           starting with ``_`` (e.g. ``_empty_recovery_synthetic``,
           ``_empty_terminal_sentinel``, ``_thinking_prefill``). These are
           bookkeeping flags the agent loop attaches to messages so the
@@ -412,7 +412,7 @@ class ChatCompletionsTransport(ProviderTransport):
                 out_msg.pop("api_content", None)  # persist-what-you-send sidecar
 
 
-            # Drop all Hermes-internal scaffolding markers (``_``-prefixed).
+            # Drop all Aura Forge-internal scaffolding markers (``_``-prefixed).
             # OpenAI's message schema has no ``_``-prefixed fields, so this
             # is safe and future-proofs against new markers being added.
             internal_keys = [k for k in msg if isinstance(k, str) and k.startswith("_")]

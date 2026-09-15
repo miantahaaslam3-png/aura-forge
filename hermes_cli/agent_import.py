@@ -844,7 +844,7 @@ class AgentImporter:
 def import_agent_command(args) -> None:
     """Handle ``auraforge import-agent`` (invoked from hermes_cli.main)."""
     from hermes_cli.config import get_config_path, load_config, save_config
-    from hermes_constants import get_hermes_home
+    from hermes_constants import get_aura_forge_home
     from hermes_cli.setup import (
         Colors,
         color,
@@ -890,12 +890,12 @@ def import_agent_command(args) -> None:
                     f"{agent} --source /path/to/{_AGENT_DEFAULT_DIRS[agent]}")
         return
 
-    hermes_home = get_hermes_home()
+    aura_forge_home = get_aura_forge_home()
     print()
     print_header("Import Settings")
     print_info(f"Agent:       {agent}")
     print_info(f"Source:      {source_dir}")
-    print_info(f"Target:      {hermes_home}")
+    print_info(f"Target:      {aura_forge_home}")
     print_info(f"Overwrite:   {'yes' if overwrite else 'no (skip conflicts)'}")
     print_info("Secrets:     never imported — run 'auraforge setup' for credentials")
 
@@ -909,7 +909,7 @@ def import_agent_command(args) -> None:
         preview = AgentImporter(
             agent=agent,
             source_root=source_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=False,
             overwrite=overwrite,
         ).run()
@@ -949,7 +949,7 @@ def import_agent_command(args) -> None:
         report = AgentImporter(
             agent=agent,
             source_root=source_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=True,
             overwrite=overwrite,
         ).run()

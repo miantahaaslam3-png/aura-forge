@@ -1,6 +1,6 @@
 """Plugin packs — declarative, shareable plugin sets (#64166).
 
-A pack is a single YAML file (``hermes-pack.yaml``) that pins a set of
+A pack is a single YAML file (``auraforge-pack.yaml``) that pins a set of
 plugins (source + exact commit SHA + optional non-secret config seeds).
 Installing a pack is nothing new at runtime: it fans out to N ordinary
 plugin installs through the existing pinned-ref install path, then seeds
@@ -13,13 +13,13 @@ Format (canonical)::
     author: hyper
     version: 1.0.0
     plugins:
-      - name: hermes-media-studio          # bare community-index name…
+      - name: auraforge-media-studio          # bare community-index name…
         ref: e8d59971d2b7901405b39dac7b03bdd616272d0d
       - repo: owner/approval-relay         # …or explicit owner/repo / git URL
         ref: 8f3c2d1a9b4e5f6071829304a5b6c7d8e9f00112
         subdir: plugins/relay              # optional path within the repo
     config:                                # optional plugins.entries seeds
-      hermes-media-studio:
+      auraforge-media-studio:
         default_model: flux-3
     skills: []                             # declared seam — NOT auto-installed
 
@@ -580,7 +580,7 @@ def _sanitized_entry_config(plugin_id: str) -> dict[str, Any]:
     return out
 
 
-def export_pack(*, enabled_only: bool = False, pack_name: str = "my-hermes-pack") -> tuple[str, List[str]]:
+def export_pack(*, enabled_only: bool = False, pack_name: str = "my-auraforge-pack") -> tuple[str, List[str]]:
     """Build pack YAML from the current install.
 
     Returns ``(yaml_text, warnings)``. Plugins whose Git provenance is
@@ -721,12 +721,12 @@ def cmd_pack_install(source: str, *, force: bool = False) -> None:
         console.print(f"  [red]✗[/red] {r.display}: {r.error}")
     if ok:
         console.print("[dim]Restart the gateway for the plugins to take effect:[/dim]")
-        console.print("[dim]  hermes gateway restart[/dim]")
+        console.print("[dim]  auraforge gateway restart[/dim]")
     if failed:
         sys.exit(1)
 
 
-def cmd_pack_export(*, enabled_only: bool = False, name: str = "my-hermes-pack") -> None:
+def cmd_pack_export(*, enabled_only: bool = False, name: str = "my-auraforge-pack") -> None:
     """``auraforge plugins pack export [--enabled-only]`` — pack YAML on stdout."""
     from rich.console import Console
 
@@ -749,7 +749,7 @@ def pack_command(args) -> None:
     elif action == "export":
         cmd_pack_export(
             enabled_only=getattr(args, "enabled_only", False),
-            name=getattr(args, "name", None) or "my-hermes-pack",
+            name=getattr(args, "name", None) or "my-auraforge-pack",
         )
     elif action == "show":
         cmd_pack_show(args.source)
@@ -757,6 +757,6 @@ def pack_command(args) -> None:
         from rich.console import Console
 
         Console().print(
-            "[red]Error:[/red] Usage: hermes plugins pack {install|export|show}"
+            "[red]Error:[/red] Usage: auraforge plugins pack {install|export|show}"
         )
         sys.exit(1)

@@ -15,7 +15,7 @@ from hermes_cli import config as config_mod
 
 @pytest.fixture
 def hermes_home(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.delenv("HERMES_MANAGED", raising=False)
@@ -94,9 +94,9 @@ def test_managed_install_names_its_system_and_offers_an_update(
     assert "set model" in config_mod.format_managed_message("set model")
     assert config_mod.get_managed_update_command()
     assert config_mod.detect_install_method(install_tree) == managed_value
-    # `hermes update` cannot run on a managed install, so the advice must not
+    # `auraforge update` cannot run on a managed install, so the advice must not
     # name it.
-    assert config_mod.recommended_update_command() != "hermes update"
+    assert config_mod.recommended_update_command() != "auraforge update"
 
 
 @pytest.mark.parametrize("managed_value", ["nixos", "home-manager"])

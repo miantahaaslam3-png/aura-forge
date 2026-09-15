@@ -82,8 +82,8 @@ def test_explicit_replace_takeover_reacquires_lock_once(adapter):
     """Initial explicit --replace may hand off and re-acquire once (#65176)."""
     existing = {
         "pid": 4242,
-        "kind": "hermes-gateway",
-        "argv": ["hermes", "gateway", "run"],
+        "kind": "auraforge-gateway",
+        "argv": ["auraforge", "gateway", "run"],
         "start_time": 123,
     }
     acquire = MagicMock(side_effect=[(False, existing), (True, None)])
@@ -130,7 +130,7 @@ def test_lock_conflict_names_owning_profile(adapter):
         "Telegram bot token already in use by the "
         "'lead-gen-outreach' profile gateway (PID 559). "
         "Stop that gateway first "
-        "(hermes --profile lead-gen-outreach gateway stop)."
+        "(auraforge --profile lead-gen-outreach gateway stop)."
     )
     assert adapter._fatal_error_retryable is True
     assert adapter._fatal_error_code == "telegram-bot-token_lock"

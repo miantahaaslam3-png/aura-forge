@@ -96,9 +96,9 @@ def _exec_profile(ctx: CommandContext) -> CommandReply:
 
         profile_name = get_active_profile_name()
     if not home_display:
-        from hermes_constants import display_hermes_home
+        from hermes_constants import display_aura_forge_home
 
-        home_display = display_hermes_home()
+        home_display = display_aura_forge_home()
 
     # Presentation-only display name (profile.yaml). `data.profile` stays
     # the canonical id — consumers route on it; only the text gets the label.
@@ -136,7 +136,7 @@ def _exec_bundles(ctx: CommandContext) -> CommandReply:
     if not bundles:
         return CommandReply(
             "No skill bundles installed.\n"
-            "Create one with: hermes bundles create <name> --skill <s1> --skill <s2>\n"
+            "Create one with: auraforge bundles create <name> --skill <s1> --skill <s2>\n"
             f"Directory: {bundles_dir}",
             data={"bundles": [], "dir": bundles_dir},
         )

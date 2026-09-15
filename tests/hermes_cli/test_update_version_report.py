@@ -1,4 +1,4 @@
-"""Version transition reporting after ``hermes update``.
+"""Version transition reporting after ``auraforge update``.
 
 Ported from PrimeIntellect-ai/prime-agent#630: a successful self-update
 reports both versions (``v0.19.4 → v0.20.0``) when the pyproject version
@@ -14,7 +14,7 @@ from hermes_cli import update_cmd
 
 def _write_pyproject(root: Path, version: str) -> None:
     (root / "pyproject.toml").write_text(
-        f'[project]\nname = "hermes-agent"\nversion = "{version}"\n',
+        f'[project]\nname = "auraforge-agent"\nversion = "{version}"\n',
         encoding="utf-8",
     )
 

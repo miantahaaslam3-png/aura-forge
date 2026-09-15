@@ -229,16 +229,16 @@ def test_abort_recovery_records_serve_runtimes_as_skipped_with_reason(monkeypatc
 
 def test_service_matching_is_exact_for_overlapping_profile_names():
     assert update_cmd._gateway_service_matches_profile(
-        "foo", "hermes-gateway-foo.service"
+        "foo", "auraforge-gateway-foo.service"
     )
     assert not update_cmd._gateway_service_matches_profile(
-        "foo", "hermes-gateway-foobar.service"
+        "foo", "auraforge-gateway-foobar.service"
     )
     assert update_cmd._gateway_service_matches_profile(
-        "default", "ai.hermes.gateway"
+        "default", "ai.auraforge.gateway"
     )
     assert not update_cmd._gateway_service_matches_profile(
-        "default", "ai.hermes.gateway-foo"
+        "default", "ai.auraforge.gateway-foo"
     )
 
 
@@ -281,7 +281,7 @@ def test_recovery_child_verifies_systemd_profiles_via_is_active(monkeypatch):
         calls.append(argv)
         if argv[0].endswith("systemctl"):
             unit = argv[-1]
-            active = unit == "hermes-gateway.service"
+            active = unit == "auraforge-gateway.service"
             return _Completed(0 if active else 3, stdout="active" if active else "inactive")
         return _Completed(0)
 
@@ -418,7 +418,7 @@ def test_recovery_module_end_to_end_in_a_real_fresh_process(tmp_path):
                 return subprocess.CompletedProcess(argv_list, 0, "", "")
             if argv_list and str(argv_list[0]).endswith("systemctl"):
                 unit = argv_list[-1]
-                if unit == "hermes-gateway.service":
+                if unit == "auraforge-gateway.service":
                     return subprocess.CompletedProcess(argv_list, 0, "active\\n", "")
                 return subprocess.CompletedProcess(argv_list, 3, "inactive\\n", "")
             return _real_run(argv, *args, **kwargs)

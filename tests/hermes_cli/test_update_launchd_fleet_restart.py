@@ -1,8 +1,8 @@
-"""Regression for #41403 — ``hermes update`` must restart ALL macOS launchd gateways.
+"""Regression for #41403 — ``auraforge update`` must restart ALL macOS launchd gateways.
 
 The macOS branch of the update's fleet-restart step only restarted the
 invoking profile's LaunchAgent (``get_launchd_label()`` is profile-scoped).
-Sibling ``ai.hermes.gateway-<profile>`` services kept running pre-update
+Sibling ``ai.auraforge.gateway-<profile>`` services kept running pre-update
 modules cached in ``sys.modules`` and died on their next agent turn once the
 new code lazily imported a symbol the old module generation didn't have
 (``ImportError: cannot import name ...`` — or, with a wider version gap,
@@ -98,9 +98,9 @@ class TestLaunchdGatewayLabelsForInstall:
             ],
         )
         assert launchd_gateway_labels_for_install() == [
-            "ai.hermes.gateway",
-            "ai.hermes.gateway-merit-ops",
-            "ai.hermes.gateway-tfl-wiki",
+            "ai.auraforge.gateway",
+            "ai.auraforge.gateway-merit-ops",
+            "ai.auraforge.gateway-tfl-wiki",
         ]
 
     def test_no_profiles_means_no_fleet(self, monkeypatch):
@@ -119,7 +119,7 @@ class TestParseLaunchdPidFromPrintOutput:
 class TestLocateLaunchdGatewayService:
     def test_domains_resolve_per_label_not_from_cache(self, monkeypatch):
         """The #41403 review defect: sibling domains are independent."""
-        gui_loaded = {"ai.hermes.gateway-a"}
+        gui_loaded = {"ai.auraforge.gateway-a"}
 
         def fake_run(cmd, **kwargs):
             assert cmd[:2] == ["launchctl", "print"]
@@ -135,11 +135,11 @@ class TestLocateLaunchdGatewayService:
         # process-wide cache — per-label lookups must not consult it.
         monkeypatch.setattr(gw, "_resolved_launchd_domain", f"gui/{UID}")
 
-        assert _locate_launchd_gateway_service("ai.hermes.gateway-a") == (
+        assert _locate_launchd_gateway_service("ai.auraforge.gateway-a") == (
             f"gui/{UID}",
             4242,
         )
-        assert _locate_launchd_gateway_service("ai.hermes.gateway-b") == (
+        assert _locate_launchd_gateway_service("ai.auraforge.gateway-b") == (
             f"user/{UID}",
             4242,
         )
@@ -150,14 +150,14 @@ class TestLocateLaunchdGatewayService:
             "run",
             lambda *a, **k: _completed(0, PRINT_LOADED_NOT_RUNNING),
         )
-        assert _locate_launchd_gateway_service("ai.hermes.gateway-x") == (
+        assert _locate_launchd_gateway_service("ai.auraforge.gateway-x") == (
             f"gui/{UID}",
             None,
         )
 
     def test_not_loaded_in_either_domain(self, monkeypatch):
         monkeypatch.setattr(gw.subprocess, "run", lambda *a, **k: _completed(113))
-        assert _locate_launchd_gateway_service("ai.hermes.gateway-x") == (None, None)
+        assert _locate_launchd_gateway_service("ai.auraforge.gateway-x") == (None, None)
 
     def test_timeout_propagates_to_caller(self, monkeypatch):
         """A wedged launchctl must surface as a failure, not read as
@@ -168,7 +168,7 @@ class TestLocateLaunchdGatewayService:
 
         monkeypatch.setattr(gw.subprocess, "run", fake_run)
         with pytest.raises(subprocess.TimeoutExpired):
-            _locate_launchd_gateway_service("ai.hermes.gateway-x")
+            _locate_launchd_gateway_service("ai.auraforge.gateway-x")
 
 
 class TestProbeLaunchdDomainForLabel:
@@ -181,7 +181,7 @@ class TestProbeLaunchdDomainForLabel:
             raise AssertionError(f"unexpected command {cmd}")
 
         monkeypatch.setattr(gw.subprocess, "run", fake_run)
-        assert _probe_launchd_domain_for_label("ai.hermes.gateway-x") == f"gui/{UID}"
+        assert _probe_launchd_domain_for_label("ai.auraforge.gateway-x") == f"gui/{UID}"
 
     def test_unloaded_label_defaults_to_user_domain(self, monkeypatch):
         def fake_run(cmd, **kwargs):
@@ -192,23 +192,23 @@ class TestProbeLaunchdDomainForLabel:
             raise AssertionError(f"unexpected command {cmd}")
 
         monkeypatch.setattr(gw.subprocess, "run", fake_run)
-        assert _probe_launchd_domain_for_label("ai.hermes.gateway-x") == f"user/{UID}"
+        assert _probe_launchd_domain_for_label("ai.auraforge.gateway-x") == f"user/{UID}"
 
 
 class TestGetServicePidsScoping:
     def _wire(self, monkeypatch):
         monkeypatch.setattr(gw, "is_macos", lambda: True)
         monkeypatch.setattr(gw, "supports_systemd_services", lambda: False)
-        monkeypatch.setattr(gw, "get_launchd_label", lambda: "ai.hermes.gateway")
+        monkeypatch.setattr(gw, "get_launchd_label", lambda: "ai.auraforge.gateway")
         monkeypatch.setattr(
             gw,
             "launchd_gateway_labels_for_install",
-            lambda: ["ai.hermes.gateway", "ai.hermes.gateway-a", "ai.hermes.gateway-b"],
+            lambda: ["ai.auraforge.gateway", "ai.auraforge.gateway-a", "ai.auraforge.gateway-b"],
         )
         located = {
-            "ai.hermes.gateway": (f"gui/{UID}", 100),
-            "ai.hermes.gateway-a": (f"gui/{UID}", 200),
-            "ai.hermes.gateway-b": (None, None),  # not bootstrapped
+            "ai.auraforge.gateway": (f"gui/{UID}", 100),
+            "ai.auraforge.gateway-a": (f"gui/{UID}", 200),
+            "ai.auraforge.gateway-b": (None, None),  # not bootstrapped
         }
         monkeypatch.setattr(
             gw, "_locate_launchd_gateway_service", lambda label: located[label]
@@ -334,16 +334,16 @@ class TestRestartMacosLaunchdGateways:
         """Current profile keeps launchd_restart(); every sibling (including
         the root gateway when a named profile invokes the update) is
         kickstarted — and verified — in the domain IT was located in."""
-        current = "ai.hermes.gateway-merit-ops"
+        current = "ai.auraforge.gateway-merit-ops"
         rec = _fleet(
             monkeypatch,
             tmp_path,
             current=current,
-            labels=["ai.hermes.gateway", current, "ai.hermes.gateway-user-scoped"],
+            labels=["ai.auraforge.gateway", current, "ai.auraforge.gateway-user-scoped"],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
                 current: (f"gui/{UID}", 200),
-                "ai.hermes.gateway-user-scoped": (f"user/{UID}", 300),
+                "ai.auraforge.gateway-user-scoped": (f"user/{UID}", 300),
             },
         )
         restarted: list[str] = []
@@ -353,17 +353,17 @@ class TestRestartMacosLaunchdGateways:
 
         assert rec.current_restarts == [current]
         assert rec.kickstarts == [
-            f"gui/{UID}/ai.hermes.gateway",
-            f"user/{UID}/ai.hermes.gateway-user-scoped",
+            f"gui/{UID}/ai.auraforge.gateway",
+            f"user/{UID}/ai.auraforge.gateway-user-scoped",
         ]
         assert rec.waits == [
-            f"gui/{UID}/ai.hermes.gateway",
-            f"user/{UID}/ai.hermes.gateway-user-scoped",
+            f"gui/{UID}/ai.auraforge.gateway",
+            f"user/{UID}/ai.auraforge.gateway-user-scoped",
         ]
         assert restarted == [
             current,
-            "ai.hermes.gateway",
-            "ai.hermes.gateway-user-scoped",
+            "ai.auraforge.gateway",
+            "ai.auraforge.gateway-user-scoped",
         ]
         assert failed == []
         # Siblings were drained before the hard kickstart.
@@ -376,13 +376,13 @@ class TestRestartMacosLaunchdGateways:
         skipped without ANY launchctl interaction (no registered probe, no
         locate) — and definitely without inventing a failure. Siblings are
         still processed."""
-        current = "ai.hermes.gateway"
+        current = "ai.auraforge.gateway"
         rec = _fleet(
             monkeypatch,
             tmp_path,
             current=current,
-            labels=[current, "ai.hermes.gateway-a"],
-            located={"ai.hermes.gateway-a": (f"gui/{UID}", 200)},
+            labels=[current, "ai.auraforge.gateway-a"],
+            located={"ai.auraforge.gateway-a": (f"gui/{UID}", 200)},
             plist_exists=False,
         )
         restarted: list[str] = []
@@ -393,7 +393,7 @@ class TestRestartMacosLaunchdGateways:
         assert rec.current_restarts == []
         assert current not in rec.registered_checks
         assert current not in rec.locates
-        assert restarted == ["ai.hermes.gateway-a"]
+        assert restarted == ["ai.auraforge.gateway-a"]
         assert failed == []
 
     def test_current_profile_registered_but_unlocatable_still_restarts(
@@ -404,7 +404,7 @@ class TestRestartMacosLaunchdGateways:
         support service management). The gate must use the registered
         predicate and hand off to launchd_restart(), which owns the
         domain-unsupported fallback — locate is for siblings only."""
-        current = "ai.hermes.gateway"
+        current = "ai.auraforge.gateway"
         rec = _fleet(
             monkeypatch,
             tmp_path,
@@ -429,11 +429,11 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
-            labels=["ai.hermes.gateway", "ai.hermes.gateway-idle"],
+            current="ai.auraforge.gateway",
+            labels=["ai.auraforge.gateway", "ai.auraforge.gateway-idle"],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-idle": (None, None),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-idle": (None, None),
             },
         )
         restarted: list[str] = []
@@ -442,7 +442,7 @@ class TestRestartMacosLaunchdGateways:
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
         assert rec.kickstarts == []
-        assert restarted == ["ai.hermes.gateway"]
+        assert restarted == ["ai.auraforge.gateway"]
         assert failed == []
 
     def test_loaded_but_not_running_sibling_is_kickstarted(
@@ -453,11 +453,11 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
-            labels=["ai.hermes.gateway", "ai.hermes.gateway-dormant"],
+            current="ai.auraforge.gateway",
+            labels=["ai.auraforge.gateway", "ai.auraforge.gateway-dormant"],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-dormant": (f"gui/{UID}", None),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-dormant": (f"gui/{UID}", None),
             },
         )
         restarted: list[str] = []
@@ -466,8 +466,8 @@ class TestRestartMacosLaunchdGateways:
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
         assert rec.drains == []
-        assert rec.kickstarts == [f"gui/{UID}/ai.hermes.gateway-dormant"]
-        assert restarted == ["ai.hermes.gateway", "ai.hermes.gateway-dormant"]
+        assert rec.kickstarts == [f"gui/{UID}/ai.auraforge.gateway-dormant"]
+        assert restarted == ["ai.auraforge.gateway", "ai.auraforge.gateway-dormant"]
         assert failed == []
 
     def test_graceful_drain_with_keepalive_respawn_skips_kickstart(
@@ -478,11 +478,11 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
-            labels=["ai.hermes.gateway", "ai.hermes.gateway-a"],
+            current="ai.auraforge.gateway",
+            labels=["ai.auraforge.gateway", "ai.auraforge.gateway-a"],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-a": (f"gui/{UID}", 200),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-a": (f"gui/{UID}", 200),
             },
             drain_results={200: True},
         )
@@ -493,8 +493,8 @@ class TestRestartMacosLaunchdGateways:
 
         assert rec.drains == [200]
         assert rec.kickstarts == []
-        assert rec.waits == [f"gui/{UID}/ai.hermes.gateway-a"]
-        assert restarted == ["ai.hermes.gateway", "ai.hermes.gateway-a"]
+        assert rec.waits == [f"gui/{UID}/ai.auraforge.gateway-a"]
+        assert restarted == ["ai.auraforge.gateway", "ai.auraforge.gateway-a"]
         assert failed == []
 
     def test_kickstart_failure_is_recorded_and_rest_continue(
@@ -503,19 +503,19 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
+            current="ai.auraforge.gateway",
             labels=[
-                "ai.hermes.gateway",
-                "ai.hermes.gateway-bad",
-                "ai.hermes.gateway-good",
+                "ai.auraforge.gateway",
+                "ai.auraforge.gateway-bad",
+                "ai.auraforge.gateway-good",
             ],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-bad": (f"gui/{UID}", 200),
-                "ai.hermes.gateway-good": (f"gui/{UID}", 300),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-bad": (f"gui/{UID}", 200),
+                "ai.auraforge.gateway-good": (f"gui/{UID}", 300),
             },
             kick_errors={
-                "ai.hermes.gateway-bad": subprocess.CalledProcessError(
+                "ai.auraforge.gateway-bad": subprocess.CalledProcessError(
                     5, ["launchctl", "kickstart"]
                 )
             },
@@ -525,9 +525,9 @@ class TestRestartMacosLaunchdGateways:
 
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
-        assert failed == ["ai.hermes.gateway-bad"]
-        assert rec.kickstarts == [f"gui/{UID}/ai.hermes.gateway-good"]
-        assert restarted == ["ai.hermes.gateway", "ai.hermes.gateway-good"]
+        assert failed == ["ai.auraforge.gateway-bad"]
+        assert rec.kickstarts == [f"gui/{UID}/ai.auraforge.gateway-good"]
+        assert restarted == ["ai.auraforge.gateway", "ai.auraforge.gateway-good"]
 
     def test_timeout_during_discovery_is_failed_and_rest_continue(
         self, monkeypatch, tmp_path
@@ -538,18 +538,18 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
+            current="ai.auraforge.gateway",
             labels=[
-                "ai.hermes.gateway",
-                "ai.hermes.gateway-wedged",
-                "ai.hermes.gateway-after",
+                "ai.auraforge.gateway",
+                "ai.auraforge.gateway-wedged",
+                "ai.auraforge.gateway-after",
             ],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-wedged": subprocess.TimeoutExpired(
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-wedged": subprocess.TimeoutExpired(
                     cmd=["launchctl", "print"], timeout=5
                 ),
-                "ai.hermes.gateway-after": (f"gui/{UID}", 300),
+                "ai.auraforge.gateway-after": (f"gui/{UID}", 300),
             },
         )
         restarted: list[str] = []
@@ -557,9 +557,9 @@ class TestRestartMacosLaunchdGateways:
 
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
-        assert failed == ["ai.hermes.gateway-wedged"]
-        assert rec.kickstarts == [f"gui/{UID}/ai.hermes.gateway-after"]
-        assert restarted == ["ai.hermes.gateway", "ai.hermes.gateway-after"]
+        assert failed == ["ai.auraforge.gateway-wedged"]
+        assert rec.kickstarts == [f"gui/{UID}/ai.auraforge.gateway-after"]
+        assert restarted == ["ai.auraforge.gateway", "ai.auraforge.gateway-after"]
 
     def test_timeout_during_kickstart_is_failed_and_rest_continue(
         self, monkeypatch, tmp_path
@@ -567,19 +567,19 @@ class TestRestartMacosLaunchdGateways:
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
+            current="ai.auraforge.gateway",
             labels=[
-                "ai.hermes.gateway",
-                "ai.hermes.gateway-wedged",
-                "ai.hermes.gateway-after",
+                "ai.auraforge.gateway",
+                "ai.auraforge.gateway-wedged",
+                "ai.auraforge.gateway-after",
             ],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-wedged": (f"gui/{UID}", 200),
-                "ai.hermes.gateway-after": (f"gui/{UID}", 300),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-wedged": (f"gui/{UID}", 200),
+                "ai.auraforge.gateway-after": (f"gui/{UID}", 300),
             },
             kick_errors={
-                "ai.hermes.gateway-wedged": subprocess.TimeoutExpired(
+                "ai.auraforge.gateway-wedged": subprocess.TimeoutExpired(
                     cmd=["launchctl", "kickstart"], timeout=90
                 )
             },
@@ -589,29 +589,29 @@ class TestRestartMacosLaunchdGateways:
 
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
-        assert failed == ["ai.hermes.gateway-wedged"]
-        assert rec.kickstarts == [f"gui/{UID}/ai.hermes.gateway-after"]
-        assert restarted == ["ai.hermes.gateway", "ai.hermes.gateway-after"]
+        assert failed == ["ai.auraforge.gateway-wedged"]
+        assert rec.kickstarts == [f"gui/{UID}/ai.auraforge.gateway-after"]
+        assert restarted == ["ai.auraforge.gateway", "ai.auraforge.gateway-after"]
 
     def test_sibling_that_never_comes_back_is_failed(self, monkeypatch, tmp_path):
         rec = _fleet(
             monkeypatch,
             tmp_path,
-            current="ai.hermes.gateway",
-            labels=["ai.hermes.gateway", "ai.hermes.gateway-zombie"],
+            current="ai.auraforge.gateway",
+            labels=["ai.auraforge.gateway", "ai.auraforge.gateway-zombie"],
             located={
-                "ai.hermes.gateway": (f"gui/{UID}", 100),
-                "ai.hermes.gateway-zombie": (f"gui/{UID}", 200),
+                "ai.auraforge.gateway": (f"gui/{UID}", 100),
+                "ai.auraforge.gateway-zombie": (f"gui/{UID}", 200),
             },
-            wait_results={"ai.hermes.gateway-zombie": False},
+            wait_results={"ai.auraforge.gateway-zombie": False},
         )
         restarted: list[str] = []
         failed: list[str] = []
 
         _restart_macos_launchd_gateways(restarted, failed, drain_budget=0.0)
 
-        assert restarted == ["ai.hermes.gateway"]
-        assert failed == ["ai.hermes.gateway-zombie"]
+        assert restarted == ["ai.auraforge.gateway"]
+        assert failed == ["ai.auraforge.gateway-zombie"]
 
 
 class TestWaitForLaunchdServicePid:
@@ -624,7 +624,7 @@ class TestWaitForLaunchdServicePid:
         )
         monkeypatch.setattr(gw.time, "sleep", lambda _s: None)
         assert gw._wait_for_launchd_service_pid(
-            "ai.hermes.gateway-x", old_pid=200, timeout=5.0, domain=f"gui/{UID}"
+            "ai.auraforge.gateway-x", old_pid=200, timeout=5.0, domain=f"gui/{UID}"
         )
 
     def test_returns_false_when_pid_never_changes(self, monkeypatch):
@@ -637,19 +637,19 @@ class TestWaitForLaunchdServicePid:
             lambda domain, label: (True, 200),
         )
         assert not gw._wait_for_launchd_service_pid(
-            "ai.hermes.gateway-x", old_pid=200, timeout=3.0, domain=f"gui/{UID}"
+            "ai.auraforge.gateway-x", old_pid=200, timeout=3.0, domain=f"gui/{UID}"
         )
 
 
 class TestIncompleteWarningMentionsLaunchctl:
     def test_launchd_labels_get_launchctl_hint(self, capsys):
-        _warn_incomplete_gateway_fleet_restart(["ai.hermes.gateway-merit-ops"])
+        _warn_incomplete_gateway_fleet_restart(["ai.auraforge.gateway-merit-ops"])
         out = capsys.readouterr().out
         assert "Update incomplete" in out
         assert "launchctl kickstart -k" in out
 
     def test_systemd_units_keep_systemctl_hint(self, capsys):
-        _warn_incomplete_gateway_fleet_restart(["hermes-gateway-coder"])
+        _warn_incomplete_gateway_fleet_restart(["auraforge-gateway-coder"])
         out = capsys.readouterr().out
         assert "systemctl" in out
         assert "launchctl" not in out

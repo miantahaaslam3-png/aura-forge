@@ -90,7 +90,7 @@ def _validate_explicit_toolsets(toolsets: object = None) -> tuple[list[str] | No
     try:
         from toolsets import validate_toolset
     except Exception as exc:
-        return None, f"hermes -z: failed to validate --toolsets: {exc}\n"
+        return None, f"auraforge -z: failed to validate --toolsets: {exc}\n"
 
     built_in = [name for name in normalized if validate_toolset(name)]
     unresolved = [name for name in normalized if name not in built_in]
@@ -112,7 +112,7 @@ def _validate_explicit_toolsets(toolsets: object = None) -> tuple[list[str] | No
         ignored = [name for name in normalized if name not in {"all", "*"}]
         if ignored:
             sys.stderr.write(
-                "hermes -z: --toolsets all enables every toolset; "
+                "auraforge -z: --toolsets all enables every toolset; "
                 f"ignoring additional entries: {', '.join(ignored)}\n"
             )
         return None, None
@@ -143,15 +143,15 @@ def _validate_explicit_toolsets(toolsets: object = None) -> tuple[list[str] | No
     valid = built_in + mcp_valid
 
     if unknown:
-        sys.stderr.write(f"hermes -z: ignoring unknown --toolsets entries: {', '.join(unknown)}\n")
+        sys.stderr.write(f"auraforge -z: ignoring unknown --toolsets entries: {', '.join(unknown)}\n")
     if disabled:
         sys.stderr.write(
-            "hermes -z: ignoring disabled MCP servers (set enabled: true in config.yaml to use): "
+            "auraforge -z: ignoring disabled MCP servers (set enabled: true in config.yaml to use): "
             f"{', '.join(disabled)}\n"
         )
 
     if not valid:
-        return None, "hermes -z: --toolsets did not contain any valid toolsets.\n"
+        return None, "auraforge -z: --toolsets did not contain any valid toolsets.\n"
 
     return valid, None
 
@@ -239,7 +239,7 @@ def run_oneshot(
     env_model_early = os.getenv("HERMES_INFERENCE_MODEL", "").strip()
     if provider and not ((model or "").strip() or env_model_early):
         sys.stderr.write(
-            "hermes -z: --provider requires --model (or HERMES_INFERENCE_MODEL). "
+            "auraforge -z: --provider requires --model (or HERMES_INFERENCE_MODEL). "
             "Pass both explicitly, or neither to use your configured defaults.\n"
         )
         return 2
@@ -306,7 +306,7 @@ def run_oneshot(
             _write_usage_file(usage_file, result, failure=repr(failure))
             raise failure
         _write_usage_file(usage_file, result, failure=str(failure))
-        real_stderr.write(f"hermes -z: agent failed: {failure}\n")
+        real_stderr.write(f"auraforge -z: agent failed: {failure}\n")
         real_stderr.flush()
         return 1
 
@@ -331,7 +331,7 @@ def run_oneshot(
         return 2
 
     if not (response or "").strip():
-        real_stderr.write("hermes -z: no final response was produced; treating the run as failed.\n")
+        real_stderr.write("auraforge -z: no final response was produced; treating the run as failed.\n")
         real_stderr.flush()
         return 1
 
@@ -341,7 +341,7 @@ def run_oneshot(
 def _create_session_db_for_oneshot():
     """Best-effort SessionDB for ``auraforge -z`` / oneshot mode.
 
-    Oneshot bypasses ``HermesCLI._init_agent()``, so it must wire the SQLite
+    Oneshot bypasses ``Aura ForgeCLI._init_agent()``, so it must wire the SQLite
     session store itself. Without this, the ``session_search``/recall tool is
     advertised but every call returns "Session database not available.".
     """
@@ -364,7 +364,7 @@ def _run_agent(
 ) -> tuple[str, dict]:
     """Build an AIAgent exactly like a normal CLI chat turn would, then
     run a single conversation.  Returns ``(final_response, run_result)``."""
-    # Imports are local so they don't run when hermes is invoked for
+    # Imports are local so they don't run when auraforge is invoked for
     # other commands (keeps top-level CLI startup cheap).
     from hermes_cli.config import load_config
     from hermes_cli.models import detect_provider_for_model
@@ -447,7 +447,7 @@ def _run_agent(
 
     # Ensure MCP tools are discovered before building the agent.  Oneshot
     # bypasses cli.py's _prepare_agent_startup MCP background path and
-    # HermesCLI._init_agent's wait — it builds AIAgent directly here, so the
+    # Aura ForgeCLI._init_agent's wait — it builds AIAgent directly here, so the
     # tool snapshot at construction time misses any MCP server that hasn't
     # registered yet.  This helper starts discovery if needed (idempotent) and
     # bounded-waits with the larger single-query bound (default 15s) because

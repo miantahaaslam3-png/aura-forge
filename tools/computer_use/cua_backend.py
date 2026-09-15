@@ -14,7 +14,7 @@ Linux is the most recent runtime (X11 today, Wayland via XWayland; pure-
 Wayland progress tracked upstream). It is enabled in
 `check_computer_use_requirements` alongside macOS and Windows. The plumbing
 in this file is OS-agnostic; per-host gaps (no DISPLAY, missing AT-SPI,
-etc.) surface as specific blocked checks via `hermes computer-use doctor`
+etc.) surface as specific blocked checks via `auraforge computer-use doctor`
 rather than failing silently.
 
 Install:
@@ -384,7 +384,7 @@ def _standard_runtime_launch_args(
     if platform != "darwin":
         return result, None
     private_socket = socket_path or os.path.join(
-        tempfile.gettempdir(), f"hermes-cua-standard-{uuid.uuid4().hex[:12]}.sock"
+        tempfile.gettempdir(), f"auraforge-cua-standard-{uuid.uuid4().hex[:12]}.sock"
     )
     result.extend(["--socket", private_socket])
     return result, private_socket
@@ -471,10 +471,10 @@ def _empty_discovery_reason() -> str:
             "window discovery returned no windows; on macOS this usually "
             "means no shareable display (headless Mac or panel asleep) — "
             "wake the display or attach a monitor/HDMI dummy, then run "
-            "`hermes computer-use doctor`"
+            "`auraforge computer-use doctor`"
         )
     return (
-        "window discovery returned no windows; run `hermes computer-use "
+        "window discovery returned no windows; run `auraforge computer-use "
         "doctor` (display reachability, AX capability)"
     )
 
@@ -691,7 +691,7 @@ def _embedded_daemon_spawn_command(
     if not resolved_app:
         raise RuntimeError(
             "CuaDriver.app is required for private computer-use sessions on macOS. "
-            "Run `hermes computer-use install` to restore it."
+            "Run `auraforge computer-use install` to restore it."
         )
     _validate_cua_driver_app_signature(resolved_app)
     return [
@@ -783,7 +783,7 @@ class _EmbeddedCuaDaemon:
         self._stderr_thread: Optional[threading.Thread] = None
         token = uuid.uuid4().hex[:12]
         if sys.platform == "win32":
-            self.socket_path = rf"\\.\pipe\hermes-cua-{token}"
+            self.socket_path = rf"\\.\pipe\auraforge-cua-{token}"
         else:
             self.socket_path = os.path.join(
                 tempfile.gettempdir(), f"hc-{token}.sock"
@@ -869,7 +869,7 @@ class _EmbeddedCuaDaemon:
         self._stderr_thread = threading.Thread(
             target=self._drain_stderr,
             args=(self._process,),
-            name="hermes-cua-daemon-stderr",
+            name="auraforge-cua-daemon-stderr",
             daemon=True,
         )
         self._stderr_thread.start()
@@ -1116,7 +1116,7 @@ def _candidate_cua_driver_commands(override: Optional[str] = None) -> List[str]:
     omits user-local install directories. The upstream cua-driver installer
     commonly places the binary under ``~/.local/bin`` on POSIX systems, so a
     Aura Forge Desktop/TUI session can otherwise filter out the `computer_use`
-    tool even though `hermes computer-use doctor` succeeds from a login shell.
+    tool even though `auraforge computer-use doctor` succeeds from a login shell.
     """
     configured = (override if override is not None else os.environ.get(_CUA_DRIVER_CMD_ENV, "")).strip()
     if configured:
@@ -1367,7 +1367,7 @@ def cua_driver_update_nudge() -> Optional[str]:
     current = state.get("current_version") or "?"
     return (
         f"cua-driver {latest} is available (you have {current}); "
-        f"update with `hermes computer-use install --upgrade`."
+        f"update with `auraforge computer-use install --upgrade`."
     )
 
 
@@ -1455,10 +1455,10 @@ def cua_driver_install_hint() -> str:
         )
     return (
         "cua-driver is not installed. Install with one of:\n"
-        "  hermes computer-use install\n"
+        "  auraforge computer-use install\n"
         "Or run the upstream installer directly:\n"
         f"{installer}\n"
-        "Or run `hermes tools` and enable the Computer Use toolset to install it automatically."
+        "Or run `auraforge tools` and enable the Computer Use toolset to install it automatically."
     )
 
 
@@ -1777,7 +1777,7 @@ class _CuaDriverSession:
                 command=command,
                 args=args,
                 # Apply the telemetry policy first (default: disabled), then
-                # sanitize Hermes-managed secrets out of the child env.
+                # sanitize Aura Forge-managed secrets out of the child env.
                 env=_sanitize_subprocess_env(child_env),
             )
 
@@ -1919,7 +1919,7 @@ class _CuaDriverSession:
             raise RuntimeError(
                 "cua-driver session never reached ready (timeout 30s; "
                 f"stuck in phase: {phase}). "
-                "Run `hermes computer-use doctor` and check "
+                "Run `auraforge computer-use doctor` and check "
                 f"{display_hermes_home()}/logs/agent.log for the phase timings."
             )
         # If setup failed, the lifecycle coroutine set _setup_error
@@ -2790,7 +2790,7 @@ class CuaDriverBackend(ComputerUseBackend):
         # `session` on every cua-driver tool call. Labels are an
         # part of the required Cua Driver 0.20 runtime contract checked at
         # backend startup.
-        self._session_id: str = f"hermes-{uuid.uuid4().hex[:12]}"
+        self._session_id: str = f"auraforge-{uuid.uuid4().hex[:12]}"
         self._session.set_transport_reset_callback(self._handle_transport_reset)
 
     def _handle_transport_reset(self) -> None:
@@ -2813,7 +2813,7 @@ class CuaDriverBackend(ComputerUseBackend):
                     "remove that override."
                 )
             else:
-                repair = "Run `hermes computer-use install` to repair it."
+                repair = "Run `auraforge computer-use install` to repair it."
             raise RuntimeError(f"cua-driver is not ready: {reason}. {repair}")
         _maybe_nudge_update()
         # The MCP client SDK (`mcp`) is an optional dependency (the
@@ -3167,7 +3167,7 @@ class CuaDriverBackend(ComputerUseBackend):
     ) -> CaptureResult:
         """Capture the frontmost on-screen window or an exact known target.
 
-        Maps hermes `capture(mode, app)` → cua-driver `list_windows` +
+        Maps auraforge `capture(mode, app)` → cua-driver `list_windows` +
         `get_window_state` (ax/som) or `screenshot` (vision).
         """
         # Step 1: enumerate on-screen windows to find target pid/window_id.

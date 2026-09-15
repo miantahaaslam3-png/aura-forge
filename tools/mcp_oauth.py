@@ -338,13 +338,13 @@ def _raise_if_non_interactive(lead: str) -> None:
     """Raise ``OAuthNonInteractiveError`` unless an interactive session exists.
 
     ``lead`` is the boundary-specific first sentence; this helper appends the
-    shared, actionable ``hermes mcp login`` next-step so the guidance wording
+    shared, actionable ``auraforge mcp login`` next-step so the guidance wording
     lives in one place across every non-interactive OAuth boundary (#57836).
     """
     if not _is_interactive():
         raise OAuthNonInteractiveError(
             f"{lead} "
-            "Run `hermes mcp login <server>` interactively to (re)authorize, "
+            "Run `auraforge mcp login <server>` interactively to (re)authorize, "
             "then restart or reload the gateway."
         )
 
@@ -425,7 +425,7 @@ def _write_json(path: Path, data: dict) -> None:
     # Tighten parent dir to 0o700 so siblings can't traverse to the creds.
     # No-op on Windows (POSIX mode bits aren't enforced); ignore failures.
     # secure_parent_dir refuses to chmod /, top-level dirs, or the
-    # hermes-agent install tree (#25821, #93050).
+    # auraforge-agent install tree (#25821, #93050).
     secure_parent_dir(path)
     # Per-process random suffix avoids collisions between concurrent
     # writers and stale leftovers from a prior crashed write.
@@ -613,8 +613,8 @@ class HermesTokenStorage:
         Without a durable marker the in-memory fallback in
         ``mcp_oauth_manager`` only holds for the current process, so every
         restart re-presents a client_id the server has already fetched and
-        refused. Cleared by ``remove()``, i.e. by ``hermes mcp login`` /
-        ``hermes mcp remove``, so a fixed document gets another chance.
+        refused. Cleared by ``remove()``, i.e. by ``auraforge mcp login`` /
+        ``auraforge mcp remove``, so a fixed document gets another chance.
         """
         path = self._cimd_rejected_path()
         try:
@@ -875,7 +875,7 @@ def _make_redirect_handler(port: int, redirect_uri: str | None = None):
                 f"         ssh -N -L {port}:127.0.0.1:{port} <user>@<this-host>\n"
                 f"       then open the URL above and let it redirect normally.\n"
                 f"\n"
-                f"  See: https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh\n",
+                f"  See: https://auraforge-agent.nousresearch.com/docs/guides/oauth-over-ssh\n",
                 file=sys.stderr,
             )
 
@@ -1108,7 +1108,7 @@ def _paste_callback_reader(result: dict) -> None:
             return
         result["error"] = _USER_SKIPPED_SENTINEL
         print(
-            "  OAuth skipped. Run `hermes mcp login <server>` later to "
+            "  OAuth skipped. Run `auraforge mcp login <server>` later to "
             "authenticate, or set ``enabled: false`` on that server in "
             "config.yaml to disable persistently.",
             file=sys.stderr,
@@ -1304,9 +1304,9 @@ def remove_oauth_tokens(
 # deploy. The github.io origin is deliberate: an authorization server MUST NOT
 # follow HTTP redirects when fetching the document
 # (draft-ietf-oauth-client-id-metadata-document section 5), and
-# hermes-agent.nousresearch.com/docs/* 301s here.
+# auraforge-agent.nousresearch.com/docs/* 301s here.
 _CIMD_CLIENT_METADATA_URL = (
-    "https://nousresearch.github.io/hermes-agent/docs/oauth/client-metadata.json"
+    "https://nousresearch.github.io/auraforge-agent/docs/oauth/client-metadata.json"
 )
 
 # Loopback callback ports declared in that document. The redirect URI in the
@@ -1751,7 +1751,7 @@ def _invalidate_tokens_on_client_change(
     the ``invalid_client`` auto-poison path (config-supplied identity can't
     be healed by re-registration), so without this check the stale tokens
     wedge every request until the user manually wipes
-    ``~/.hermes/mcp-tokens/<server>.*``.
+    ``~/.auraforge/mcp-tokens/<server>.*``.
 
     Compares the on-disk ``client.json`` identity against the incoming
     config identity BEFORE the new client info overwrites it. Matching
@@ -1785,7 +1785,7 @@ def _invalidate_tokens_on_client_change(
         logger.warning(
             "MCP OAuth '%s': configured OAuth client changed (client_id %r "
             "-> %r); discarded tokens minted under the previous client. "
-            "Re-authorize with: hermes mcp login %s",
+            "Re-authorize with: auraforge mcp login %s",
             storage._server_name, old_client_id, new_client_id,
             storage._server_name,
         )
@@ -1865,7 +1865,7 @@ def humanize_oauth_registration_error(
             f"client_name: {_FIGMA_DCR_CLIENT_NAME!r} automatically. If you "
             "set oauth.client_name yourself, change it to one of those, or "
             "clear it and re-run:\n"
-            f"  hermes mcp login {server_name}"
+            f"  auraforge mcp login {server_name}"
         )
 
     return (
@@ -1918,7 +1918,7 @@ def build_oauth_auth(
             "MCP OAuth for "
             f"'{server_name}': non-interactive environment and no cached tokens "
             "found. The OAuth flow requires browser authorization. Run "
-            f"`hermes mcp login {server_name}` interactively first to complete "
+            f"`auraforge mcp login {server_name}` interactively first to complete "
             "initial authorization, then cached tokens will be reused."
         )
 

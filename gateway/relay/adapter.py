@@ -1030,7 +1030,7 @@ class RelayAdapter(BasePlatformAdapter):
     def _relay_slack_extra(self) -> Dict[str, Any]:
         """The Slack-behavior subset of the RELAY platform config.
 
-        Enterprise knob shape (Hermes-config directed, relay-namespaced):
+        Enterprise knob shape (Aura Forge-config directed, relay-namespaced):
 
             platforms:
               relay:
@@ -1113,7 +1113,7 @@ class RelayAdapter(BasePlatformAdapter):
             val = extra.get(knob)
             if val is None:
                 continue
-            # Railway / `hermes config set` write YAML strings ("true"/"false").
+            # Railway / `auraforge config set` write YAML strings ("true"/"false").
             # A Slack bot that omits the fields does NOT get human-default
             # previews — so a string "true" that we drop looks like
             # suppression. Coerce the same way as reply_in_thread; still drop

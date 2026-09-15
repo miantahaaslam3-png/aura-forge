@@ -1,4 +1,4 @@
-"""Tests for ``hermes peer`` — cross-machine bot-to-bot DMs."""
+"""Tests for ``auraforge peer`` — cross-machine bot-to-bot DMs."""
 
 import json
 import threading
@@ -118,13 +118,13 @@ class _FakePeer(BaseHTTPRequestHandler):
             type(self).sessions.append("bc_1")
             # REAL api_server create shape: the row is wrapped under "session"
             # (verified live Aug 2026 — a flat fake hid a parser bug).
-            return self._json({"object": "hermes.session", "session": {"id": "bc_1", "title": body.get("title")}}, 201)
+            return self._json({"object": "auraforge.session", "session": {"id": "bc_1", "title": body.get("title")}}, 201)
 
         if self.path.startswith("/api/sessions/") and self.path.endswith("/chat"):
             type(self).chats.append(body.get("message"))
             return self._json(
                 {
-                    "object": "hermes.session.chat.completion",
+                    "object": "auraforge.session.chat.completion",
                     "session_id": "bc_1",
                     "message": {"role": "assistant", "content": "reply from the other machine"},
                 }

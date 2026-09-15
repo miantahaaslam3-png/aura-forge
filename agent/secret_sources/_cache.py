@@ -78,7 +78,7 @@ def resolve_cache_home(home_path: Optional[Path] = None) -> Path:
     """Resolve the Aura Forge home used for cache paths.
 
     ``home_path`` is whatever ``load_hermes_dotenv()`` already resolved;
-    falling back to ``$HERMES_HOME`` / ``~/.hermes`` keeps direct callers
+    falling back to ``$HERMES_HOME`` / ``~/.auraforge`` keeps direct callers
     (and tests that don't thread a home through) working.
     """
     if home_path is None:

@@ -45,7 +45,7 @@ def _make_profile(tmp_path, name: str, workspace: str, api_key: str,
                   host: str | None = None, oauth: dict | None = None):
     home = tmp_path / name
     home.mkdir(parents=True, exist_ok=True)
-    host = host or "hermes"
+    host = host or "auraforge"
     block: dict = {"apiKey": api_key, "workspace": workspace}
     if oauth:
         block["oauth"] = oauth
@@ -210,7 +210,7 @@ class TestCredentialIdentity:
 
             # Operator re-runs setup: same file, new account credentials.
             (home / "honcho.json").write_text(json.dumps({
-                "hosts": {"hermes": {"apiKey": "key-account-2", "workspace": "tenant-a"}},
+                "hosts": {"auraforge": {"apiKey": "key-account-2", "workspace": "tenant-a"}},
             }))
             cfg2 = HonchoClientConfig.from_global_config()
             c2 = get_honcho_client(cfg2)
@@ -238,7 +238,7 @@ class TestCredentialIdentity:
             "expiresAt": 9999999999,
         }
         (home / "honcho.json").write_text(json.dumps({
-            "hosts": {"hermes": {"apiKey": "access-token-1", "workspace": "w",
+            "hosts": {"auraforge": {"apiKey": "access-token-1", "workspace": "w",
                                   "oauth": oauth_block}},
         }))
 
@@ -255,7 +255,7 @@ class TestCredentialIdentity:
             # Re-auth: new refresh token.
             oauth_block2 = dict(oauth_block, refreshToken="refresh-2")
             (home / "honcho.json").write_text(json.dumps({
-                "hosts": {"hermes": {"apiKey": "access-token-3", "workspace": "w",
+                "hosts": {"auraforge": {"apiKey": "access-token-3", "workspace": "w",
                                       "oauth": oauth_block2}},
             }))
             cfg2 = HonchoClientConfig.from_global_config()
@@ -276,7 +276,7 @@ class TestCredentialIdentity:
             c1 = get_honcho_client(cfg1)
 
             raw = json.loads((home / "honcho.json").read_text())
-            raw["hosts"]["hermes"]["timeout"] = 77
+            raw["hosts"]["auraforge"]["timeout"] = 77
             (home / "honcho.json").write_text(json.dumps(raw))
             cfg2 = HonchoClientConfig.from_global_config()
             c2 = get_honcho_client(cfg2)

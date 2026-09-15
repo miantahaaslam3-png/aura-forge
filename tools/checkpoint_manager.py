@@ -13,10 +13,10 @@ controlled by the ``checkpoints`` config flag or ``--checkpoints`` CLI flag.
 Storage layout (single shared store, git objects deduplicated across projects)
 -----------------------------------------------------------------------------
 
-    ~/.hermes/checkpoints/
+    ~/.auraforge/checkpoints/
         store/                          — single bare-ish git repo
             HEAD, config, objects/      — standard git internals (shared)
-            refs/hermes/<hash16>        — per-project branch tip
+            refs/auraforge/<hash16>        — per-project branch tip
             indexes/<hash16>            — per-project git index
             projects/<hash16>.json      — {workdir, created_at, last_touch}
             info/exclude                — default excludes (shared)
@@ -73,7 +73,7 @@ CHECKPOINT_BASE = get_hermes_home() / "checkpoints"
 
 # Single shared store directory under CHECKPOINT_BASE.
 _STORE_DIRNAME = "store"
-_REFS_PREFIX = "refs/hermes"
+_REFS_PREFIX = "refs/auraforge"
 _INDEXES_DIRNAME = "indexes"
 _PROJECTS_DIRNAME = "projects"
 _LEDGERS_DIRNAME = "ledgers"
@@ -432,7 +432,7 @@ def _migrate_legacy_store(base: Path) -> Optional[Path]:
     Rather than delete the old data (users might want to recover), rename
     everything except our own v2 entries into ``legacy-<timestamp>/``.  The
     legacy dir is subject to the same retention sweep and can be manually
-    cleared with ``hermes checkpoints clear-legacy``.
+    cleared with ``auraforge checkpoints clear-legacy``.
 
     Returns the legacy-archive path, or None if nothing to migrate.
     """
@@ -466,7 +466,7 @@ def _migrate_legacy_store(base: Path) -> Optional[Path]:
     if legacy_root is not None:
         logger.info(
             "Migrated pre-v2 checkpoint repos to %s. "
-            "Clear with `hermes checkpoints clear-legacy` when safe.",
+            "Clear with `auraforge checkpoints clear-legacy` when safe.",
             legacy_root,
         )
     return legacy_root
@@ -525,7 +525,7 @@ def _init_store(store: Path, working_dir: str) -> Optional[str]:
     # Use the base dir as the working_dir for config commands — it always
     # exists since we just created the store inside it.
     cfg_wd = str(base)
-    _run_git(["config", "user.email", "hermes@local"], store, cfg_wd)
+    _run_git(["config", "user.email", "auraforge@local"], store, cfg_wd)
     _run_git(["config", "user.name", "Aura Forge Checkpoint"], store, cfg_wd)
     _run_git(["config", "commit.gpgsign", "false"], store, cfg_wd)
     _run_git(["config", "tag.gpgSign", "false"], store, cfg_wd)
@@ -885,7 +885,7 @@ class CheckpointManager:
             current = _hash_file(abs_path)
             if current is None:
                 # File deleted since Aura Forge wrote it: restoring it back is
-                # safe — its last content was Hermes-authored.
+                # safe — its last content was Aura Forge-authored.
                 restore.append(rel)
             elif current == recorded:
                 restore.append(rel)
@@ -1097,7 +1097,7 @@ class CheckpointManager:
 
         With ``safe=True`` (full-directory restores only), files the user
         hand-edited after Aura Forge' last write — per the agent-write ledger —
-        are left untouched, and only Hermes-authored changes are reverted.
+        are left untouched, and only Aura Forge-authored changes are reverted.
         The result gains ``skipped_user_edits`` listing the preserved paths,
         ``skipped_oversize`` listing paths kept because the size cap excluded
         them from every checkpoint, and — only when a delete failed —
@@ -1160,7 +1160,7 @@ class CheckpointManager:
 
         if restore_paths is not None:
             # Split into files present in the checkpoint (checkout) and
-            # Hermes-created files absent from it (delete to restore state).
+            # Aura Forge-created files absent from it (delete to restore state).
             checkout_targets: List[str] = []
             delete_targets: List[str] = []
             for rel in restore_paths:
@@ -2115,7 +2115,7 @@ def maybe_auto_prune_checkpoints(
 
 
 # ---------------------------------------------------------------------------
-# Public helpers for `hermes checkpoints` CLI
+# Public helpers for `auraforge checkpoints` CLI
 # ---------------------------------------------------------------------------
 
 def store_status(checkpoint_base: Optional[Path] = None) -> Dict:

@@ -40,7 +40,7 @@ SKILL.md Format (YAML Frontmatter, agentskills.io compatible):
       commands: [curl, jq]        #   Command checks remain advisory only.
     compatibility: Requires X     # Optional (agentskills.io)
     metadata:                     # Optional, arbitrary key-value (agentskills.io)
-      hermes:
+      auraforge:
         tags: [fine-tuning, llm]
         related_skills: [peft, lora]
     ---
@@ -137,7 +137,7 @@ def _skills_scan_signature(dirs_to_scan, disabled) -> tuple:
     return (tuple(sig), frozenset(disabled), platform)
 
 
-# All skills live in ~/.hermes/skills/ (seeded from bundled skills/ on install).
+# All skills live in ~/.auraforge/skills/ (seeded from bundled skills/ on install).
 # This is the single source of truth -- agent edits, hub installs, and bundled
 # skills all coexist here without polluting the git repo.
 HERMES_HOME = get_hermes_home()
@@ -581,7 +581,7 @@ def _get_category_from_path(skill_path: Path) -> Optional[str]:
     """
     Extract category from skill path based on directory structure.
 
-    For paths like: ~/.hermes/skills/mlops/axolotl/SKILL.md -> "mlops"
+    For paths like: ~/.auraforge/skills/mlops/axolotl/SKILL.md -> "mlops"
     Also works for external skill dirs configured via skills.external_dirs.
     """
     # Try the active profile skills dir first (respects monkeypatching in tests),
@@ -685,11 +685,11 @@ def _is_skill_disabled(name: str, platform: str = None) -> bool:
 
 
 def _find_all_skills(*, skip_disabled: bool = False) -> List[Dict[str, Any]]:
-    """Recursively find all skills in ~/.hermes/skills/ and external dirs.
+    """Recursively find all skills in ~/.auraforge/skills/ and external dirs.
 
     Args:
         skip_disabled: If True, return ALL skills regardless of disabled
-            state (used by ``hermes skills`` config UI). Default False
+            state (used by ``auraforge skills`` config UI). Default False
             filters out disabled skills.
 
     Returns:
@@ -909,7 +909,7 @@ def _serve_plugin_skill(
                 "success": False,
                 "error": (
                     f"Plugin '{namespace}' is disabled. "
-                    f"Re-enable with: hermes plugins enable {namespace}"
+                    f"Re-enable with: auraforge plugins enable {namespace}"
                 ),
             },
             ensure_ascii=False,
@@ -1424,7 +1424,7 @@ def skill_view(
                         ),
                         "hint": (
                             "Inspect the skill in the repo checkout, or untrust "
-                            "the repo with `hermes skills untrust`."
+                            "the repo with `auraforge skills untrust`."
                         ),
                     },
                     ensure_ascii=False,
@@ -1479,7 +1479,7 @@ def skill_view(
         if _outside_skills_dir or _injection_detected:
             _warnings = []
             if _outside_skills_dir:
-                _warnings.append(f"skill file is outside the trusted skills directory (~/.hermes/skills/): {skill_md}")
+                _warnings.append(f"skill file is outside the trusted skills directory (~/.auraforge/skills/): {skill_md}")
             if _injection_detected:
                 _warnings.append("skill content contains patterns that may indicate prompt injection")
             logging.getLogger(__name__).warning("Skill security warning for '%s': %s", name, "; ".join(_warnings))
@@ -1508,7 +1508,7 @@ def skill_view(
                     "success": False,
                     "error": (
                         f"Skill '{resolved_name}' is disabled. "
-                        "Enable it with `hermes skills` or inspect the files directly on disk."
+                        "Enable it with `auraforge skills` or inspect the files directly on disk."
                     ),
                 },
                 ensure_ascii=False,
@@ -1678,11 +1678,11 @@ def skill_view(
                     )
 
         # Read tags/related_skills with backward compat:
-        # Check metadata.hermes.* first (agentskills.io convention), fall back to top-level
+        # Check metadata.auraforge.* first (agentskills.io convention), fall back to top-level
         hermes_meta = {}
         metadata = frontmatter.get("metadata")
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("hermes", {}) or {}
+            hermes_meta = metadata.get("auraforge", {}) or {}
 
         tags = _parse_tags(hermes_meta.get("tags") or frontmatter.get("tags", ""))
         related_skills = _parse_tags(
@@ -1845,7 +1845,7 @@ def skill_view(
                         "Your edits are kept locally\n"
                         "> and are never overwritten by org updates; share "
                         "them back with\n"
-                        "> `hermes sync propose` (or automatically, if your "
+                        "> `auraforge sync propose` (or automatically, if your "
                         "org enables it).\n\n"
                     )
                     rendered_content = header + rendered_content

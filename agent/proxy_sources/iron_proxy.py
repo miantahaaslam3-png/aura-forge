@@ -26,7 +26,7 @@ Design summary
   verifying the SHA-256 against the release's ``checksums.txt``.
 
 * A long-lived CA at ``<hermes_home>/proxy/ca.{crt,key}`` is generated on
-  first ``hermes egress setup``.  Sandboxes trust this CA so iron-proxy can
+  first ``auraforge egress setup``.  Sandboxes trust this CA so iron-proxy can
   terminate TLS and rewrite headers.
 
 * The proxy config lives at ``<hermes_home>/proxy/proxy.yaml``.  It enumerates
@@ -39,7 +39,7 @@ Design summary
   Bitwarden Secrets Manager is configured, the real value is pulled there
   at proxy startup instead.
 
-* The proxy runs as a managed subprocess (``hermes egress start``), pidfile
+* The proxy runs as a managed subprocess (``auraforge egress start``), pidfile
   at ``<hermes_home>/proxy/iron-proxy.pid``.  Daemon output (including
   per-request records on v0.39) goes to ``<hermes_home>/proxy/iron-proxy.log``;
   ``audit.log`` is pre-created but reserved for a future pin that supports
@@ -110,7 +110,7 @@ _STARTUP_GRACE_SECONDS = 5
 # whose ``POST /v1/reload`` re-reads proxy.yaml and atomically swaps the
 # transform pipeline in-place — no restart, no dropped connections.  We
 # always enable it on generated configs: it binds loopback only and every
-# request needs the bearer key below.  ``hermes egress reload`` is the
+# request needs the bearer key below.  ``auraforge egress reload`` is the
 # client.
 #
 # The key is minted at setup time, stored at
@@ -366,7 +366,7 @@ def _proxy_state_dir_ro() -> Path:
     """Return the proxy state dir without creating it.
 
     Read-only callers (status probes, pidfile reads, version queries) use
-    this — there's no reason to materialize ``~/.hermes/proxy/`` just to
+    this — there's no reason to materialize ``~/.auraforge/proxy/`` just to
     check whether a pidfile exists.
     """
     from hermes_constants import get_hermes_home
@@ -466,7 +466,7 @@ def install_iron_proxy(*, force: bool = False) -> Path:
 
     Returns the path to the installed executable.  Raises on any failure
     (network, checksum, extraction).  Callers in the auto-install path catch
-    these; the user-facing ``hermes proxy install`` surface lets them
+    these; the user-facing ``auraforge proxy install`` surface lets them
     propagate so the wizard can show a clear error.
     """
 
@@ -481,7 +481,7 @@ def install_iron_proxy(*, force: bool = False) -> Path:
     asset_url = f"{_IRON_PROXY_RELEASE_BASE}/{asset_name}"
     checksum_url = f"{_IRON_PROXY_RELEASE_BASE}/{_IRON_PROXY_CHECKSUM_NAME}"
 
-    with tempfile.TemporaryDirectory(prefix="hermes-iron-proxy-") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="auraforge-iron-proxy-") as tmpdir:
         tmp = Path(tmpdir)
         archive_path = tmp / asset_name
         checksum_path = tmp / _IRON_PROXY_CHECKSUM_NAME
@@ -547,7 +547,7 @@ def install_iron_proxy(*, force: bool = False) -> Path:
 
 
 def _http_download(url: str, dest: Path) -> None:
-    req = urllib.request.Request(url, headers={"User-Agent": "hermes-agent"})
+    req = urllib.request.Request(url, headers={"User-Agent": "auraforge-agent"})
     try:
         with urllib.request.urlopen(req, timeout=_DOWNLOAD_TIMEOUT) as resp:  # noqa: S310
             with open(dest, "wb") as f:
@@ -713,7 +713,7 @@ def iron_proxy_version(binary: Path) -> str:
     except (OSError, subprocess.TimeoutExpired):
         return ""
     out = (res.stdout or res.stderr or "").strip()
-    # Don't cache empty output — that would poison ``hermes egress
+    # Don't cache empty output — that would poison ``auraforge egress
     # status`` for the lifetime of the process if the first probe hit a
     # corrupt binary or a flag-rename in a newer upstream.  Re-probe on
     # the next call instead.
@@ -751,7 +751,7 @@ def ensure_ca_cert(*, force: bool = False) -> Tuple[Path, Path]:
 
     # 10-year cert.  iron-proxy mints short-lived leaf certs from this CA,
     # so the CA itself only rotates when the user explicitly forces it.
-    with tempfile.TemporaryDirectory(prefix="hermes-proxy-ca-") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="auraforge-proxy-ca-") as tmpdir:
         tmp = Path(tmpdir)
         tmp_key = tmp / "ca.key"
         tmp_crt = tmp / "ca.crt"
@@ -767,7 +767,7 @@ def ensure_ca_cert(*, force: bool = False) -> Tuple[Path, Path]:
                 "openssl", "req", "-x509", "-new", "-nodes",
                 "-key", str(tmp_key),
                 "-sha256", "-days", "3650",
-                "-subj", "/CN=hermes iron-proxy CA",
+                "-subj", "/CN=auraforge iron-proxy CA",
                 "-addext", "basicConstraints=critical,CA:TRUE",
                 "-addext", "keyUsage=critical,keyCertSign",
                 "-out", str(tmp_crt),
@@ -825,7 +825,7 @@ def ensure_ca_cert(*, force: bool = False) -> Tuple[Path, Path]:
 # ---------------------------------------------------------------------------
 
 
-def mint_proxy_token(prefix: str = "hermes-proxy") -> str:
+def mint_proxy_token(prefix: str = "auraforge-proxy") -> str:
     """Mint a fresh opaque token to hand to the sandbox.
 
     The token has no internal structure beyond a recognizable prefix —
@@ -848,7 +848,7 @@ def ensure_management_token(*, force: bool = False) -> str:
     Stored at ``<hermes_home>/proxy/management.token`` with 0600 perms.
     The daemon receives it via the ``HERMES_IRON_PROXY_MGMT_KEY`` env var
     (named in the generated config's ``management.api_key_env``);
-    ``hermes egress reload`` reads the same file to authenticate.
+    ``auraforge egress reload`` reads the same file to authenticate.
     """
 
     p = _management_token_path()
@@ -859,7 +859,7 @@ def ensure_management_token(*, force: bool = False) -> str:
                 return existing
         except OSError:
             pass
-    token = mint_proxy_token(prefix="hermes-mgmt")
+    token = mint_proxy_token(prefix="auraforge-mgmt")
     fd = os.open(
         str(p),
         os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0),
@@ -929,20 +929,20 @@ def reload_proxy() -> bool:
     if not pid or not _pid_alive(pid):
         raise RuntimeError(
             "iron-proxy is not running — nothing to reload.  "
-            "Run `hermes egress start`."
+            "Run `auraforge egress start`."
         )
     mgmt = _read_management_listen_from_config()
     if mgmt is None:
         raise RuntimeError(
             "The generated proxy.yaml has no management listener (written "
-            "before reload support).  Re-run `hermes egress setup` and use "
-            "`hermes egress restart` this one time."
+            "before reload support).  Re-run `auraforge egress setup` and use "
+            "`auraforge egress restart` this one time."
         )
     token = _read_management_token()
     if not token:
         raise RuntimeError(
-            "management.token is missing — re-run `hermes egress setup`, "
-            "then `hermes egress restart`."
+            "management.token is missing — re-run `auraforge egress setup`, "
+            "then `auraforge egress restart`."
         )
 
     import urllib.error
@@ -977,7 +977,7 @@ def reload_proxy() -> bool:
             raise RuntimeError(
                 "management API rejected our key (401).  The running "
                 "daemon was started with a different management.token — "
-                "run `hermes egress restart`."
+                "run `auraforge egress restart`."
             ) from exc
         raise RuntimeError(
             f"management reload failed (HTTP {exc.code}): {body}"
@@ -988,7 +988,7 @@ def reload_proxy() -> bool:
         raise RuntimeError(
             f"could not reach the management API at {host}:{port} ({exc}).  "
             "If the daemon was started before reload support, run "
-            "`hermes egress restart` once."
+            "`auraforge egress restart` once."
         ) from exc
 
 
@@ -1282,7 +1282,7 @@ def build_proxy_config(
         # random port each start and nothing records it — metrics are
         # effectively disabled/undiscoverable at this pin.  If we want
         # scrapable metrics later, allocate a fixed port and surface it
-        # in ``ProxyStatus`` / ``hermes egress status``.
+        # in ``ProxyStatus`` / ``auraforge egress status``.
         "metrics": {
             "listen": "127.0.0.1:0",
         },
@@ -1290,7 +1290,7 @@ def build_proxy_config(
         # authenticated (key read from the env var named below; injected
         # by ``start_proxy`` from ``management.token``).  ``POST /v1/reload``
         # re-reads THIS config file and atomically swaps the transform
-        # pipeline — `hermes egress reload` applies allowlist/token/mapping
+        # pipeline — `auraforge egress reload` applies allowlist/token/mapping
         # changes without a restart.  Loopback deliberately: sandboxes must
         # never reach the management surface, so it does NOT bind the
         # docker bridge like the traffic listeners do.
@@ -1507,7 +1507,7 @@ def discover_uncovered_providers(
     sandbox is holding real credentials that the proxy can't strip — the
     isolation guarantee is incomplete for those providers.
 
-    The wizard and ``hermes egress status`` use this to print a warning.
+    The wizard and ``auraforge egress status`` use this to print a warning.
     (Anthropic / Azure OpenAI / Gemini used to be here; they're now
     first-class swapped providers via ``_HEADER_AUTH_PROVIDERS``.)
     """
@@ -1529,7 +1529,7 @@ def merge_mappings(
     """Combine an existing mapping set with freshly discovered providers.
 
     By default this PRESERVES tokens for providers already in ``existing`` —
-    re-running ``hermes egress setup`` should not invalidate the tokens
+    re-running ``auraforge egress setup`` should not invalidate the tokens
     baked into containers that are already running.  Only newly added
     providers get freshly minted tokens.
 
@@ -1787,14 +1787,14 @@ def start_proxy(
     bin_path = binary or find_iron_proxy(install_if_missing=install_if_missing)
     if bin_path is None:
         raise RuntimeError(
-            "iron-proxy binary not available — run `hermes egress install`."
+            "iron-proxy binary not available — run `auraforge egress install`."
         )
 
     cfg = config_path or (_proxy_state_dir() / "proxy.yaml")
     if not cfg.exists():
         raise RuntimeError(
             f"iron-proxy config not found at {cfg}. "
-            "Run `hermes egress setup` first."
+            "Run `auraforge egress setup` first."
         )
 
     # Build a minimal subprocess env.  os.environ.copy() would ship every
@@ -1892,7 +1892,7 @@ def start_proxy(
     # Write the pidfile IMMEDIATELY after Popen, BEFORE the listening
     # verification.  If the parent dies during the poll loop (SIGINT,
     # OOM, kernel pause), the pidfile is still on disk so the next
-    # ``hermes egress stop`` can clean up the orphan.  Failure paths
+    # ``auraforge egress stop`` can clean up the orphan.  Failure paths
     # below unlink the pidfile when they kill the child.
     pidfile = _pidfile()
     try:
@@ -1907,7 +1907,7 @@ def start_proxy(
     # of liveness keeps Docker container creation snappy.
     #
     # We scope a Ctrl-C handler around the poll loop so an operator who
-    # hits Ctrl-C while waiting for ``hermes egress start`` doesn't leak
+    # hits Ctrl-C while waiting for ``auraforge egress start`` doesn't leak
     # an orphan with the port bound.
     #
     # Probe the CONFIGURED bind host, not loopback unconditionally — on
@@ -2029,7 +2029,7 @@ def _write_pidfile_safely(pidfile: Path, pid: int) -> None:
             raise RuntimeError(
                 f"Another iron-proxy start appears to be in progress "
                 f"(pidfile {pidfile} -> pid {existing_pid}).  "
-                f"Run `hermes egress stop` if that proxy is stuck."
+                f"Run `auraforge egress stop` if that proxy is stuck."
             )
         # Stale — unlink and retry.
         try:
@@ -2189,7 +2189,7 @@ def _build_proxy_subprocess_env(
                             f"Bitwarden refresh did not return secrets for "
                             f"{missing}.  Either add the secrets to your BWS "
                             f"project, switch to credential_source: env via "
-                            f"`hermes egress setup --no-bitwarden`, or set "
+                            f"`auraforge egress setup --no-bitwarden`, or set "
                             f"`proxy.allow_env_fallback: true` in config.yaml "
                             f"to opt into the legacy host-env fallback."
                         )
@@ -2206,7 +2206,7 @@ def _build_proxy_subprocess_env(
                 if warnings:
                     logger.warning(
                         "Bitwarden refresh produced %d warning(s); "
-                        "run `hermes secrets bitwarden status` for detail.",
+                        "run `auraforge secrets bitwarden status` for detail.",
                         len(warnings),
                     )
             else:

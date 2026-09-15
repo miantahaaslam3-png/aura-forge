@@ -287,7 +287,7 @@ def _clamp_responses_call_id(call_id: str) -> str:
 
     The codex app-server namespaces MCP tool call ids as
     ``codex_mcp__<server>__<tool>_<codex_call_id>``; with an ``exec-<uuid>``
-    component the built-in ``hermes-tools`` server already overflows 64 chars,
+    component the built-in ``auraforge-tools`` server already overflows 64 chars,
     and the Responses API rejects the whole payload with a non-retryable HTTP
     400 that then replays every turn — permanently bricking the session.
 
@@ -458,7 +458,7 @@ _RESPONSE_MESSAGE_STATUSES = {"completed", "incomplete", "in_progress"}
 
 # The Responses API rejects input[].id longer than this with a non-retryable
 # HTTP 400 ("string too long"). Codex-issued assistant message ids are
-# server-assigned base64 blobs that can run 400+ chars, while Hermes-minted
+# server-assigned base64 blobs that can run 400+ chars, while Aura Forge-minted
 # ids (msg_...) stay well under this cap and are worth keeping for
 # prefix-cache hits. Drop only the oversized ones on replay.
 _MAX_RESPONSES_ITEM_ID_LENGTH = 64
@@ -637,7 +637,7 @@ def _chat_messages_to_responses_input(
                             # returns 404.  The encrypted_content blob is
                             # self-contained for reasoning chain continuity.
                             # Also strip the internal "_issuer_kind" stamp;
-                            # it is a Hermes-side metadata key and not part
+                            # it is a Aura Forge-side metadata key and not part
                             # of the Responses API schema.
                             replay_item = {
                                 k: v for k, v in ri.items()

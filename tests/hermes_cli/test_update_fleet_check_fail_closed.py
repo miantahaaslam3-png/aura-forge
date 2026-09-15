@@ -3,7 +3,7 @@
 ``collect_fleet_versions()`` swallows every probe failure via
 ``logger.debug()`` and ``print_fleet_version_matrix([])`` early-returns
 ``False``, so an empty fleet snapshot used to read as "healthy fleet" and
-``hermes update`` exited 0 with zero rows — even when a gateway was
+``auraforge update`` exited 0 with zero rows — even when a gateway was
 verifiably live before the update.
 
 The first guard (PR #93410) keyed on ``(restarted_services or killed_pids)``,
@@ -87,7 +87,7 @@ class TestEmptySnapshotFailClosed:
     def test_incomplete_when_restart_phase_touched_gateways(self):
         # The original #93410 signal still counts.
         assert (
-            _fleet_probe_expected_runtimes(None, [], None, ["hermes-gateway"], set())
+            _fleet_probe_expected_runtimes(None, [], None, ["auraforge-gateway"], set())
             is True
         )
         assert _fleet_probe_expected_runtimes(None, [], None, [], {4321}) is True

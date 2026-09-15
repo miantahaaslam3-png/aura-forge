@@ -3,10 +3,10 @@
 MCP (Model Context Protocol) Client Support
 
 Connects to external MCP servers via stdio, HTTP/StreamableHTTP, or SSE
-transport, discovers their tools, and registers them into the hermes-agent
+transport, discovers their tools, and registers them into the auraforge-agent
 tool registry so the agent can call them like any built-in tool.
 
-Configuration is read from ~/.hermes/config.yaml under the ``mcp_servers`` key.
+Configuration is read from ~/.auraforge/config.yaml under the ``mcp_servers`` key.
 The ``mcp`` Python package is optional -- if not installed, this module is a
 no-op and logs a debug message.
 
@@ -180,7 +180,7 @@ _OSV_MALWARE_CHECK_TIMEOUT_S = 12.0
 # corrupts the display and can hang the session.
 #
 # Instead we redirect every stdio MCP subprocess's stderr into a shared
-# per-profile log file (~/.hermes/logs/mcp-stderr.log), tagged with the
+# per-profile log file (~/.auraforge/logs/mcp-stderr.log), tagged with the
 # server name so individual servers remain debuggable.
 #
 # Fallback is os.devnull if opening the log file fails for any reason.
@@ -1036,7 +1036,7 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
         elif resolved_command in {"npx", "npm", "node"}:
             hermes_home = os.path.expanduser(
                 os.getenv(
-                    "HERMES_HOME", os.path.join(os.path.expanduser("~"), ".hermes")
+                    "HERMES_HOME", os.path.join(os.path.expanduser("~"), ".auraforge")
                 )
             )
             candidates = [
@@ -3192,7 +3192,7 @@ class MCPServerTask:
         if not _ensure_mcp_sdk():
             raise ImportError(
                 f"MCP server '{self.name}' requires the 'mcp' Python SDK, but "
-                "it is not installed. Run `hermes setup` to install MCP support, "
+                "it is not installed. Run `auraforge setup` to install MCP support, "
                 "then retry."
             )
 
@@ -3283,7 +3283,7 @@ class MCPServerTask:
         # Redirect subprocess stderr into a shared log file so MCP servers
         # (FastMCP banners, slack-mcp startup JSON, etc.) don't dump onto
         # the user's TTY and corrupt the TUI.  Preserves debuggability via
-        # ~/.hermes/logs/mcp-stderr.log.
+        # ~/.auraforge/logs/mcp-stderr.log.
         _write_stderr_log_header(self.name)
         _errlog = _get_mcp_stderr_log()
         try:
@@ -3505,7 +3505,7 @@ class MCPServerTask:
                             '"method":"initialize",'
                             '"params":{"protocolVersion":"2025-03-26",'
                             '"capabilities":{},'
-                            '"clientInfo":{"name":"hermes-probe",'
+                            '"clientInfo":{"name":"auraforge-probe",'
                             '"version":"0.1"}}}'
                         ),
                     )
@@ -4168,14 +4168,14 @@ class MCPServerTask:
                         # listener on ``_reconnect_event`` — so a 401 on the
                         # very first connect left the server unrevivable for
                         # the life of the process, even after the user
-                        # re-authenticated with ``hermes mcp login``. Parking
+                        # re-authenticated with ``auraforge mcp login``. Parking
                         # keeps the task alive so the 300s self-probe (and an
                         # explicit /mcp refresh) can pick up fresh tokens.
                         if _is_auth_error(root):
                             logger.warning(
                                 "MCP server '%s' failed initial authentication, "
                                 "parking until credentials change; re-authenticate "
-                                "with `hermes mcp login %s` "
+                                "with `auraforge mcp login %s` "
                                 "(state: connecting → parked): %s: %s",
                                 self.name, self.name,
                                 type(root).__name__, root,
@@ -5044,8 +5044,8 @@ def _handle_auth_error_and_retry(
     _bump_server_error(server_name)
     return tool_error(
         f"MCP server '{server_name}' requires re-authentication. "
-        f"Run `hermes mcp login {server_name}` (or delete the tokens "
-        f"file under ~/.hermes/mcp-tokens/ and restart). Do NOT retry "
+        f"Run `auraforge mcp login {server_name}` (or delete the tokens "
+        f"file under ~/.auraforge/mcp-tokens/ and restart). Do NOT retry "
         f"this tool — ask the user to re-authenticate.",
         needs_reauth=True,
         server=server_name,
@@ -5765,7 +5765,7 @@ def _load_mcp_config() -> Dict[str, dict]:
     ``timeout``, ``connect_timeout``, and ``auth`` overrides.
 
     ``${ENV_VAR}`` placeholders in string values are resolved from
-    ``os.environ`` (which includes ``~/.hermes/.env`` loaded at startup).
+    ``os.environ`` (which includes ``~/.auraforge/.env`` loaded at startup).
     """
     try:
         from hermes_cli.config import load_config
@@ -8037,7 +8037,7 @@ def get_mcp_status() -> List[dict]:
 def probe_mcp_server_tools() -> Dict[str, List[tuple]]:
     """Temporarily connect to configured MCP servers and list their tools.
 
-    Designed for ``hermes tools`` interactive configuration — connects to each
+    Designed for ``auraforge tools`` interactive configuration — connects to each
     enabled server, grabs tool names and descriptions, then disconnects.
     Does NOT register tools in the Aura Forge registry.
 
@@ -8430,7 +8430,7 @@ def _kill_orphaned_mcp_children(
     sessions are not disrupted.
 
     Sends SIGTERM, waits 2 seconds, then escalates to SIGKILL for any
-    survivors, avoiding shared-resource collisions when multiple hermes
+    survivors, avoiding shared-resource collisions when multiple auraforge
     processes run on the same host (each has its own ``_stdio_pids`` dict).
 
     On POSIX, signals are sent via ``os.killpg`` to the spawn-time pgid when

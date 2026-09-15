@@ -1,6 +1,6 @@
 """Tests for subprocess env sanitization in LocalEnvironment.
 
-Verifies that Hermes-managed provider, tool, and gateway env vars are
+Verifies that Aura Forge-managed provider, tool, and gateway env vars are
 stripped from subprocess environments so external CLIs are not silently
 misrouted or handed Aura Forge secrets.
 
@@ -70,7 +70,7 @@ def _run_with_env(extra_os_env=None, self_env=None):
 
 
 class TestProviderEnvBlocklist:
-    """Provider env vars loaded from ~/.hermes/.env must not leak."""
+    """Provider env vars loaded from ~/.auraforge/.env must not leak."""
 
     def test_blocked_vars_are_stripped(self):
         """OPENAI_BASE_URL and other provider vars must not appear in subprocess env."""
@@ -159,7 +159,7 @@ class TestProviderEnvBlocklist:
         unconditionally — and (b) be unrecoverable, because env_passthrough.py
         refuses to re-allow anything in _HERMES_PROVIDER_ENV_BLOCKLIST
         (GHSA-rhgp-j443-p4rf). Only the Bedrock inference bearer token is
-        Hermes-managed; the rest belongs to the user.
+        Aura Forge-managed; the rest belongs to the user.
         """
         general_chain = {
             "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
@@ -326,13 +326,13 @@ class TestActiveVenvMarkerStripping:
 
     def test_virtualenv_marker_stripped_end_to_end(self):
         result_env = _run_with_env(extra_os_env={
-            "VIRTUAL_ENV": "/home/user/.hermes/hermes-agent/venv",
+            "VIRTUAL_ENV": "/home/user/.auraforge/auraforge-agent/venv",
         })
         assert "VIRTUAL_ENV" not in result_env
 
     def test_conda_prefix_marker_stripped_end_to_end(self):
         result_env = _run_with_env(extra_os_env={
-            "CONDA_PREFIX": "/opt/conda/envs/hermes",
+            "CONDA_PREFIX": "/opt/conda/envs/auraforge",
         })
         assert "CONDA_PREFIX" not in result_env
 
@@ -388,13 +388,13 @@ def _make_directory_link(link: Path, target: Path) -> None:
 
 def _physical_repo_root(tmp_path: Path) -> Path:
     """Create the physical repo checkout directory for junction tests."""
-    physical_root = tmp_path / "physical-home" / "hermes-agent"
+    physical_root = tmp_path / "physical-home" / "auraforge-agent"
     physical_root.mkdir(parents=True)
     return physical_root
 
 
 class TestPythonpathSelectiveStrip:
-    """PYTHONPATH Hermes-owned entry stripping (#74817).
+    """PYTHONPATH Aura Forge-owned entry stripping (#74817).
 
     The Desktop Electron app injects the Aura Forge repo root and the Aura Forge
     venv's site-packages (Python 3.11) into PYTHONPATH.  When this leaks
@@ -407,13 +407,13 @@ class TestPythonpathSelectiveStrip:
     """
 
     def test_owned_entries_stripped_matrix(self):
-        """Exact Hermes-owned entries are removed; everything else survives
+        """Exact Aura Forge-owned entries are removed; everything else survives
         verbatim (ordering, duplicates, empty components).
 
         Covers: the running venv's site-packages, the repo root (computed
         independently via parents[2] so an off-by-one in _hermes_repo_root
         cannot silently pass), duplicate Aura Forge entries, all-owned input
-        (PYTHONPATH key removed), and mixed user/Hermes ordering with an
+        (PYTHONPATH key removed), and mixed user/Aura Forge ordering with an
         empty component preserved.
         """
         from tools.environments.local import _strip_hermes_owned_pythonpath
@@ -447,7 +447,7 @@ class TestPythonpathSelectiveStrip:
         "",
     ])
     def test_non_owned_entries_preserved(self, user_pp):
-        """Anything not proven Hermes-owned is preserved byte-for-byte.
+        """Anything not proven Aura Forge-owned is preserved byte-for-byte.
 
         One invariant, one matrix: ordinary user paths, Nix store paths,
         other-major/minor-version site-packages, paths merely containing a
@@ -492,23 +492,23 @@ class TestPythonpathSelectiveStrip:
             assert env["PYTHONPATH"] == user_pp
 
     def test_windows_backslash_paths(self):
-        """Windows-style backslash paths are handled for Hermes-owned entries.
+        """Windows-style backslash paths are handled for Aura Forge-owned entries.
 
         On Windows, os.pathsep is ';'.  We mock it so the test runs
         correctly on POSIX CI.  On a POSIX host a backslash path is a
         single path component, so ``Path`` cannot identify it as
-        Hermes-owned — the critical invariant is that user Windows paths
+        Aura Forge-owned — the critical invariant is that user Windows paths
         (including site-packages paths for another Python version) are
         never destroyed.  On a real Windows host, Path splits on
         backslashes and Aura Forge venv site-packages entries are stripped
-        by the same Hermes-owned check (covered by the Windows-only test
+        by the same Aura Forge-owned check (covered by the Windows-only test
         below).
         """
         from tools.environments.local import _strip_hermes_owned_pythonpath
         import sys
 
         pyver = f"python{sys.version_info[0]}.{sys.version_info[1]}"
-        hermes_win = f"C:\\\\Users\\\\u\\\\.hermes\\\\hermes-agent\\\\venv\\\\lib\\\\{pyver}\\\\site-packages"
+        hermes_win = f"C:\\\\Users\\\\u\\\\.auraforge\\\\auraforge-agent\\\\venv\\\\lib\\\\{pyver}\\\\site-packages"
         user_win = "D:\\\\user\\\\lib"
         env = {
             "PYTHONPATH": ";".join([hermes_win, user_win]),
@@ -519,14 +519,14 @@ class TestPythonpathSelectiveStrip:
         assert "PYTHONPATH" in env
         entries = env["PYTHONPATH"].split(";")
         # Both survive on POSIX: user paths must always be preserved, and
-        # the Hermes-owned check cannot match a backslash path here.
+        # the Aura Forge-owned check cannot match a backslash path here.
         assert hermes_win in entries
         assert user_win in entries
 
     @pytest.mark.windows_only
     def test_windows_hermes_owned_paths_stripped(self):
         """On Windows, a Aura Forge venv site-packages entry written with
-        backslashes is stripped by the same Hermes-owned check, while a
+        backslashes is stripped by the same Aura Forge-owned check, while a
         user Windows path is preserved.  Windows-only: POSIX ``Path`` does
         not split on backslashes, so this cannot be meaningfully simulated
         on a POSIX host."""
@@ -591,7 +591,7 @@ class TestPythonpathSelectiveStrip:
         """
         import tools.environments.local as local
 
-        repo_root = tmp_path / "hermes-agent"
+        repo_root = tmp_path / "auraforge-agent"
         runtime_venv = repo_root / "venv"
         runtime_sp = runtime_venv / "Lib" / "site-packages"
         runtime_sp.mkdir(parents=True)
@@ -620,7 +620,7 @@ class TestPythonpathSelectiveStrip:
         """An arbitrary inherited VIRTUAL_ENV cannot claim PYTHONPATH ownership."""
         import tools.environments.local as local
 
-        repo_root = tmp_path / "hermes-agent"
+        repo_root = tmp_path / "auraforge-agent"
         repo_root.mkdir()
         unrelated_venv = tmp_path / "user-venv"
         unrelated_sp = unrelated_venv / "Lib" / "site-packages"
@@ -838,7 +838,7 @@ class TestPythonpathSelectiveStrip:
             configured_home,
         )
 
-        assert launcher_entry == configured_home / "hermes-agent"
+        assert launcher_entry == configured_home / "auraforge-agent"
         assert launcher_entry in aliases
 
         monkeypatch.setattr(local, "_hermes_repo_root_aliases", aliases)
@@ -871,7 +871,7 @@ class TestPythonpathSelectiveStrip:
         from hermes_cli.profiles import resolve_profile_env
 
         physical_home = tmp_path / "physical-home"
-        physical_root = physical_home / "hermes-agent"
+        physical_root = physical_home / "auraforge-agent"
         physical_root.mkdir(parents=True)
         (physical_home / "profiles" / "coder").mkdir(parents=True)
         configured_home = tmp_path / "configured-home"
@@ -882,7 +882,7 @@ class TestPythonpathSelectiveStrip:
 
         # Launcher contract: the configured spelling is the env and the root.
         monkeypatch.setenv("HERMES_HOME", str(configured_home))
-        lexical_root = configured_home / "hermes-agent"
+        lexical_root = configured_home / "auraforge-agent"
 
         # Profile re-home keeps the configured spelling (physically identical
         # through the link; lexically the launcher spelling is preserved).
@@ -905,7 +905,7 @@ class TestPythonpathSelectiveStrip:
 
     def test_repo_level_junction_recovers_lexical_alias(self, tmp_path, monkeypatch):
         """The repo itself may be a junction under the configured root
-        (e.g. D:\\hermes\\hermes-agent -> C:\\...\\hermes-agent) while the
+        (e.g. D:\\auraforge\\auraforge-agent -> C:\\...\\auraforge-agent) while the
         editable import spelling resolves to the physical location.  The
         alias builder must recover the lexical spelling via exact-identity
         proof (strict resolve), not a name-based guess.
@@ -915,13 +915,13 @@ class TestPythonpathSelectiveStrip:
         physical_root = _physical_repo_root(tmp_path)
         configured_home = tmp_path / "configured-home"
         configured_home.mkdir()
-        # repo-level link: <configured-home>/hermes-agent -> physical repo
+        # repo-level link: <configured-home>/auraforge-agent -> physical repo
         try:
-            _make_directory_link(configured_home / "hermes-agent", physical_root)
+            _make_directory_link(configured_home / "auraforge-agent", physical_root)
         except OSError as exc:
             pytest.skip(f"directory link unavailable on this host: {exc}")
 
-        lexical_root = configured_home / "hermes-agent"
+        lexical_root = configured_home / "auraforge-agent"
         aliases = local._build_hermes_repo_root_aliases(
             physical_root.resolve(),
             physical_root,
@@ -944,8 +944,8 @@ class TestPythonpathSelectiveStrip:
 
         physical_root = _physical_repo_root(tmp_path)
         configured_home = tmp_path / "configured-home"
-        (configured_home / "hermes-agent").mkdir(parents=True)
-        unrelated = tmp_path / "user-tools" / "hermes-agent"
+        (configured_home / "auraforge-agent").mkdir(parents=True)
+        unrelated = tmp_path / "user-tools" / "auraforge-agent"
         unrelated.mkdir(parents=True)
 
         aliases = local._build_hermes_repo_root_aliases(
@@ -953,18 +953,18 @@ class TestPythonpathSelectiveStrip:
             physical_root,
             configured_home,
         )
-        for lookalike in (configured_home / "hermes-agent", unrelated):
+        for lookalike in (configured_home / "auraforge-agent", unrelated):
             assert not any(local._same_path(a, lookalike) for a in aliases)
 
         monkeypatch.setattr(local, "_hermes_repo_root_aliases", aliases)
-        for lookalike in (configured_home / "hermes-agent", unrelated):
+        for lookalike in (configured_home / "auraforge-agent", unrelated):
             env = {"PYTHONPATH": os.pathsep.join([str(lookalike), "/home/user/my-lib"])}
             local._strip_hermes_owned_pythonpath(env)
             assert env["PYTHONPATH"].split(os.pathsep) == [str(lookalike), "/home/user/my-lib"]
 
     def test_profile_home_with_repo_level_junction(self, tmp_path, monkeypatch):
         """Profile re-home + repo-level junction together: the configured home
-        is <root>/profiles/<name> while the repo is a link at <root>/hermes-agent.
+        is <root>/profiles/<name> while the repo is a link at <root>/auraforge-agent.
         The root spelling must be derived (profiles -> grandparent) and then
         the lexical repo alias recovered from it.
         """
@@ -974,19 +974,19 @@ class TestPythonpathSelectiveStrip:
         configured_root = tmp_path / "configured-root"
         (configured_root / "profiles" / "coder").mkdir(parents=True)
         try:
-            _make_directory_link(configured_root / "hermes-agent", physical_root)
+            _make_directory_link(configured_root / "auraforge-agent", physical_root)
         except OSError as exc:
             pytest.skip(f"directory link unavailable on this host: {exc}")
 
         configured_home = configured_root / "profiles" / "coder"
-        lexical_root = configured_root / "hermes-agent"
+        lexical_root = configured_root / "auraforge-agent"
         aliases = local._build_hermes_repo_root_aliases(
             physical_root.resolve(),
             physical_root,
             configured_home,
         )
         assert any(local._same_path(a, lexical_root) for a in aliases)
-        assert not any(local._same_path(a, configured_home / "hermes-agent") for a in aliases)
+        assert not any(local._same_path(a, configured_home / "auraforge-agent") for a in aliases)
 
         monkeypatch.setattr(local, "_hermes_repo_root_aliases", aliases)
         env = {"PYTHONPATH": os.pathsep.join([str(lexical_root), "/home/user/my-lib"])}
@@ -1007,11 +1007,11 @@ class TestPythonpathSelectiveStrip:
         configured_home = tmp_path / "configured-home"
         configured_home.mkdir()
         try:
-            _make_directory_link(configured_home / "hermes-agent", physical_root)
+            _make_directory_link(configured_home / "auraforge-agent", physical_root)
         except OSError as exc:
             pytest.skip(f"directory link unavailable on this host: {exc}")
 
-        lexical_root = configured_home / "hermes-agent"
+        lexical_root = configured_home / "auraforge-agent"
         aliases = local._build_hermes_repo_root_aliases(
             physical_root.resolve(),
             physical_root,
@@ -1063,7 +1063,7 @@ class TestPythonhomeSanitized:
         seed = {
             "PATH": "/usr/bin:/bin",
             "HOME": "/home/user",
-            "PYTHONHOME": "/opt/hermes-venv",
+            "PYTHONHOME": "/opt/auraforge-venv",
         }
         with patch.dict(os.environ, seed, clear=True):
             if builder == "_make_run_env":
@@ -1095,13 +1095,13 @@ class TestPythonhomeSanitized:
         base = {
             "PATH": "/usr/bin:/bin",
             "HOME": "/home/user",
-            "PYTHONHOME": "/opt/hermes-venv",
-            "VIRTUAL_ENV": "/opt/hermes-venv",
+            "PYTHONHOME": "/opt/auraforge-venv",
+            "VIRTUAL_ENV": "/opt/auraforge-venv",
             "SERVICE_TOKEN": "s3cr3t",
         }
         result = build_subprocess_env(base, scrub_secrets=False)
-        assert result.get("PYTHONHOME") == "/opt/hermes-venv"
-        assert result.get("VIRTUAL_ENV") == "/opt/hermes-venv"
+        assert result.get("PYTHONHOME") == "/opt/auraforge-venv"
+        assert result.get("VIRTUAL_ENV") == "/opt/auraforge-venv"
         assert result.get("SERVICE_TOKEN") == "s3cr3t"
 
 
@@ -1185,7 +1185,7 @@ class TestBlocklistCoverage:
                 )
 
     def test_bedrock_bearer_token_is_in_blocklist(self):
-        """auth_type='aws_sdk' providers contribute their Hermes-managed
+        """auth_type='aws_sdk' providers contribute their Aura Forge-managed
         inference token (the Bedrock bearer) to the blocklist, keyed off
         auth_type so any future SDK-cred provider is covered automatically."""
         assert "AWS_BEARER_TOKEN_BEDROCK" in _HERMES_PROVIDER_ENV_BLOCKLIST
@@ -1311,8 +1311,8 @@ class TestSanePathIncludesHomebrew:
     @pytest.fixture(autouse=True)
     def _disable_hermes_bin_injection(self):
         """These tests assert the sane-path merge in isolation. Disable the
-        hermes-install-dir prepend (a separate concern, covered by
-        TestHermesBinDirOnPath) so a real ``hermes`` on the test runner's PATH
+        auraforge-install-dir prepend (a separate concern, covered by
+        TestHermesBinDirOnPath) so a real ``auraforge`` on the test runner's PATH
         doesn't shift the asserted PATH layout."""
         from tools.environments import local as local_mod
         saved = local_mod._HERMES_BIN_DIR
@@ -1387,10 +1387,10 @@ class TestSanePathIncludesHomebrew:
 
 
 class TestHermesBinDirOnPath:
-    """The hermes install dir is reachable in the terminal subshell PATH.
+    """The auraforge install dir is reachable in the terminal subshell PATH.
 
-    Plugins shelling out to bare ``hermes`` via the terminal tool must work
-    even when the gateway was launched without the hermes install dir on
+    Plugins shelling out to bare ``auraforge`` via the terminal tool must work
+    even when the gateway was launched without the auraforge install dir on
     PATH (systemd, service managers, cron). See the discussion that motivated
     _resolve_hermes_bin_dir / _prepend_hermes_bin_dir.
     """
@@ -1403,9 +1403,9 @@ class TestHermesBinDirOnPath:
         from tools.environments import local as local_mod
         self._reset_cache()
         monkeypatch.setattr(local_mod.shutil, "which",
-                            lambda name: "/opt/hermes/bin/hermes" if name == "hermes" else None)
-        monkeypatch.setattr(local_mod.os.path, "isdir", lambda p: p == "/opt/hermes/bin")
-        assert local_mod._resolve_hermes_bin_dir() == "/opt/hermes/bin"
+                            lambda name: "/opt/auraforge/bin/auraforge" if name == "auraforge" else None)
+        monkeypatch.setattr(local_mod.os.path, "isdir", lambda p: p == "/opt/auraforge/bin")
+        assert local_mod._resolve_hermes_bin_dir() == "/opt/auraforge/bin"
 
 
     def test_prepend_noop_when_unresolved(self, monkeypatch):
@@ -1415,14 +1415,14 @@ class TestHermesBinDirOnPath:
         assert local_mod._prepend_hermes_bin_dir("/usr/bin:/bin") == "/usr/bin:/bin"
 
     def test_make_run_env_injects_hermes_bin_dir(self):
-        """A gateway env missing the hermes dir gets it back in the subshell PATH.
+        """A gateway env missing the auraforge dir gets it back in the subshell PATH.
 
         Platform-agnostic: ``_prepend_hermes_bin_dir`` uses ``os.pathsep`` on
         every host, so no platform flag is faked here."""
         from tools.environments import local as local_mod
         from tools.environments.local import _make_run_env
         self._reset_cache()
-        local_mod._HERMES_BIN_DIR = "/opt/hermes/bin"
+        local_mod._HERMES_BIN_DIR = "/opt/auraforge/bin"
         with patch.dict(
             os.environ,
             {"PATH": os.pathsep.join(["/usr/bin", "/bin"])},
@@ -1430,7 +1430,7 @@ class TestHermesBinDirOnPath:
         ):
             result = _make_run_env({})
         entries = result["PATH"].split(os.pathsep)
-        assert entries[0] == "/opt/hermes/bin"
+        assert entries[0] == "/opt/auraforge/bin"
         assert "/usr/bin" in entries
 
 

@@ -1,7 +1,7 @@
 """Global emergency stop (ESTOP) — a resumable pause for NEW work only.
 
-``hermes pause`` writes a sentinel file at ``$HERMES_HOME/ESTOP``;
-``hermes resume`` removes it. While the sentinel exists:
+``auraforge pause`` writes a sentinel file at ``$HERMES_HOME/ESTOP``;
+``auraforge resume`` removes it. While the sentinel exists:
 
 * the cron scheduler skips dispatching due jobs (``cron/scheduler.py:tick``),
 * the embedded kanban dispatcher skips spawning workers
@@ -16,7 +16,7 @@ the very next check.
 
 The sentinel body is optional JSON ``{"reason": ..., "engaged_at": ...}``.
 A corrupt or empty file still counts as engaged (fail safe): the pause must
-hold even if the file was created by ``touch ~/.hermes/ESTOP``.
+hold even if the file was created by ``touch ~/.auraforge/ESTOP``.
 
 Ported from: gastownhall/gastown estop.go (MIT). Related prior art:
 #26778 (/panic — kill/exit semantics; deliberately different, ours is
@@ -48,7 +48,7 @@ def _hermes_home() -> Path:
         from hermes_constants import get_hermes_home
         return get_hermes_home()
     except Exception:
-        return Path(os.path.expanduser("~/.hermes"))
+        return Path(os.path.expanduser("~/.auraforge"))
 
 
 def sentinel_path() -> Path:
@@ -131,11 +131,11 @@ def paused_reply() -> Optional[str]:
     if reason:
         return (
             f"⏸️ Aura Forge is paused ({reason}). New work is on hold; "
-            "run `hermes resume` to pick things back up."
+            "run `auraforge resume` to pick things back up."
         )
     return (
         "⏸️ Aura Forge is paused. New work is on hold; "
-        "run `hermes resume` to pick things back up."
+        "run `auraforge resume` to pick things back up."
     )
 
 
@@ -160,7 +160,7 @@ def check_paused(component: str, logger: logging.Logger) -> bool:
         suffix = f" (reason: {reason})" if reason else ""
         logger.info(
             "%s dispatch paused by global emergency stop%s — remove with "
-            "`hermes resume` (%s)",
+            "`auraforge resume` (%s)",
             component,
             suffix,
             sentinel_path(),

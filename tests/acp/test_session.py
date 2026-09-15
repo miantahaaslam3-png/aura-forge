@@ -187,8 +187,8 @@ class TestSymlinkAliasNormalization:
         # that don't exist on this host (e.g. WSL-translated drives) behave
         # exactly as the old normpath comparison did.
         assert acp_session._normalize_cwd_for_compare(
-            "/nonexistent-hermes-test/x/../y"
-        ) == "/nonexistent-hermes-test/y"
+            "/nonexistent-auraforge-test/x/../y"
+        ) == "/nonexistent-auraforge-test/y"
 
     def test_list_sessions_matches_symlink_alias_cwd(self, manager, tmp_path):
         real = tmp_path / "proj"

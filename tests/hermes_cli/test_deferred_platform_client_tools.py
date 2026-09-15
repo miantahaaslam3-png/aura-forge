@@ -1,13 +1,13 @@
 """Deferred platform plugins must still register their *client* tools.
 
 Issue #78050: a bundled ``kind: platform`` plugin is registered as a deferred
-loader so ``hermes chat`` doesn't import ~20 gateway SDKs. The a2a plugin ships
+loader so ``auraforge chat`` doesn't import ~20 gateway SDKs. The a2a plugin ships
 two independent things behind that one deferral — an inbound adapter (heavy)
 and five outbound client tools (``a2a_call``, ``a2a_discover``, ``a2a_list``,
 ``a2a_history``, ``a2a_orchestrate``). Deferring the plugin deferred both, so
 in a CLI/TUI process the client tools never registered at all:
 ``resolve_toolset("a2a")`` returned ``[]`` and the toolset was absent from the
-``hermes tools`` checklist. The same tools worked in gateway/web processes only
+``auraforge tools`` checklist. The same tools worked in gateway/web processes only
 because those materialize every platform at startup.
 
 Client tools that live in a dedicated ``tools`` submodule are now registered at
@@ -209,13 +209,13 @@ class TestA2AClientToolsInCliProcess:
         from hermes_cli.plugins import discover_plugins, get_plugin_toolsets
 
         # get_plugin_toolsets() reads the process-wide manager, which is what
-        # the `hermes tools` checklist does.
+        # the `auraforge tools` checklist does.
         discover_plugins()
 
         assert "a2a" in {key for key, _, _ in get_plugin_toolsets()}
 
     def test_platform_bundle_includes_the_client_tools(self):
-        """``hermes-a2a`` sessions get the client tools too.
+        """``auraforge-a2a`` sessions get the client tools too.
 
         The bundle path read the tool registry behind a deliberately cheap
         ``is_registered()`` check, so a deferred platform's own tools were
@@ -227,7 +227,7 @@ class TestA2AClientToolsInCliProcess:
         mgr = PluginManager()
         mgr.discover_and_load()
 
-        assert A2A_CLIENT_TOOLS.issubset(set(resolve_toolset("hermes-a2a")))
+        assert A2A_CLIENT_TOOLS.issubset(set(resolve_toolset("auraforge-a2a")))
 
 
 # ── the general mechanism ──────────────────────────────────────────────────
@@ -322,7 +322,7 @@ class TestDeferredPlatformToolPreregistration:
     def test_tools_stay_attributed_after_materialization(
         self, tmp_path, probe, clean_registry
     ):
-        """`hermes plugins list` must still credit the pre-registered tools.
+        """`auraforge plugins list` must still credit the pre-registered tools.
 
         ``_load_plugin`` attributes tools by diffing the registry around
         ``register()``. Tools registered at discovery are already in the
@@ -377,7 +377,7 @@ class TestDeferredPlatformToolPreregistration:
 
         `register_tools` is not transactional: whatever it registered before
         raising stays in the registry. Leaving those unattributed makes
-        `hermes plugins list` under-report what the process is carrying, and
+        `auraforge plugins list` under-report what the process is carrying, and
         `_load_plugin`'s own diff cannot recover them later because they are
         already inside its "before" snapshot.
         """
@@ -415,7 +415,7 @@ class TestDeferredPlatformToolPreregistration:
         ``_load_plugin_scoped``'s failure path sweeps the *whole* ownership
         ledger for this plugin key — not the ``registration_start:`` slice —
         and disposes it, so the discovery-time client tools go with the failed
-        adapter. Attribution and the registry therefore agree at zero: `hermes
+        adapter. Attribution and the registry therefore agree at zero: `auraforge
         plugins list` reports no tools because the process really is serving
         none.
 

@@ -1,4 +1,4 @@
-"""`hermes memory status` should explain *why* a provider is unavailable.
+"""`auraforge memory status` should explain *why* a provider is unavailable.
 
 Regression coverage for miantahaaslam3-png/aura-forge#2765: when the selected
 provider reports unavailable, status lists the missing env vars and surfaces

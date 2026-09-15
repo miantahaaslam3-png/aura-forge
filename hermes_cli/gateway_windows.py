@@ -59,7 +59,7 @@ _FALLBACK_PATTERNS = re.compile(
 )
 _ACCESS_DENIED_PATTERN = re.compile(r"(access is denied|acceso denegado)", re.IGNORECASE)
 
-_TASK_NAME_DEFAULT = "Hermes_Gateway"
+_TASK_NAME_DEFAULT = "Aura Forge_Gateway"
 _TASK_DESCRIPTION = "Aura Forge Agent Gateway - Messaging Platform Integration"
 _TASK_LOGON_DELAY = "PT30S"
 _TASK_RESTART_INTERVAL = "PT1M"
@@ -89,19 +89,19 @@ def _assert_windows() -> None:
         raise RuntimeError("gateway_windows is Windows-only")
 
 
-def _preserve_hermes_home_path(path: str | Path) -> str:
-    """Render Hermes-owned paths under the configured AURA_FORGE_HOME spelling.
+def _preserve_aura_forge_home_path(path: str | Path) -> str:
+    """Render Aura Forge-owned paths under the configured AURA_FORGE_HOME spelling.
 
-    Windows installs may keep ``%LOCALAPPDATA%\\hermes`` as a symlink/junction to
+    Windows installs may keep ``%LOCALAPPDATA%\\auraforge`` as a symlink/junction to
     another drive. Runtime state should still identify itself by the configured
     AppData path, so launcher files must not bake in the resolved target when a
     path lives under AURA_FORGE_HOME.
     """
     candidate = Path(path)
     try:
-        from hermes_cli.config import get_hermes_home
+        from hermes_cli.config import get_aura_forge_home
 
-        home = Path(get_hermes_home())
+        home = Path(get_aura_forge_home())
         resolved_home = home.resolve()
         resolved_candidate = candidate.resolve()
         home_key = os.path.normcase(str(resolved_home))
@@ -294,8 +294,8 @@ def _launch_elevated_uninstall() -> bool:
 def get_task_name() -> str:
     """Scheduled Task name, scoped per profile.
 
-    Default profile: ``Hermes_Gateway``
-    Named profile X: ``Hermes_Gateway_<X>``
+    Default profile: ``Aura Forge_Gateway``
+    Named profile X: ``Aura Forge_Gateway_<X>``
     """
     _assert_windows()
     # Local import to avoid circular module initialization during hermes_cli boot.
@@ -315,14 +315,14 @@ def _sanitize_filename(value: str) -> str:
 def get_task_script_path() -> Path:
     """The generated ``gateway.cmd`` wrapper kept beside the VBS launcher.
 
-    Lives under ``%LOCALAPPDATA%\\hermes\\gateway-service\\<task_name>.cmd``
+    Lives under ``%LOCALAPPDATA%\\auraforge\\gateway-service\\<task_name>.cmd``
     (or ``<AURA_FORGE_HOME>/gateway-service/<task_name>.cmd`` so per-profile
     Aura Forge installs stay self-contained).
     """
     _assert_windows()
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    script_dir = Path(get_hermes_home()) / "gateway-service"
+    script_dir = Path(get_aura_forge_home()) / "gateway-service"
     script_dir.mkdir(parents=True, exist_ok=True)
     return script_dir / f"{_sanitize_filename(get_task_name())}.cmd"
 
@@ -370,10 +370,10 @@ def _stable_gateway_working_dir(project_root: Path) -> str:
     configured spelling instead of resolving symlinks so AppData installs backed
     by a junction/symlink still identify themselves as AppData.
     """
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
     try:
-        home = get_hermes_home()
+        home = get_aura_forge_home()
         if home:
             home_path = Path(home)
             if home_path.is_dir():
@@ -390,7 +390,7 @@ def _stable_gateway_working_dir(project_root: Path) -> str:
 def _build_gateway_cmd_script(
     python_path: str,
     working_dir: str,
-    hermes_home: str,
+    aura_forge_home: str,
     profile_arg: str,
 ) -> str:
     """Build the ``gateway.cmd`` wrapper content (CRLF-terminated).
@@ -412,16 +412,16 @@ def _build_gateway_cmd_script(
     """
     lines = ["@echo off", f"rem {_TASK_DESCRIPTION}"]
     lines.append(f"cd /d {_quote_cmd_script_arg(working_dir)}")
-    lines.append(f'set "AURA_FORGE_HOME={hermes_home}"')
+    lines.append(f'set "AURA_FORGE_HOME={aura_forge_home}"')
     lines.append('set "PYTHONIOENCODING=utf-8"')
     lines.append('set "HERMES_GATEWAY_DETACHED=1"')
     python_exe_path, venv_dir, extra_pythonpath = _resolve_detached_python(python_path)
     # VIRTUAL_ENV lets the gateway's own python detection find the venv
     # if someone imports hermes_constants-based logic during startup.
-    lines.append(f'set "VIRTUAL_ENV={_preserve_hermes_home_path(venv_dir)}"')
+    lines.append(f'set "VIRTUAL_ENV={_preserve_aura_forge_home_path(venv_dir)}"')
     pythonpath_entries = [
-        _preserve_hermes_home_path(Path(__file__).resolve().parent.parent),
-        *[_preserve_hermes_home_path(entry) for entry in extra_pythonpath],
+        _preserve_aura_forge_home_path(Path(__file__).resolve().parent.parent),
+        *[_preserve_aura_forge_home_path(entry) for entry in extra_pythonpath],
     ]
     lines.append(f'set "PYTHONPATH={";".join([*pythonpath_entries, "%PYTHONPATH%"])}"')
 
@@ -452,7 +452,7 @@ def _quote_vbs_string(value: str) -> str:
 def _build_gateway_vbs_script(
     python_path: str,
     working_dir: str,
-    hermes_home: str,
+    aura_forge_home: str,
     profile_arg: str,
 ) -> str:
     """Build a hidden-console ``gateway.vbs`` launcher (CRLF-terminated).
@@ -486,9 +486,9 @@ def _build_gateway_vbs_script(
     # list2cmdline gives CreateProcess-correct quoting for WScript.Shell.Run.
     command_line = subprocess.list2cmdline(prog_args)
 
-    repo_root = _preserve_hermes_home_path(Path(__file__).resolve().parent.parent)
+    repo_root = _preserve_aura_forge_home_path(Path(__file__).resolve().parent.parent)
     static_pythonpath = os.pathsep.join(
-        [repo_root, *[_preserve_hermes_home_path(entry) for entry in extra_pythonpath]]
+        [repo_root, *[_preserve_aura_forge_home_path(entry) for entry in extra_pythonpath]]
     )
 
     lines = [
@@ -497,10 +497,10 @@ def _build_gateway_vbs_script(
         "Dim sh, env, existing_pp",
         'Set sh = CreateObject("WScript.Shell")',
         'Set env = sh.Environment("PROCESS")',
-        f"env.Item({_quote_vbs_string('AURA_FORGE_HOME')}) = {_quote_vbs_string(hermes_home)}",
+        f"env.Item({_quote_vbs_string('AURA_FORGE_HOME')}) = {_quote_vbs_string(aura_forge_home)}",
         f"env.Item({_quote_vbs_string('PYTHONIOENCODING')}) = {_quote_vbs_string('utf-8')}",
         f"env.Item({_quote_vbs_string('HERMES_GATEWAY_DETACHED')}) = {_quote_vbs_string('1')}",
-        f"env.Item({_quote_vbs_string('VIRTUAL_ENV')}) = {_quote_vbs_string(_preserve_hermes_home_path(venv_dir))}",
+        f"env.Item({_quote_vbs_string('VIRTUAL_ENV')}) = {_quote_vbs_string(_preserve_aura_forge_home_path(venv_dir))}",
         # Mirror the cmd wrapper's ``PYTHONPATH=<static>;%PYTHONPATH%``: chain onto
         # whatever PYTHONPATH the task environment already carries, at runtime.
         f"existing_pp = env.Item({_quote_vbs_string('PYTHONPATH')})",
@@ -546,19 +546,19 @@ def _write_task_script() -> Path:
     """Generate and write the gateway.cmd wrapper. Return its absolute path."""
     _assert_windows()
     # Local imports to avoid circular-init at module load time.
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
     from hermes_cli.gateway import (
         PROJECT_ROOT,
         _profile_arg,
         get_python_path,
     )
 
-    python_path = _preserve_hermes_home_path(get_python_path())
+    python_path = _preserve_aura_forge_home_path(get_python_path())
     working_dir = _stable_gateway_working_dir(PROJECT_ROOT)
-    hermes_home = str(Path(get_hermes_home()))
-    profile_arg = _profile_arg(hermes_home)
+    aura_forge_home = str(Path(get_aura_forge_home()))
+    profile_arg = _profile_arg(aura_forge_home)
 
-    content = _build_gateway_cmd_script(python_path, working_dir, hermes_home, profile_arg)
+    content = _build_gateway_cmd_script(python_path, working_dir, aura_forge_home, profile_arg)
     script_path = get_task_script_path()
     tmp = script_path.with_suffix(".tmp")
     tmp.write_text(content, encoding="utf-8", newline="")
@@ -567,7 +567,7 @@ def _write_task_script() -> Path:
     # Also render the console-less .vbs launcher used by Scheduled Task and the
     # Startup-folder fallback via wscript.exe (issue #45599 fix A). The .cmd
     # wrapper stays as a generated helper/compatibility artifact.
-    vbs_content = _build_gateway_vbs_script(python_path, working_dir, hermes_home, profile_arg)
+    vbs_content = _build_gateway_vbs_script(python_path, working_dir, aura_forge_home, profile_arg)
     vbs_path = script_path.with_suffix(".vbs")
     vbs_tmp = vbs_path.with_name(vbs_path.name + ".tmp")
     vbs_tmp.write_text(vbs_content, encoding="utf-8", newline="")
@@ -790,7 +790,7 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
     layer in between.
     """
     _assert_windows()
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
     from hermes_cli.gateway import (
         PROJECT_ROOT,
         _profile_arg,
@@ -798,12 +798,12 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
     )
 
     python_exe, venv_dir, extra_pythonpath = _resolve_detached_python(
-        _preserve_hermes_home_path(get_python_path())
+        _preserve_aura_forge_home_path(get_python_path())
     )
-    project_root = _preserve_hermes_home_path(PROJECT_ROOT)
+    project_root = _preserve_aura_forge_home_path(PROJECT_ROOT)
     working_dir = _stable_gateway_working_dir(PROJECT_ROOT)
-    hermes_home = str(Path(get_hermes_home()))
-    profile_arg = _profile_arg(hermes_home)
+    aura_forge_home = str(Path(get_aura_forge_home()))
+    profile_arg = _profile_arg(aura_forge_home)
 
     argv = [python_exe, "-m", "hermes_cli.main"]
     if profile_arg:
@@ -811,14 +811,14 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
     argv.extend(["gateway", "run"])
 
     env_overlay = {
-        "AURA_FORGE_HOME": hermes_home,
+        "AURA_FORGE_HOME": aura_forge_home,
         "PYTHONIOENCODING": "utf-8",
         "HERMES_GATEWAY_DETACHED": "1",
-        "VIRTUAL_ENV": _preserve_hermes_home_path(venv_dir),
+        "VIRTUAL_ENV": _preserve_aura_forge_home_path(venv_dir),
     }
     _prepend_pythonpath(
         env_overlay,
-        [project_root, *[_preserve_hermes_home_path(entry) for entry in extra_pythonpath]]
+        [project_root, *[_preserve_aura_forge_home_path(entry) for entry in extra_pythonpath]]
         if extra_pythonpath
         else [project_root],
     )
@@ -853,7 +853,7 @@ def windowless_gateway_restart_spec(
     if sys.platform != "win32":
         return run_argv, "", {}
 
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
     from hermes_cli.gateway import PROJECT_ROOT
 
     python_exe = run_argv[0]
@@ -874,17 +874,17 @@ def windowless_gateway_restart_spec(
     working_dir = _stable_gateway_working_dir(PROJECT_ROOT)
     project_root = str(PROJECT_ROOT)
     try:
-        hermes_home = str(Path(get_hermes_home()).resolve())
+        aura_forge_home = str(Path(get_aura_forge_home()).resolve())
     except Exception:
-        hermes_home = ""
+        aura_forge_home = ""
 
     env_overlay: dict[str, str] = {
         "PYTHONIOENCODING": "utf-8",
         "HERMES_GATEWAY_DETACHED": "1",
         "VIRTUAL_ENV": str(venv_dir),
     }
-    if hermes_home:
-        env_overlay["AURA_FORGE_HOME"] = hermes_home
+    if aura_forge_home:
+        env_overlay["AURA_FORGE_HOME"] = aura_forge_home
     _prepend_pythonpath(
         env_overlay,
         [project_root, *extra_pythonpath] if extra_pythonpath else [project_root],
@@ -936,9 +936,9 @@ def _spawn_detached(script_path: Path | None = None) -> int:
     # logging module writes to gateway.log through a FileHandler, so the
     # real gateway logs still land there — this just captures anything
     # that goes to print() or native stderr.
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    log_dir = Path(get_hermes_home()) / "logs"
+    log_dir = Path(get_aura_forge_home()) / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     stray_log = log_dir / "gateway-stdio.log"
 
@@ -1043,7 +1043,7 @@ def _install_startup_fallback(script_path: Path, start_now: bool, detail: str) -
         _report_gateway_start(f"direct spawn (PID {pid})")
     else:
         profile_arg = _profile_arg()
-        start_cmd = f"hermes {profile_arg} gateway start" if profile_arg else "hermes gateway start"
+        start_cmd = f"auraforge {profile_arg} gateway start" if profile_arg else "auraforge gateway start"
         print("ℹ Startup fallback installed; gateway not started now.")
         print(f"  Start manually with: {start_cmd}")
     _print_next_steps()
@@ -1076,7 +1076,7 @@ def install(
                 _report_gateway_start(f"direct spawn (PID {pid})")
         else:
             print("ℹ Gateway not started and no auto-start service installed.")
-            print("  Run later with: hermes gateway start")
+            print("  Run later with: auraforge gateway start")
         return
 
     task_name = get_task_name()
@@ -1097,7 +1097,7 @@ def install(
                 if start_now:
                     print("  Approve the Windows UAC prompt; the elevated install will start the gateway afterwards.")
                 else:
-                    print("  Approve the Windows UAC prompt, then run: hermes gateway status")
+                    print("  Approve the Windows UAC prompt, then run: auraforge gateway status")
                 return
             print("⚠ Falling back to Startup folder because elevation was unavailable or cancelled.")
         else:
@@ -1119,7 +1119,7 @@ def install(
                 _report_gateway_start(f"direct spawn (PID {pid})")
         else:
             print("ℹ Gateway not started now.")
-            print("  Start manually with: hermes gateway start")
+            print("  Start manually with: auraforge gateway start")
         _print_next_steps()
         return
 
@@ -1138,7 +1138,7 @@ def install(
                 if start_now:
                     print("  Approve the Windows UAC prompt; the elevated install will start the gateway afterwards.")
                 else:
-                    print("  Approve the Windows UAC prompt, then run: hermes gateway status")
+                    print("  Approve the Windows UAC prompt, then run: auraforge gateway status")
                 return
             print("⚠ Falling back to Startup folder because elevation was unavailable or cancelled.")
         else:
@@ -1165,7 +1165,7 @@ def install(
             _report_gateway_start(f"direct spawn (PID {pid})")
         else:
             profile_arg = _profile_arg()
-            start_cmd = f"hermes {profile_arg} gateway start" if profile_arg else "hermes gateway start"
+            start_cmd = f"auraforge {profile_arg} gateway start" if profile_arg else "auraforge gateway start"
             print("ℹ Startup fallback installed; gateway not started now.")
             print(f"  Start manually with: {start_cmd}")
         _print_next_steps()
@@ -1199,19 +1199,19 @@ def _report_gateway_start(via: str) -> None:
     else:
         print(f"⚠ Launched gateway via {via}, but no process detected after 6s.")
         print("  Check the log for startup errors:")
-        from hermes_cli.config import get_hermes_home
-        print(f"    type {Path(get_hermes_home())}\\logs\\gateway.log")
-        print(f"    type {Path(get_hermes_home())}\\logs\\gateway-stdio.log")
+        from hermes_cli.config import get_aura_forge_home
+        print(f"    type {Path(get_aura_forge_home())}\\logs\\gateway.log")
+        print(f"    type {Path(get_aura_forge_home())}\\logs\\gateway-stdio.log")
 
 
 def _print_next_steps() -> None:
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    hermes_home = Path(get_hermes_home())
+    aura_forge_home = Path(get_aura_forge_home())
     print()
     print("Next steps:")
-    print("  hermes gateway status                      # Check status")
-    print(f"  type {hermes_home}\\logs\\gateway.log       # View logs")
+    print("  auraforge gateway status                      # Check status")
+    print(f"  type {aura_forge_home}\\logs\\gateway.log       # View logs")
 
 
 def uninstall() -> None:
@@ -1238,7 +1238,7 @@ def uninstall() -> None:
             if prompt_yes_no("  Open the UAC prompt now?", False):
                 if _launch_elevated_uninstall():
                     print("✓ Launched elevated Aura Forge gateway uninstall prompt.")
-                    print("  Approve the Windows UAC prompt, then run: hermes gateway status")
+                    print("  Approve the Windows UAC prompt, then run: auraforge gateway status")
                     return
                 print("⚠ Elevated uninstall prompt was unavailable or cancelled.")
             else:
@@ -1328,9 +1328,9 @@ def _print_deep_probes() -> None:
     import json
     from datetime import datetime, timezone
 
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    home = Path(get_hermes_home())
+    home = Path(get_aura_forge_home())
     pid_path = home / "gateway.pid"
     lock_path = home / "gateway.lock"
     state_path = home / "gateway_state.json"
@@ -1482,7 +1482,7 @@ def status(deep: bool = False) -> None:
     if not task_installed and not startup_installed and not pids:
         print()
         print("To install:")
-        print("  hermes gateway install")
+        print("  auraforge gateway install")
 
 
 def start() -> None:
@@ -1501,14 +1501,14 @@ def start() -> None:
 
         print("✗ Gateway service is not installed")
         if not prompt_yes_no("  Install it now so the gateway starts on login?", True):
-            print("  Run: hermes gateway install")
+            print("  Run: auraforge gateway install")
             return
         install(force=False)
         task_installed = is_task_registered()
         startup_installed = is_startup_entry_installed()
         if not task_installed and not startup_installed:
             print("⚠ Gateway install did not complete in this process.")
-            print("  If a UAC prompt opened, approve it, then run: hermes gateway start")
+            print("  If a UAC prompt opened, approve it, then run: auraforge gateway start")
             return
 
     # Manual starts use the same console-less direct spawn path as restart()

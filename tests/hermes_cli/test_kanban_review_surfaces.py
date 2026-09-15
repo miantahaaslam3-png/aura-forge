@@ -13,7 +13,7 @@ from hermes_cli import kanban_db as kb
 
 @pytest.fixture
 def review_worker(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> str:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -95,7 +95,7 @@ def test_review_tools_are_gated_and_visible_to_kanban_workers(
 
     invalidate_check_fn_cache()
     definitions = registry.get_definitions(
-        set(resolve_toolset("hermes-cli")), quiet=True
+        set(resolve_toolset("auraforge-cli")), quiet=True
     )
     names = {
         definition["function"]["name"]
@@ -117,7 +117,7 @@ def test_review_cli_round_trip_preserves_handoff(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -163,7 +163,7 @@ def test_domain_and_cli_review_handoffs_redact_before_persistence(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     secret = "ghp_" + "R" * 40
@@ -252,7 +252,7 @@ def test_cli_reopen_review_is_transition_first_and_redacts_reason(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     secret = "ghp_" + "Q" * 40
@@ -286,7 +286,7 @@ def test_goal_mode_review_handoff_cannot_bypass_judge(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -389,7 +389,7 @@ def test_cli_and_dashboard_receive_graph_aware_deadlock_diagnostic(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)

@@ -1821,7 +1821,7 @@ class TestPluginManagerList:
         already-loaded plugins, so when a later plugin registered a hook name
         an earlier plugin had already used, the shared name was attributed to
         the first plugin only and the later plugin reported 0 hooks in
-        `hermes plugins list`. Attribution now counts what each plugin's own
+        `auraforge plugins list`. Attribution now counts what each plugin's own
         register() added (per-registration delta), so both get credit.
         """
         plugins_dir = tmp_path / "hermes_test" / "plugins"
@@ -2048,7 +2048,7 @@ class TestPluginCommands:
         write_engine_plugin(home_b)
 
         # Note: HomeEngine reads os.environ['HERMES_HOME'] itself (simulating
-        # a real plugin like hermes-lcm capturing its home at registration),
+        # a real plugin like auraforge-lcm capturing its home at registration),
         # so we set the env var to home_a as a baseline and only use the
         # context-local override to *switch away* to home_b — proving the
         # override, not the env var, is what get_plugin_manager() keys on.
@@ -2278,7 +2278,7 @@ class TestPluginContextProfileName:
 
     def test_default_profile(self, tmp_path, monkeypatch):
         """HERMES_HOME at the root resolves to 'default'."""
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".auraforge"
         home.mkdir()
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         monkeypatch.setenv("HERMES_HOME", str(home))
@@ -2286,7 +2286,7 @@ class TestPluginContextProfileName:
 
     def test_named_profile(self, tmp_path, monkeypatch):
         """HERMES_HOME under profiles/<name> resolves to that name."""
-        prof = tmp_path / ".hermes" / "profiles" / "coder"
+        prof = tmp_path / ".auraforge" / "profiles" / "coder"
         prof.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         monkeypatch.setenv("HERMES_HOME", str(prof))

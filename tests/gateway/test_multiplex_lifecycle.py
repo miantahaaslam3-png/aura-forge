@@ -24,7 +24,7 @@ class TestServedProfilesStatus:
 def test_cron_profile_homes_follow_allowlist(tmp_path, monkeypatch):
     """The helper wired into in-process cron returns only selected profiles."""
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
-    default_home = tmp_path / ".hermes"
+    default_home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(default_home))
     for name in ("worker", "guest"):
         (default_home / "profiles" / name).mkdir(parents=True)

@@ -112,11 +112,11 @@ class TestFallbackChainInit:
             "fallback_providers": [
                 {"provider": "openrouter", "model": "anthropic/claude-sonnet-4.6"},
             ],
-            "fallback_model": {"provider": "nous", "model": "Hermes-4"},
+            "fallback_model": {"provider": "nous", "model": "Aura Forge-4"},
         })
         assert cli._fallback_model == [
             {"provider": "openrouter", "model": "anthropic/claude-sonnet-4.6"},
-            {"provider": "nous", "model": "Hermes-4"},
+            {"provider": "nous", "model": "Aura Forge-4"},
         ]
 
 
@@ -327,7 +327,7 @@ class TestHistoryDisplay:
             {
                 "id": "20260401_201329_d85961",
                 "title": "Checking Running Aura Forge Agent",
-                "preview": "check running gateways for hermes agent",
+                "preview": "check running gateways for auraforge agent",
                 "last_active": 0,
             },
         ]
@@ -357,7 +357,7 @@ class TestHistoryDisplay:
             {
                 "id": "20260401_201329_d85961",
                 "title": "Checking Running Aura Forge Agent",
-                "preview": "check running gateways for hermes agent",
+                "preview": "check running gateways for auraforge agent",
                 "last_active": 0,
             },
         ]
@@ -473,7 +473,7 @@ class TestRootLevelProviderOverride:
         """model.provider takes priority — root-level provider is only a fallback."""
         import yaml
 
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -496,7 +496,7 @@ class TestRootLevelProviderOverride:
         """Legacy root-level provider still populates model.provider in the CLI loader."""
         import yaml
 
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -519,7 +519,7 @@ class TestRootLevelProviderOverride:
         """Legacy root-level base_url still populates model.base_url in the CLI loader."""
         import yaml
 
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -541,7 +541,7 @@ class TestRootLevelProviderOverride:
         """Classic CLI must expose terminal.vercel_runtime to terminal_tool.py."""
         import yaml
 
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
         monkeypatch.delenv("TERMINAL_VERCEL_RUNTIME", raising=False)

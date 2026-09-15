@@ -1,5 +1,5 @@
 """
-`hermes computer-use doctor` — thin client for cua-driver's `health_report` MCP tool.
+`auraforge computer-use doctor` — thin client for cua-driver's `health_report` MCP tool.
 
 cua-driver owns the health model (#1908 / be761fac on `main`). This module
 just drives the stdio JSON-RPC handshake, calls `health_report`, and
@@ -136,7 +136,7 @@ def _normalize_version_token(text: str) -> str:
 
 
 def _build_identity(binary: str, report: Dict[str, Any]) -> Dict[str, Any]:
-    """Hermes-side identity block comparing resolved binary vs health_report."""
+    """Aura Forge-side identity block comparing resolved binary vs health_report."""
     cli = _read_cli_version(binary) or ""
     report_v = str(report.get("driver_version") or "")
     cli_tok = _normalize_version_token(cli)
@@ -869,7 +869,7 @@ def run_doctor(
     if not binary:
         looked_for = driver_cmd or "cua-driver (PATH and canonical install paths)"
         print(f"cua-driver: not installed (looked for {looked_for!r}).")
-        print("  Run: hermes computer-use install")
+        print("  Run: auraforge computer-use install")
         return 2
 
     try:

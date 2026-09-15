@@ -71,18 +71,18 @@ def start_background_mcp_discovery(*, logger, thread_name: str) -> None:
         # mcp_servers instead (#67605). The config gate above already runs on
         # the caller's thread, so it sees the same override.
         try:
-            from hermes_constants import get_hermes_home_override
+            from hermes_constants import get_aura_forge_home_override
 
-            home_override = get_hermes_home_override()
+            home_override = get_aura_forge_home_override()
         except Exception:
             home_override = None
 
         def _discover() -> None:
             token = None
             try:
-                from hermes_constants import set_hermes_home_override
+                from hermes_constants import set_aura_forge_home_override
 
-                token = set_hermes_home_override(home_override)
+                token = set_aura_forge_home_override(home_override)
             except Exception:
                 token = None
             try:
@@ -101,9 +101,9 @@ def start_background_mcp_discovery(*, logger, thread_name: str) -> None:
             finally:
                 if token is not None:
                     try:
-                        from hermes_constants import reset_hermes_home_override
+                        from hermes_constants import reset_aura_forge_home_override
 
-                        reset_hermes_home_override(token)
+                        reset_aura_forge_home_override(token)
                     except Exception:
                         pass
                 with _mcp_discovery_lock:

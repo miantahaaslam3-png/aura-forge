@@ -37,7 +37,7 @@ pytestmark = [
 @pytest.fixture()
 def hermes_home(tmp_path, monkeypatch):
     """Isolated HERMES_HOME so the repair scope covers tmp DBs."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     return home

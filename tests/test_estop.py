@@ -1,8 +1,8 @@
-"""Global emergency stop (`hermes pause` / `hermes resume`) — agent/estop.py.
+"""Global emergency stop (`auraforge pause` / `auraforge resume`) — agent/estop.py.
 
 The ESTOP sentinel is a resumable pause for NEW work only: cron dispatch,
 kanban dispatch, and new gateway turns are halted while it is engaged; work
-already in flight is never touched. Removing the sentinel (`hermes resume`)
+already in flight is never touched. Removing the sentinel (`auraforge resume`)
 restores normal operation with no restart.
 
 Ported from: gastownhall/gastown estop.go (MIT); related prior art: #26778
@@ -85,7 +85,7 @@ def test_paused_reply_surfaces_reason_and_resume_hint(hermes_home):
     assert notice is not None
     assert "paused" in notice.lower()
     assert "deploy window" in notice
-    assert "hermes resume" in notice
+    assert "auraforge resume" in notice
 
 
 def test_paused_reply_without_reason(hermes_home):
@@ -93,7 +93,7 @@ def test_paused_reply_without_reason(hermes_home):
     notice = estop.paused_reply()
     assert notice is not None
     assert "paused" in notice.lower()
-    assert "hermes resume" in notice
+    assert "auraforge resume" in notice
 
 
 # ── check_paused: cheap gate + log-once ─────────────────────────────────────
@@ -225,7 +225,7 @@ async def test_gateway_internal_events_bypass_estop(hermes_home):
     assert reply is None or "paused" not in (reply or "").lower()
 
 
-# ── CLI: hermes pause / hermes resume ───────────────────────────────────────
+# ── CLI: auraforge pause / auraforge resume ───────────────────────────────────────
 
 
 def test_cli_pause_engages_with_reason(hermes_home, capsys):
@@ -271,7 +271,7 @@ def test_builtin_subcommands_include_pause_resume():
     assert "resume" in _BUILTIN_SUBCOMMANDS
 
 
-# ── hermes status surfacing ─────────────────────────────────────────────────
+# ── auraforge status surfacing ─────────────────────────────────────────────────
 
 
 def test_status_line_when_paused(hermes_home):
@@ -329,7 +329,7 @@ async def test_gateway_slash_commands_bypass_estop(hermes_home):
         reply = await runner._handle_message(_FakeCmdEvent())
     except Exception:
         return
-    assert reply is None or "hermes is paused" not in (reply or "").lower()
+    assert reply is None or "auraforge is paused" not in (reply or "").lower()
 
 
 class _FakePauseEvent(_FakeEvent):

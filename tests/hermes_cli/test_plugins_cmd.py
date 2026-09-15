@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.plugins_cmd — the ``hermes plugins`` CLI subcommand."""
+"""Tests for hermes_cli.plugins_cmd — the ``auraforge plugins`` CLI subcommand."""
 
 from __future__ import annotations
 
@@ -263,7 +263,7 @@ class TestGitPullPluginDirAutostash:
         assert "preserved in git stash" in msg
         # The local edit is recoverable from the kept stash entry.
         stash_list = git(checkout, "stash", "list")
-        assert "hermes-plugin-update-autostash" in stash_list
+        assert "auraforge-plugin-update-autostash" in stash_list
         stash_diff = git(checkout, "stash", "show", "-p", "stash@{0}")
         assert "VALUE = 99" in stash_diff
 

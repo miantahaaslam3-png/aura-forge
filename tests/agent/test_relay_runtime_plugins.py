@@ -802,7 +802,7 @@ def test_session_close_does_not_flush_during_concurrent_managed_publication(
 
     event_loop_thread = threading.Thread(
         target=run_on_event_loop_thread,
-        name="hermes-relay-session-close-regression",
+        name="auraforge-relay-session-close-regression",
         daemon=True,
     )
     event_loop_thread.start()

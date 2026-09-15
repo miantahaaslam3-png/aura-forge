@@ -59,7 +59,7 @@ def test_self_heals_on_stale_refresh_token(monkeypatch):
 
 def test_self_heals_missing_singleton_access_token_from_codex_cli(tmp_path, monkeypatch):
     """Exact cron failure path: Aura Forge auth has refresh_token but missing access_token."""
-    hermes_home = tmp_path / "hermes"
+    hermes_home = tmp_path / "auraforge"
     codex_home = tmp_path / "codex"
     hermes_home.mkdir()
     codex_home.mkdir()
@@ -85,7 +85,7 @@ def test_self_heals_missing_singleton_access_token_from_codex_cli(tmp_path, monk
     resolved = resolve_codex_runtime_credentials()
 
     assert resolved["api_key"] == "fresh-access"
-    assert resolved["source"] == "hermes-auth-store"
+    assert resolved["source"] == "auraforge-auth-store"
     stored = json.loads((hermes_home / "auth.json").read_text())
     tokens = stored["providers"]["openai-codex"]["tokens"]
     assert tokens["access_token"] == "fresh-access"

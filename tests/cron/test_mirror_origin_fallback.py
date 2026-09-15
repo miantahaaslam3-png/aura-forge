@@ -129,7 +129,7 @@ class TestFallbackMirrorEndToEnd:
 
     @pytest.fixture()
     def slack_env(self, monkeypatch, tmp_path):
-        home = tmp_path / "hermes-home"
+        home = tmp_path / "auraforge-home"
         home.mkdir()
         (home / "config.yaml").write_text(
             "cron:\n  mirror_delivery: true\n"

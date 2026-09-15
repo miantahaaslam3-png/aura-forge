@@ -769,7 +769,7 @@ def _spawn_powershell_es(root: str, ctx: ServerContext) -> Optional[SpawnSpec]:
         f"-LogPath '{log_path}' "
         f"-SessionDetailsPath '{session_path}' "
         f"-FeatureFlags @() -AdditionalModules @() "
-        f"-HostName Aura Forge -HostProfileId hermes -HostVersion 1.0.0 "
+        f"-HostName Aura Forge -HostProfileId auraforge -HostVersion 1.0.0 "
         f"-Stdio -LogLevel Normal"
     )
     return SpawnSpec(

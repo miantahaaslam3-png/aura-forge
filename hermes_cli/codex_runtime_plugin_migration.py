@@ -25,7 +25,7 @@ What translates (MCP servers):
   Aura Forge mcp_servers.<n>.connect_timeout   → codex startup_timeout_sec
 
 What does NOT translate (warned + skipped):
-  Hermes-specific keys (sampling, etc.) — codex's MCP client has no
+  Aura Forge-specific keys (sampling, etc.) — codex's MCP client has no
   equivalent. Listed in the per-server skipped[] field of the report.
 
 What's NOT migrated (intentional):
@@ -471,7 +471,7 @@ def _query_codex_plugins(
         with CodexAppServerClient(
             codex_home=str(codex_home) if codex_home else None
         ) as client:
-            client.initialize(client_name="hermes-migration")
+            client.initialize(client_name="auraforge-migration")
             resp = client.request("plugin/list", {}, timeout=timeout)
     except Exception as exc:
         return [], f"plugin/list query failed: {exc}"
@@ -536,10 +536,10 @@ def _looks_like_test_tempdir(path: str) -> bool:
     macOS routes ``/tmp`` through ``/private/var/folders/<…>/T`` which is
     what pytest's tempdir factory uses by default. If a AURA_FORGE_HOME pointing
     at one of those paths is burned into ``~/.codex/config.toml``, every
-    codex-routed hermes-tools call fails silently once the directory is GC'd.
+    codex-routed auraforge-tools call fails silently once the directory is GC'd.
 
     We err on the side of refusing — losing a (very unlikely) real
-    ``~/.hermes`` symlink that happens to live under ``/private/var/folders``
+    ``~/.auraforge`` symlink that happens to live under ``/private/var/folders``
     is much less harmful than silently bricking codex's tool surface.
     """
     if not path:
@@ -560,7 +560,7 @@ def _build_hermes_tools_mcp_entry() -> dict:
     this for browser/web/delegate_task/vision/memory/skills tools.
 
     The command runs the worktree's Python via the current sys.executable
-    so a hermes installed under /opt/, /usr/local/, or a venv all work.
+    so a auraforge installed under /opt/, /usr/local/, or a venv all work.
     AURA_FORGE_HOME and PYTHONPATH are passed through so the spawned process
     sees the same config + module layout the user is running."""
     import sys
@@ -568,7 +568,7 @@ def _build_hermes_tools_mcp_entry() -> dict:
     env: dict[str, str] = {}
     # AURA_FORGE_HOME passes through IF SET so the MCP subprocess sees the same
     # config / auth / sessions DB as the parent CLI. Read from os.environ
-    # (not get_hermes_home()) on purpose: when the env var is unset we want
+    # (not get_aura_forge_home()) on purpose: when the env var is unset we want
     # codex's subprocess to inherit whatever AURA_FORGE_HOME its launcher sets
     # at runtime (systemd unit, gateway, kanban dispatcher, custom shell),
     # rather than burning the migrate-time resolved default into config.toml
@@ -579,12 +579,12 @@ def _build_hermes_tools_mcp_entry() -> dict:
     # a sibling test's monkeypatch.setenv("AURA_FORGE_HOME", tmp_path) would
     # otherwise leak a transient pytest tempdir into the user's real
     # ~/.codex/config.toml and silently brick codex once the tempdir is GC'd.
-    hermes_home = os.environ.get("AURA_FORGE_HOME") or ""
-    if hermes_home and _looks_like_test_tempdir(hermes_home):
-        hermes_home = ""
-    if hermes_home:
-        env["AURA_FORGE_HOME"] = hermes_home
-    # PYTHONPATH passes through so a worktree-launched hermes finds the
+    aura_forge_home = os.environ.get("AURA_FORGE_HOME") or ""
+    if aura_forge_home and _looks_like_test_tempdir(aura_forge_home):
+        aura_forge_home = ""
+    if aura_forge_home:
+        env["AURA_FORGE_HOME"] = aura_forge_home
+    # PYTHONPATH passes through so a worktree-launched auraforge finds the
     # branch's modules instead of the installed package.
     pythonpath = os.environ.get("PYTHONPATH")
     if pythonpath:
@@ -694,9 +694,9 @@ def migrate(
     # The server itself is agent/transports/hermes_tools_mcp_server.py
     # and is launched on demand by codex (stdio MCP).
     if expose_hermes_tools:
-        translated["hermes-tools"] = _build_hermes_tools_mcp_entry()
-        if "hermes-tools" not in report.migrated:
-            report.migrated.append("hermes-tools")
+        translated["auraforge-tools"] = _build_hermes_tools_mcp_entry()
+        if "auraforge-tools" not in report.migrated:
+            report.migrated.append("auraforge-tools")
 
     # Build the new managed block
     managed_block = render_codex_toml_section(

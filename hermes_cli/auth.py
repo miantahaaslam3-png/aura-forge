@@ -82,7 +82,7 @@ from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Optional, Tup
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from hermes_cli.config import (
-    get_hermes_home,
+    get_aura_forge_home,
     get_config_path,
     read_raw_config,
     require_readable_config_before_write,
@@ -112,7 +112,7 @@ AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 # Nous Portal defaults
 DEFAULT_NOUS_PORTAL_URL = "https://portal.nousresearch.com"
 DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.nousresearch.com/v1"
-DEFAULT_NOUS_CLIENT_ID = "hermes-cli"
+DEFAULT_NOUS_CLIENT_ID = "auraforge-cli"
 NOUS_INFERENCE_INVOKE_SCOPE = "inference:invoke"
 NOUS_BILLING_MANAGE_SCOPE = "billing:manage"
 DEFAULT_NOUS_SCOPE = NOUS_INFERENCE_INVOKE_SCOPE
@@ -145,7 +145,7 @@ try:  # Version tag for the Codex token-endpoint User-Agent; fall back if unavai
     from hermes_cli import __version__ as _HERMES_CLI_VERSION
 except Exception:  # pragma: no cover - version import should always succeed
     _HERMES_CLI_VERSION = "unknown"
-CODEX_OAUTH_USER_AGENT = f"hermes-cli/{_HERMES_CLI_VERSION}"
+CODEX_OAUTH_USER_AGENT = f"auraforge-cli/{_HERMES_CLI_VERSION}"
 CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 XAI_OAUTH_ISSUER = "https://auth.x.ai"
 XAI_OAUTH_DISCOVERY_URL = f"{XAI_OAUTH_ISSUER}/.well-known/openid-configuration"
@@ -1113,14 +1113,14 @@ def _oauth_trace(event: str, *, sequence_id: Optional[str] = None, **fields: Any
 # =============================================================================
 
 def _auth_file_path() -> Path:
-    path = get_hermes_home() / "auth.json"
+    path = get_aura_forge_home() / "auth.json"
     # Seat belt: if pytest is running and AURA_FORGE_HOME resolves to the real
     # user's auth store, refuse rather than silently corrupt it. This catches
     # tests that forgot to monkeypatch AURA_FORGE_HOME, tests invoked without the
     # hermetic conftest, or sandbox escapes via threads/subprocesses. In
     # production (no PYTEST_CURRENT_TEST) this is a single dict lookup.
     if os.environ.get("PYTEST_CURRENT_TEST"):
-        real_home_auth = (Path.home() / ".hermes" / "auth.json").resolve(strict=False)
+        real_home_auth = (Path.home() / ".aura-forge" / "auth.json").resolve(strict=False)
         try:
             resolved = path.resolve(strict=False)
         except Exception:
@@ -1149,7 +1149,7 @@ def _global_auth_file_path() -> Optional[Path]:
         global_root = get_default_hermes_root()
     except Exception:
         return None
-    profile_home = get_hermes_home()
+    profile_home = get_aura_forge_home()
     try:
         if profile_home.resolve(strict=False) == global_root.resolve(strict=False):
             return None
@@ -1200,7 +1200,7 @@ def _load_global_auth_store() -> Dict[str, Any]:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         real_home_env = os.environ.get("HOME", "")
         if real_home_env:
-            real_root = Path(real_home_env) / ".hermes" / "auth.json"
+            real_root = Path(real_home_env) / ".aura-forge" / "auth.json"
             try:
                 if global_path.resolve(strict=False) == real_root.resolve(strict=False):
                     _global_auth_store_cache = None
@@ -2081,7 +2081,7 @@ def is_provider_explicitly_configured(provider_id: str) -> bool:
     # NOTE: this uses has_explicit_vertex_config(), NOT has_vertex_credentials()
     # — the latter also counts an ambient GOOGLE_APPLICATION_CREDENTIALS path
     # (commonly set globally for unrelated GCP work), which would mark Vertex
-    # explicit for users who never set Aura Forge up for it. Only Hermes-scoped
+    # explicit for users who never set Aura Forge up for it. Only Aura Forge-scoped
     # signals (VERTEX_PROJECT_ID / vertex.project_id / VERTEX_CREDENTIALS_PATH)
     # count here.
     try:
@@ -4344,7 +4344,7 @@ def resolve_codex_runtime_credentials(
         "provider": "openai-codex",
         "base_url": base_url,
         "api_key": access_token,
-        "source": "hermes-auth-store",
+        "source": "auraforge-auth-store",
         "last_refresh": data.get("last_refresh"),
         "auth_mode": "chatgpt",
     }
@@ -4787,7 +4787,7 @@ def _write_through_xai_oauth_to_global_root(state: Dict[str, Any]) -> None:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         real_home_env = os.environ.get("HOME", "")
         if real_home_env:
-            real_root = Path(real_home_env) / ".hermes" / "auth.json"
+            real_root = Path(real_home_env) / ".aura-forge" / "auth.json"
             try:
                 if global_path.resolve(strict=False) == real_root.resolve(strict=False):
                     return
@@ -5292,7 +5292,7 @@ def resolve_xai_oauth_runtime_credentials(
         "provider": "xai-oauth",
         "base_url": base_url,
         "api_key": access_token,
-        "source": "hermes-auth-store",
+        "source": "auraforge-auth-store",
         "last_refresh": data.get("last_refresh"),
         # Display/telemetry only. Device-code is the only supported xAI OAuth
         # flow, so report it unconditionally — auth.json may still carry a
@@ -5403,7 +5403,7 @@ def _nous_device_auth_timeout_message(portal_base_url: str) -> str:
         "  Portal sign-in is required before the device code can be approved.\n"
         "  If the browser showed a CAPTCHA / 'You did not pass CAPTCHA' error,\n"
         "  finish signing in at the Portal in a normal browser tab, then retry:\n"
-        "    hermes portal\n"
+        "    auraforge portal\n"
         f"  Portal login: {portal}/login"
     )
 
@@ -5470,11 +5470,11 @@ def _poll_for_token(
 # import instead of running the full device-code flow every time.
 #
 # File lives at ${HERMES_SHARED_AUTH_DIR}/nous_auth.json, defaulting to
-# ``<hermes-root>/shared/nous_auth.json`` where ``<hermes-root>`` is what
-# ``get_default_hermes_root()`` returns — ``~/.hermes`` on Linux/macOS,
-# ``%LOCALAPPDATA%\hermes`` on native Windows, or the Docker/custom root.
+# ``<auraforge-root>/shared/nous_auth.json`` where ``<auraforge-root>`` is what
+# ``get_default_hermes_root()`` returns — ``~/.auraforge`` on Linux/macOS,
+# ``%LOCALAPPDATA%\auraforge`` on native Windows, or the Docker/custom root.
 # It is OUTSIDE any named profile's AURA_FORGE_HOME so named profiles (which
-# typically live under ``<hermes-root>/profiles/<name>/``) all see the
+# typically live under ``<auraforge-root>/profiles/<name>/``) all see the
 # same file.
 #
 # Written on successful login and on every runtime refresh so the stored
@@ -5492,10 +5492,10 @@ def _nous_shared_auth_dir() -> Path:
 
     Honors ``HERMES_SHARED_AUTH_DIR`` so tests can redirect it to a tmp
     path without touching the real user's home. Defaults to
-    ``<hermes-root>/shared/``, where ``<hermes-root>`` is what
+    ``<auraforge-root>/shared/``, where ``<auraforge-root>`` is what
     :func:`hermes_constants.get_default_hermes_root` returns — so
     Linux/macOS classic installs land at ``~/.aura-forge/shared/``, native
-    Windows installs at ``%LOCALAPPDATA%\\hermes\\shared\\``, and
+    Windows installs at ``%LOCALAPPDATA%\\auraforge\\shared\\``, and
     Docker / custom ``AURA_FORGE_HOME`` deployments at
     ``<AURA_FORGE_HOME>/shared/``. Sits outside any named profile so all
     profiles under the same root share the store.
@@ -6041,7 +6041,7 @@ def fetch_nous_models(
         if isinstance(model_id, str) and model_id.strip():
             mid = model_id.strip()
             # Skip Aura Forge models — they're not reliable for agentic tool-calling
-            if "hermes" in mid.lower():
+            if "auraforge" in mid.lower():
                 continue
             model_ids.append(mid)
 
@@ -6345,7 +6345,7 @@ def refresh_nous_oauth_from_state(
     return refresh_nous_oauth_pure(
         state.get("access_token", ""),
         state.get("refresh_token", ""),
-        state.get("client_id", "hermes-cli"),
+        state.get("client_id", "auraforge-cli"),
         state.get("portal_base_url", DEFAULT_NOUS_PORTAL_URL),
         state.get("inference_base_url", DEFAULT_NOUS_INFERENCE_URL),
         token_type=state.get("token_type", "Bearer"),
@@ -7209,7 +7209,7 @@ def get_api_key_provider_status(provider_id: str) -> Dict[str, Any]:
 
     # Keyless providers (opencode-free) are served anonymously: no credential
     # exists, so every install counts as configured/logged in. Derived from
-    # the HermesOverlay keyless flag — the same source the provider catalog
+    # the Aura ForgeOverlay keyless flag — the same source the provider catalog
     # and GUI contract tests use.
     try:
         from hermes_cli.providers import HERMES_OVERLAYS
@@ -8019,7 +8019,7 @@ def _save_model_choice(model_id: str) -> None:
 
 def login_command(args) -> None:
     """Deprecated: use 'auraforge model' or 'auraforge setup' instead."""
-    print("The 'hermes login' command has been removed.")
+    print("The 'auraforge login' command has been removed.")
     print("Use 'auraforge auth' to manage credentials,")
     print("'auraforge model' to select a provider, or 'auraforge setup' for full setup.")
     raise SystemExit(0)
@@ -8035,7 +8035,7 @@ def _login_openai_codex(
 
     del args, pconfig  # kept for parity with other provider login helpers
 
-    # Check for existing Hermes-owned credentials
+    # Check for existing Aura Forge-owned credentials
     if not force_new_login:
         try:
             existing = resolve_codex_runtime_credentials()
@@ -8094,7 +8094,7 @@ def _login_openai_codex(
     config_path = _update_config_for_provider("openai-codex", creds.get("base_url", DEFAULT_CODEX_BASE_URL))
     print()
     print("Login successful!")
-    from hermes_constants import display_hermes_home as _dhh
+    from hermes_constants import display_aura_forge_home as _dhh
     print(f"  Auth state: {_dhh()}/auth.json")
     print(f"  Config updated: {config_path} (model.provider=openai-codex)")
 
@@ -8162,7 +8162,7 @@ def _login_xai_oauth(
     config_path = _update_config_for_provider("xai-oauth", creds.get("base_url", DEFAULT_XAI_OAUTH_BASE_URL))
     print()
     print("Login successful!")
-    from hermes_constants import display_hermes_home as _dhh
+    from hermes_constants import display_aura_forge_home as _dhh
     print(f"  Auth state: {_dhh()}/auth.json")
     print(f"  Config updated: {config_path} (model.provider=xai-oauth)")
 

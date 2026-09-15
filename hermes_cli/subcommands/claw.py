@@ -56,7 +56,7 @@ def build_claw_parser(subparsers, *, cmd_claw: Callable) -> None:
         action="store_true",
         help="Skip the pre-migration zip snapshot of ~/.aura-forge/ (by default a "
         "single restore-point archive is written to ~/.aura-forge/backups/ "
-        "before apply; restorable with 'hermes import').",
+        "before apply; restorable with 'auraforge import').",
     )
     claw_migrate.add_argument(
         "--workspace-target", help="Absolute path to copy workspace instructions into"

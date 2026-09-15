@@ -177,9 +177,9 @@ def _ledger_path() -> Path:
 
         return Path(get_default_hermes_root()) / LEDGER_FILENAME
     except Exception:
-        from hermes_cli.config import get_hermes_home
+        from hermes_cli.config import get_aura_forge_home
 
-        return Path(get_hermes_home()) / LEDGER_FILENAME
+        return Path(get_aura_forge_home()) / LEDGER_FILENAME
 
 
 def _read_ledger(path: Path) -> Optional[list[dict]]:

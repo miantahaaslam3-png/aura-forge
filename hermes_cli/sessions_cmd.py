@@ -11,7 +11,7 @@ byte-identical. A symtable/AST closure check found exactly two free variables:
   threaded as a keyword parameter via ``functools.partial`` at the
   ``set_defaults(func=...)`` wiring site in ``main()``.
 
-Helpers that stay in ``hermes_cli.main`` (``get_hermes_home``,
+Helpers that stay in ``hermes_cli.main`` (``get_aura_forge_home``,
 ``_relative_time``, ``_session_browse_picker``, ``_size_delta_label``) are
 delegated through call-time wrappers below so existing test monkeypatches on
 ``hermes_cli.main.<name>`` keep reaching this code path, and so imports stay
@@ -31,8 +31,8 @@ def _m():
     return main
 
 
-def get_hermes_home():
-    return _m().get_hermes_home()
+def get_aura_forge_home():
+    return _m().get_aura_forge_home()
 
 
 def _relative_time(ts):
@@ -111,7 +111,7 @@ def _prune_never_active_keyed(db, args):
         print("Aborted.")
         return
 
-    sessions_dir = get_hermes_home() / "sessions"
+    sessions_dir = get_aura_forge_home() / "sessions"
     deleted, routing_deleted = db.prune_never_active_keyed_sessions(
         older_than_days=days, sessions_dir=sessions_dir
     )
@@ -181,11 +181,11 @@ def cmd_sessions(args, sessions_parser=None):
             print("")
             print("  Next step — offline recovery (never modifies the source):")
             source_hint = report.get("backup_path") or db_path
-            print(f"    hermes sessions recover --source {source_hint} \\")
+            print(f"    auraforge sessions recover --source {source_hint} \\")
             print("        --inspect-only")
             print("  If that reports the data is recoverable, rebuild it into")
             print("  a NEW database (the active one is left untouched):")
-            print(f"    hermes sessions recover --source {source_hint} \\")
+            print(f"    auraforge sessions recover --source {source_hint} \\")
             print("        --output recovered-state.db")
         return
 
@@ -625,7 +625,7 @@ def cmd_sessions(args, sessions_parser=None):
                     out_dir = (
                         Path(args.output).expanduser()
                         if args.output and args.output != "-"
-                        else get_hermes_home() / "session-exports"
+                        else get_aura_forge_home() / "session-exports"
                     )
                     out_dir.mkdir(parents=True, exist_ok=True)
                     exported = 0
@@ -715,7 +715,7 @@ def cmd_sessions(args, sessions_parser=None):
             print("Markdown/QMD export writes files; stdout (-) is only supported with --format jsonl.")
             db.close()
             return
-        output_dir = Path(args.output).expanduser() if args.output else get_hermes_home() / "session-exports"
+        output_dir = Path(args.output).expanduser() if args.output else get_aura_forge_home() / "session-exports"
 
         def _export_one(session_id: str, *, include_lineage: bool = False):
             data = (
@@ -809,7 +809,7 @@ def cmd_sessions(args, sessions_parser=None):
                         )
                         db.close()
                         return
-                sessions_dir = get_hermes_home() / "sessions"
+                sessions_dir = get_aura_forge_home() / "sessions"
                 if db.delete_session(
                     resolved_session_id,
                     sessions_dir=sessions_dir,
@@ -887,7 +887,7 @@ def cmd_sessions(args, sessions_parser=None):
                 return
         elif _pinned_note:
             print(f"Warning: deleting a pinned session '{resolved_session_id}'.")
-        sessions_dir = get_hermes_home() / "sessions"
+        sessions_dir = get_aura_forge_home() / "sessions"
         if db.delete_session(resolved_session_id, sessions_dir=sessions_dir):
             print(f"Deleted session '{resolved_session_id}'.")
         else:
@@ -1046,7 +1046,7 @@ def cmd_sessions(args, sessions_parser=None):
                 return
 
         if action == "prune":
-            sessions_dir = get_hermes_home() / "sessions"
+            sessions_dir = get_aura_forge_home() / "sessions"
             count = db.prune_sessions(sessions_dir=sessions_dir, **filters)
             print(f"Pruned {count} session(s).")
         else:
@@ -1133,7 +1133,7 @@ def cmd_sessions(args, sessions_parser=None):
             return
         if not pinned_rows:
             print(
-                "No pinned sessions. Pin one with: hermes sessions pin <session_id>"
+                "No pinned sessions. Pin one with: auraforge sessions pin <session_id>"
             )
             return
         print(f"{'Title':<32} {'Last Active':<13} {'Src':<9} {'ID'}")
@@ -1227,7 +1227,7 @@ def cmd_sessions(args, sessions_parser=None):
             print("Cancelled.")
             return
 
-        # Launch hermes --resume <id> by replacing the current process
+        # Launch auraforge --resume <id> by replacing the current process
         print(f"Resuming session: {selected_id}")
         from hermes_cli.relaunch import relaunch
 

@@ -20,8 +20,8 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
         description=(
             "Manage MCP server connections and run Aura Forge as an MCP server.\n\n"
             "MCP servers provide additional tools via the Model Context Protocol.\n"
-            "Use 'hermes mcp add' to connect to a new server, or\n"
-            "'hermes mcp serve' to expose Aura Forge conversations over MCP."
+            "Use 'auraforge mcp add' to connect to a new server, or\n"
+            "'auraforge mcp serve' to expose Aura Forge conversations over MCP."
         ),
     )
     mcp_sub = mcp_parser.add_subparsers(dest="mcp_action")

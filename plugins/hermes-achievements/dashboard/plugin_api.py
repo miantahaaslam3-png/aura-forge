@@ -1,6 +1,6 @@
 """Aura Forge Achievements dashboard plugin backend.
 
-Mounted at /api/plugins/hermes-achievements/ by Aura Forge dashboard.
+Mounted at /api/plugins/auraforge-achievements/ by Aura Forge dashboard.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ except ImportError:
     import os as _os
     def get_hermes_home() -> Path:  # type: ignore[misc]
         val = (_os.environ.get("HERMES_HOME") or "").strip()
-        return Path(val) if val else Path.home() / ".hermes"
+        return Path(val) if val else Path.home() / ".auraforge"
 
 try:
     from fastapi import APIRouter
@@ -143,20 +143,20 @@ ACHIEVEMENTS: List[Dict[str, Any]] = [
 
 
 def _data_dir() -> Path:
-    """Durable data root (``<hermes home>/plugin-data/hermes-achievements/``).
+    """Durable data root (``<auraforge home>/plugin-data/auraforge-achievements/``).
 
-    Was the install tree (``plugins/hermes-achievements/``) before the
+    Was the install tree (``plugins/auraforge-achievements/``) before the
     plugin-data convention existed — state parked there died on
-    ``hermes plugins remove``/``update``. Legacy files migrate on first read.
+    ``auraforge plugins remove``/``update``. Legacy files migrate on first read.
     """
     try:
         from plugins.plugin_storage import plugin_data_dir
 
-        return plugin_data_dir("hermes-achievements")
+        return plugin_data_dir("auraforge-achievements")
     except Exception:
         # Standalone dashboard import (no plugins package on sys.path):
         # keep the plugin working with the same layout, computed locally.
-        root = get_hermes_home() / "plugin-data" / "hermes-achievements"
+        root = get_hermes_home() / "plugin-data" / "auraforge-achievements"
         root.mkdir(parents=True, exist_ok=True)
         return root
 
@@ -164,7 +164,7 @@ def _data_dir() -> Path:
 def _data_file(name: str) -> Path:
     path = _data_dir() / name
     if not path.exists():
-        legacy = get_hermes_home() / "plugins" / "hermes-achievements" / name
+        legacy = get_hermes_home() / "plugins" / "auraforge-achievements" / name
         if legacy.exists():
             try:
                 path.write_text(legacy.read_text(encoding="utf-8"), encoding="utf-8")
@@ -965,7 +965,7 @@ def _start_background_scan() -> None:
         thread = threading.Thread(
             target=_run_scan_and_update_cache,
             kwargs={"publish_partial_snapshots": True},
-            name="hermes-achievements-scan",
+            name="auraforge-achievements-scan",
             daemon=True,
         )
         _BACKGROUND_SCAN_THREAD = thread

@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 
 
 # -- Aura Forge overlay ----------------------------------------------------------
-# Hermes-specific metadata that models.dev doesn't provide.
+# Aura Forge-specific metadata that models.dev doesn't provide.
 
 @dataclass(frozen=True)
 class HermesOverlay:
-    """Hermes-specific provider metadata layered on top of models.dev."""
+    """Aura Forge-specific provider metadata layered on top of models.dev."""
 
     transport: str = "openai_chat"        # openai_chat | anthropic_messages | codex_responses
     is_aggregator: bool = False
@@ -271,7 +271,7 @@ class ProviderDef:
     is_aggregator: bool = False
     auth_type: str = "api_key"
     doc: str = ""
-    source: str = ""                      # "models.dev", "hermes", "user-config"
+    source: str = ""                      # "models.dev", "auraforge", "user-config"
 
 
 # -- Aliases ------------------------------------------------------------------
@@ -503,7 +503,7 @@ def get_provider(name: str, *, allow_network: bool = True) -> Optional[ProviderD
         base_url_env = overlay.base_url_env_var if overlay else ""
         base_url_override = overlay.base_url_override if overlay else ""
 
-        # Combine env vars: models.dev env + hermes extra
+        # Combine env vars: models.dev env + auraforge extra
         env_vars = list(mdev_info.env)
         if overlay and overlay.extra_env_vars:
             for ev in overlay.extra_env_vars:
@@ -524,7 +524,7 @@ def get_provider(name: str, *, allow_network: bool = True) -> Optional[ProviderD
         )
 
     if overlay is not None:
-        # Hermes-only provider (not in models.dev)
+        # Aura Forge-only provider (not in models.dev)
         return ProviderDef(
             id=canonical,
             name=_LABEL_OVERRIDES.get(canonical, canonical),
@@ -534,7 +534,7 @@ def get_provider(name: str, *, allow_network: bool = True) -> Optional[ProviderD
             base_url_env_var=overlay.base_url_env_var,
             is_aggregator=overlay.is_aggregator,
             auth_type=overlay.auth_type,
-            source="hermes",
+            source="auraforge",
         )
 
     # Plugin-registered provider profiles (plugins/model-providers/<name>/).
@@ -965,7 +965,7 @@ def resolve_provider_full(
                         transport="openai_chat",
                         api_key_env_vars=tuple(_pcfg.api_key_env_vars or ()),
                         base_url=_pcfg.inference_base_url or "",
-                        source="hermes-auth-registry",
+                        source="auraforge-auth-registry",
                     )
         except Exception:
             pass

@@ -24,7 +24,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from hermes_cli._subprocess_compat import noninteractive_git_env
 from hermes_cli.config import cfg_get
 from hermes_cli.secret_prompt import masked_secret_prompt
@@ -147,7 +147,7 @@ _SUPPORTED_MANIFEST_VERSION = 1
 
 def _plugins_dir() -> Path:
     """Return the user plugins directory, creating it if needed."""
-    plugins = get_hermes_home() / "plugins"
+    plugins = get_aura_forge_home() / "plugins"
     plugins.mkdir(parents=True, exist_ok=True)
     return plugins
 
@@ -450,7 +450,7 @@ def _prompt_plugin_env_vars(manifest: dict, console) -> None:
         return
 
     from hermes_cli.config import get_env_value, save_env_value  # noqa: F811
-    from hermes_constants import display_hermes_home
+    from hermes_constants import display_aura_forge_home
 
     # Normalise to list-of-dicts
     env_specs: list[dict] = []
@@ -487,15 +487,15 @@ def _prompt_plugin_env_vars(manifest: dict, console) -> None:
             else:
                 value = line_input(f"  {name}: ").strip()
         except (EOFError, KeyboardInterrupt):
-            console.print(f"\n[dim]  Skipped (you can set these later in {display_hermes_home()}/.env)[/dim]")
+            console.print(f"\n[dim]  Skipped (you can set these later in {display_aura_forge_home()}/.env)[/dim]")
             return
 
         if value:
             save_env_value(name, value)
             os.environ[name] = value
-            console.print(f"  [green]✓[/green] Saved to {display_hermes_home()}/.env")
+            console.print(f"  [green]✓[/green] Saved to {display_aura_forge_home()}/.env")
         else:
-            console.print(f"  [dim]  Skipped (set {name} in {display_hermes_home()}/.env later)[/dim]")
+            console.print(f"  [dim]  Skipped (set {name} in {display_aura_forge_home()}/.env later)[/dim]")
 
     console.print()
 
@@ -561,7 +561,7 @@ _EXACT_COMMIT_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 _INSTALL_METADATA_FILE = ".install-metadata.json"
 
 def _install_metadata_path() -> Path:
-    return get_hermes_home() / "plugins" / _INSTALL_METADATA_FILE
+    return get_aura_forge_home() / "plugins" / _INSTALL_METADATA_FILE
 
 
 def _read_install_metadata() -> dict[str, dict[str, object]]:
@@ -1076,7 +1076,7 @@ def cmd_install(
         )
 
     console.print("[dim]Restart the gateway for the plugin to take effect:[/dim]")
-    console.print("[dim]  hermes gateway restart[/dim]")
+    console.print("[dim]  auraforge gateway restart[/dim]")
     console.print()
 
 
@@ -1959,7 +1959,7 @@ def cmd_list(args: Any | None = None) -> None:
     entries = _discover_all_plugins()
     if not entries:
         console.print("[dim]No plugins installed.[/dim]")
-        console.print("[dim]Install with:[/dim] hermes plugins install owner/repo")
+        console.print("[dim]Install with:[/dim] auraforge plugins install owner/repo")
         return
 
     enabled = _get_enabled_set()
@@ -2010,9 +2010,9 @@ def cmd_list(args: Any | None = None) -> None:
     console.print()
     console.print(table)
     console.print()
-    console.print("[dim]Compact view:[/dim] hermes plugins list --plain --no-bundled")
-    console.print("[dim]Interactive toggle:[/dim] hermes plugins")
-    console.print("[dim]Enable/disable:[/dim] hermes plugins enable/disable <name>")
+    console.print("[dim]Compact view:[/dim] auraforge plugins list --plain --no-bundled")
+    console.print("[dim]Interactive toggle:[/dim] auraforge plugins")
+    console.print("[dim]Enable/disable:[/dim] auraforge plugins enable/disable <name>")
     console.print("[dim]Plugins are opt-in by default — only 'enabled' plugins load.[/dim]")
 
 
@@ -2204,7 +2204,7 @@ def cmd_show(name: str) -> None:
 
     if match is None:
         console.print(f"[red]Plugin '{name}' not found.[/red]")
-        console.print("[dim]List installed plugins:[/dim] hermes plugins list")
+        console.print("[dim]List installed plugins:[/dim] auraforge plugins list")
         sys.exit(1)
 
     pname, version, description, source, dir_path, key = match
@@ -2285,7 +2285,7 @@ def cmd_toggle() -> None:
 
     if not has_plugins and not has_categories:
         console.print("[dim]No plugins installed and no provider categories available.[/dim]")
-        console.print("[dim]Install with:[/dim] hermes plugins install owner/repo")
+        console.print("[dim]Install with:[/dim] auraforge plugins install owner/repo")
         return
 
     # Non-TTY fallback
@@ -2962,7 +2962,7 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
             push = _run_plugin_git(
                 git_exe, target,
                 "stash", "push", "--include-untracked",
-                "-m", "hermes-plugin-update-autostash",
+                "-m", "auraforge-plugin-update-autostash",
             )
             post_stash = _stash_ref(git_exe, target)
             stash_created = bool(post_stash) and post_stash != pre_stash
@@ -3114,12 +3114,12 @@ def cmd_search(
             desc = desc[:67] + "..."
         table.add_row(e.name, desc, e.author, ", ".join(e.tags))
     console.print(table)
-    console.print(f"[dim]Index source: {source}. Install: hermes plugins install <name>[/dim]")
+    console.print(f"[dim]Index source: {source}. Install: auraforge plugins install <name>[/dim]")
     console.print(f"[dim]{SECURITY_FOOTER}[/dim]")
 
 
 def plugins_command(args) -> None:
-    """Dispatch hermes plugins subcommands."""
+    """Dispatch auraforge plugins subcommands."""
     action = getattr(args, "plugins_action", None)
 
     if action == "install":

@@ -30,7 +30,7 @@ def _install_fake_gateway_run(monkeypatch, start_gateway):
     # ``run_gateway()`` calls ``refresh_systemd_unit_if_needed()`` on every
     # invocation so that restart settings stay current after exit-code-75
     # respawns. That helper writes to ``Path.home() / ".config/systemd/user
-    # /hermes-gateway.service"`` and runs ``systemctl --user daemon-reload``
+    # /auraforge-gateway.service"`` and runs ``systemctl --user daemon-reload``
     # — both target the *real* user environment because the conftest only
     # sandboxes ``HERMES_HOME``, not ``HOME``. Tests that drive
     # ``run_gateway()`` end-to-end with a fake ``start_gateway`` MUST stub
@@ -364,7 +364,7 @@ def test_spawn_detached_gateway_timestamps_stderr(monkeypatch, tmp_path):
     reason="systemd user-linger is Linux-only (drives os.getuid())",
 )
 def test_systemd_install_checks_linger_status(monkeypatch, tmp_path, capsys):
-    unit_path = tmp_path / "systemd" / "user" / "hermes-gateway.service"
+    unit_path = tmp_path / "systemd" / "user" / "auraforge-gateway.service"
 
     monkeypatch.setattr(gateway, "get_systemd_unit_path", lambda system=False: unit_path)
     # Synthetic unit with a non-temp home: the real generator bakes the
@@ -374,7 +374,7 @@ def test_systemd_install_checks_linger_status(monkeypatch, tmp_path, capsys):
         gateway,
         "generate_systemd_unit",
         lambda system=False, run_as_user=None: (
-            '[Service]\nEnvironment="HERMES_HOME=/home/alice/.hermes"\n'
+            '[Service]\nEnvironment="HERMES_HOME=/home/alice/.auraforge"\n'
         ),
     )
 
@@ -425,7 +425,7 @@ def test_gateway_install_noninteractive_skips_legacy_unit_prompt(monkeypatch, tm
     monkeypatch.setattr(gateway, "remove_legacy_hermes_units", lambda interactive=False: calls.append(("remove_legacy",)))
     monkeypatch.setattr(gateway, "print_legacy_unit_warning", lambda: None)
 
-    fake_path = tmp_path / "hermes-gateway.service"
+    fake_path = tmp_path / "auraforge-gateway.service"
     monkeypatch.setattr(gateway, "get_systemd_unit_path", lambda system=False: fake_path)
     monkeypatch.setattr(gateway, "generate_systemd_unit", lambda system=False, run_as_user=None: "[Service]")
     monkeypatch.setattr(gateway, "_run_systemctl", lambda *a, **kw: None)
@@ -566,7 +566,7 @@ class TestReapUnsupervisedGatewayOrphansMacOS:
 
     Regression guard: without the ``is_macos()`` exclusion of
     ``_get_service_pids()``, the reaper would SIGTERM the launchd-supervised
-    gateway every time Aura Forge Desktop opens (``hermes serve`` calls
+    gateway every time Aura Forge Desktop opens (``auraforge serve`` calls
     ``_reap_unsupervised_gateway_orphans`` during startup).
     """
 
@@ -644,7 +644,7 @@ class TestReapUnsupervisedGatewayOrphansWindows:
     Regression guard: without the Windows exemption of the recorded healthy
     gateway PID (and its parent chain), the reaper would SIGTERM/SIGKILL a
     Scheduled-Task-supervised gateway every time Aura Forge Desktop opens
-    (``hermes serve`` calls ``_reap_unsupervised_gateway_orphans`` during
+    (``auraforge serve`` calls ``_reap_unsupervised_gateway_orphans`` during
     startup). The Scheduled-Task bootstrap's argv matches the gateway scan,
     so it is reaped as an "orphan" — and when the bootstrap dies, the
     detached gateway it spawned exits with it (#86098).
@@ -764,7 +764,7 @@ class TestReaperCandidateIsSupervisorOwned:
         """A Windows gateway launched by the Scheduled Task is spared even when
         gateway.pid is missing — the supervisor-owned backstop catches it."""
         gateway_pid = 52615
-        bootstrap_pid = 52616   # Task-launched `hermes gateway run` bootstrap
+        bootstrap_pid = 52616   # Task-launched `auraforge gateway run` bootstrap
         orphan_pid = 99998      # a genuine orphan that SHOULD be reaped
 
         monkeypatch.setattr(gateway, "is_windows", lambda: True)
@@ -778,15 +778,15 @@ class TestReaperCandidateIsSupervisorOwned:
         # Parent chain: gateway -> bootstrap -> services.exe (Task Scheduler).
         services = SimpleNamespace(pid=4, parent=lambda: None, name=lambda: "services.exe")
         bootstrap = SimpleNamespace(
-            pid=bootstrap_pid, parent=lambda: services, name=lambda: "hermes-gateway.exe"
+            pid=bootstrap_pid, parent=lambda: services, name=lambda: "auraforge-gateway.exe"
         )
         gw = SimpleNamespace(
-            pid=gateway_pid, parent=lambda: bootstrap, name=lambda: "hermes-gateway.exe"
+            pid=gateway_pid, parent=lambda: bootstrap, name=lambda: "auraforge-gateway.exe"
         )
         # Genuine Windows orphan: its parent exited; Windows does NOT reparent,
         # so psutil reports parent() is None — the chain never reaches
         # services.exe and the orphan is reaped.
-        orphan = SimpleNamespace(pid=orphan_pid, parent=lambda: None, name=lambda: "hermes-gateway.exe")
+        orphan = SimpleNamespace(pid=orphan_pid, parent=lambda: None, name=lambda: "auraforge-gateway.exe")
         by_pid = {gateway_pid: gw, bootstrap_pid: bootstrap, orphan_pid: orphan}
         self._install_fake_psutil(monkeypatch, by_pid)
 
@@ -867,7 +867,7 @@ class TestReaperCandidateIsSupervisorOwned:
         chain breaks before services.exe (Windows does not reparent) and the
         candidate is treated as a reapable orphan."""
         monkeypatch.setattr(gateway, "is_windows", lambda: True)
-        stranded = SimpleNamespace(pid=4242, parent=lambda: None, name=lambda: "hermes-gateway.exe")
+        stranded = SimpleNamespace(pid=4242, parent=lambda: None, name=lambda: "auraforge-gateway.exe")
         self._install_fake_psutil(monkeypatch, {4242: stranded})
         assert gateway._reaper_candidate_is_supervisor_owned(4242) is False
 

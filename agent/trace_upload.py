@@ -11,7 +11,7 @@ Docs: https://huggingface.co/docs/hub/agent-traces
 Design notes
 ------------
 * **Zero LLM turn.** This is a deterministic export — it never spends a
-  model call. The ``hermes trace upload`` subcommand calls
+  model call. The ``auraforge trace upload`` subcommand calls
   :func:`upload_session_trace` directly.
 * **Private by default.** Traces can contain prompts, tool output, local
   paths, and secrets. The dataset is created private and every text body
@@ -34,8 +34,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATASET_NAME = "hermes-traces"
-_HERMES_VERSION = "hermes-agent"
+DEFAULT_DATASET_NAME = "auraforge-traces"
+_HERMES_VERSION = "auraforge-agent"
 _REDACTION_BLOCKED_MESSAGE = (
     "Trace upload blocked: secret redaction failed, so the transcript may "
     "still contain credentials or other sensitive data. Fix the redactor or "
@@ -258,9 +258,9 @@ _NO_TOKEN_MESSAGE = (
     "\n"
     "1. Create a token with WRITE access at https://huggingface.co/settings/tokens\n"
     "   (New token -> type \"Write\" -> copy it).\n"
-    "2. Add it to your environment as HF_TOKEN (e.g. in ~/.hermes/.env):\n"
+    "2. Add it to your environment as HF_TOKEN (e.g. in ~/.auraforge/.env):\n"
     "     HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx\n"
-    "3. Run /upload-trace again (or `hermes trace upload`)."
+    "3. Run /upload-trace again (or `auraforge trace upload`)."
 )
 
 
@@ -362,7 +362,7 @@ def upload_session_trace(
     """Top-level entry point used by the CLI/gateway/subcommand.
 
     Loads the session, converts it to Claude Code JSONL, and uploads it to
-    the user's private ``{user}/hermes-traces`` dataset. Returns a
+    the user's private ``{user}/auraforge-traces`` dataset. Returns a
     user-facing status string and never raises.
     """
     if not session_id:

@@ -1,7 +1,7 @@
 """Behavior tests for the Windows desktop-exe integrity gate (#69179).
 
-The desktop self-update chain (Desktop → hermes-setup --update →
-``hermes update`` → ``hermes desktop --build-only`` → relaunch) rebuilds
+The desktop self-update chain (Desktop → auraforge-setup --update →
+``auraforge update`` → ``auraforge desktop --build-only`` → relaunch) rebuilds
 Aura Forge.exe on the end user's machine. Before this gate, "build succeeded" was
 just "the file exists", so a truncated PE (corrupt cached Electron zip), a
 non-PE file, or a wrong-architecture tree shipped as the new app — Windows
@@ -256,7 +256,7 @@ def test_gate_fails_clearly_without_backup(tmp_path, capsys):
     assert "No usable backup" in out
 
 
-# ─── end-to-end: `hermes desktop --build-only` exits nonzero on corrupt exe ─
+# ─── end-to-end: `auraforge desktop --build-only` exits nonzero on corrupt exe ─
 
 
 def _ns(**kw):
@@ -277,14 +277,14 @@ def _ns(**kw):
 @pytest.mark.windows_only
 def test_build_only_fails_when_pack_produces_corrupt_exe(tmp_path, monkeypatch, capsys):
     """The updater chain's contract: a rebuild whose Aura Forge.exe cannot launch
-    must exit nonzero (so hermes-setup's retry-once kicks in) and must restore
+    must exit nonzero (so auraforge-setup's retry-once kicks in) and must restore
     the previous working build instead of leaving the corrupt one.
 
     ``windows_only``: the whole chain is Windows-gated — ``win-unpacked``
     candidate discovery in ``_desktop_packaged_executable`` and the integrity
     gate itself both short-circuit off Windows.
     """
-    root = tmp_path / "hermes-agent"
+    root = tmp_path / "auraforge-agent"
     desktop_dir = root / "apps" / "desktop"
     desktop_dir.mkdir(parents=True)
     (desktop_dir / "package.json").write_text("{}", encoding="utf-8")

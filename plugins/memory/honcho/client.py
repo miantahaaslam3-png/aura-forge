@@ -53,7 +53,7 @@ def _sanitize_url(url: str | None) -> str | None:
     return None
 
 
-HOST = "hermes"
+HOST = "auraforge"
 
 
 def profile_host_key(profile: str | None) -> str:
@@ -81,7 +81,7 @@ def resolve_active_host() -> str:
       1. HERMES_HONCHO_HOST env var (explicit override)
       2. Active profile name via profiles system -> ``hermes_<profile>``
       3. defaultHost from the active config, but only for the default profile
-      4. Fallback: ``"hermes"`` (default profile)
+      4. Fallback: ``"auraforge"`` (default profile)
     """
     explicit = os.environ.get("HERMES_HONCHO_HOST", "").strip()
     if explicit:
@@ -122,7 +122,7 @@ def resolve_config_path() -> Path:
 
     Resolution order:
       1. $HERMES_HOME/honcho.json      (profile-local, if it exists)
-      2. ~/.hermes/honcho.json          (default profile — shared host blocks live here)
+      2. ~/.auraforge/honcho.json          (default profile — shared host blocks live here)
       3. ~/.honcho/config.json          (global, cross-app interop)
 
     Returns the global path if none exist (for first-time setup writes).
@@ -382,7 +382,7 @@ class HonchoClientConfig:
     """Configuration for Honcho client, resolved for a specific host."""
 
     host: str = HOST
-    workspace_id: str = "hermes"
+    workspace_id: str = "auraforge"
     api_key: str | None = None
     environment: str = "production"
     # Optional base URL for self-hosted Honcho (overrides environment mapping)
@@ -391,7 +391,7 @@ class HonchoClientConfig:
     timeout: float | None = None
     # Identity
     peer_name: str | None = None
-    ai_peer: str = "hermes"
+    ai_peer: str = "auraforge"
     # When True, ``peer_name`` wins over any gateway-supplied runtime
     # identity (Telegram UID, Discord ID, …) when resolving the user peer.
     # This keeps memory unified across platforms for single-user deployments
@@ -477,7 +477,7 @@ class HonchoClientConfig:
     sessions: dict[str, str] = field(default_factory=dict)
     # Raw global config for anything else consumers need
     raw: dict[str, Any] = field(default_factory=dict)
-    # True when Honcho was explicitly configured for this host (hosts.hermes
+    # True when Honcho was explicitly configured for this host (hosts.auraforge
     # block exists or enabled was set explicitly), vs auto-enabled from a
     # stray HONCHO_API_KEY env var.
     explicitly_configured: bool = False
@@ -503,7 +503,7 @@ class HonchoClientConfig:
     @classmethod
     def from_env(
         cls,
-        workspace_id: str = "hermes",
+        workspace_id: str = "auraforge",
         host: str | None = None,
     ) -> HonchoClientConfig:
         """Create config from environment variables (fallback)."""
@@ -558,7 +558,7 @@ class HonchoClientConfig:
             return cls.from_env(host=resolved_host)
 
         host_block = _host_block(raw, resolved_host)
-        # A hosts.hermes block or explicit enabled flag means the user
+        # A hosts.auraforge block or explicit enabled flag means the user
         # intentionally configured Honcho for this host.
         _explicitly_configured = bool(host_block) or raw.get("enabled") is True
 
@@ -604,7 +604,7 @@ class HonchoClientConfig:
         # The Honcho SDK's native config format — and what Claude Desktop
         # writes — nests the URL at endpoint.baseUrl. Read it first: a user
         # who has that block set almost certainly means it, and the flat
-        # baseUrl / base_url keys below are the Hermes-specific spelling.
+        # baseUrl / base_url keys below are the Aura Forge-specific spelling.
         endpoint_block = raw.get("endpoint")
         native_base_url = (
             endpoint_block.get("baseUrl")
@@ -984,7 +984,7 @@ def _credential_fingerprint(config: HonchoClientConfig | None) -> str:
     so the fingerprint must NOT change on rotation — it hashes the REFRESH
     token, which is stable across access-token rotation but changes on
     re-auth or account switch. Static keys hash the key itself. This is what
-    makes 'hermes honcho setup' account switches produce a NEW cache identity
+    makes 'auraforge honcho setup' account switches produce a NEW cache identity
     instead of silently reusing the old account's client (a first-config-wins
     hole that per-path keys alone cannot close).
     """
@@ -1247,7 +1247,7 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
         raise ValueError(
             "Honcho API key not found. "
             "Get your API key at https://app.honcho.dev, "
-            "then run 'hermes honcho setup' or set HONCHO_API_KEY. "
+            "then run 'auraforge honcho setup' or set HONCHO_API_KEY. "
             "For local instances, set HONCHO_BASE_URL instead."
         )
 
@@ -1271,7 +1271,7 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
             raise ImportError(
                 "honcho-ai is required for Honcho integration. "
                 "Install it with: pip install honcho-ai  "
-                "(or run `hermes honcho setup` to configure)."
+                "(or run `auraforge honcho setup` to configure)."
             )
 
         # Allow config.yaml honcho.base_url to override the SDK's environment

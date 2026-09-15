@@ -12,26 +12,26 @@ from agent.relay_runtime import (
     RUNTIME_SCHEMA_VERSION,
 )
 
-SCHEMA_KEY = "hermes.metrics.schema_version"
-SCHEMA_VERSION = "hermes.metrics.event.v2"
-MODEL_CALL_SCOPE = "hermes.model_call"
+SCHEMA_KEY = "auraforge.metrics.schema_version"
+SCHEMA_VERSION = "auraforge.metrics.event.v2"
+MODEL_CALL_SCOPE = "auraforge.model_call"
 MODEL_CALL_PROFILE_MODEL = "unknown"
-TASK_SCOPE = "hermes.task_run"
-TOOL_CALL_SCOPE = "hermes.tool_call"
-CLIENT_ACTIVE_MARK = "hermes.client.active"
-TOOL_APPROVAL_MARK = "hermes.tool_approval"
-SKILL_LIFECYCLE_MARK = "hermes.skill.lifecycle"
-SKILL_LOAD_MARK = "hermes.skill.load"
-SUBSCRIBER_NAME = "hermes.nemo_relay.shared_metrics"
-CLIENT_ACTIVE_METRIC = "hermes.client.active"
-LEGACY_MODEL_CALL_METRIC = "hermes.model_call.count"
-MODEL_ROUTE_METRIC = "hermes.model_route.count"
-TASK_STARTED_METRIC = "hermes.task_run.started"
-TASK_FINISHED_METRIC = "hermes.task_run.finished"
-TOOL_CALL_METRIC = "hermes.tool_call.count"
-TOOL_APPROVAL_METRIC = "hermes.tool_approval.count"
-SKILL_LIFECYCLE_METRIC = "hermes.skill.lifecycle.count"
-SKILL_LOAD_METRIC = "hermes.skill.load.count"
+TASK_SCOPE = "auraforge.task_run"
+TOOL_CALL_SCOPE = "auraforge.tool_call"
+CLIENT_ACTIVE_MARK = "auraforge.client.active"
+TOOL_APPROVAL_MARK = "auraforge.tool_approval"
+SKILL_LIFECYCLE_MARK = "auraforge.skill.lifecycle"
+SKILL_LOAD_MARK = "auraforge.skill.load"
+SUBSCRIBER_NAME = "auraforge.nemo_relay.shared_metrics"
+CLIENT_ACTIVE_METRIC = "auraforge.client.active"
+LEGACY_MODEL_CALL_METRIC = "auraforge.model_call.count"
+MODEL_ROUTE_METRIC = "auraforge.model_route.count"
+TASK_STARTED_METRIC = "auraforge.task_run.started"
+TASK_FINISHED_METRIC = "auraforge.task_run.finished"
+TOOL_CALL_METRIC = "auraforge.tool_call.count"
+TOOL_APPROVAL_METRIC = "auraforge.tool_approval.count"
+SKILL_LIFECYCLE_METRIC = "auraforge.skill.lifecycle.count"
+SKILL_LOAD_METRIC = "auraforge.skill.load.count"
 MODEL_IDENTIFIER_MAX_LENGTH = 256
 PROVIDER_IDENTIFIER_MAX_LENGTH = 64
 _METRIC_IDENTIFIER_CHARACTERS = frozenset(
@@ -466,13 +466,13 @@ def _auxiliary_model_call_dimensions(event: Any) -> dict[str, str] | None:
     relay_metadata = set(metadata) - {
         RUNTIME_INSTANCE_KEY,
         RUNTIME_SCHEMA_KEY,
-        "hermes.call_role",
+        "auraforge.call_role",
     }
     if relay_metadata - {"otel.status_code"} or metadata.get(
         "otel.status_code", "OK"
     ) not in {"OK", "ERROR"}:
         return None
-    call_role = metadata.get("hermes.call_role")
+    call_role = metadata.get("auraforge.call_role")
     if not isinstance(call_role, str) or not call_role.startswith("auxiliary:"):
         return None
     if (
@@ -834,7 +834,7 @@ def tool_category(kwargs: dict[str, Any]) -> str:
     if toolset == "x_search":
         return "web"
     if toolset.startswith(
-        ("discord", "email", "feishu", "hermes-yuanbao", "slack", "sms")
+        ("discord", "email", "feishu", "auraforge-yuanbao", "slack", "sms")
     ):
         return "communication"
     return "other"

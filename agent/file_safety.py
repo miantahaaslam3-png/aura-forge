@@ -13,7 +13,7 @@ def _hermes_home_path() -> Path:
         from hermes_constants import get_hermes_home  # local import to avoid cycles
         return get_hermes_home()
     except Exception:
-        return Path(os.path.expanduser("~/.hermes"))
+        return Path(os.path.expanduser("~/.auraforge"))
 
 
 def _hermes_root_path() -> Path:
@@ -22,7 +22,7 @@ def _hermes_root_path() -> Path:
         from hermes_constants import get_default_hermes_root  # local import to avoid cycles
         return get_default_hermes_root()
     except Exception:
-        return Path(os.path.expanduser("~/.hermes"))
+        return Path(os.path.expanduser("~/.auraforge"))
 
 
 def build_write_denied_paths(home: str) -> set[str]:
@@ -269,7 +269,7 @@ def get_read_block_error(path: str) -> Optional[str]:
 
     **This is NOT a security boundary.** The terminal tool runs as the
     same OS user with shell access; the agent can still ``cat auth.json``
-    or ``cat ~/.hermes/.env`` and exfiltrate the file. The read-deny exists
+    or ``cat ~/.auraforge/.env`` and exfiltrate the file. The read-deny exists
     as defense-in-depth that:
 
       * Returns a clear error to models that respect tool denials, which
@@ -458,9 +458,9 @@ def raise_if_read_blocked(path: str) -> None:
 # as the dangerous-command approval flow — the agent is told the boundary
 # exists, and explicit user direction is required to cross it.
 #
-# Reference: May 2026 incident where a hermes-security profile session
-# edited skills under both ``~/.hermes/profiles/hermes-security/skills/``
-# AND ``~/.hermes/skills/`` (the default profile's skills) without realizing
+# Reference: May 2026 incident where a auraforge-security profile session
+# edited skills under both ``~/.auraforge/profiles/auraforge-security/skills/``
+# AND ``~/.auraforge/skills/`` (the default profile's skills) without realizing
 # the second path belonged to a different profile.
 # ---------------------------------------------------------------------------
 
@@ -473,8 +473,8 @@ PROFILE_SCOPED_AREAS = ("skills", "plugins", "cron", "memories")
 def _resolve_active_profile_name() -> str:
     """Return the active profile name derived from HERMES_HOME.
 
-    ``~/.hermes``              -> ``"default"``
-    ``~/.hermes/profiles/X``  -> ``"X"``
+    ``~/.auraforge``              -> ``"default"``
+    ``~/.auraforge/profiles/X``  -> ``"X"``
 
     Falls back to ``"default"`` on any resolution failure so the guard
     never raises into the tool path.
@@ -577,7 +577,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
 # Non-local terminal backends (Docker, Daytona, etc.) bind a sandbox-local
 # directory to the container's ``$HOME``. The on-disk layout looks like
 #
-#   <HERMES_HOME>/profiles/<name>/sandboxes/<backend>/<task>/home/.hermes/...
+#   <HERMES_HOME>/profiles/<name>/sandboxes/<backend>/<task>/home/.auraforge/...
 #
 # When the agent (running host-side) speculates that authoritative profile
 # state lives at one of those sandbox-mirror paths, the write lands on the
@@ -586,29 +586,29 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
 # disk two divergent copies accumulate. See #32049 for evidence.
 #
 # This guard is path-shape-only: it detects the
-# ``…/sandboxes/<backend>/<task>/home/.hermes/…`` segment and warns
+# ``…/sandboxes/<backend>/<task>/home/.auraforge/…`` segment and warns
 # regardless of which Aura Forge profile is active. It does NOT cover the
 # inner-container case where the bind mount strips the ``sandboxes/`` prefix
-# (the agent's view inside the container is plain ``/root/.hermes/...``);
+# (the agent's view inside the container is plain ``/root/.auraforge/...``);
 # that case needs a separate dispatch-layer or host-side ``profile_state``
 # tool.
 # ---------------------------------------------------------------------------
 
 
 def _find_sandbox_mirror_segments(parts: tuple) -> Optional[int]:
-    """Return the index of the inner ``.hermes`` part in a sandbox-mirror path.
+    """Return the index of the inner ``.auraforge`` part in a sandbox-mirror path.
 
-    Matches ``…/sandboxes/<backend>/<task>/home/.hermes/…`` and returns the
-    index where the inner Hermes-state portion starts. Returns ``None`` for
+    Matches ``…/sandboxes/<backend>/<task>/home/.auraforge/…`` and returns the
+    index where the inner Aura Forge-state portion starts. Returns ``None`` for
     paths that do not contain the sandbox-mirror shape.
     """
     for i, part in enumerate(parts):
         if part != "sandboxes":
             continue
-        # Need at least: sandboxes / <backend> / <task> / home / .hermes / <thing>
+        # Need at least: sandboxes / <backend> / <task> / home / .auraforge / <thing>
         if i + 5 >= len(parts):
             continue
-        if parts[i + 3] == "home" and parts[i + 4] == ".hermes":
+        if parts[i + 3] == "home" and parts[i + 4] == ".auraforge":
             return i + 4
     return None
 
@@ -620,9 +620,9 @@ def classify_sandbox_mirror_target(path: str) -> Optional[dict]:
     Otherwise returns a dict with:
 
       * ``target_path``: the resolved path string
-      * ``mirror_root``: the ``…/sandboxes/<backend>/<task>/home/.hermes``
+      * ``mirror_root``: the ``…/sandboxes/<backend>/<task>/home/.auraforge``
         prefix (so callers can show users which sandbox owns the mirror)
-      * ``inner_path``: the portion under the mirror's ``.hermes`` (what the
+      * ``inner_path``: the portion under the mirror's ``.auraforge`` (what the
         agent likely meant to address on the host)
 
     Detection is path-shape-only — does not require any Aura Forge resolver to
@@ -685,9 +685,9 @@ def get_sandbox_mirror_warning(path: str) -> Optional[str]:
 # Container-context mirror guard (inner-container case — #32049 follow-up)
 #
 # Brian's shape-based detector (#32213) catches paths that still carry the
-# full ``…/sandboxes/<backend>/<task>/home/.hermes/…`` prefix on the host.
+# full ``…/sandboxes/<backend>/<task>/home/.auraforge/…`` prefix on the host.
 # But when file tools execute *inside* the container the bind-mount strips
-# that prefix: the agent sees plain ``/root/.hermes/…``.  The root:root
+# that prefix: the agent sees plain ``/root/.auraforge/…``.  The root:root
 # ownership on the divergent SOUL.md in #32049 confirms this is the primary
 # failure mode.
 #

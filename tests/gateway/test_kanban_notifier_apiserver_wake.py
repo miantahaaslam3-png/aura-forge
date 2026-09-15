@@ -35,7 +35,7 @@ class ApiServerLikeAdapter:
         self._host = "127.0.0.1"
         self._port = 8642
         self._api_key = "k"
-        self._model_name = "hermes"
+        self._model_name = "auraforge"
         self.handle_message_calls = []
         self.send_calls = 0
 

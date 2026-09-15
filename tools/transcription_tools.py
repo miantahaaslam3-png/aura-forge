@@ -73,7 +73,7 @@ def _resolve_provider_key(env_var: str, provider_id: str) -> str:
 
     Delegates to ``tools.tool_backend_helpers.resolve_provider_secret`` —
     the single owner of STT/TTS key resolution (config > env/.env > the
-    credential pool populated by ``hermes auth add <provider_id>``).
+    credential pool populated by ``auraforge auth add <provider_id>``).
     Resolved at call time so tests that reload the helpers module see the
     live function.
     """
@@ -363,7 +363,7 @@ def _try_lazy_install_stt() -> bool:
             "This is often a permission issue: the Aura Forge process user cannot "
             "write to the virtual environment. Try running manually as the "
             "venv owner: `stat -c '%%u' '$(dirname $(dirname $(which python3)))'` "
-            "then `su - <owner> -c 'VIRTUAL_ENV=/opt/hermes/.venv "
+            "then `su - <owner> -c 'VIRTUAL_ENV=/opt/auraforge/.venv "
             "uv pip install faster-whisper==1.2.1'`",
             exc,
         )
@@ -933,7 +933,7 @@ def _transcribe_command_stt(
     model = model_override or config.get("model") or ""
 
     try:
-        with tempfile.TemporaryDirectory(prefix=f"hermes-cmd-stt-{provider_name}-") as tmpdir:
+        with tempfile.TemporaryDirectory(prefix=f"auraforge-cmd-stt-{provider_name}-") as tmpdir:
             output_path = Path(tmpdir) / f"transcript.{output_format}"
             placeholders = {
                 "input_path": str(audio.resolve()),
@@ -1194,7 +1194,7 @@ def _unregistered_stt_provider_error(provider: str) -> Dict[str, Any]:
         "error_type": "provider_not_registered",
         "error": (
             f"stt.provider='{key}' is set but no built-in, command, or plugin "
-            "provider registered that name. Run `hermes plugins list` to see "
+            "provider registered that name. Run `auraforge plugins list` to see "
             "installed STT plugins, or configure a command provider under "
             f"`stt.providers.{key}.command`."
         ),
@@ -1581,7 +1581,7 @@ def _prepare_audio_for_transcription(
                 "error": "Unsupported format: .silk. Install the optional 'pilk' dependency to enable WeChat voice transcription.",
             }
 
-    temp_dir = tempfile.mkdtemp(prefix="hermes-silk-")
+    temp_dir = tempfile.mkdtemp(prefix="auraforge-silk-")
     converted_path = os.path.join(temp_dir, f"{audio_path.stem}.wav")
     try:
         import pilk
@@ -1747,7 +1747,7 @@ def _start_idle_unload_watcher(timeout_seconds: int) -> None:
 
         _idle_unload_stop.clear()
         _idle_unload_thread = threading.Thread(
-            target=_watch, name="hermes-stt-idle-unload", daemon=True
+            target=_watch, name="auraforge-stt-idle-unload", daemon=True
         )
         _idle_unload_thread.start()
 
@@ -2112,7 +2112,7 @@ def _transcribe_local_command(
     normalized_model = _normalize_local_command_model(model_name)
 
     try:
-        with tempfile.TemporaryDirectory(prefix="hermes-local-stt-") as output_dir:
+        with tempfile.TemporaryDirectory(prefix="auraforge-local-stt-") as output_dir:
             prepared_input, prep_error = _prepare_local_audio(file_path, output_dir)
             if prep_error:
                 return {"success": False, "transcript": "", "error": prep_error}
@@ -2327,7 +2327,7 @@ def _transcribe_openai(
                 return client.audio.transcriptions.create(**create_kwargs)
 
         try:
-            with tempfile.TemporaryDirectory(prefix="hermes-stt-") as work_dir:
+            with tempfile.TemporaryDirectory(prefix="auraforge-stt-") as work_dir:
                 try:
                     transcription = _create_transcription(file_path)
                 except BadRequestError as exc:
@@ -2476,7 +2476,7 @@ def _transcribe_xai(
         return {
             "success": False,
             "transcript": "",
-            "error": "No xAI credentials found. Configure xAI OAuth in `hermes model` or set XAI_API_KEY",
+            "error": "No xAI credentials found. Configure xAI OAuth in `auraforge model` or set XAI_API_KEY",
         }
 
     stt_config = _load_stt_config()
@@ -2890,7 +2890,7 @@ def _trim_silence_for_cloud_stt(
         f"start_periods=1:start_threshold={threshold_db}dB:start_silence={keep_seconds}:"
         f"stop_periods=-1:stop_threshold={threshold_db}dB:stop_silence={keep_seconds}"
     )
-    work_dir = tempfile.mkdtemp(prefix="hermes-stt-trim-")
+    work_dir = tempfile.mkdtemp(prefix="auraforge-stt-trim-")
     trimmed_path = os.path.join(work_dir, f"{Path(file_path).stem or 'audio'}-trimmed.m4a")
     # Scale the all-silence guard with keep_ms: an output consisting solely
     # of kept pause must never be uploaded as "speech".
@@ -3171,7 +3171,7 @@ def _dispatch_stt_provider(
 
     # An explicit openai selection flattened to "none" carries a
     # selection-specific reason (e.g. the managed openai-audio gateway is
-    # unavailable). Surface it — with its `hermes tools` remediation —
+    # unavailable). Surface it — with its `auraforge tools` remediation —
     # instead of the all-provider setup hint (#93045).
     if provider_key == "none" and str(stt_config.get("provider") or "") == "openai" and _HAS_OPENAI:
         try:

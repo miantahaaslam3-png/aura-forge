@@ -122,7 +122,7 @@ def test_load_force_reload_and_unload_remove_every_manager_registration(
     from hermes_cli.plugins import PluginManager
     from tools.registry import registry
 
-    hermes_home = tmp_path / "hermes"
+    hermes_home = tmp_path / "auraforge"
     _write_plugin(hermes_home)
     monkeypatch.setenv("HERMES_HOME", str(hermes_home))
     monkeypatch.setattr(
@@ -1119,7 +1119,7 @@ def test_direct_plugin_platform_registration_infers_immutable_scope(tmp_path):
 
     home_a = str((tmp_path / "direct-a").resolve())
     home_b = tmp_path / "direct-b"
-    module_name = "company.hermes.direct_platform_probe"
+    module_name = "company.auraforge.direct_platform_probe"
     policy = tool_registry.register_plugin_override_policy(
         module_name, False, scope=home_a
     )

@@ -14,10 +14,10 @@ from .constants import QQBOT_VERSION
 # ---------------------------------------------------------------------------
 
 def _get_hermes_version() -> str:
-    """Return the hermes-agent package version, or 'dev' if unavailable."""
+    """Return the auraforge-agent package version, or 'dev' if unavailable."""
     try:
         from importlib.metadata import version
-        return version("hermes-agent")
+        return version("auraforge-agent")
     except Exception:
         return "dev"
 

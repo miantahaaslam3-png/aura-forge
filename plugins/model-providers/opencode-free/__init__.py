@@ -6,7 +6,7 @@ Authorization bearer it doesn't recognize with 401 — so this provider
 never sends a credential at all (the runtime resolver pins the keyless
 placeholder and an empty Authorization header; see
 hermes_cli.models.opencode_zen_free_runtime). No OpenCode account needed.
-Select via ``hermes model`` or ``/model free``.
+Select via ``auraforge model`` or ``/model free``.
 """
 
 from typing import Any
@@ -20,7 +20,7 @@ from providers.base import ProviderProfile
 # off the wire (the free tier 401s any unrecognized bearer).
 _KEYLESS_HEADERS = {
     "Authorization": "",
-    "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+    "HTTP-Referer": "https://auraforge-agent.nousresearch.com",
     "X-Title": "Aura Forge Agent",
     "User-Agent": f"HermesAgent/{_HERMES_VERSION}",
 }

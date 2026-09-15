@@ -3,13 +3,13 @@
 
 Usage (via cron with --no-agent):
 
-    hermes cron create hermes-issues \\
+    auraforge cron create auraforge-issues \\
       --schedule "*/5 * * * *" --no-agent \\
       --script "$HERMES_HOME/skills/devops/watchers/scripts/watch_github.py" \\
-      --script-args "--name hermes-issues --repo miantahaaslam3-png/aura-forge --scope issues"
+      --script-args "--name auraforge-issues --repo miantahaaslam3-png/aura-forge --scope issues"
 
 Set GITHUB_TOKEN (or GH_TOKEN) in the Aura Forge .env file
-(``${HERMES_HOME:-~/.hermes}/.env``) to avoid the 60 req/hr
+(``${HERMES_HOME:-~/.auraforge}/.env``) to avoid the 60 req/hr
 anonymous rate limit.
 
 Scopes: issues | pulls | releases | commits.  Or pass --search QUERY to
@@ -113,7 +113,7 @@ def main() -> int:
 
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "Hermes-Watcher/1.0",
+        "User-Agent": "Aura Forge-Watcher/1.0",
     }
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:

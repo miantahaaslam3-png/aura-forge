@@ -10,17 +10,17 @@ Matches OpenClaw's 9-tool MCP channel bridge surface:
   events_poll, events_wait, messages_send, permissions_list_open,
   permissions_respond
 
-Plus: channels_list (Hermes-specific extra)
+Plus: channels_list (Aura Forge-specific extra)
 
 Usage:
-    hermes mcp serve
-    hermes mcp serve --verbose
+    auraforge mcp serve
+    auraforge mcp serve --verbose
 
 MCP client config (e.g. claude_desktop_config.json):
     {
         "mcpServers": {
-            "hermes": {
-                "command": "hermes",
+            "auraforge": {
+                "command": "auraforge",
                 "args": ["mcp", "serve"]
             }
         }
@@ -41,7 +41,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-logger = logging.getLogger("hermes.mcp_serve")
+logger = logging.getLogger("auraforge.mcp_serve")
 
 # ---------------------------------------------------------------------------
 # Lazy MCP SDK import
@@ -69,7 +69,7 @@ def _get_sessions_dir() -> Path:
         from hermes_constants import get_hermes_home
         return get_hermes_home() / "sessions"
     except ImportError:
-        return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "sessions"
+        return Path(os.environ.get("HERMES_HOME", Path.home() / ".auraforge")) / "sessions"
 
 
 def _get_session_db():
@@ -218,7 +218,7 @@ def _load_channel_directory() -> dict:
         directory_file = get_hermes_home() / "channel_directory.json"
     except ImportError:
         directory_file = Path(
-            os.environ.get("HERMES_HOME", Path.home() / ".hermes")
+            os.environ.get("HERMES_HOME", Path.home() / ".auraforge")
         ) / "channel_directory.json"
 
     if not directory_file.exists():
@@ -492,7 +492,7 @@ class EventBridge:
             from hermes_constants import get_hermes_home
             db_file = get_hermes_home() / "state.db"
         except ImportError:
-            db_file = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "state.db"
+            db_file = Path(os.environ.get("HERMES_HOME", Path.home() / ".auraforge")) / "state.db"
         try:
             self._state_db_mtime = db_file.stat().st_mtime if db_file.exists() else 0.0
         except OSError:
@@ -549,7 +549,7 @@ class EventBridge:
             from hermes_constants import get_hermes_home
             db_file = get_hermes_home() / "state.db"
         except ImportError:
-            db_file = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")) / "state.db"
+            db_file = Path(os.environ.get("HERMES_HOME", Path.home() / ".auraforge")) / "state.db"
 
         try:
             db_mtime = db_file.stat().st_mtime if db_file.exists() else 0.0
@@ -629,7 +629,7 @@ def create_mcp_server(event_bridge: Optional[EventBridge] = None) -> "MCPServer"
         )
 
     mcp = MCPServer(
-        "hermes",
+        "auraforge",
         instructions=(
             "Aura Forge Agent messaging bridge. Use these tools to interact with "
             "conversations across Telegram, Discord, Slack, WhatsApp, Signal, "

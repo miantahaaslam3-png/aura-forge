@@ -4,9 +4,9 @@ A *peer* is another Aura Forge gateway (any machine: homelab, Spark, Aura Forge
 Cloud) running the ``api_server`` platform. Registering it here gives every
 bot on THIS machine a transport to message bots on THAT machine:
 
-    hermes peer add spark --url http://spark.lan:8377 --key <API_SERVER_KEY>
-    hermes peer dm spark "Message from 🤖 dixie (@dixie): disk status?"
-    hermes peer dm spark/researcher "..."      # named profile (multiplexed peer)
+    auraforge peer add spark --url http://spark.lan:8377 --key <API_SERVER_KEY>
+    auraforge peer dm spark "Message from 🤖 dixie (@dixie): disk status?"
+    auraforge peer dm spark/researcher "..."      # named profile (multiplexed peer)
 
 ``dm`` resolves the remote agent's canonical "Bot Chat" session (by title,
 creating it when missing), runs ONE synchronous agent turn over the peer's
@@ -85,7 +85,7 @@ def _request(url: str, key: str, *, method: str = "GET", body: dict | None = Non
         headers={
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
-            "User-Agent": "hermes-peer-dm",
+            "User-Agent": "auraforge-peer-dm",
         },
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — user-registered peer URL
@@ -150,7 +150,7 @@ def _ensure_bot_chat(base: str, key: str) -> str:
                 f"session there: PATCH /api/sessions/<id> {{\"hidden\": false}}."
             ) from exc
         raise
-    # Real api_server wraps the row: {"object": "hermes.session", "session": {...}}.
+    # Real api_server wraps the row: {"object": "auraforge.session", "session": {...}}.
     session = created.get("session") if isinstance(created.get("session"), dict) else created
     session_id = str(session.get("id") or session.get("session_id") or "")
     if not session_id:
@@ -165,7 +165,7 @@ def _parse_target(target: str) -> tuple[str, str | None]:
     peer = peer.strip()
     profile = profile.strip() or None
     if not peer:
-        raise ValueError("Peer name required (hermes peer dm <peer>[/<agent>] ...)")
+        raise ValueError("Peer name required (auraforge peer dm <peer>[/<agent>] ...)")
     if profile and not _PROFILE_RE.match(profile):
         raise ValueError(f"Invalid agent/profile name: {profile!r}")
     return peer, profile
@@ -205,7 +205,7 @@ def cmd_peer(args) -> int:
         else:
             print(
                 f"Peer '{name}' saved ({url}). No key given — set the peer's API_SERVER_KEY with:\n"
-                f"  hermes peer add {name} --url {url} --key <key>\n"
+                f"  auraforge peer add {name} --url {url} --key <key>\n"
                 f"  (or add {_peer_key_env(name)}=<key> to ~/.aura-forge/.env)"
             )
         return 0
@@ -224,7 +224,7 @@ def cmd_peer(args) -> int:
     if action in ("list", "ls", None):
         peers = _load_peers()
         if not peers:
-            print("No peers registered. Add one: hermes peer add <name> --url http://host:port --key <API_SERVER_KEY>")
+            print("No peers registered. Add one: auraforge peer add <name> --url http://host:port --key <API_SERVER_KEY>")
             return 0
         for name in sorted(peers):
             entry = peers[name] if isinstance(peers[name], dict) else {}
@@ -242,12 +242,12 @@ def cmd_peer(args) -> int:
         peers = _load_peers()
         peer = peers.get(peer_name)
         if not isinstance(peer, dict) or not peer.get("url"):
-            print(f"No peer named '{peer_name}'. Run: hermes peer list", file=sys.stderr)
+            print(f"No peer named '{peer_name}'. Run: auraforge peer list", file=sys.stderr)
             return 1
         key = _peer_secret(peer_name)
         if not key:
             print(
-                f"No API key for peer '{peer_name}'. Set it: hermes peer add {peer_name} "
+                f"No API key for peer '{peer_name}'. Set it: auraforge peer add {peer_name} "
                 f"--url <url> --key <key> (or add {_peer_key_env(peer_name)}=<key> to ~/.aura-forge/.env)",
                 file=sys.stderr,
             )
@@ -289,7 +289,7 @@ def cmd_peer(args) -> int:
             print(reply or "(no reply)")
         return 0
 
-    print("Unknown peer action. See: hermes peer --help", file=sys.stderr)
+    print("Unknown peer action. See: auraforge peer --help", file=sys.stderr)
     return 2
 
 
@@ -300,19 +300,19 @@ def build_peer_parser(subparsers) -> None:
         help="Bot-to-bot DMs across machines (peer Aura Forge gateways)",
         description=(
             "Register other Aura Forge gateways as peers and message their agents. "
-            "'hermes peer dm <peer>[/<agent>] \"...\"' delivers into the remote "
+            "'auraforge peer dm <peer>[/<agent>] \"...\"' delivers into the remote "
             "agent's canonical Bot Chat over the peer's API server and prints "
-            "the reply — the cross-machine twin of 'hermes -p <bot> chat'. "
+            "the reply — the cross-machine twin of 'auraforge -p <bot> chat'. "
             "The peer must run the api_server platform; its API_SERVER_KEY is "
             "stored locally as a credential in ~/.aura-forge/.env."
         ),
         epilog=(
             "Examples:\n"
-            "  hermes peer add spark --url http://spark.lan:8377 --key <API_SERVER_KEY>\n"
-            "  hermes peer list\n"
-            '  hermes peer dm spark "Message from 🤖 dixie (@dixie): disk status?"\n'
-            '  hermes peer dm spark/researcher "..."   # named profile on a multiplexed peer\n'
-            "  hermes peer remove spark\n"
+            "  auraforge peer add spark --url http://spark.lan:8377 --key <API_SERVER_KEY>\n"
+            "  auraforge peer list\n"
+            '  auraforge peer dm spark "Message from 🤖 dixie (@dixie): disk status?"\n'
+            '  auraforge peer dm spark/researcher "..."   # named profile on a multiplexed peer\n'
+            "  auraforge peer remove spark\n"
             "\n"
             "Exit codes: 0 ok, 1 delivery/peer error, 2 usage error."
         ),

@@ -1,5 +1,5 @@
 """
-Top-level argparse construction for the hermes CLI.
+Top-level argparse construction for the auraforge CLI.
 
 Lives in its own module so other modules (e.g. ``relaunch.py``) can
 introspect the parser to discover which flags exist without running the
@@ -88,48 +88,48 @@ def _inherited_flag(parser, *args, **kwargs):
 
 _EPILOGUE = """
 Examples:
-    hermes                        Start interactive chat
-    hermes chat -q "Hello"        Single query mode
-    hermes --tui                  Launch the modern TUI (or set display.interface: tui)
-    hermes --cli                  Force the classic REPL (overrides display.interface: tui)
-    hermes -c                     Resume the most recent session
-    hermes -c "my project"        Resume a session by name (latest in lineage)
-    hermes --resume <session_id>  Resume a specific session by ID
-    hermes --resume latest        Resume the most recent session (same as -c)
-    hermes --tui --resume latest --in ./dir   Resume ./dir's latest session in the TUI
+    auraforge                        Start interactive chat
+    auraforge chat -q "Hello"        Single query mode
+    auraforge --tui                  Launch the modern TUI (or set display.interface: tui)
+    auraforge --cli                  Force the classic REPL (overrides display.interface: tui)
+    auraforge -c                     Resume the most recent session
+    auraforge -c "my project"        Resume a session by name (latest in lineage)
+    auraforge --resume <session_id>  Resume a specific session by ID
+    auraforge --resume latest        Resume the most recent session (same as -c)
+    auraforge --tui --resume latest --in ./dir   Resume ./dir's latest session in the TUI
     auraforge setup                  Run setup wizard
-    hermes logout                 Clear stored authentication
+    auraforge logout                 Clear stored authentication
     auraforge auth add <provider>    Add a pooled credential
     auraforge auth list              List pooled credentials
     auraforge auth remove <p> <t>    Remove pooled credential by index, id, or label
     auraforge auth reset <provider>  Clear exhaustion status for a provider
     auraforge model                  Select default model
-    hermes fallback [list]        Show fallback provider chain
-    hermes fallback add           Add a fallback provider (same picker as `auraforge model`)
-    hermes fallback remove        Remove a fallback provider from the chain
+    auraforge fallback [list]        Show fallback provider chain
+    auraforge fallback add           Add a fallback provider (same picker as `auraforge model`)
+    auraforge fallback remove        Remove a fallback provider from the chain
     auraforge config                 View configuration
     auraforge config edit            Edit config in $EDITOR
     auraforge config set model gpt-4 Set a config value
-    hermes gateway                Run messaging gateway
-    hermes -s aura-forge-agent-dev,github-auth
-    hermes -w                     Start in isolated git worktree
-    hermes gateway install        Install gateway background service
-    hermes sessions list          List past sessions
-    hermes sessions browse        Interactive session picker
-    hermes sessions rename ID T   Rename/title a session
-    hermes logs                   View agent.log (last 50 lines)
-    hermes logs -f                Follow agent.log in real time
-    hermes logs errors            View errors.log
-    hermes logs --since 1h        Lines from the last hour
-    hermes debug share             Upload debug report for support
-    hermes console                Open the safe Aura Forge command console
-    hermes update                 Update to latest version
-    hermes dashboard              Start web UI dashboard (port 9119)
-    hermes dashboard --stop       Stop running dashboard processes
-    hermes dashboard --status     List running dashboard processes
+    auraforge gateway                Run messaging gateway
+    auraforge -s aura-forge-agent-dev,github-auth
+    auraforge -w                     Start in isolated git worktree
+    auraforge gateway install        Install gateway background service
+    auraforge sessions list          List past sessions
+    auraforge sessions browse        Interactive session picker
+    auraforge sessions rename ID T   Rename/title a session
+    auraforge logs                   View agent.log (last 50 lines)
+    auraforge logs -f                Follow agent.log in real time
+    auraforge logs errors            View errors.log
+    auraforge logs --since 1h        Lines from the last hour
+    auraforge debug share             Upload debug report for support
+    auraforge console                Open the safe Aura Forge command console
+    auraforge update                 Update to latest version
+    auraforge dashboard              Start web UI dashboard (port 9119)
+    auraforge dashboard --stop       Stop running dashboard processes
+    auraforge dashboard --status     List running dashboard processes
 
 For more help on a command:
-    hermes <command> --help
+    auraforge <command> --help
 """
 
 
@@ -141,7 +141,7 @@ def build_top_level_parser():
     other subparsers via ``subparsers.add_parser(...)``.
     """
     parser = argparse.ArgumentParser(
-        prog="hermes",
+        prog="auraforge",
         description="Aura Forge Agent - AI assistant with tool-calling capabilities",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=_EPILOGUE,

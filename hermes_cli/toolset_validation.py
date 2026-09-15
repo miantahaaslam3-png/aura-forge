@@ -5,7 +5,7 @@ the tool registry or launching Aura Forge (mirrors the decoupled-helper pattern 
 elsewhere in the CLI).
 
 Motivated by #38798: a config migration silently rewrote the valid toolset name
-``hermes-cli`` to the non-existent ``auraforge``. ``resolve_toolset('hermes')``
+``auraforge-cli`` to the non-existent ``auraforge``. ``resolve_toolset('auraforge')``
 returns an empty list, so every tool silently disappeared with no error, warning,
 or log entry — the agent degraded to text-only replies and the cause took
 significant debugging to find. Surfacing invalid toolset names (and the
@@ -24,8 +24,8 @@ def validate_platform_toolsets(
     Two failure modes are reported:
 
     1. A toolset name that ``is_valid_toolset`` rejects — usually a corrupted or
-       renamed entry. When ``hermes-<platform>`` would have been valid (the exact
-       #38798 shape, where ``cli`` held ``auraforge`` instead of ``hermes-cli``),
+       renamed entry. When ``auraforge-<platform>`` would have been valid (the exact
+       #38798 shape, where ``cli`` held ``auraforge`` instead of ``auraforge-cli``),
        the warning includes that as a suggestion.
     2. The mapping is non-empty but resolves to *zero* valid toolsets, so the
        agent would start with no tools at all.
@@ -55,7 +55,7 @@ def validate_platform_toolsets(
             if is_valid_toolset(name):
                 valid_count += 1
                 continue
-            suggestion = f"hermes-{platform}"
+            suggestion = f"auraforge-{platform}"
             hint = (
                 f" — did you mean '{suggestion}'?"
                 if is_valid_toolset(suggestion)

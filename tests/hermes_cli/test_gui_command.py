@@ -1,4 +1,4 @@
-"""Tests for ``hermes gui`` desktop launcher wiring."""
+"""Tests for ``auraforge gui`` desktop launcher wiring."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _isolate_xdg_data_home(tmp_path, monkeypatch):
     resolves it under ``XDG_DATA_HOME`` (falling back to ``~/.local/share``).
     While these tests faked the host as darwin the Linux-only registration
     never ran, so nothing escaped. Running them on their real host makes that
-    call live, and on a Linux dev box it wrote a ``hermes.desktop`` pointing
+    call live, and on a Linux dev box it wrote a ``auraforge.desktop`` pointing
     ``Exec=`` at the test's throwaway npm stub into the user's actual
     applications menu.
 
@@ -65,7 +65,7 @@ def _ns(**kw):
 
 
 def _make_desktop_tree(tmp_path: Path) -> Path:
-    root = tmp_path / "hermes-agent"
+    root = tmp_path / "auraforge-agent"
     desktop_dir = root / "apps" / "desktop"
     desktop_dir.mkdir(parents=True)
     (desktop_dir / "package.json").write_text("{}", encoding="utf-8")
@@ -91,7 +91,7 @@ def _make_packaged_executable(root: Path, monkeypatch) -> Path:
     elif sys.platform == "win32":
         exe = desktop_dir / "release" / "win-unpacked" / "AuraForge.exe"
     else:
-        exe = desktop_dir / "release" / "linux-unpacked" / "hermes"
+        exe = desktop_dir / "release" / "linux-unpacked" / "auraforge"
     exe.parent.mkdir(parents=True, exist_ok=True)
     exe.write_text("", encoding="utf-8")
     if sys.platform not in ("darwin", "win32"):
@@ -137,7 +137,7 @@ def test_gui_installs_packages_and_launches_desktop_app(tmp_path, monkeypatch):
 def test_gui_install_env_prepends_managed_node_on_bare_path(tmp_path, monkeypatch):
     """Regression: npm's child scripts (electron-winstaller's select-7z-arch.js)
     shell out to bare ``node``. When Desktop is launched from the updater chain
-    the parent PATH is stripped, so the install env MUST carry the Hermes-managed
+    the parent PATH is stripped, so the install env MUST carry the Aura Forge-managed
     Node ahead of that bare PATH or the install dies with ``node: not found``.
     """
     import os
@@ -149,14 +149,14 @@ def test_gui_install_env_prepends_managed_node_on_bare_path(tmp_path, monkeypatc
     _make_packaged_executable(root, monkeypatch)
 
     # A managed Node tree on disk so with_hermes_node_path() actually prepends it.
-    home = tmp_path / "hermes-home"
+    home = tmp_path / "auraforge-home"
     (home / "node" / "bin").mkdir(parents=True)
     monkeypatch.setenv("HERMES_HOME", str(home))
     # Simulate the stripped PATH the desktop updater chain hands us.
     monkeypatch.setenv("PATH", os.pathsep.join(["/usr/bin", "/bin"]))
 
     install_ok = subprocess.CompletedProcess(["npm", "ci"], 0)
-    launch_ok = subprocess.CompletedProcess(["hermes"], 0)
+    launch_ok = subprocess.CompletedProcess(["auraforge"], 0)
 
     # A plain return_value rather than a fixed side_effect list: this test only
     # cares about the env handed to the npm install, and pinning an exact
@@ -248,7 +248,7 @@ def test_gui_does_not_retry_after_packaged_executable_exists(tmp_path, monkeypat
     Electron-download problem the cache purge + mirror retries exist to repair.
 
     Regression for #40187: a late failure such as macOS code signing leaves
-    AuraForge.app/Contents/MacOS/Hermes in place. Re-downloading Electron can't
+    AuraForge.app/Contents/MacOS/Aura Forge in place. Re-downloading Electron can't
     repair a signing failure, so the destructive purge + slow mirror retry must
     be skipped — we fail directly instead of grinding through an identical retry.
     """
@@ -551,7 +551,7 @@ def test_setup_tcc_identity_creates_cert_imports_trusts_and_configures(tmp_path,
     trust_call = next(c for c in calls if c[1:2] == ["add-trusted-cert"])
     assert "codeSign" in trust_call and "trustRoot" in trust_call
     # Temp files cleaned up.
-    assert not list(tmp_path.glob("hermes-tcc-*"))
+    assert not list(tmp_path.glob("auraforge-tcc-*"))
 
 
 def test_setup_tcc_identity_retries_pkcs12_with_legacy_on_mac_verification_failure(tmp_path, monkeypatch, capsys):
@@ -729,7 +729,7 @@ def test_setup_tcc_identity_non_macos_skips(tmp_path, monkeypatch, capsys):
 
 
 def test_cmd_gui_setup_tcc_identity_exits_before_build(tmp_path, monkeypatch):
-    """`hermes desktop --setup-tcc-identity` calls the setup and exits 0/1
+    """`auraforge desktop --setup-tcc-identity` calls the setup and exits 0/1
     without building or launching the app."""
     root = _make_desktop_tree(tmp_path)
     monkeypatch.setattr(cli_main, "PROJECT_ROOT", root)
@@ -921,7 +921,7 @@ def test_relaunchable_fixup_legacy_adhoc_success_still_verifies_and_never_delete
 
 @pytest.mark.linux_only
 def test_gui_registers_linux_desktop_entry_before_launch(tmp_path, monkeypatch):
-    """`hermes desktop` gives the app a launcher presence on Linux."""
+    """`auraforge desktop` gives the app a launcher presence on Linux."""
     root = _make_desktop_tree(tmp_path)
     monkeypatch.setattr(cli_main, "PROJECT_ROOT", root)
     packaged_exe = _make_packaged_executable(root, monkeypatch)
@@ -930,7 +930,7 @@ def test_gui_registers_linux_desktop_entry_before_launch(tmp_path, monkeypatch):
     monkeypatch.setattr("hermes_cli.linux_desktop_entry.is_supported", lambda: True)
     monkeypatch.setattr(
         "hermes_cli.linux_desktop_entry.install_desktop_entry",
-        lambda project_root: registered.append(project_root) or (tmp_path / "hermes.desktop"),
+        lambda project_root: registered.append(project_root) or (tmp_path / "auraforge.desktop"),
     )
 
     launch_ok = subprocess.CompletedProcess([str(packaged_exe)], 0)

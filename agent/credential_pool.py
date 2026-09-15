@@ -91,7 +91,7 @@ _TERMINAL_AUTH_REASONS = frozenset({
 # Manual entries (``manual:*``) are independent credentials with no singleton
 # to re-seed from, so pruning them after a quiet window cleans up dead state
 # without losing recoverability — the user always has the option to re-add
-# via ``hermes auth add``.
+# via ``auraforge auth add``.
 #
 # Singleton-seeded entries (``device_code``, ``claude_code``)
 # are NOT pruned because ``_seed_from_singletons`` would just re-create them
@@ -683,13 +683,13 @@ def _write_through_provider_state_to_global_root(
         # Classic mode (profile == root); the profile save already hit root.
         return
     # Seat belt: under pytest, refuse to write the real user's
-    # ~/.hermes/auth.json even when HERMES_HOME points at a profile path
+    # ~/.auraforge/auth.json even when HERMES_HOME points at a profile path
     # (mirrors the read-side guard in _load_global_auth_store). Uses the
     # unmodified HOME env, not Path.home() which fixtures may monkeypatch.
     if os.environ.get("PYTEST_CURRENT_TEST"):
         real_home_env = os.environ.get("HOME", "")
         if real_home_env:
-            real_root = Path(real_home_env) / ".hermes" / "auth.json"
+            real_root = Path(real_home_env) / ".auraforge" / "auth.json"
             try:
                 if global_path.resolve(strict=False) == real_root.resolve(strict=False):
                     return
@@ -973,7 +973,7 @@ class CredentialPool:
         When a Codex OAuth access token expires (or the ChatGPT account hits
         its 5h/weekly quota), the pool entry gets marked ``STATUS_EXHAUSTED``
         with a ``last_error_reset_at`` that can be many hours in the future.
-        Meanwhile the user may run ``hermes model`` / ``hermes auth`` which
+        Meanwhile the user may run ``auraforge model`` / ``auraforge auth`` which
         performs a fresh device-code login and writes new tokens to
         ``auth.json`` under ``_auth_store_lock``.  Without this sync the pool
         entry stays frozen until ``last_error_reset_at`` elapses — even
@@ -1241,8 +1241,8 @@ class CredentialPool:
         Using ``_save_provider_state`` (which sets ``active_provider``)
         here would mean every Nous/Codex/xAI refresh in a multi-provider
         setup silently flips the ``active_provider`` flag — the next
-        ``hermes`` invocation that defaults to the active provider
-        (e.g. setup wizard, ``hermes auth status``) would land on
+        ``auraforge`` invocation that defaults to the active provider
+        (e.g. setup wizard, ``auraforge auth status``) would land on
         whatever provider happened to refresh last, not whatever the
         user actually chose.
         """
@@ -1938,7 +1938,7 @@ class CredentialPool:
                     entry = synced
                     cleared_any = True
             # For openai-codex entries, same pattern: the user may have
-            # re-authed via `hermes model` / `hermes auth` after a 429/401,
+            # re-authed via `auraforge model` / `auraforge auth` after a 429/401,
             # leaving fresh tokens on disk while the pool entry is still
             # frozen behind last_error_reset_at (can be hours in the
             # future for ChatGPT weekly windows).
@@ -1951,7 +1951,7 @@ class CredentialPool:
                     cleared_any = True
             # For xai-oauth singleton-seeded entries, identical pattern:
             # an entry frozen as exhausted may simply be holding stale
-            # tokens that another process (or a fresh `hermes model` ->
+            # tokens that another process (or a fresh `auraforge model` ->
             # xAI Grok OAuth login) has since rotated in auth.json.
             if (self.provider == "xai-oauth"
                     and entry.source == "device_code"
@@ -1963,7 +1963,7 @@ class CredentialPool:
             if entry.last_status == STATUS_DEAD:
                 # Manual DEAD credentials get pruned after a 24h quiet window
                 # so the pool doesn't accumulate dead entries forever.  The
-                # user can always re-add via ``hermes auth add``.  Singleton-
+                # user can always re-add via ``auraforge auth add``.  Singleton-
                 # seeded DEAD entries are kept so the audit trail (label,
                 # last_error_reason, timestamps) stays visible — pruning them
                 # would just be undone by ``_seed_from_singletons`` on the
@@ -1974,7 +1974,7 @@ class CredentialPool:
                         _label = entry.label or entry.id[:8]
                         logger.warning(
                             "credential pool: pruning DEAD manual entry %s "
-                            "(reason=%s, age=%.1fh) — re-add via `hermes auth add %s`",
+                            "(reason=%s, age=%.1fh) — re-add via `auraforge auth add %s`",
                             _label,
                             entry.last_error_reason or "unknown",
                             (now - dead_at) / 3600.0,
@@ -2567,7 +2567,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
     auth_store = _load_auth_store()
 
     # Shared suppression gate — used at every upsert site so
-    # `hermes auth remove <provider> <N>` is stable across all source types.
+    # `auraforge auth remove <provider> <N>` is stable across all source types.
     try:
         from hermes_cli.auth import is_source_suppressed as _is_suppressed
     except ImportError:
@@ -2586,7 +2586,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
         except ImportError:
             pass
 
-        # API-key vs OAuth is a user-visible choice at `hermes setup` ("Claude
+        # API-key vs OAuth is a user-visible choice at `auraforge setup` ("Claude
         # Pro/Max subscription" vs "Anthropic API key").  The signal that the
         # user picked the API-key path is: ANTHROPIC_API_KEY set in the env,
         # AND no OAuth env vars set — `save_anthropic_api_key()` writes the
@@ -2599,9 +2599,9 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
         # Code identity injection, `mcp_` tool-name rewrite, and claude-cli
         # User-Agent header (`agent/anthropic_adapter.py:2128`).  Users who
         # explicitly opted into the API-key path are explicitly opting OUT of
-        # that masquerade.  Prefer ~/.hermes/.env over os.environ for the
+        # that masquerade.  Prefer ~/.auraforge/.env over os.environ for the
         # same reason `_seed_from_env` does — that's the authoritative file
-        # that `hermes setup` writes.
+        # that `auraforge setup` writes.
         _env_file = load_env()
 
         def _env_val(key: str) -> str:
@@ -2673,7 +2673,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
             active_sources.add("device_code")
             # Prefer a user-supplied label embedded in the singleton state
             # (set by persist_nous_credentials(label=...) when the user ran
-            # `hermes auth add nous --label <name>`).  Fall back to the
+            # `auraforge auth add nous --label <name>`).  Fall back to the
             # auto-derived token fingerprint for logins that didn't supply one.
             custom_label = str(state.get("label") or "").strip()
             seeded_label = custom_label or label_from_token(
@@ -2727,7 +2727,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
             # `gh auth token` subprocess spawn.  resolve_copilot_token()
             # shells out (~30ms), and the exchange retries 3x with backoff
             # (~35s worst case); a user who suppressed every copilot source
-            # (hermes auth remove copilot gh_cli) must not pay either on
+            # (auraforge auth remove copilot gh_cli) must not pay either on
             # every pool load (model picker open, /model, agent startup).
             # Enumerating the full source space here matches what
             # credential_sources._remove_copilot_gh suppresses, so an
@@ -2821,9 +2821,9 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
             logger.debug("Qwen OAuth token seed failed: %s", exc)
 
     elif provider == "minimax-oauth":
-        # MiniMax OAuth tokens live in ~/.hermes/auth.json providers.minimax-oauth.
+        # MiniMax OAuth tokens live in ~/.auraforge/auth.json providers.minimax-oauth.
         # Seed the pool so `/auth list` reflects the logged-in state and the
-        # standard `hermes auth remove minimax-oauth <N>` flow works.
+        # standard `auraforge auth remove minimax-oauth <N>` flow works.
         # Use refresh_if_expiring=False equivalent: resolve_minimax_oauth_runtime_credentials
         # always refreshes on expiry, so instead read raw state here to avoid
         # surprise network calls during provider discovery.
@@ -2863,7 +2863,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
             logger.debug("MiniMax OAuth token seed failed: %s", exc)
 
     elif provider == "openai-codex":
-        # Respect user suppression — `hermes auth remove openai-codex` marks
+        # Respect user suppression — `auraforge auth remove openai-codex` marks
         # the device_code source as suppressed so it won't be re-seeded from
         # the Aura Forge auth store.  Without this gate the removal is instantly
         # undone on the next load_pool() call.
@@ -2877,7 +2877,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
         # single-use, so sharing them with Codex CLI / VS Code causes
         # refresh_token_reused race failures.  Users who want to adopt
         # existing Codex CLI credentials get a one-time, explicit prompt
-        # via `hermes auth openai-codex`.
+        # via `auraforge auth openai-codex`.
         if isinstance(tokens, dict) and tokens.get("access_token"):
             active_sources.add("device_code")
             custom_label = str(state.get("label") or "").strip()
@@ -2897,10 +2897,10 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
             )
 
     elif provider == "xai-oauth":
-        # When the user logs in via ``hermes model`` -> xAI Grok OAuth,
+        # When the user logs in via ``auraforge model`` -> xAI Grok OAuth,
         # tokens are written to the auth.json singleton
         # (``providers["xai-oauth"]``).  Surface them in the pool too so
-        # ``hermes auth list`` reflects the logged-in state and so the pool
+        # ``auraforge auth list`` reflects the logged-in state and so the pool
         # is the single source of truth for refresh during runtime resolution.
         state = _load_provider_state(auth_store, "xai-oauth")
         tokens = state.get("tokens") if isinstance(state, dict) else None
@@ -2932,7 +2932,7 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
     return changed, active_sources
 
 
-# Prefer ~/.hermes/.env over os.environ — the user's config file is the
+# Prefer ~/.auraforge/.env over os.environ — the user's config file is the
 # authoritative source for Aura Forge credentials. Stale env vars from parent
 # processes (Codex CLI, test scripts, etc.) should not override deliberate
 # changes to the .env file. load_env() memoizes on the .env mtime, so
@@ -2980,9 +2980,9 @@ def _seed_from_env(provider: str, entries: List[PooledCredential]) -> Tuple[bool
     # credential refresh share one implementation.
     _get_env_prefer_dotenv = get_env_prefer_dotenv
 
-    # Honour user suppression — `hermes auth remove <provider> <N>` for an
+    # Honour user suppression — `auraforge auth remove <provider> <N>` for an
     # env-seeded credential marks the env:<VAR> source as suppressed so it
-    # won't be re-seeded from the user's shell environment or ~/.hermes/.env.
+    # won't be re-seeded from the user's shell environment or ~/.auraforge/.env.
     # Without this gate the removal is silently undone on the next
     # load_pool() call whenever the var is still exported by the shell.
     try:
@@ -3020,7 +3020,7 @@ def _seed_from_env(provider: str, entries: List[PooledCredential]) -> Tuple[bool
         return payload
 
     if provider == "openrouter":
-        # Prefer ~/.hermes/.env over os.environ
+        # Prefer ~/.auraforge/.env over os.environ
         token = _get_env_prefer_dotenv("OPENROUTER_API_KEY")
         if token:
             source = "env:OPENROUTER_API_KEY"
@@ -3057,7 +3057,7 @@ def _seed_from_env(provider: str, entries: List[PooledCredential]) -> Tuple[bool
         ]
 
     for env_var in env_vars:
-        # Prefer ~/.hermes/.env over os.environ
+        # Prefer ~/.auraforge/.env over os.environ
         token = _get_env_prefer_dotenv(env_var)
         if not token:
             continue
@@ -3096,7 +3096,7 @@ def _prune_stale_seeded_entries(
         # var this call must NOT delete the on-disk entry for every other
         # process — that destructive read is the bug behind #9331. Only prune
         # an env source when ``prune_env_sources`` is explicitly requested
-        # (e.g. an `hermes auth` command that confirmed the source is gone).
+        # (e.g. an `auraforge auth` command that confirmed the source is gone).
         if entry.source.startswith("env:"):
             return prune_env_sources
         # File-backed singletons (device-code OAuth, claude_code) and Aura Forge

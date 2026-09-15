@@ -192,7 +192,7 @@ def _make_activity_event(
 ) -> Dict[str, Any]:
     event: Dict[str, Any] = {
         "schema": ACTIVITY_EVENT_SCHEMA,
-        "eventId": f"hermes-{uuid.uuid4()}",
+        "eventId": f"auraforge-{uuid.uuid4()}",
         "sessionId": _safe_scalar(session_id, "unknown") or "unknown",
         "hookEventName": hook_event_name,
         "status": "error" if status == "error" else "ok",
@@ -785,7 +785,7 @@ def _env_enablement() -> Optional[dict]:
 
 
 def interactive_setup() -> None:
-    """Interactive ``hermes gateway setup`` flow for the Raft platform.
+    """Interactive ``auraforge gateway setup`` flow for the Raft platform.
 
     Lazy-imports CLI helpers so the plugin stays importable in gateway runtime
     and test contexts. The flow persists ``RAFT_PROFILE`` to the Aura Forge env
@@ -823,7 +823,7 @@ def interactive_setup() -> None:
 
     print()
     print_success("Raft configuration saved")
-    print_info("Restart the gateway for changes to take effect: hermes gateway restart")
+    print_info("Restart the gateway for changes to take effect: auraforge gateway restart")
 
 
 def register(ctx) -> None:

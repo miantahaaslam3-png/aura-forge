@@ -69,7 +69,7 @@ class TestHandleUpdateCommand:
             # The handler does Path(__file__).parent.parent.resolve()
             # We need to make project_root / '.git' not exist.
             # Since Path(__file__) resolves to the real gateway/run.py,
-            # project_root will be the real hermes-agent dir (which HAS .git).
+            # project_root will be the real auraforge-agent dir (which HAS .git).
             # Patch Path to control this.
             original_path = Path
 
@@ -117,12 +117,12 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         with patch("gateway.run._hermes_home", hermes_home), \
              patch("gateway.run.__file__", fake_file), \
-             patch("shutil.which", side_effect=lambda x: "/usr/bin/hermes" if x == "hermes" else "/usr/bin/setsid"), \
+             patch("shutil.which", side_effect=lambda x: "/usr/bin/auraforge" if x == "auraforge" else "/usr/bin/setsid"), \
              patch("subprocess.Popen"):
             result = await runner._handle_update_command(event)
 
@@ -149,14 +149,14 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         mock_popen = MagicMock()
 
         def which_no_setsid(x):
-            if x == "hermes":
-                return "/usr/bin/hermes"
+            if x == "auraforge":
+                return "/usr/bin/auraforge"
             if x == "setsid":
                 return None
             return None
@@ -270,7 +270,7 @@ class TestSendUpdateNotification:
     async def test_defers_notification_while_update_still_running(self, tmp_path):
         """Returns False and keeps marker files when the update has not exited yet."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         pending_path = hermes_home / ".update_pending.json"
@@ -293,7 +293,7 @@ class TestSendUpdateNotification:
     async def test_recovers_from_claimed_pending_file(self, tmp_path):
         """A claimed pending file from a crashed notifier is still deliverable."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         claimed_path = hermes_home / ".update_pending.claimed.json"
@@ -317,7 +317,7 @@ class TestSendUpdateNotification:
     async def test_sends_notification_with_output(self, tmp_path):
         """Sends update output to the correct platform and chat."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         # Write pending marker
@@ -351,7 +351,7 @@ class TestSendUpdateNotification:
     async def test_cleans_up_on_error(self, tmp_path):
         """Files are cleaned up even if notification fails."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         pending_path = hermes_home / ".update_pending.json"
@@ -387,7 +387,7 @@ class TestSendUpdateNotification:
         retry can deliver once the platform is back.
         """
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         pending = {"platform": "discord", "chat_id": "111", "user_id": "222"}
@@ -425,7 +425,7 @@ class TestSendUpdateNotification:
         cleans up — exactly once.
         """
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         pending = {"platform": "discord", "chat_id": "111", "user_id": "222"}
@@ -464,7 +464,7 @@ class TestSendUpdateNotification:
     async def test_completion_notification_tolerates_invalid_utf8_output(self, tmp_path):
         """Completion-only update notifications must not crash on bad bytes."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         pending = {"platform": "discord", "chat_id": "111", "user_id": "222"}
@@ -515,7 +515,7 @@ class TestWatchUpdateProgress:
     @pytest.mark.asyncio
     async def test_invalid_utf8_update_output_does_not_crash_watcher(self, tmp_path):
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
 
         (hermes_home / ".update_pending.json").write_text(json.dumps({

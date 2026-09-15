@@ -72,15 +72,15 @@ def _notify_provider_jobs_changed_safe() -> None:
 #
 #   1. User-supplied cron prompt (small, written as a directive).
 #      Strict scanning is appropriate — a legit cron prompt has no business
-#      saying "cat ~/.hermes/.env" or "rm -rf /". `_scan_cron_prompt()` runs
+#      saying "cat ~/.auraforge/.env" or "rm -rf /". `_scan_cron_prompt()` runs
 #      against this at create/update time and as a runtime defense-in-depth.
 #
 #   2. Assembled prompt that includes loaded skill content (large markdown
 #      bodies, often security docs, postmortems, runbooks discussing attack
 #      patterns in PROSE). Reusing the strict patterns here false-positives
 #      every time a skill *describes* a command — see #3968 follow-up: the
-#      `hermes-agent-dev` skill contains a security postmortem mentioning
-#      `cat ~/.hermes/.env`, which tripped `read_secrets` and silently
+#      `auraforge-agent-dev` skill contains a security postmortem mentioning
+#      `cat ~/.auraforge/.env`, which tripped `read_secrets` and silently
 #      killed all PR-scout jobs.
 #
 #      Skill bodies are user-curated and scanned at install time by
@@ -577,7 +577,7 @@ def _validate_bot_chat_deliver(deliver: Optional[str]) -> Optional[str]:
             return (
                 f"bot-chat delivery profile '{profile_arg}' not found on this "
                 "gateway's machine. Bot Chat delivery is machine-local — use a "
-                "profile that exists here (hermes profile list), or omit the "
+                "profile that exists here (auraforge profile list), or omit the "
                 "name (deliver='bot-chat') for the job's own profile."
             )
     return None
@@ -727,12 +727,12 @@ def _validate_cron_script_path(script: Optional[str]) -> Optional[str]:
     raw = script.strip()
 
     # Reject absolute paths and ~ expansion at the API boundary.
-    # Only relative paths within ~/.hermes/scripts/ are allowed.
+    # Only relative paths within ~/.auraforge/scripts/ are allowed.
     if raw.startswith(("/", "~")) or (len(raw) >= 2 and raw[1] == ":"):
         return (
-            f"Script path must be relative to ~/.hermes/scripts/. "
+            f"Script path must be relative to ~/.auraforge/scripts/. "
             f"Got absolute or home-relative path: {raw!r}. "
-            f"Place scripts in ~/.hermes/scripts/ and use just the filename."
+            f"Place scripts in ~/.auraforge/scripts/ and use just the filename."
         )
 
     # Validate containment after resolution
@@ -1141,7 +1141,7 @@ def _latest_job_output_excerpt(job_id: str, max_chars: int = 2000) -> Optional[s
 
     Included in the background-run completion block so the parent agent sees
     what the job actually produced without having to dig through
-    ``~/.hermes/cron/output/``. Never raises.
+    ``~/.auraforge/cron/output/``. Never raises.
     """
     try:
         from cron.jobs import get_cron_output_dir
@@ -1187,7 +1187,7 @@ def _try_dispatch_background_run(
     -------
     None
         Background delivery unavailable on this session runtime (one-shot
-        ``hermes -z``, stateless HTTP, Kanban worker, nested cron run).
+        ``auraforge -z``, stateless HTTP, Kanban worker, nested cron run).
         Caller falls back to the synchronous path unchanged.
     dict
         ``{"claimed": False, "success": False, "error": ...}`` — claim lost;
@@ -1213,7 +1213,7 @@ def _try_dispatch_background_run(
     job_name = str(job.get("name") or job_id)
 
     # Reap any execution row this job (or any job) left stranded 'claimed'/
-    # 'running' by a dead owner process -- e.g. a PRIOR one-shot `hermes
+    # 'running' by a dead owner process -- e.g. a PRIOR one-shot `auraforge
     # cron run` invocation whose dispatched runner died with the exiting
     # process before writing a terminal status (issue #86721). The
     # long-lived scheduler ticker already does this once at its own
@@ -1256,7 +1256,7 @@ def _try_dispatch_background_run(
         # fail closed and the completion could never be claimed.
         session_key = str(session_id)
     if not session_key:
-        # Direct Python callers (`hermes cron run`, tests) have no agent
+        # Direct Python callers (`auraforge cron run`, tests) have no agent
         # session to deliver a completion to — the process exits right after
         # the tool returns. Run synchronously.
         return None
@@ -1448,7 +1448,7 @@ def _gateway_liveness_notice(plural: bool = False) -> dict:
             "warning": (
                 f"The Aura Forge gateway is not running — {subject} "
                 "but will NOT fire until the gateway is started "
-                "(hermes gateway install / hermes gateway start). "
+                "(auraforge gateway install / auraforge gateway start). "
                 "Tell the user the task is scheduled but not active yet."
             ),
         }
@@ -1593,7 +1593,7 @@ def cronjob(
                     monitor_script=_normalize_optional_job_value(monitor_script),
                     monitor_url=_normalize_optional_job_value(monitor_url),
                     # reasoning_effort reaches here from the CLI
-                    # (hermes cron create --reasoning-effort) ONLY — it is
+                    # (auraforge cron create --reasoning-effort) ONLY — it is
                     # deliberately absent from CRONJOB_SCHEMA and the model
                     # dispatch below: models do not make model-config
                     # decisions (standing policy).
@@ -2079,7 +2079,7 @@ def _cronjob_handler(args, **kw):
         skills=args.get("skills"),
         # model / provider / base_url are intentionally NOT read from the
         # agent's arguments: per-job inference pins are user-owned (dashboard,
-        # `hermes cron create/edit --model`, or hand-edited jobs). The agent
+        # `auraforge cron create/edit --model`, or hand-edited jobs). The agent
         # must not be able to point unattended spend at a different model.
         # Programmatic callers of cronjob() itself retain the parameters.
         reason=args.get("reason"),

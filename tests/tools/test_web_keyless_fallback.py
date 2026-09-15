@@ -365,7 +365,7 @@ class TestResolutionOrder:
 
 
 # ---------------------------------------------------------------------------
-# hermes tools picker: tier variant rows
+# auraforge tools picker: tier variant rows
 # ---------------------------------------------------------------------------
 
 

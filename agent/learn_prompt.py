@@ -13,7 +13,7 @@ that instructs the live agent to:
      material).
   2. Author a skill via ``skill_manage`` that follows the Aura Forge
      skill-authoring standards (description <=60 chars, the modern section
-     order, Hermes-tool framing, no invented commands). Small sources get one
+     order, Aura Forge-tool framing, no invented commands). Small sources get one
      tight SKILL.md; large prose sources (books, paper stacks, specs, doc
      corpora) get the knowledge-base layout — a lean SKILL.md index plus
      per-chapter ``references/`` files loaded on demand via ``skill_view``
@@ -29,7 +29,7 @@ gateway ``/learn``, the dashboard "Learn a skill" panel) calls
 from __future__ import annotations
 
 # The house-style rules, distilled from AGENTS.md "Skill authoring standards
-# (HARDLINE)" and the hermes-agent-dev new-skill salvage reference. Embedded in
+# (HARDLINE)" and the auraforge-agent-dev new-skill salvage reference. Embedded in
 # the prompt so the agent authors skills the way a maintainer would by hand.
 _AUTHORING_STANDARDS = """\
 Follow the Aura Forge skill-authoring standards exactly. These are the same
@@ -61,7 +61,7 @@ Frontmatter:
   cross-platform first (tempfile.gettempdir(), pathlib.Path, psutil); gate only
   when the dependency is genuinely platform-bound. Omit the field for portable
   skills.
-- metadata.hermes.tags: a few Capitalized, Relevant, Tags.
+- metadata.auraforge.tags: a few Capitalized, Relevant, Tags.
 
 Body section order (omit a section only if it genuinely has no content):
 1. "# <Human Title>" then a 2-3 sentence intro: what it does, what it does NOT
@@ -74,7 +74,7 @@ Body section order (omit a section only if it genuinely has no content):
 7. "## Pitfalls" — known limits, rate limits, things that look broken but aren't.
 8. "## Verification" — a single command/check that proves the skill worked.
 
-Hermes-tool framing (this is what makes it a skill, not shell docs):
+Aura Forge-tool framing (this is what makes it a skill, not shell docs):
 - Frame running scripts as "invoke through the `terminal` tool".
 - Reference Aura Forge tools by name in backticks: `terminal`, `read_file`,
   `write_file`, `search_files`, `patch`, `web_extract`, `web_search`,

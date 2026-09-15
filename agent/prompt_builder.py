@@ -98,11 +98,11 @@ def _find_git_root(start: Path) -> Optional[Path]:
     return None
 
 
-_HERMES_MD_NAMES = (".hermes.md", "HERMES.md")
+_HERMES_MD_NAMES = (".auraforge.md", "AURA_FORGE.md")
 
 
 def _find_hermes_md(cwd: Path) -> Optional[Path]:
-    """Discover the nearest ``.hermes.md`` or ``HERMES.md``.
+    """Discover the nearest ``.auraforge.md`` or ``AURA_FORGE.md``.
 
     Search order: *cwd* first, then each parent directory up to (and
     including) the git repository root.  Returns the first match, or
@@ -112,7 +112,7 @@ def _find_hermes_md(cwd: Path) -> Optional[Path]:
     current = cwd.resolve()
 
     # When there is no git root, only check cwd itself – walking parents
-    # could pick up a .hermes.md planted in /tmp, /home, etc.
+    # could pick up a .auraforge.md planted in /tmp, /home, etc.
     search_dirs = [current, *current.parents] if stop_at else [current]
 
     for directory in search_dirs:
@@ -161,9 +161,9 @@ HERMES_AGENT_HELP_GUIDANCE = (
     "You run on Aura Forge Agent (by Nous Research). When the user needs help with "
     "Aura Forge itself — configuring, setting up, using, extending, or troubleshooting "
     "it — or when you need to understand your own features, tools, or capabilities, "
-    "the documentation at https://hermes-agent.nousresearch.com/docs is your "
+    "the documentation at https://auraforge-agent.nousresearch.com/docs is your "
     "authoritative reference and always holds the latest, most up-to-date "
-    "information. Load the `hermes-agent` skill with skill_view(name='hermes-agent') "
+    "information. Load the `auraforge-agent` skill with skill_view(name='auraforge-agent') "
     "for additional guidance and proven workflows, but treat the docs as the source "
     "of truth when the two differ."
 )
@@ -176,7 +176,7 @@ HERMES_AGENT_HELP_GUIDANCE_NO_SKILLS = (
     "You run on Aura Forge Agent (by Nous Research). When the user needs help with "
     "Aura Forge itself — configuring, setting up, using, extending, or troubleshooting "
     "it — or when you need to understand your own features, tools, or capabilities, "
-    "the documentation at https://hermes-agent.nousresearch.com/docs is the "
+    "the documentation at https://auraforge-agent.nousresearch.com/docs is the "
     "authoritative reference and always holds the latest, most up-to-date "
     "information. Point the user there (or read it yourself if you have a way to "
     "fetch web content)."
@@ -268,7 +268,7 @@ SKILLS_GUIDANCE = (
 KANBAN_GUIDANCE = (
     "# Kanban task execution protocol\n"
     "You have been assigned ONE task from "
-    "the shared board at `~/.hermes/kanban.db`. Your task id is in "
+    "the shared board at `~/.auraforge/kanban.db`. Your task id is in "
     "`$HERMES_KANBAN_TASK`; your workspace is `$HERMES_KANBAN_WORKSPACE`. "
     "The `kanban_*` tools in your schema are your primary coordination surface — "
     "they write directly to the shared SQLite DB and work regardless of terminal "
@@ -361,12 +361,12 @@ KANBAN_GUIDANCE = (
     "or paste ids; the kernel rejects the completion on any phantom id.\n"
     "- **Orchestrating: discover profiles first.** The dispatcher SILENTLY "
     "drops a card with an unknown assignee (it sits in `ready` forever). Ground "
-    "every assignee in a real profile (`hermes profile list`, or ask the user), "
+    "every assignee in a real profile (`auraforge profile list`, or ask the user), "
     "and express dependencies via `parents=[...]` on `kanban_create`, not prose.\n"
     "\n"
     "## Do NOT\n"
     "\n"
-    "- Do not shell out to `hermes kanban <verb>` for board operations. Use "
+    "- Do not shell out to `auraforge kanban <verb>` for board operations. Use "
     "the `kanban_*` tools — they work across all terminal backends.\n"
     "- Do not complete a task you didn't actually finish. Block it.\n"
     "- Do not call `clarify` to ask questions. You are running headless — "
@@ -461,7 +461,7 @@ TASK_COMPLETION_GUIDANCE = (
 # assistant response collapses N turns into one, cutting both latency and the
 # resent-context cost that compounds over a long conversation.
 #
-# The hermes-agent runtime already executes a batch of tool calls
+# The auraforge-agent runtime already executes a batch of tool calls
 # concurrently when they are independent (read-only tools always; path-scoped
 # file ops when their targets don't overlap — see
 # run_agent._execute_tool_calls / tool_dispatch_helpers). The missing piece
@@ -476,7 +476,7 @@ TASK_COMPLETION_GUIDANCE = (
 # sessions via prefix caching. Keep it tight.
 #
 # Ported from cline/cline#11514 ("encourage parallel tool calls"), adapted
-# from Cline's TypeScript tool-surface guidance to hermes-agent's Python
+# from Cline's TypeScript tool-surface guidance to auraforge-agent's Python
 # prompt-assembly architecture.
 PARALLEL_TOOL_CALL_GUIDANCE = (
     "# Parallel tool calls\n"
@@ -894,8 +894,8 @@ PLATFORM_HINTS = {
         "the inherited app font, no body padding or margin, content flush "
         "left and filling the viewport width, no centering wrappers, decorative "
         "backdrops, or page chrome. The frame auto-sizes to the content. "
-        "Widgets can talk back: window.hermes.send(\"prompt\") — or a "
-        "data-hermes-send=\"prompt\" attribute on any clickable element — sends "
+        "Widgets can talk back: window.auraforge.send(\"prompt\") — or a "
+        "data-auraforge-send=\"prompt\" attribute on any clickable element — sends "
         "that prompt to you as a hidden user turn (no chat bubble), so give "
         "interactive widgets buttons whose clicks mean something and answer "
         "them by updating the widget's file, not with prose. Only "
@@ -1766,7 +1766,7 @@ def build_skills_system_prompt(
     Falls back to a full filesystem scan when both layers miss.
 
     External skill directories (``skills.external_dirs`` in config.yaml) are
-    scanned alongside the local ``~/.hermes/skills/`` directory.  External dirs
+    scanned alongside the local ``~/.auraforge/skills/`` directory.  External dirs
     are read-only — they appear in the index but new skills are always created
     in the local dir.  Local skills take precedence when names collide.
 
@@ -1791,7 +1791,7 @@ def build_skills_system_prompt(
         _home_token = None
     try:
         external_dirs = get_all_skills_dirs()[1:]  # skip local (index 0)
-        # Trusted project-local dirs (./.hermes/skills, ./.agents/skills at
+        # Trusted project-local dirs (./.auraforge/skills, ./.agents/skills at
         # the git root) — highest-precedence tier, scanned before local.
         # Resolved once here; cwd and trust are stable for the session, so
         # the index (and the system prompt) stays byte-stable.
@@ -2110,9 +2110,9 @@ def _build_skills_system_prompt_inner(
             "already know how to do, because the skill defines how it should be done here.\n"
             "Whenever the user asks you to configure, set up, install, enable, disable, modify, "
             "or troubleshoot Aura Forge Agent itself — its CLI, config, models, providers, tools, "
-            "skills, voice, gateway, plugins, or any feature — load the `hermes-agent` skill "
-            "first. It has the actual commands (e.g. `hermes config set …`, `hermes tools`, "
-            "`hermes setup`) so you don't have to guess or invent workarounds.\n"
+            "skills, voice, gateway, plugins, or any feature — load the `auraforge-agent` skill "
+            "first. It has the actual commands (e.g. `auraforge config set …`, `auraforge tools`, "
+            "`auraforge setup`) so you don't have to guess or invent workarounds.\n"
             "If a skill has issues, fix it with skill_manage(action='patch').\n"
             "After difficult/iterative tasks, offer to save as a skill. "
             "If a skill you loaded was missing steps, had wrong commands, or needed "
@@ -2222,7 +2222,7 @@ def load_soul_md(
 
 
 def _load_hermes_md(cwd_path: Path, context_length: Optional[int] = None) -> str:
-    """.hermes.md / HERMES.md — walk to git root."""
+    """.auraforge.md / AURA_FORGE.md — walk to git root."""
     hermes_md_path = _find_hermes_md(cwd_path)
     if not hermes_md_path:
         return ""
@@ -2239,7 +2239,7 @@ def _load_hermes_md(cwd_path: Path, context_length: Optional[int] = None) -> str
         content = _scan_context_content(content, rel)
         result = f"## {rel}\n\n{content}"
         return _truncate_content(
-            result, ".hermes.md", context_length=context_length,
+            result, ".auraforge.md", context_length=context_length,
             read_path=str(hermes_md_path),
         )
     except Exception as e:
@@ -2394,7 +2394,7 @@ def build_context_files_prompt(
     """Discover and load context files for the system prompt.
 
     Priority (first found wins — only ONE project context type is loaded):
-      1. .hermes.md / HERMES.md  (walk to git root)
+      1. .auraforge.md / AURA_FORGE.md  (walk to git root)
       2. AGENTS.md / agents.md   (merged chain: git root → cwd)
       3. CLAUDE.md / claude.md   (cwd only)
       4. .cursorrules / .cursor/rules/*.mdc  (cwd only)

@@ -22,13 +22,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 logger = logging.getLogger(__name__)
 
 # Canonical index location. Override via config key ``plugins.index_url``.
 DEFAULT_INDEX_URL = (
-    "https://raw.githubusercontent.com/NousResearch/hermes-plugin-index/main/index.json"
+    "https://raw.githubusercontent.com/NousResearch/auraforge-plugin-index/main/index.json"
 )
 
 # Cache the fetched index for 24 hours; a stale cache is still preferred over
@@ -91,7 +91,7 @@ class PluginIndexEntry:
 
 
 def _cache_path() -> Path:
-    return get_hermes_home() / "cache" / "plugin_index.json"
+    return get_aura_forge_home() / "cache" / "plugin_index.json"
 
 
 def get_index_url() -> str:

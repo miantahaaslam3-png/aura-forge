@@ -11,7 +11,7 @@ of 4000+ models across 109+ providers.  Provides:
 Data resolution order:
   1. In-memory cache (fresh, or stale served immediately while a single
      background daemon thread refreshes)
-  2. Disk cache (~/.hermes/models_dev_cache.json — any age; stale data is
+  2. Disk cache (~/.auraforge/models_dev_cache.json — any age; stale data is
      served rather than blocking callers on the network)
   3. Network fetch (https://models.dev/api.json) — only when no cache
      exists at all; failed refreshes back off for 5 minutes process-wide
@@ -604,7 +604,7 @@ def fetch_models_dev(
       5. Any failed refresh (foreground or background) suppresses further
          automatic refreshes for 5 minutes process-wide.
 
-    When ``force_refresh=True`` (used by ``hermes config refresh``, the
+    When ``force_refresh=True`` (used by ``auraforge config refresh``, the
     \"refresh model catalog\" code path), cache fast paths and the failure
     backoff are bypassed; the function hits the network and only falls back
     to cached data if the call fails. When ``allow_network=False``, any
@@ -1274,7 +1274,7 @@ def list_provider_models(
     Returns an empty list if the provider is unknown or has no data.
 
     ``allow_network`` defaults to True — this is called from the model
-    picker (``hermes model``), which is an interactive user-facing flow
+    picker (``auraforge model``), which is an interactive user-facing flow
     where a fresh catalog is worth a short network wait.
     """
     from hermes_cli.models import normalize_provider

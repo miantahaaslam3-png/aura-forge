@@ -69,7 +69,7 @@ def _redact_terminal_error_text(value: Any) -> str:
 from tools.interrupt import is_interrupted, _interrupt_event  # noqa: F401 — re-exported
 from tools.registry import tool_error
 from tools.shell_heredoc import strip_inert_heredoc_bodies
-# display_hermes_home imported lazily at call site (stale-module safety during hermes update)
+# display_hermes_home imported lazily at call site (stale-module safety during auraforge update)
 
 
 
@@ -218,10 +218,10 @@ def _check_disk_usage_warning():
     try:
         scratch_dir = _get_scratch_dir()
 
-        # Get total size of hermes directories
+        # Get total size of auraforge directories
         total_bytes = 0
         import glob
-        for path in glob.glob(str(scratch_dir / "hermes-*")):
+        for path in glob.glob(str(scratch_dir / "auraforge-*")):
             for f in Path(path).rglob('*'):
                 if f.is_file():
                     try:
@@ -1160,7 +1160,7 @@ _docker_orphan_reaper_lock = threading.Lock()
 def _maybe_reap_docker_orphans(container_config: Dict[str, Any]) -> None:
     """Run the docker orphan reaper once per process, if enabled.
 
-    Sweeps long-Exited containers labeled ``hermes-agent=1`` for the current
+    Sweeps long-Exited containers labeled ``auraforge-agent=1`` for the current
     profile that match the issue #20561 leak class — containers left behind
     by Aura Forge processes that exited without firing ``atexit`` (SIGKILL,
     OOM, terminal-window-close). The reaper is conservative by default:
@@ -1612,7 +1612,7 @@ def _parse_env_var(name: str, default: str, converter: Any = int, type_label: st
     except (ValueError, json.JSONDecodeError):
         raise ValueError(
             f"Invalid value for {name}: {raw!r} (expected {type_label}). "
-            f"Check ~/.hermes/.env or environment variables."
+            f"Check ~/.auraforge/.env or environment variables."
         )
 
 
@@ -1717,7 +1717,7 @@ def _ensure_terminal_env_bridged() -> None:
     The CLI (cli.py ``env_mappings``), the gateway (gateway/run.py
     ``_terminal_env_map``), and TUI/dashboard PTY launches
     (``apply_terminal_config_to_env``) bridge ``terminal.*`` config into env
-    vars at startup — but processes that skip all of those paths (``hermes
+    vars at startup — but processes that skip all of those paths (``auraforge
     serve`` / the Desktop app backend's in-process agents, the desktop cron
     ticker, ACP) used to silently fall back to the local backend even when
     config.yaml selects ``terminal.backend: docker``, running commands on the
@@ -1725,7 +1725,7 @@ def _ensure_terminal_env_bridged() -> None:
 
     Explicit terminal config keys win: when config.yaml has a ``terminal``
     section, each key present there overrides its matching env value (which may
-    be stale from ``hermes setup``). Environment values for omitted terminal
+    be stale from ``auraforge setup``). Environment values for omitted terminal
     keys are preserved. When no terminal section exists, exported/.env values
     keep working unchanged.
     """
@@ -1883,7 +1883,7 @@ def _get_env_config() -> Dict[str, Any]:
         "docker_shared_container_key": os.getenv(
             "TERMINAL_DOCKER_SHARED_CONTAINER_KEY", ""
         ).strip(),
-        # Startup orphan reaper for hermes-tagged containers left behind by
+        # Startup orphan reaper for auraforge-tagged containers left behind by
         # crashed / SIGKILL'd previous processes that bypassed atexit.
         # Conservative: only sweeps Exited containers older than 2× the
         # idle-reap window AND scoped to the current profile. Issue #20561.
@@ -2391,7 +2391,7 @@ def cleanup_all_environments():
     # Also clean any orphaned directories
     scratch_dir = _get_scratch_dir()
     import glob
-    for path in glob.glob(str(scratch_dir / "hermes-*")):
+    for path in glob.glob(str(scratch_dir / "auraforge-*")):
         try:
             shutil.rmtree(path, ignore_errors=True)
             logger.info("Removed orphaned: %s", path)
@@ -2883,7 +2883,7 @@ def terminal_tool(
         # a registered env override (RL benchmarks) get isolated sandboxes.
         effective_task_id = _resolve_container_task_id(task_id)
         if _host_local:
-            # Hermes-owned control-plane children must run beside the current
+            # Aura Forge-owned control-plane children must run beside the current
             # interpreter, never inside the model's configured Docker/SSH/etc.
             # Keep their environment cache separate from the configured backend.
             effective_task_id = f"host-local-{effective_task_id}"
@@ -3067,18 +3067,18 @@ def terminal_tool(
 
         session_key = get_current_session_key(default="") or (task_id or "")
 
-        # Hard-block: gateway lifecycle commands (systemctl/launchctl/hermes
-        # restart|stop|uninstall targeting hermes-gateway) must never run inside the
+        # Hard-block: gateway lifecycle commands (systemctl/launchctl/auraforge
+        # restart|stop|uninstall targeting auraforge-gateway) must never run inside the
         # gateway process itself. The restart would SIGTERM the gateway, which
         # kills this very subprocess before it can complete — the service may
-        # never restart. This mirrors the `hermes gateway restart` guard in
+        # never restart. This mirrors the `auraforge gateway restart` guard in
         # hermes_cli/gateway.py and the cron-path guard in hermes_cli/cron.py,
         # but applies unconditionally (force=True cannot help here).
         # Gate on the SUPERVISED-gateway probe, not the raw _HERMES_GATEWAY
         # marker: gateway.run sets it at import time, so it leaks into every
-        # process that merely imports gateway.run (hermes serve --isolated,
+        # process that merely imports gateway.run (auraforge serve --isolated,
         # CLI, web server) which are NOT the gateway and must be able to
-        # restart it. A plain foreground `hermes gateway run` (env set, PID
+        # restart it. A plain foreground `auraforge gateway run` (env set, PID
         # owned, no supervisor) now also PASSES this guard: intentional and
         # harmless, since without a supervisor there is no KeepAlive to turn a
         # self-restart into a respawn loop.
@@ -3179,7 +3179,7 @@ def terminal_tool(
                         "Blocked: command or referenced script cannot restart, stop, or "
                         "uninstall the gateway from inside the gateway process. The gateway would "
                         "kill this command before it could complete (SIGTERM propagates "
-                        "to child processes). Run `hermes gateway restart` from a "
+                        "to child processes). Run `auraforge gateway restart` from a "
                         "separate shell outside the running gateway."
                     ),
                     "status": "error",
@@ -3367,7 +3367,7 @@ def terminal_tool(
                 # Nudge: homebrewed CI watcher built from `gh pr view`
                 # `--json statusCheckRollup` or `gh pr checks` piped through
                 # `jq` is the #1 cause of silent CI-watcher failures in
-                # hermes-agent dev work. May 2026 PRs that surfaced this
+                # auraforge-agent dev work. May 2026 PRs that surfaced this
                 # exact failure mode: #31329, #31448, #31695, #31709, #31745,
                 # #32264, #33131. Failure modes seen:
                 #   * `gh pr view --json statusCheckRollup --jq ...` with
@@ -3415,7 +3415,7 @@ def terminal_tool(
                             "This looks like a homebrewed CI poller built from "
                             "`gh pr view --json statusCheckRollup` and/or "
                             "`gh pr checks | jq`. That shape has burned us "
-                            "repeatedly in hermes-agent dev work (PRs #31329, "
+                            "repeatedly in auraforge-agent dev work (PRs #31329, "
                             "#31448, #31695, #31709, #31745, #32264, #33131) — "
                             "stdout buffering kills output capture, jq null-key "
                             "edge cases silently exit the loop, conclusion-vs-"
@@ -3429,7 +3429,7 @@ def terminal_tool(
                             "awk-on-tabs poller "
                             "(`awk -F\"\\t\" \"$2==\\\"pending\\\"\"`) for "
                             "sharded matrices. Load skill_view("
-                            "name='github/hermes-agent-dev', "
+                            "name='github/auraforge-agent-dev', "
                             "file_path='references/green-ci-policy.md') for "
                             "the verbatim snippets. If you must roll a custom "
                             "loop with rich structured output, write each tick "
@@ -3463,7 +3463,7 @@ def terminal_tool(
                         result_data["notify_unsupported"] = (
                             "notify_on_complete / watch_patterns are not available in "
                             "this session — it cannot receive an async completion after "
-                            "the turn ends (a one-shot runner such as `hermes -z`, a "
+                            "the turn ends (a one-shot runner such as `auraforge -z`, a "
                             "cron job, a Kanban worker, or a stateless HTTP endpoint). "
                             "The process is "
                             "running in the background; retrieve its result with "

@@ -2,7 +2,7 @@
 Gateway control socket — the gateway-owned local coordination surface.
 
 Migration step 1 of the #92091 design: every other process on the machine
-(the updater, `hermes serve`/dashboard, the Desktop app) currently discovers
+(the updater, `auraforge serve`/dashboard, the Desktop app) currently discovers
 gateway identity/state by scanning the process table and string-matching argv
 or by reading ``gateway_state.json`` (which can outlive its writer). This
 module gives the gateway an OWNED contract instead: a local-only socket the
@@ -25,7 +25,7 @@ Transport:
   bound in the system temp dir and a pointer file
   ``$HERMES_HOME/gateway.sock.path`` records the real location; clients
   follow the pointer transparently.
-- Windows: named pipe ``\\\\.\\pipe\\hermes-gateway-<home-hash>`` served via
+- Windows: named pipe ``\\\\.\\pipe\\auraforge-gateway-<home-hash>`` served via
   the proactor event loop. Same trust model (per-user namespace).
 
 Never a TCP port. Filesystem/pipe ACLs are the auth boundary — the same
@@ -36,7 +36,7 @@ single JSON line out, then the server closes. Clients must not rely on
 keep-alive or pipelining. Verb handlers may touch disk (they run in an
 executor server-side) but must stay fast; the client budget is small.
 
-Consumers (``hermes update --plan`` inventory, the post-update fleet version
+Consumers (``auraforge update --plan`` inventory, the post-update fleet version
 matrix) PREFER the socket when it answers and fall back to the existing
 state-file/scan layer when it doesn't — old gateways mid-upgrade and crashed
 processes keep working exactly as before. The scan layer is demoted, not
@@ -89,7 +89,7 @@ def _home_hash(home: Path) -> str:
 
 def windows_pipe_name(home: Path) -> str:
     """Per-HERMES_HOME named pipe path (Windows transport)."""
-    return rf"\\.\pipe\hermes-gateway-{_home_hash(home)}"
+    return rf"\\.\pipe\auraforge-gateway-{_home_hash(home)}"
 
 
 def _pointer_path(home: Path) -> Path:
@@ -108,7 +108,7 @@ def _fallback_socket_path(home: Path) -> Path:
     tempdir candidate is returned anyway — bind will fail non-fatally and
     consumers use the scan layer.
     """
-    name = f"hermes-gw-{_home_hash(home)}.sock"
+    name = f"auraforge-gw-{_home_hash(home)}.sock"
     candidates = [Path(tempfile.gettempdir()) / name]
     if not _IS_WINDOWS:
         candidates.append(Path("/tmp") / name)
@@ -164,7 +164,7 @@ def _detect_supervisor() -> str:
     if env.get("INVOCATION_ID"):
         return "systemd"
     if sys.platform == "darwin" and (
-        env.get("XPC_SERVICE_NAME", "").startswith("ai.hermes")
+        env.get("XPC_SERVICE_NAME", "").startswith("ai.auraforge")
         or env.get("LAUNCHD_SOCKET")
     ):
         return "launchd"

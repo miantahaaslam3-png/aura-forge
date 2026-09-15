@@ -90,7 +90,7 @@ def _(rid, params: dict) -> dict:
         at most one row). Complements ``last_session``: that field answers
         "what is the newest conversation", this answers "where is the
         forever-chat" — so a roster row's preview and its click target
-        describe the same session (hermes-agent#88200) with no client-side
+        describe the same session (auraforge-agent#88200) with no client-side
         pointer involved.
 
         Exact-lookup semantics, deliberately different from the listing:
@@ -198,7 +198,7 @@ def _(rid, params: dict) -> dict:
         sub-agent rows and ``kanban`` dispatcher workers). Second element is
         the newest DENIED row — the freshest kanban/tool worker — so roster
         UIs can show that a profile is actively working even though worker
-        sessions never surface in conversation lists (hermes-agent#90268).
+        sessions never surface in conversation lists (auraforge-agent#90268).
         Workers heartbeat ``last_activity_at`` every ≤60s while running
         (#72016), so a live worker's ``last_active`` stays fresh and the
         client can apply its own liveness window. Best-effort: any failure
@@ -329,7 +329,7 @@ def _(rid, params: dict) -> dict:
         # Capability flag: this backend's prompt builder injects the Bot Mode
         # teammate-messaging protocol (tools/bot_mode_probe.py) into every
         # session of Bot-Mode-managed installs. Clients that would otherwise
-        # append the protocol to SOUL.md (the desktop's hermes-bots plugin)
+        # append the protocol to SOUL.md (the desktop's auraforge-bots plugin)
         # must skip their SOUL writes when this is present.
         return _ok(rid, {"profiles": out, "bot_mode_protocol": True})
     except Exception as e:
@@ -353,7 +353,7 @@ def _(rid, params: dict) -> dict:
     tokens / credential pools), so a profile created headlessly from a
     plugin was born with NO inference provider — the first message failed
     with "No inference provider configured" and there is no interactive
-    ``hermes setup`` in that flow to recover. A profile spawned as an
+    ``auraforge setup`` in that flow to recover. A profile spawned as an
     always-available teammate must be able to think out of the box; callers
     that want an isolated/credential-free profile pass
     ``mirror_credentials: false``.
@@ -618,12 +618,12 @@ def _(rid, params: dict) -> dict:
                         {"name": skill_name, "enabled": skill_name.lower() not in disabled}
                     )
 
-            # Toolsets: the same filtered universe the `hermes tools`
+            # Toolsets: the same filtered universe the `auraforge tools`
             # checklist offers — configurable toolsets (built-in + plugin),
             # minus platform-restricted ones that don't apply here — with
             # enablement resolved the way the runtime actually resolves it.
             # The raw registry (get_all_toolsets) leaks internal platform
-            # composites (hermes-discord, feishu_drive, ...) and reports
+            # composites (auraforge-discord, feishu_drive, ...) and reports
             # everything "enabled" whenever the profile has no pin, which a
             # capabilities UI then faithfully mis-renders (tester report).
             from hermes_cli.tools_config import (
@@ -661,7 +661,7 @@ def _(rid, params: dict) -> dict:
                 )
                 # Default-off integrations (a2a, yuanbao, spotify, ...) are
                 # opt-ins; when the profile hasn't opted in they're noise in
-                # a per-profile editor — `hermes tools` / Settings is where
+                # a per-profile editor — `auraforge tools` / Settings is where
                 # you turn them on globally first. Enabled ones still show.
                 # yuanbao rides the same rule: a region-specific integration
                 # that isn't in _DEFAULT_OFF_TOOLSETS but is equally opt-in.

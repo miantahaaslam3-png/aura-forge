@@ -99,7 +99,7 @@ WATCH_GLOBAL_COOLDOWN_SECONDS = 30
 # MemoryMax and trigger systemd-oomd to kill the ENTIRE gateway — taking down
 # the messaging control plane and silently losing the active turn.
 #
-# Wrapping the spawn in ``systemd-run --user --scope --unit=hermes-worker-<pid>``
+# Wrapping the spawn in ``systemd-run --user --scope --unit=auraforge-worker-<pid>``
 # places the worker in its own transient cgroup so an OOM in the worker kills
 # only the worker, not the gateway.  We probe *once* whether
 # ``systemd-run --user --scope`` is actually usable (the binary can exist on
@@ -223,7 +223,7 @@ def _systemd_run_user_scope_available() -> bool:
                 if binary:
                     # Probe: create a transient scope that immediately exits.
                     # A unique unit avoids collisions; timeout bounds D-Bus.
-                    probe_unit = f"hermes-probe-scope-{os.getpid()}-{uuid.uuid4().hex[:8]}"
+                    probe_unit = f"auraforge-probe-scope-{os.getpid()}-{uuid.uuid4().hex[:8]}"
                     result = subprocess.run(
                         [
                             binary, "--user", "--scope", "--quiet",
@@ -298,7 +298,7 @@ def _build_systemd_scope_argv(
         # Caller should have checked _systemd_run_user_scope_available();
         # guard anyway so we never pass None into Popen.
         return shell_argv
-    unit_name = f"hermes-worker-{unit_suffix}"
+    unit_name = f"auraforge-worker-{unit_suffix}"
     memory_max = _worker_memory_max_bytes()
     return [
         binary,
@@ -1100,7 +1100,7 @@ class ProcessRegistry:
                         pty_argv,
                         unit_suffix=session.id,
                     )
-                    session.systemd_unit = f"hermes-worker-{session.id}.scope"
+                    session.systemd_unit = f"auraforge-worker-{session.id}.scope"
                     pty_scope_attempted = True
                 elif pty_in_supervised_gateway:
                     logger.debug(
@@ -1180,7 +1180,7 @@ class ProcessRegistry:
                 shell_argv,
                 unit_suffix=unit_suffix,
             )
-            session.systemd_unit = f"hermes-worker-{unit_suffix}.scope"
+            session.systemd_unit = f"auraforge-worker-{unit_suffix}.scope"
             # CRITICAL (#70716 regression): systemd-run --scope does NOT give
             # the worker a new session — the invoked process keeps the
             # parent's session and inherits its controlling terminal.  From an
@@ -1704,13 +1704,13 @@ class ProcessRegistry:
     ) -> dict:
         """Bounded wait for tracked ``notify_on_complete`` background processes.
 
-        One-shot CLI runs (``hermes -q/-Q/-z``) exit as soon as their single
+        One-shot CLI runs (``auraforge -q/-Q/-z``) exit as soon as their single
         turn ends.  Any background process the turn spawned with
         ``notify_on_complete=True`` — a bounded task whose completion the
         caller explicitly cares about — still holds a stdout pipe owned by
         the dying parent, so it is killed by SIGPIPE on its next write a few
         seconds later.  Bot Mode handoff REPLIES are the visible casualty
-        (#90879): a recipient invoked as ``hermes -p <bot> chat -Q
+        (#90879): a recipient invoked as ``auraforge -p <bot> chat -Q
         --query-file ...`` dispatches its reply via ``message_agent`` /
         ``bot_relay`` exactly this way, then exits, and the reply process is
         destroyed ~3s later.  The sender waits forever for a reply that was
@@ -2033,7 +2033,7 @@ class ProcessRegistry:
         The reader thread (`_reader_loop`) sets `session.exited = True` only
         in its `finally` block, which runs when `stdout.read()` returns EOF.
         If the direct `Popen` child has exited but a descendant process (e.g.
-        a daemon spawned by `hermes update` restarting the gateway) is still
+        a daemon spawned by `auraforge update` restarting the gateway) is still
         holding the stdout pipe open, the reader blocks forever and poll()
         keeps returning "running" indefinitely (issue #17327 — 74 polls over
         7 minutes on Feishu).
@@ -2793,7 +2793,7 @@ class ProcessRegistry:
                             "session_id": s.id,
                             # Redact inline credentials before persisting to
                             # disk — the checkpoint file lives under
-                            # ~/.hermes/processes.json with the raw command
+                            # ~/.auraforge/processes.json with the raw command
                             # (issue #77484). Recovery only uses command for
                             # display/logging (the process is already running;
                             # adoption re-validates the PID, never re-runs the

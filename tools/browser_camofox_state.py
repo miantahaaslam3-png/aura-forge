@@ -1,4 +1,4 @@
-"""Hermes-managed Camofox state helpers.
+"""Aura Forge-managed Camofox state helpers.
 
 Provides profile-scoped identity and state directory paths for Camofox
 persistent browser profiles.  When managed persistence is enabled, Aura Forge
@@ -25,7 +25,7 @@ def get_camofox_state_dir() -> Path:
 
 
 def get_camofox_identity(task_id: Optional[str] = None) -> Dict[str, str]:
-    """Return the stable Hermes-managed Camofox identity for this profile.
+    """Return the stable Aura Forge-managed Camofox identity for this profile.
 
     The user identity is profile-scoped (same Aura Forge profile = same userId).
     The session key is scoped to the logical browser task so newly created

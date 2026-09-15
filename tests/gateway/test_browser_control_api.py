@@ -20,7 +20,7 @@ from tools.browser_extension_router import route_browser_tool
 
 
 API_KEY = "-".join(("fixture", "neutral", "api", "key", "123"))
-CONTROL_PROTOCOL = "hermes-browser-control-v1"
+CONTROL_PROTOCOL = "auraforge-browser-control-v1"
 REAL_BROWSER_CAPABILITIES = {
     "browser_back",
     "browser_click",
@@ -50,7 +50,7 @@ class _SessionDB:
 
 
 def _ticket_protocol(ticket):
-    return f"hermes-browser-control-ticket.{ticket}"
+    return f"auraforge-browser-control-ticket.{ticket}"
 
 
 def _adapter(*, key=API_KEY):

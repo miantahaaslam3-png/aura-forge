@@ -24,7 +24,7 @@ class TestCronCommandLifecycle:
 
     def test_edit_persists_user_owned_inference_pins(self, tmp_cron_dir, capsys):
         job = create_job(prompt="Daily report", schedule="every 1h")
-        parser = argparse.ArgumentParser(prog="hermes")
+        parser = argparse.ArgumentParser(prog="auraforge")
         subparsers = parser.add_subparsers(dest="command")
         build_cron_parser(subparsers, cmd_cron=cron_command)
 
@@ -263,7 +263,7 @@ def test_cron_create_failure_returns_nonzero(monkeypatch, capsys):
 
 
 class TestCronRunBackgroundDispatch:
-    """`hermes cron run` must not report 'failed' when the run was dispatched
+    """`auraforge cron run` must not report 'failed' when the run was dispatched
     to the background delegation worker.
 
     The CLI process inherits the gateway/desktop session env, so a manual run

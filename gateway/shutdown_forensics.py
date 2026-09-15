@@ -331,7 +331,7 @@ def check_systemd_timing_alignment(
     """At startup, sanity-check that systemd's TimeoutStopSec covers stop.
 
     When the gateway is run under a stale systemd unit file (e.g. the user
-    upgraded hermes-agent but never re-ran ``hermes setup`` to regenerate
+    upgraded auraforge-agent but never re-ran ``auraforge setup`` to regenerate
     the unit), ``TimeoutStopSec`` can be smaller than the full stop budget
     (``restart_drain_timeout`` vs ``cron_drain_timeout`` + cleanup reserve,
     plus headroom).  Result: SIGTERM arrives, the drain starts, and systemd
@@ -352,7 +352,7 @@ def check_systemd_timing_alignment(
     # Try to identify our unit name and ask systemctl for its config.
     unit_name: Optional[str] = None
     try:
-        # /proc/self/cgroup gives us "0::/user.slice/.../hermes-gateway.service"
+        # /proc/self/cgroup gives us "0::/user.slice/.../auraforge-gateway.service"
         with open("/proc/self/cgroup", encoding="utf-8") as fh:
             for line in fh:
                 # systemd cgroup line ends with the unit name
@@ -371,7 +371,7 @@ def check_systemd_timing_alignment(
 
     # Query systemctl for TimeoutStopUSec.  Use --user OR system depending
     # on which manager actually owns the unit.  Try user first since
-    # that's the common case for hermes.
+    # that's the common case for auraforge.
     timeout_us: Optional[int] = None
     for flag in (["--user"], []):
         try:

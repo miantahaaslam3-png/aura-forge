@@ -2,7 +2,7 @@
 
 Scoped port of superagent-ai/grok-cli's verify subsystem entrypoint.
 Statically detects the project kind (or loads the saved manifest at
-``.hermes/environment.json``), then runs bootstrap/build/test phases and an
+``.auraforge/environment.json``), then runs bootstrap/build/test phases and an
 optional background start + readiness poll, printing an evidence summary.
 
 Completed runs are recorded into the coding verification evidence ledger
@@ -140,7 +140,7 @@ def _record_evidence(root: Path, recipe, result, *, partial: bool) -> None:
             root=root,
             session_id=os.environ.get("HERMES_SESSION_ID"),
             ok=result.ok,
-            command="hermes verify",
+            command="auraforge verify",
             scope="targeted" if partial else "full",
             output="\n".join(tails),
         )

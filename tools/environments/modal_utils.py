@@ -1,4 +1,4 @@
-"""Shared Hermes-side execution flow for Modal transports.
+"""Shared Aura Forge-side execution flow for Modal transports.
 
 This module deliberately stops at the Aura Forge boundary:
 - command preparation

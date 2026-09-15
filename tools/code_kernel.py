@@ -282,7 +282,7 @@ _KERNELS_LOCK = threading.Lock()
 # accumulate one live child per finished conversation — the ownership,
 # disposal, idle-reap, and cap shape here deliberately carries forward the
 # lifecycle invariants of the earlier session-persistent implementation in
-# hermes-agent#88637 by @z80dev (stable owner id, owner-teardown disposal,
+# auraforge-agent#88637 by @z80dev (stable owner id, owner-teardown disposal,
 # idle reaping, max-live bound).
 DEFAULT_MAX_SESSION_KERNELS = 4
 DEFAULT_KERNEL_IDLE_TIMEOUT = 1800
@@ -362,7 +362,7 @@ def shutdown_kernels_for_owner(owner: str) -> None:
 
     Wired into ``tools.approval.clear_session`` so kernels die at the same
     session boundary that clears the owner's approval and yolo state
-    (the /new + session-close disposal shape from hermes-agent#88637).
+    (the /new + session-close disposal shape from auraforge-agent#88637).
     """
     if not owner:
         return
@@ -554,7 +554,7 @@ def _spawn(kernel: SessionKernel, *, task_id: str, child_python: str,
     _sock_tmpdir = "/tmp" if sys.platform == "darwin" else tempfile.gettempdir()
 
     kernel.rpc_token = secrets.token_urlsafe(32)
-    kernel.sentinel = "@@HERMES-KERNEL-" + secrets.token_urlsafe(16) + "@@"
+    kernel.sentinel = "@@AURA_FORGE-KERNEL-" + secrets.token_urlsafe(16) + "@@"
 
     if _IS_WINDOWS:
         kernel.sock_path = None

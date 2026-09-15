@@ -40,10 +40,10 @@ def build_gui_parser(subparsers, *, cmd_gui: Callable) -> None:
     gui_parser.add_argument(
         "--ignore-existing",
         action="store_true",
-        help="Force Desktop to ignore any hermes CLI already on PATH during backend resolution",
+        help="Force Desktop to ignore any auraforge CLI already on PATH during backend resolution",
     )
     gui_parser.add_argument(
-        "--hermes-root",
+        "--auraforge-root",
         help="Override the Aura Forge source root used by Desktop (sets HERMES_DESKTOP_HERMES_ROOT)",
     )
     gui_parser.add_argument(

@@ -47,7 +47,7 @@ def _make_legacy_db(path: Path) -> None:
 
 
 def _setup_home(tmp_path, monkeypatch) -> Path:
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -140,7 +140,7 @@ def test_unseen_events_for_sub_survives_migrated_db(tmp_path, monkeypatch):
 def _default_board_db(tmp_path, monkeypatch) -> Path:
     """Point the kanban root at a temp home and return the default board's DB
     (the back-compat top-level ``<root>/kanban.db`` #83445 reports on)."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)

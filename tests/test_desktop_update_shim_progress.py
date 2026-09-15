@@ -35,7 +35,7 @@ requires_posix_handoff = pytest.mark.skipif(
 @pytest.fixture
 def progress(tmp_path):
     """The real loopback server, over a status file the test drives."""
-    status = tmp_path / "hermes-update-status"
+    status = tmp_path / "auraforge-update-status"
     proc = subprocess.Popen(
         [
             sys.executable,
@@ -112,7 +112,7 @@ def test_unreadable_status_still_serves_a_running_state(progress):
 
 # ── posix.sh: the stages it publishes at its own gates ─────────────────────
 
-# Stands in for `hermes update`, and reports the stage that was on screen
+# Stands in for `auraforge update`, and reports the stage that was on screen
 # while it ran -- the update child is the only thing that can observe the
 # window's state at the exact moment of the longest wait in the hand-off.
 FAKE_HERMES = """#!/bin/bash
@@ -122,7 +122,7 @@ FAKE_HERMES = """#!/bin/bash
 case "$*" in *--help*) echo "--keep-stash"; exit 0 ;; esac
 n="$(cat "$HERMES_TEST_CALLS" 2>/dev/null || echo 0)"; n=$((n + 1))
 printf '%s' "$n" > "$HERMES_TEST_CALLS"
-for f in "$TMPDIR"/hermes-update-status.[0-9]*; do
+for f in "$TMPDIR"/auraforge-update-status.[0-9]*; do
   case "$f" in *.tmp) continue ;; esac
   cp "$f" "$HERMES_TEST_CAPTURE.$n" 2>/dev/null
 done
@@ -132,11 +132,11 @@ exit "$(cat "$HERMES_TEST_EXITS.$n" 2>/dev/null || echo 0)"
 
 def _run_handoff(tmp_path, exits: dict[int, int]) -> list[dict]:
     """Run the real hand-off end to end; return the stage seen at each call."""
-    install_root = tmp_path / "hermes-agent"
+    install_root = tmp_path / "auraforge-agent"
     (install_root / "venv" / "bin").mkdir(parents=True)
-    hermes = install_root / "venv" / "bin" / "hermes"
-    hermes.write_text(FAKE_HERMES)
-    hermes.chmod(0o755)
+    auraforge = install_root / "venv" / "bin" / "auraforge"
+    auraforge.write_text(FAKE_HERMES)
+    auraforge.chmod(0o755)
 
     capture = tmp_path / "seen"
     calls = tmp_path / "calls"
@@ -165,7 +165,7 @@ def _run_handoff(tmp_path, exits: dict[int, int]) -> list[dict]:
         check=True,
     )
 
-    result = tmp_path / ".hermes-update-result.json"
+    result = tmp_path / ".auraforge-update-result.json"
     deadline = time.monotonic() + 45
     while time.monotonic() < deadline and not result.exists():
         time.sleep(0.1)
@@ -178,7 +178,7 @@ def _run_handoff(tmp_path, exits: dict[int, int]) -> list[dict]:
 
 @requires_posix_handoff
 def test_update_gate_publishes_its_stage_before_running(tmp_path):
-    """`hermes update` is the longest wait in the hand-off and the one the
+    """`auraforge update` is the longest wait in the hand-off and the one the
     Discord report sat through; the window must name it while it happens."""
     stages = _run_handoff(tmp_path, {1: 0})
 

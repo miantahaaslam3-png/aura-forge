@@ -333,7 +333,7 @@ def test_update_parser_accepts_keep_stash():
 
 def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     """#38529: the Desktop bootstrap marker must be git-ignored so that
-    ``hermes update``'s ``git stash push --include-untracked`` does not sweep it
+    ``auraforge update``'s ``git stash push --include-untracked`` does not sweep it
     into an autostash on every run.
 
     Behavioral + hermetic: build a throwaway repo that adopts the project's real
@@ -361,21 +361,21 @@ def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     git("add", "-A")
     git("commit", "-qm", "init")
 
-    marker = tmp_path / ".hermes-bootstrap-complete"
+    marker = tmp_path / ".auraforge-bootstrap-complete"
     marker.write_text("")
 
-    # Exact flags used by hermes update (hermes_cli/main.py).
-    git("stash", "push", "--include-untracked", "-m", "hermes-update-autostash")
+    # Exact flags used by auraforge update (hermes_cli/main.py).
+    git("stash", "push", "--include-untracked", "-m", "auraforge-update-autostash")
 
     assert marker.exists(), (
-        ".hermes-bootstrap-complete was swept into the update autostash — it must "
+        ".auraforge-bootstrap-complete was swept into the update autostash — it must "
         "be listed in .gitignore so `git stash -u` skips it (#38529)."
     )
     # It must not even register as a dirty/untracked change.
     status = subprocess.run(
         ["git", "status", "--porcelain"], cwd=tmp_path, capture_output=True, text=True
     ).stdout
-    assert ".hermes-bootstrap-complete" not in status
+    assert ".auraforge-bootstrap-complete" not in status
 
 
 # ---------------------------------------------------------------------------
@@ -418,7 +418,7 @@ def test_update_autostash_survives_undeletable_untracked_dir(tmp_path):
     (tmp_path / "tracked.txt").write_text("v2 local change\n")
     pkg = tmp_path / "packaging" / "homebrew"
     pkg.mkdir(parents=True)
-    (pkg / "hermes-agent.rb").write_text("formula\n")
+    (pkg / "auraforge-agent.rb").write_text("formula\n")
     os.chmod(pkg, 0o555)  # undeletable contents, like a root-owned dir
     try:
         stash_ref = hermes_main._stash_local_changes_if_needed(["git"], tmp_path)
@@ -432,6 +432,6 @@ def test_update_autostash_survives_undeletable_untracked_dir(tmp_path):
         )
         assert restored is True
         assert (tmp_path / "tracked.txt").read_text() == "v2 local change\n"
-        assert (pkg / "hermes-agent.rb").read_text() == "formula\n"
+        assert (pkg / "auraforge-agent.rb").read_text() == "formula\n"
     finally:
         os.chmod(pkg, 0o755)

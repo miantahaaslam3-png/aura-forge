@@ -5,7 +5,7 @@ thread that did not bind the HERMES_HOME ContextVar.
 Root cause this guards (confirmed empirically): ContextVars do not propagate
 into ``threading.Thread``. ``build_skills_system_prompt`` and the
 active-profile line resolved the home via the ambient ``get_hermes_home()``,
-so an unbound build thread fell back to ``~/.hermes`` (default) and leaked
+so an unbound build thread fell back to ``~/.auraforge`` (default) and leaked
 default's full skills index + "Active Aura Forge profile: default" into a bot's
 prompt, while the live ``skills_list()`` (re-bound per turn) correctly
 showed the bot's real, empty set. The agent now resolves its own home from
@@ -97,7 +97,7 @@ def test_profile_name_correct_on_bound_profile_session(tmp_path, monkeypatch):
     the ambient home IS the profile dir, so deriving the profile name with
     ``get_hermes_home()/profiles`` as the root would never match and every
     profile would misreport as \"default\". The name must derive from the
-    hermes ROOT (get_default_hermes_root)."""
+    auraforge ROOT (get_default_hermes_root)."""
     from agent import system_prompt
 
     bot_home = tmp_path / "profiles" / "mybot"

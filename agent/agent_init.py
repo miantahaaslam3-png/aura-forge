@@ -74,7 +74,7 @@ def _warn_memory_provider_unavailable(name: str, reason: str = "") -> None:
     log for itself. Without this warning a provider whose credentials/config are
     missing is silently dropped — the user has ``memory.provider`` set but gets
     no memory and no diagnostic. A common trigger is systemd/gateway services
-    not inheriting ``~/.hermes/.env``. See miantahaaslam3-png/aura-forge#2765.
+    not inheriting ``~/.auraforge/.env``. See miantahaaslam3-png/aura-forge#2765.
 
     ``reason`` is the provider's ``unavailable_reason()`` — a provider-specific,
     actionable hint (e.g. which package to install). Because an unavailable
@@ -87,8 +87,8 @@ def _warn_memory_provider_unavailable(name: str, reason: str = "") -> None:
     logger.warning(
         "Memory provider %r is selected but reports unavailable — external memory "
         "is disabled for this session (built-in memory still works). Check the "
-        "provider's credentials/config with 'hermes memory status'. Note: "
-        "systemd/gateway services do not inherit ~/.hermes/.env automatically; set "
+        "provider's credentials/config with 'auraforge memory status'. Note: "
+        "systemd/gateway services do not inherit ~/.auraforge/.env automatically; set "
         "any required variables in the service environment.%s",
         name,
         f" {reason}" if reason else "",
@@ -303,7 +303,7 @@ def _build_codex_gpt5_autoraise_notice(
         f"ℹ Codex {model} caps context at {cap}, so auto-compaction was raised "
         f"to {to_pct}% (from {from_pct}%) to use more of the window before "
         f"summarizing.\n"
-        f"  Opt back out: hermes config set compression.codex_gpt55_autoraise false"
+        f"  Opt back out: auraforge config set compression.codex_gpt55_autoraise false"
     )
 
 
@@ -656,10 +656,10 @@ def init_agent(
         platform (str): The interface platform the user is on (e.g. "cli", "telegram", "discord", "whatsapp").
             Used to inject platform-specific formatting hints into the system prompt.
         skip_context_files (bool): If True, skip auto-injection of project context files
-            (SOUL.md, .hermes.md, AGENTS.md, CLAUDE.md, .cursorrules) from the cwd / HERMES_HOME
+            (SOUL.md, .auraforge.md, AGENTS.md, CLAUDE.md, .cursorrules) from the cwd / HERMES_HOME
             into the system prompt. Use this for batch processing and data generation to avoid
             polluting trajectories with user-specific persona or project instructions.
-        load_soul_identity (bool): If True, still use ~/.hermes/SOUL.md as the primary
+        load_soul_identity (bool): If True, still use ~/.auraforge/SOUL.md as the primary
             identity even when skip_context_files=True. Project context files from the cwd
             remain skipped.
     """
@@ -1069,7 +1069,7 @@ def init_agent(
     agent._or_cache_hits: int = 0
 
     # Centralized logging — agent.log (INFO+) and errors.log (WARNING+)
-    # both live under ~/.hermes/logs/.  Idempotent, so gateway mode
+    # both live under ~/.auraforge/logs/.  Idempotent, so gateway mode
     # (which creates a new AIAgent per message) won't duplicate handlers.
     from hermes_logging import setup_logging, setup_verbose_logging
     setup_logging(hermes_home=_ra()._hermes_home)
@@ -1449,13 +1449,13 @@ def init_agent(
                         raise RuntimeError(
                             f"Provider '{_explicit}' is set in config.yaml but no API key "
                             f"was found. Set the {_env_hint} environment "
-                            f"variable, or switch to a different provider with `hermes model`."
+                            f"variable, or switch to a different provider with `auraforge model`."
                         )
                 if not getattr(agent, "_fallback_activated", False):
                     # No provider configured — reject with a clear message.
                     raise RuntimeError(
-                        "No LLM provider configured. Run `hermes model` to "
-                        "select a provider, or run `hermes setup` for first-time "
+                        "No LLM provider configured. Run `auraforge model` to "
+                        "select a provider, or run `auraforge setup` for first-time "
                         "configuration."
                     )
         # Bedrock GPT-5.5/5.6 use Bedrock Mantle's OpenAI Responses endpoint.
@@ -1695,11 +1695,11 @@ def init_agent(
         if not delegated_child:
             os.environ["HERMES_SESSION_ID"] = agent.session_id
 
-    # Session logs go into ~/.hermes/sessions/ alongside gateway sessions
+    # Session logs go into ~/.auraforge/sessions/ alongside gateway sessions
     hermes_home = get_hermes_home()
     agent.logs_dir = hermes_home / "sessions"
     agent.logs_dir.mkdir(parents=True, exist_ok=True)
-    # Per-session JSON snapshot writer (~/.hermes/sessions/session_{sid}.json)
+    # Per-session JSON snapshot writer (~/.auraforge/sessions/session_{sid}.json)
     # is opt-in via sessions.write_json_snapshots (default False).  state.db
     # is canonical — the snapshot is only useful for external tooling that
     # reads the JSON files directly.  See run_agent._save_session_log.
@@ -1779,7 +1779,7 @@ def init_agent(
         "max_tokens": max_tokens,
     }
     # Persist a process-scoped --yolo launch into the session row so a later
-    # `hermes --resume <id>` can restore the bypass (CLI resume paths read
+    # `auraforge --resume <id>` can restore the bypass (CLI resume paths read
     # model_config.yolo_mode back via SessionDB.session_yolo_enabled).
     # Session-scoped /yolo toggles persist separately through
     # SessionDB.set_session_yolo at toggle time.
@@ -1960,7 +1960,7 @@ def init_agent(
                         from hermes_cli.profiles import get_active_profile_name
                         _profile = get_active_profile_name()
                         _init_kwargs["agent_identity"] = _profile
-                        _init_kwargs["agent_workspace"] = "hermes"
+                        _init_kwargs["agent_workspace"] = "auraforge"
                     except Exception:
                         pass
                     # NOTE: status_callback (for the deterministic retain
@@ -2320,10 +2320,10 @@ def init_agent(
     codex_app_server_auto_compaction = str(
         _compression_cfg.get("codex_app_server_auto", "native") or "native"
     ).lower()
-    if codex_app_server_auto_compaction not in {"native", "hermes", "off"}:
+    if codex_app_server_auto_compaction not in {"native", "auraforge", "off"}:
         _ra().logger.warning(
             "Invalid compression.codex_app_server_auto=%r; using 'native'. "
-            "Valid values are: native, hermes, off.",
+            "Valid values are: native, auraforge, off.",
             codex_app_server_auto_compaction,
         )
         codex_app_server_auto_compaction = "native"

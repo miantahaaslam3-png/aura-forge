@@ -8,8 +8,8 @@ Built-in defaults live in ``gateway/assets/status_phrases.yaml``. Users can add
 portable, profile-relative phrase catalogs under ``HERMES_HOME`` either by using
 conventional paths::
 
-    ~/.hermes/status_phrases.yaml
-    ~/.hermes/status_phrases/*.yaml
+    ~/.auraforge/status_phrases.yaml
+    ~/.auraforge/status_phrases/*.yaml
 
 or by pointing config at a relative file/directory::
 

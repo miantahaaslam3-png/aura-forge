@@ -126,7 +126,7 @@ def check_bang_approval(command: str) -> dict:
 
 
 def _bang_env() -> dict:
-    """Environment for a bang command, with Hermes-managed secrets filtered.
+    """Environment for a bang command, with Aura Forge-managed secrets filtered.
 
     The CLI process holds every configured provider API key in ``os.environ``.
     A bang command is user-typed, but it can still be a third-party script, so

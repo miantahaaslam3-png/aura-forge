@@ -18,7 +18,7 @@ def test_check_for_updates_uses_cache(tmp_path, monkeypatch):
     from hermes_cli import __version__
 
     # Create a fake git repo and fresh cache
-    repo_dir = tmp_path / "hermes-agent"
+    repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
     (repo_dir / ".git").mkdir()
 
@@ -68,7 +68,7 @@ def test_check_via_local_git_fetch_failure_returns_none(tmp_path, monkeypatch):
     """
     from hermes_cli import banner
 
-    repo_dir = tmp_path / "hermes-agent"
+    repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
     (repo_dir / ".git").mkdir()
 
@@ -112,7 +112,7 @@ def test_check_via_local_git_fetch_failure_keeps_positive_stale_count(tmp_path, 
     signal and must be returned (review #92578)."""
     from hermes_cli import banner
 
-    repo_dir = tmp_path / "hermes-agent"
+    repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
     (repo_dir / ".git").mkdir()
 
@@ -150,7 +150,7 @@ def test_check_via_local_git_fetch_failure_rev_list_error_returns_none(tmp_path,
     """If the stale rev-list itself fails, the check stays inconclusive (None)."""
     from hermes_cli import banner
 
-    repo_dir = tmp_path / "hermes-agent"
+    repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
     (repo_dir / ".git").mkdir()
 
@@ -200,7 +200,7 @@ def test_check_for_updates_does_not_cache_none(tmp_path, monkeypatch):
     monkeypatch.delenv("HERMES_REVISION", raising=False)
 
     # Create a fake repo dir so the .git check passes
-    repo_dir = tmp_path / "hermes-agent"
+    repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
     (repo_dir / ".git").mkdir()
 
@@ -224,9 +224,9 @@ def test_check_for_updates_does_not_cache_none(tmp_path, monkeypatch):
     # Simpler: just patch the get_hermes_home and the repo_dir resolution
     # by making check_for_updates find our fake repo via hermes_home fallback.
     # The code checks Path(__file__).parent.parent/.git first, then falls
-    # back to hermes_home / "hermes-agent". We ensure the fallback hits.
+    # back to hermes_home / "auraforge-agent". We ensure the fallback hits.
     # To do this, we make Path(__file__).parent.parent.resolve() return
-    # a path without .git, so it falls through to hermes_home / "hermes-agent".
+    # a path without .git, so it falls through to hermes_home / "auraforge-agent".
     real_resolve = Path.resolve
 
     def fake_resolve(self, *args, **kwargs):

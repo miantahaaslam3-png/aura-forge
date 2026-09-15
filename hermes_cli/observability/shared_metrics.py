@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from hermes_cli.sqlite_util import write_txn
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from utils import atomic_json_write
 
 from .shared_metrics_contract import (
@@ -25,7 +25,7 @@ from .shared_metrics_contract import (
 )
 
 
-_PACKAGE_SCHEMA_VERSION = "hermes.shared_metrics.v2"
+_PACKAGE_SCHEMA_VERSION = "auraforge.shared_metrics.v2"
 _STORE_SCHEMA_VERSION = "2"
 _BUSY_TIMEOUT_MS = 250
 _SCHEMA_BUSY_TIMEOUT_MS = 5_000
@@ -52,7 +52,7 @@ class SharedMetricsStore:
         database_path: Path | None = None,
         outbox_directory: Path | None = None,
     ) -> None:
-        root = get_hermes_home() / "telemetry" / "shared_metrics"
+        root = get_aura_forge_home() / "telemetry" / "shared_metrics"
         self.database_path = database_path or root / "metrics.sqlite3"
         self.outbox_directory = outbox_directory or root / "outbox"
         self._ensure_private_directory(self.database_path.parent)

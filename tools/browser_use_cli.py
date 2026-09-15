@@ -38,7 +38,7 @@ _PRIVATE_BROWSER_SENTINEL = "_HERMES_BU_PRIVATE_BROWSER"
 # once per daemon (marker file keyed by BU_NAME under the harness runtime
 # state), costs one IPC round-trip on later calls.
 _OWN_TAB_PREAMBLE = """\
-# hermes: pin this named session to its own tab (once per daemon process)
+# auraforge: pin this named session to its own tab (once per daemon process)
 def _hermes_ensure_own_tab():
     import os as _os, tempfile as _tf
     _name = _os.environ.get("BU_NAME", "default")
@@ -52,7 +52,7 @@ def _hermes_ensure_own_tab():
         _dpid = "0"
     _uid = _os.getuid() if hasattr(_os, "getuid") else 0
     _marker = _os.path.join(
-        _tf.gettempdir(), "hermes-bu-owntab-%s-%s-%s" % (_uid, _name, _dpid)
+        _tf.gettempdir(), "auraforge-bu-owntab-%s-%s-%s" % (_uid, _name, _dpid)
     )
     if _os.path.exists(_marker):
         return
@@ -282,7 +282,7 @@ def default_downgrade_notice() -> Optional[str]:
             pass
         return (
             "Browser Use CLI not found — using the built-in browser tools. "
-            "Run `hermes tools` (Browser Automation → Browser Use) to install it, "
+            "Run `auraforge tools` (Browser Automation → Browser Use) to install it, "
             "or `browser.backend: off` in config.yaml to silence this."
         )
     except Exception as e:  # pragma: no cover — a notice must never break startup
@@ -325,7 +325,7 @@ def _find_cli() -> Optional[List[str]]:
     MANAGED-FIRST resolution: Aura Forge' own ``$HERMES_HOME/bin`` copy — the
     one every browser backend selection installs and updates via
     ``install_cli()`` — always wins, so all sessions drive one canonical,
-    Hermes-controlled binary. PATH and the user-level tool dir
+    Aura Forge-controlled binary. PATH and the user-level tool dir
     (~/.local/bin / %APPDATA%\\uv\\bin, where a manual ``uv tool install``
     links binaries) are fallbacks for setups that never ran our install,
     and cover Desktop/TUI workers that spawn with a minimal PATH. The uvx
@@ -357,9 +357,9 @@ def install_cli(timeout_s: int = 600) -> Tuple[bool, str]:
     """
     # MANAGED-FIRST: only the managed copy short-circuits the install. A
     # browser-use found on PATH is a user-level side install — it must NOT
-    # prevent provisioning the canonical Hermes-managed copy, or resolution
+    # prevent provisioning the canonical Aura Forge-managed copy, or resolution
     # stays pinned to a binary we don't control (version drift, no updates
-    # through hermes tools).
+    # through auraforge tools).
     bin_dir = _managed_bin_dir()
     if bin_dir:
         managed = shutil.which("browser-use", path=bin_dir)
@@ -581,7 +581,7 @@ def _resolve_backend_cdp(
         return (
             f"Cloud browser provider {type(provider).__name__} failed to "
             f"provide a session: {e}. Fix the provider configuration or "
-            "switch backends via `hermes tools` → Browser Automation."
+            "switch backends via `auraforge tools` → Browser Automation."
         )
     cdp = str((session_info or {}).get("cdp_url") or "")
     if not cdp:
@@ -929,7 +929,7 @@ def _dynamic_schema_overrides() -> dict:
         props["local"] = {
             "type": "boolean",
             "description": (
-                "Drive the user's own local browser (a Hermes-managed copy of "
+                "Drive the user's own local browser (a Aura Forge-managed copy of "
                 "their real default-Chromium profile, logins/cookies included) "
                 "instead of the configured cloud browser backend. Use when the "
                 "user asks to act as themselves — their accounts, their "

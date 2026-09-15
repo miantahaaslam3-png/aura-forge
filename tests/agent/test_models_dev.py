@@ -1219,7 +1219,7 @@ class TestModelOverrides:
         import agent.models_dev as md
         import hermes_cli.config as hc
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         home.mkdir()
         (home / "config.yaml").write_text(
             "model_overrides:\n"

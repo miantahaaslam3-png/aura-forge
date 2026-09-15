@@ -104,7 +104,7 @@ class TestUvStoreDetection:
 
     def test_matches_hermes_runtime_repair_generation(self):
         path = (
-            "/Users/u/hermes-agent/.hermes-runtime/python/"
+            "/Users/u/auraforge-agent/.auraforge-runtime/python/"
             "generation-a1b2c3/cpython-3.11.15-macos-aarch64-none/bin/python3.11"
         )
         assert tcc._is_uv_macos_store(path)
@@ -158,7 +158,7 @@ class TestEnsureTccAnchor:
         store = (
             tmp_path
             / "checkout"
-            / ".hermes-runtime"
+            / ".auraforge-runtime"
             / "python"
             / "generation-a1b2c3"
             / "cpython-3.11.15-macos-aarch64-none"

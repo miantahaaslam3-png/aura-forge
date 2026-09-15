@@ -1,13 +1,13 @@
-"""hermes claw — OpenClaw migration commands.
+"""auraforge claw — OpenClaw migration commands.
 
 Usage:
-    hermes claw migrate              # Preview then migrate (always shows preview first)
-    hermes claw migrate --dry-run    # Preview only, no changes
-    hermes claw migrate --yes        # Skip confirmation prompt
-    hermes claw migrate --preset full --overwrite --migrate-secrets  # Full run w/ secrets
-    hermes claw migrate --no-backup  # Skip pre-migration snapshot
-    hermes claw cleanup              # Archive leftover OpenClaw directories
-    hermes claw cleanup --dry-run    # Preview what would be archived
+    auraforge claw migrate              # Preview then migrate (always shows preview first)
+    auraforge claw migrate --dry-run    # Preview only, no changes
+    auraforge claw migrate --yes        # Skip confirmation prompt
+    auraforge claw migrate --preset full --overwrite --migrate-secrets  # Full run w/ secrets
+    auraforge claw migrate --no-backup  # Skip pre-migration snapshot
+    auraforge claw cleanup              # Archive leftover OpenClaw directories
+    auraforge claw cleanup --dry-run    # Preview what would be archived
 """
 
 import importlib.util
@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from hermes_cli.config import get_hermes_home, get_config_path, load_config, save_config
+from hermes_cli.config import get_aura_forge_home, get_config_path, load_config, save_config
 from hermes_constants import get_optional_skills_dir
 from hermes_cli.setup import (
     Colors,
@@ -44,7 +44,7 @@ _OPENCLAW_SCRIPT = (
 
 # Fallback: user may have installed the skill from the Hub
 _OPENCLAW_SCRIPT_INSTALLED = (
-    get_hermes_home()
+    get_aura_forge_home()
     / "skills"
     / "migration"
     / "openclaw-migration"
@@ -183,7 +183,7 @@ def _warn_if_gateway_running(auto_yes: bool) -> None:
         "conflicts (Telegram, Discord, and Slack only allow one active "
         "session per token)."
     )
-    print_info("Recommendation: stop the gateway first with 'hermes gateway stop'.")
+    print_info("Recommendation: stop the gateway first with 'auraforge gateway stop'.")
     print()
     if not auto_yes and not prompt_yes_no("Continue anyway?", default=False):
         print_info("Migration cancelled. Stop the gateway and try again.")
@@ -299,7 +299,7 @@ def _archive_directory(source_dir: Path, dry_run: bool = False) -> Path:
 
 
 def claw_command(args):
-    """Route hermes claw subcommands."""
+    """Route auraforge claw subcommands."""
     action = getattr(args, "claw_action", None)
 
     if action == "migrate":
@@ -307,13 +307,13 @@ def claw_command(args):
     elif action in {"cleanup", "clean"}:
         _cmd_cleanup(args)
     else:
-        print("Usage: hermes claw <command> [options]")
+        print("Usage: auraforge claw <command> [options]")
         print()
         print("Commands:")
         print("  migrate          Migrate settings from OpenClaw to Aura Forge")
         print("  cleanup          Archive leftover OpenClaw directories after migration")
         print()
-        print("Run 'hermes claw <command> --help' for options.")
+        print("Run 'auraforge claw <command> --help' for options.")
 
 
 def _cmd_migrate(args):
@@ -341,7 +341,7 @@ def _cmd_migrate(args):
 
     # Secrets are never included implicitly — they must be explicitly requested
     # via --migrate-secrets, even under --preset full.  This mirrors OpenClaw's
-    # migrate-hermes posture (two-phase: run once without secrets, rerun with
+    # migrate-auraforge posture (two-phase: run once without secrets, rerun with
     # --include-secrets) and prevents a --preset full invocation from silently
     # importing API keys that the user may not have intended to copy.
 
@@ -370,7 +370,7 @@ def _cmd_migrate(args):
         print()
         print_error(f"OpenClaw directory not found: {source_dir}")
         print_info("Make sure your OpenClaw installation is at the expected path.")
-        print_info("You can specify a custom path: hermes claw migrate --source /path/to/.openclaw")
+        print_info("You can specify a custom path: auraforge claw migrate --source /path/to/.openclaw")
         return
 
     # Find the migration script
@@ -385,12 +385,12 @@ def _cmd_migrate(args):
         return
 
     # Show what we're doing
-    hermes_home = get_hermes_home()
+    aura_forge_home = get_aura_forge_home()
     auto_yes = getattr(args, "yes", False)
     print()
     print_header("Migration Settings")
     print_info(f"Source:      {source_dir}")
-    print_info(f"Target:      {hermes_home}")
+    print_info(f"Target:      {aura_forge_home}")
     print_info(f"Preset:      {preset}")
     print_info(f"Overwrite:   {'yes' if overwrite else 'no (skip conflicts)'}")
     print_info(f"Secrets:     {'yes (allowlisted only)' if migrate_secrets else 'no'}")
@@ -431,7 +431,7 @@ def _cmd_migrate(args):
     try:
         preview = mod.Migrator(
             source_root=source_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=False,
             workspace_target=ws_target,
             overwrite=overwrite,
@@ -498,7 +498,7 @@ def _cmd_migrate(args):
     if not auto_yes:
         if not sys.stdin.isatty():
             print_info("Non-interactive session — preview only.")
-            print_info("To execute, re-run with: hermes claw migrate --yes")
+            print_info("To execute, re-run with: auraforge claw migrate --yes")
             return
         if not prompt_yes_no("Proceed with migration?", default=True):
             print_info("Migration cancelled.")
@@ -515,12 +515,12 @@ def _cmd_migrate(args):
     if not no_backup:
         try:
             from hermes_cli.backup import create_pre_migration_backup, _format_size
-            backup_archive = create_pre_migration_backup(hermes_home=hermes_home)
+            backup_archive = create_pre_migration_backup(aura_forge_home=aura_forge_home)
             if backup_archive:
                 size_str = _format_size(backup_archive.stat().st_size)
                 print()
                 print_success(f"Pre-migration backup: {backup_archive} ({size_str})")
-                print_info(f"Restore with: hermes import {backup_archive.name}")
+                print_info(f"Restore with: auraforge import {backup_archive.name}")
         except Exception as e:
             print()
             print_error(f"Could not create pre-migration backup: {e}")
@@ -533,7 +533,7 @@ def _cmd_migrate(args):
     try:
         migrator = mod.Migrator(
             source_root=source_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=True,
             workspace_target=ws_target,
             overwrite=overwrite,
@@ -550,7 +550,7 @@ def _cmd_migrate(args):
         logger.debug("OpenClaw migration error", exc_info=True)
         if backup_archive:
             print_info(f"A pre-migration backup is available at: {backup_archive}")
-            print_info(f"Restore with: hermes import {backup_archive.name}")
+            print_info(f"Restore with: auraforge import {backup_archive.name}")
         return
 
     # Print results
@@ -558,7 +558,7 @@ def _cmd_migrate(args):
 
     # Source directory is left untouched — archiving is not the migration
     # tool's responsibility.  Users who want to clean up can run
-    # 'hermes claw cleanup' separately.
+    # 'auraforge claw cleanup' separately.
 
 
 def _cmd_cleanup(args):
@@ -621,7 +621,7 @@ def _cmd_cleanup(args):
                 print_info("Non-interactive session — aborting. Stop OpenClaw and re-run.")
                 return
             if not prompt_yes_no("Proceed anyway?", default=False):
-                print_info("Aborted. Stop OpenClaw first, then re-run: hermes claw cleanup")
+                print_info("Aborted. Stop OpenClaw first, then re-run: auraforge claw cleanup")
                 return
 
     total_archived = 0
@@ -675,7 +675,7 @@ def _cmd_cleanup(args):
             print_info(f"Would archive: {source_dir} → {archive_path}")
         elif not auto_yes and not sys.stdin.isatty():
             print_info(f"Non-interactive session — would archive: {source_dir}")
-            print_info("To execute, re-run with: hermes claw cleanup --yes")
+            print_info("To execute, re-run with: auraforge claw cleanup --yes")
         elif auto_yes or prompt_yes_no(f"Archive {source_dir}?", default=True):
             try:
                 archive_path = _archive_directory(source_dir)
@@ -794,7 +794,7 @@ def _print_migration_report(report: dict, dry_run: bool):
     if dry_run:
         print()
         print_info("To execute the migration, run without --dry-run:")
-        print_info(f"  hermes claw migrate --preset {report.get('preset', 'full')}")
+        print_info(f"  auraforge claw migrate --preset {report.get('preset', 'full')}")
     elif migrated:
         print()
         print_success("Migration complete!")
@@ -809,7 +809,7 @@ def _print_migration_report(report: dict, dry_run: bool):
             print(color("  Your OPENROUTER_API_KEY and other provider keys must be added manually.", Colors.YELLOW))
             print()
             print_info("To migrate API keys, re-run with:")
-            print_info("  hermes claw migrate --migrate-secrets")
+            print_info("  auraforge claw migrate --migrate-secrets")
             print()
             print_info("Or add your key manually:")
             print_info("  auraforge config set OPENROUTER_API_KEY sk-or-v1-...")

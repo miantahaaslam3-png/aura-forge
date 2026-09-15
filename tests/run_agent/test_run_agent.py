@@ -541,7 +541,7 @@ class TestSessionJsonSnapshotOptIn:
 
     def test_traversal_session_id_cannot_escape_logs_dir(self, agent, tmp_path):
         # Security regression (#5958): a traversal-shaped session ID (which can
-        # originate from the untrusted X-Hermes-Session-Id API header) must not
+        # originate from the untrusted X-Aura Forge-Session-Id API header) must not
         # redirect the session snapshot outside the sessions directory.
         agent._session_json_enabled = True
         agent.logs_dir = tmp_path
@@ -1838,8 +1838,8 @@ class TestExecuteToolCalls:
         assert "tool was not executed" in messages[0]["content"].lower()
 
     def test_result_truncation_over_100k(self, agent, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        (tmp_path / ".hermes").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        (tmp_path / ".auraforge").mkdir()
         tc = _mock_tool_call(name="web_search", arguments="{}", call_id="c1")
         mock_msg = _mock_assistant_msg(content="", tool_calls=[tc])
         messages = []
@@ -2931,7 +2931,7 @@ class TestHandleMaxIterations:
         output ...'. The sanitizer renames the blank name to a non-empty
         sentinel so the call and its result stay PAIRED (no orphaned output,
         no 400) while the result content is preserved — it must NOT drop the
-        call, because hermes' dispatch loop keeps empty-name calls paired with
+        call, because auraforge' dispatch loop keeps empty-name calls paired with
         an anti-priming result for self-correction (#47967). (#12807)"""
         messages = [
             {
@@ -4152,7 +4152,7 @@ class TestRunConversation:
 
         Regression test for #20316: when running below the threshold_tokens
         cutoff, run_conversation must still consult the engine's
-        should_compress_preflight() hook so engines like hermes-lcm can
+        should_compress_preflight() hook so engines like auraforge-lcm can
         perform incremental maintenance (e.g. leaf-chunk compaction)
         without waiting for the 75% context fill threshold.
         """

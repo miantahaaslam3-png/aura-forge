@@ -2013,7 +2013,7 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
     _qwen_meta = None
     if _is_qwen:
         _qwen_meta = {
-            "sessionId": agent.session_id or "hermes",
+            "sessionId": agent.session_id or "auraforge",
             "promptId": str(uuid.uuid4()),
         }
 
@@ -2888,7 +2888,7 @@ def handle_max_iterations(agent, messages: list, api_call_count: int) -> str:
     """Request a summary when max iterations are reached. Returns the final response text."""
     warning = f"⚠️  Reached maximum iterations ({agent.max_iterations}). Requesting summary..."
     if getattr(agent, "suppress_status_output", False):
-        # Strict machine-readable mode (hermes chat -Q, oneshot, background
+        # Strict machine-readable mode (auraforge chat -Q, oneshot, background
         # review): keep diagnostics out of stdout so wrappers receive only
         # the final assistant content (#93220 class). Note: plain quiet_mode
         # is NOT the right gate — the interactive CLI runs quiet_mode=True by
@@ -2952,7 +2952,7 @@ def handle_max_iterations(agent, messages: list, api_call_count: int) -> str:
             # tool_name (SQLite FTS bookkeeping), the codex_* reasoning carriers,
             # timestamp (preserved on gateway user replay entries for the
             # stale-confirmation expiry check — #47868 rejection class),
-            # and every Hermes-internal underscore-prefixed scaffolding key.
+            # and every Aura Forge-internal underscore-prefixed scaffolding key.
             for schema_foreign in ("tool_name", "codex_reasoning_items", "codex_message_items", "timestamp"):
                 api_msg.pop(schema_foreign, None)
             # api_content (the persist-what-you-send sidecar) carries the

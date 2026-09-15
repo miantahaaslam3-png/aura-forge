@@ -30,17 +30,17 @@ def _make_auth_store(pool: dict | None = None, providers: dict | None = None) ->
 
 @pytest.fixture()
 def profile_env(tmp_path, monkeypatch):
-    """Set up a global root + an active profile under Path.home()/.hermes/profiles/coder.
+    """Set up a global root + an active profile under Path.home()/.auraforge/profiles/coder.
 
     * Path.home() -> tmp_path
-    * Global root -> tmp_path/.hermes            (has its own auth.json fixture)
-    * Profile     -> tmp_path/.hermes/profiles/coder   (active, HERMES_HOME points here)
+    * Global root -> tmp_path/.auraforge            (has its own auth.json fixture)
+    * Profile     -> tmp_path/.auraforge/profiles/coder   (active, HERMES_HOME points here)
 
     This mirrors the real "named profile mounted under the default root"
     layout that profile users actually have on disk.
     """
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    global_root = tmp_path / ".hermes"
+    global_root = tmp_path / ".auraforge"
     global_root.mkdir()
     profile_dir = global_root / "profiles" / "coder"
     profile_dir.mkdir(parents=True)
@@ -238,7 +238,7 @@ def test_auth_lock_reentrancy_is_scoped_after_profile_context_switch(profile_env
 
 @pytest.fixture()
 def classic_env(tmp_path, monkeypatch):
-    """Classic single-root layout (HERMES_HOME != ~/.hermes, no profiles)."""
+    """Classic single-root layout (HERMES_HOME != ~/.auraforge, no profiles)."""
     fake_home = tmp_path / "home"
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: fake_home)

@@ -151,7 +151,7 @@ class TestStartRun:
                 status = await status_resp.json()
                 assert status["run_id"] == data["run_id"]
                 assert status["status"] in {"queued", "running", "completed"}
-                assert status["object"] == "hermes.run"
+                assert status["object"] == "auraforge.run"
 
     @pytest.mark.asyncio
     async def test_start_binds_chat_id_for_delegation_wake_target(self, adapter):
@@ -433,7 +433,7 @@ class TestSteerRun:
 
         assert resp.status == 200
         assert payload == {
-            "object": "hermes.run.steer",
+            "object": "auraforge.run.steer",
             "run_id": "run_123",
             "accepted": True,
         }

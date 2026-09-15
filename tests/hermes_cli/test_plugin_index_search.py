@@ -1,7 +1,7 @@
 """Tests for the community plugin index (#64181).
 
 Covers: index parsing, fuzzy search, cache TTL + fallback chain
-(remote → cache → seed), `hermes plugins search --json`, and install-time
+(remote → cache → seed), `auraforge plugins search --json`, and install-time
 name resolution (unique / ambiguous / passthrough of owner/repo).
 No live network — every remote fetch is mocked.
 """
@@ -35,19 +35,19 @@ def _index_doc(entries):
 SAMPLE = _index_doc(
     [
         {
-            "name": "hermes-media-studio",
+            "name": "auraforge-media-studio",
             "description": "Generative media workspace plugin.",
             "author": "NousResearch",
             "tags": ["media", "image-gen"],
-            "repo": "NousResearch/hermes-media-studio",
+            "repo": "NousResearch/auraforge-media-studio",
             "ref": "e" * 40,
         },
         {
-            "name": "hermes-telegram-business",
+            "name": "auraforge-telegram-business",
             "description": "Telegram secretary bot with owner approval.",
             "author": "NousResearch",
             "tags": ["telegram", "gateway"],
-            "repo": "NousResearch/hermes-telegram-business",
+            "repo": "NousResearch/auraforge-telegram-business",
             "ref": "f" * 40,
             "capabilities": ["platform"],
         },
@@ -56,7 +56,7 @@ SAMPLE = _index_doc(
             "description": "Reference plugin for structured LLM access.",
             "author": "NousResearch",
             "tags": ["example", "llm"],
-            "repo": "NousResearch/hermes-example-plugins",
+            "repo": "NousResearch/auraforge-example-plugins",
             "subdir": "plugin-llm-example",
             "ref": "a" * 40,
             "capabilities": ["commands", "llm"],
@@ -93,15 +93,15 @@ class TestParsing:
     def test_parses_object_form(self):
         entries = _parse_entries(SAMPLE)
         assert [e.name for e in entries] == [
-            "hermes-media-studio",
-            "hermes-telegram-business",
+            "auraforge-media-studio",
+            "auraforge-telegram-business",
             "plugin-llm-example",
         ]
         assert entries[2].subdir == "plugin-llm-example"
         assert entries[2].install_identifier == (
-            "NousResearch/hermes-example-plugins/plugin-llm-example"
+            "NousResearch/auraforge-example-plugins/plugin-llm-example"
         )
-        assert entries[0].install_identifier == "NousResearch/hermes-media-studio"
+        assert entries[0].install_identifier == "NousResearch/auraforge-media-studio"
 
     def test_parses_bare_list_form(self):
         entries = _parse_entries(SAMPLE["plugins"])
@@ -144,20 +144,20 @@ class TestSearch:
     entries = _parse_entries(SAMPLE)
 
     def test_exact_name_ranks_first(self):
-        results = search_index(self.entries, "hermes-media-studio")
-        assert results[0].name == "hermes-media-studio"
+        results = search_index(self.entries, "auraforge-media-studio")
+        assert results[0].name == "auraforge-media-studio"
 
     def test_matches_tags(self):
         results = search_index(self.entries, "telegram")
-        assert results and results[0].name == "hermes-telegram-business"
+        assert results and results[0].name == "auraforge-telegram-business"
 
     def test_matches_description(self):
         results = search_index(self.entries, "secretary")
-        assert [e.name for e in results] == ["hermes-telegram-business"]
+        assert [e.name for e in results] == ["auraforge-telegram-business"]
 
     def test_fuzzy_typo_tolerance(self):
-        results = search_index(self.entries, "hermes-media-studo")
-        assert results and results[0].name == "hermes-media-studio"
+        results = search_index(self.entries, "auraforge-media-studo")
+        assert results and results[0].name == "auraforge-media-studio"
 
     def test_no_match(self):
         assert search_index(self.entries, "zzzzqqqq") == []
@@ -168,7 +168,7 @@ class TestSearch:
 
     def test_capability_filter(self):
         results = search_index(self.entries, "", capability="platform")
-        assert [e.name for e in results] == ["hermes-telegram-business"]
+        assert [e.name for e in results] == ["auraforge-telegram-business"]
 
     def test_capability_filter_with_term(self):
         results = search_index(self.entries, "llm", capability="commands")
@@ -284,19 +284,19 @@ class TestResolveName:
     entries = _parse_entries(SAMPLE)
 
     def test_exact_unique(self):
-        entry, candidates = resolve_name(self.entries, "hermes-media-studio")
-        assert entry is not None and entry.repo == "NousResearch/hermes-media-studio"
+        entry, candidates = resolve_name(self.entries, "auraforge-media-studio")
+        assert entry is not None and entry.repo == "NousResearch/auraforge-media-studio"
 
     def test_case_insensitive(self):
-        entry, _ = resolve_name(self.entries, "Hermes-Media-Studio")
+        entry, _ = resolve_name(self.entries, "Aura Forge-Media-Studio")
         assert entry is not None
 
     def test_unique_partial(self):
         entry, _ = resolve_name(self.entries, "telegram")
-        assert entry is not None and entry.name == "hermes-telegram-business"
+        assert entry is not None and entry.name == "auraforge-telegram-business"
 
     def test_ambiguous_partial(self):
-        entry, candidates = resolve_name(self.entries, "hermes")
+        entry, candidates = resolve_name(self.entries, "auraforge")
         assert entry is None
         assert len(candidates) == 2
 
@@ -314,7 +314,7 @@ class TestInstallResolution:
     def test_bare_name_detection(self):
         from hermes_cli.plugins_cmd import _looks_like_bare_index_name
 
-        assert _looks_like_bare_index_name("hermes-media-studio")
+        assert _looks_like_bare_index_name("auraforge-media-studio")
         assert not _looks_like_bare_index_name("owner/repo")
         assert not _looks_like_bare_index_name("https://github.com/o/r.git")
         assert not _looks_like_bare_index_name("git@github.com:o/r.git")
@@ -336,8 +336,8 @@ class TestInstallResolution:
 
         monkeypatch.setattr(plugins_cmd, "_install_plugin_core", fake_core)
         with pytest.raises(SystemExit):
-            plugins_cmd.cmd_install("hermes-media-studio", enable=False)
-        assert captured["identifier"] == "NousResearch/hermes-media-studio"
+            plugins_cmd.cmd_install("auraforge-media-studio", enable=False)
+        assert captured["identifier"] == "NousResearch/auraforge-media-studio"
         assert captured["ref"] == "e" * 40
 
     def test_install_explicit_ref_beats_index_pin(self, hermes_home, monkeypatch):
@@ -354,7 +354,7 @@ class TestInstallResolution:
 
         monkeypatch.setattr(plugins_cmd, "_install_plugin_core", fake_core)
         with pytest.raises(SystemExit):
-            plugins_cmd.cmd_install("hermes-media-studio", enable=False, ref="d" * 40)
+            plugins_cmd.cmd_install("auraforge-media-studio", enable=False, ref="d" * 40)
         assert captured["ref"] == "d" * 40
 
     def test_install_ambiguous_name_lists_candidates_and_exits(
@@ -372,13 +372,13 @@ class TestInstallResolution:
             lambda *a, **k: called.append(1),
         )
         with pytest.raises(SystemExit) as exc:
-            plugins_cmd.cmd_install("hermes", enable=False)
+            plugins_cmd.cmd_install("auraforge", enable=False)
         assert exc.value.code == 1
         assert not called
         out = capsys.readouterr().out
         assert "ambiguous" in out
-        assert "hermes-media-studio" in out
-        assert "hermes-telegram-business" in out
+        assert "auraforge-media-studio" in out
+        assert "auraforge-telegram-business" in out
 
     def test_install_unknown_name_exits(self, hermes_home, monkeypatch, capsys):
         from hermes_cli import plugins_cmd
@@ -429,8 +429,8 @@ class TestCmdSearch:
         payload = json.loads(capsys.readouterr().out)
         assert payload["source"] == "seed"
         assert payload["query"] == "telegram"
-        assert payload["results"][0]["name"] == "hermes-telegram-business"
-        assert payload["results"][0]["repo"] == "NousResearch/hermes-telegram-business"
+        assert payload["results"][0]["name"] == "auraforge-telegram-business"
+        assert payload["results"][0]["repo"] == "NousResearch/auraforge-telegram-business"
         assert payload["results"][0]["ref"] == "f" * 40
         assert "audited" in payload["note"]
 
@@ -444,7 +444,7 @@ class TestCmdSearch:
         )
         plugins_cmd.cmd_search("media")
         out = capsys.readouterr().out
-        assert "hermes-media-studio" in out
+        assert "auraforge-media-studio" in out
         assert "audited" in out
 
     def test_no_results_message(self, hermes_home, monkeypatch, capsys):

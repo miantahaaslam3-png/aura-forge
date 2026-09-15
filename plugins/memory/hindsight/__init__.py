@@ -11,7 +11,7 @@ Original PR #1811 by benfrank241, adapted to MemoryProvider ABC.
 
 Config via environment variables:
   HINDSIGHT_API_KEY                — API key for Hindsight Cloud
-  HINDSIGHT_BANK_ID                — memory bank identifier (default: hermes)
+  HINDSIGHT_BANK_ID                — memory bank identifier (default: auraforge)
   HINDSIGHT_BUDGET                 — recall budget: low/mid/high (default: mid)
   HINDSIGHT_API_URL                — API endpoint
   HINDSIGHT_MODE                   — cloud or local (default: cloud)
@@ -20,7 +20,7 @@ Config via environment variables:
   HINDSIGHT_EMBED_PORT_HEALTH_GRACE_TIMEOUT — seconds to wait for a slow embedded daemon /health before treating it as stale (default: 30; set via config.json port_health_grace_timeout)
   HINDSIGHT_RETAIN_TAGS            — comma-separated tags attached to retained memories
   HINDSIGHT_RETAIN_OBSERVATION_SCOPES — observation scoping for retained memories: per_tag/combined/all_combinations, or a JSON list of tag-lists for custom scopes
-  HINDSIGHT_RETAIN_SOURCE          — metadata source value attached to retained memories (default: hermes)
+  HINDSIGHT_RETAIN_SOURCE          — metadata source value attached to retained memories (default: auraforge)
   HINDSIGHT_RETAIN_USER_PREFIX     — label used before user turns in retained transcripts
   HINDSIGHT_RETAIN_ASSISTANT_PREFIX — label used before assistant turns in retained transcripts
 
@@ -78,7 +78,7 @@ _DEFAULT_IDLE_TIMEOUT = 300  # seconds — Hindsight embedded daemon default
 # ``metadata.source`` stamped on retained memories — OPT-IN, empty by default.
 # AGENTS.md forbids shipping third-party attribution tags on-by-default until a
 # generic user-facing opt-in exists, so this stays unset unless the user sets it
-# via the ``retain_source`` config key or HINDSIGHT_RETAIN_SOURCE (e.g. "hermes").
+# via the ``retain_source`` config key or HINDSIGHT_RETAIN_SOURCE (e.g. "auraforge").
 _DEFAULT_RETAIN_SOURCE = ""
 # Hindsight brand mark — the logo is an eye ringed by graph nodes. Used for
 # the deterministic recall/retain indicators (overrides the generic core default).
@@ -163,7 +163,7 @@ def _check_local_runtime() -> tuple[bool, str | None]:
     (transformers + huggingface-hub). Importing ``hindsight`` /
     ``hindsight_embed`` alone succeeds even when that stack is broken, so
     without importing it here the probe would falsely report the backend
-    healthy and ``hermes memory status`` would stay green while the daemon
+    healthy and ``auraforge memory status`` would stay green while the daemon
     aborts at startup on every retain/recall. Import it too so the probe (and
     status) reports the real ImportError.
     """
@@ -183,7 +183,7 @@ def _local_runtime_hint(reason: str | None) -> str:
     is provided only by the ``hindsight-all`` package (its wheel ships the
     top-level ``hindsight`` module). ``plugin.yaml`` declares only
     ``hindsight-client`` (enough for cloud / local_external), so a user who
-    selected local_embedded without going through ``hermes memory setup`` — a
+    selected local_embedded without going through ``auraforge memory setup`` — a
     hand-written config, the legacy ``"mode": "local"`` alias, or a restored
     backup — hits ``ModuleNotFoundError: No module named 'hindsight'``.
     miantahaaslam3-png/aura-forge#7718.
@@ -193,7 +193,7 @@ def _local_runtime_hint(reason: str | None) -> str:
                                       or "hindsight_embed" in text):
         return (
             f" Install the embedded runtime with: uv pip install --python "
-            f"{sys.executable} hindsight-all — or run 'hermes memory setup'. "
+            f"{sys.executable} hindsight-all — or run 'auraforge memory setup'. "
             "(local_embedded needs the 'hindsight-all' package, which provides the "
             "top-level 'hindsight' module; 'hindsight-client' alone only covers "
             "cloud / local_external.)"
@@ -454,8 +454,8 @@ def _load_config() -> dict:
         "retain_user_prefix": os.environ.get("HINDSIGHT_RETAIN_USER_PREFIX", "User"),
         "retain_assistant_prefix": os.environ.get("HINDSIGHT_RETAIN_ASSISTANT_PREFIX", "Assistant"),
         "banks": {
-            "hermes": {
-                "bankId": os.environ.get("HINDSIGHT_BANK_ID", "hermes"),
+            "auraforge": {
+                "bankId": os.environ.get("HINDSIGHT_BANK_ID", "auraforge"),
                 "budget": os.environ.get("HINDSIGHT_BUDGET", "mid"),
                 "enabled": True,
             }
@@ -567,8 +567,8 @@ def _event_timestamp() -> str:
 
 def _embedded_profile_name(config: dict[str, Any]) -> str:
     """Return the Hindsight embedded profile name for this Aura Forge config."""
-    profile = config.get("profile", "hermes")
-    return str(profile or "hermes")
+    profile = config.get("profile", "auraforge")
+    return str(profile or "auraforge")
 
 
 def _load_simple_env(path) -> dict[str, str]:
@@ -721,7 +721,7 @@ def _resolve_bank_id_template(template: str, fallback: str, **placeholders: str)
       {session}   — current session id
 
     Missing/empty placeholders are rendered as the empty string and then
-    collapsed — e.g. ``hermes-{user}`` with no user becomes ``hermes``.
+    collapsed — e.g. ``auraforge-{user}`` with no user becomes ``auraforge``.
 
     If the template is empty, resolution falls back to *fallback*.
     Returns the sanitized bank id.
@@ -764,7 +764,7 @@ class HindsightMemoryProvider(MemoryProvider):
         self._config = None
         self._api_key = None
         self._api_url = _DEFAULT_API_URL
-        self._bank_id = "hermes"
+        self._bank_id = "auraforge"
         self._budget = "mid"
         self._mode = "cloud"
         self._llm_base_url = ""
@@ -1014,7 +1014,7 @@ class HindsightMemoryProvider(MemoryProvider):
 
         print("\n  Checking dependencies...")
         # Environment-aware install: sealed hosted venvs redirect to the durable
-        # data-volume target instead of writing to /opt/hermes (NS-605).
+        # data-volume target instead of writing to /opt/auraforge (NS-605).
         from tools.lazy_deps import install_specs
 
         outcome = install_specs(deps_to_install, timeout=120)
@@ -1091,7 +1091,7 @@ class HindsightMemoryProvider(MemoryProvider):
                 env_writes["HINDSIGHT_LLM_API_KEY"] = existing_llm_key
 
         # Step 4: Save everything
-        provider_config.setdefault("bank_id", "hermes")
+        provider_config.setdefault("bank_id", "auraforge")
         provider_config.setdefault("recall_budget", "mid")
         # Read existing timeout from config if present, otherwise use default.
         # Preserve explicit 0 values instead of treating them as blank.
@@ -1173,7 +1173,7 @@ class HindsightMemoryProvider(MemoryProvider):
 
         default_url = _DEFAULT_LOCAL_URL if mode == "local_external" else _DEFAULT_API_URL
         api_url = provider_config.get("api_url") or default_url
-        bank_id = provider_config.get("bank_id", "hermes")
+        bank_id = provider_config.get("bank_id", "auraforge")
         api_key = env_writes.get("HINDSIGHT_API_KEY") or os.environ.get("HINDSIGHT_API_KEY", "") or None
         _hs_templates.run_template_step(
             api_url=api_url,
@@ -1197,8 +1197,8 @@ class HindsightMemoryProvider(MemoryProvider):
             {"key": "llm_base_url", "description": "Endpoint URL (e.g. http://192.168.1.10:8080/v1)", "default": "", "when": {"mode": "local_embedded", "llm_provider": "openai_compatible"}},
             {"key": "llm_api_key", "description": "LLM API key (optional for openai_compatible)", "secret": True, "env_var": "HINDSIGHT_LLM_API_KEY", "when": {"mode": "local_embedded"}},
             {"key": "llm_model", "description": "LLM model", "default": "gpt-4o-mini", "default_from": {"field": "llm_provider", "map": _PROVIDER_DEFAULT_MODELS}, "when": {"mode": "local_embedded"}},
-            {"key": "bank_id", "description": "Memory bank name (static fallback when bank_id_template is unset)", "default": "hermes"},
-            {"key": "bank_id_template", "description": "Optional template to derive bank_id dynamically. Placeholders: {profile}, {workspace}, {platform}, {user}, {session}. Example: hermes-{profile}", "default": ""},
+            {"key": "bank_id", "description": "Memory bank name (static fallback when bank_id_template is unset)", "default": "auraforge"},
+            {"key": "bank_id_template", "description": "Optional template to derive bank_id dynamically. Placeholders: {profile}, {workspace}, {platform}, {user}, {session}. Example: auraforge-{profile}", "default": ""},
             {"key": "bank_mission", "description": "Mission/purpose description for the memory bank"},
             {"key": "bank_retain_mission", "description": "Custom extraction prompt for memory retention"},
             {"key": "recall_budget", "description": "Recall thoroughness", "default": "mid", "choices": ["low", "mid", "high"]},
@@ -1253,9 +1253,9 @@ class HindsightMemoryProvider(MemoryProvider):
                 if llm_provider in {"openai_compatible", "openrouter"}:
                     llm_provider = "openai"
                 logger.debug("Creating HindsightEmbedded client (profile=%s, provider=%s)",
-                             self._config.get("profile", "hermes"), llm_provider)
+                             self._config.get("profile", "auraforge"), llm_provider)
                 kwargs = dict(
-                    profile=self._config.get("profile", "hermes"),
+                    profile=self._config.get("profile", "auraforge"),
                     llm_provider=llm_provider,
                     llm_api_key=self._config.get("llmApiKey") or self._config.get("llm_api_key") or get_secret("HINDSIGHT_LLM_API_KEY", ""),
                     llm_model=self._config.get("llm_model", ""),
@@ -1609,7 +1609,7 @@ class HindsightMemoryProvider(MemoryProvider):
                 logger.warning("hindsight-client %s is outdated (need >=%s), attempting upgrade...",
                                installed, _MIN_CLIENT_VERSION)
                 # Environment-aware install: sealed hosted venvs redirect to the
-                # durable data-volume target instead of /opt/hermes (NS-605).
+                # durable data-volume target instead of /opt/auraforge (NS-605).
                 from tools.lazy_deps import install_specs
                 outcome = install_specs([f"hindsight-client>={_MIN_CLIENT_VERSION}"], timeout=120)
                 if outcome.ok:
@@ -1667,8 +1667,8 @@ class HindsightMemoryProvider(MemoryProvider):
         self._api_url = self._config.get("api_url") or os.environ.get("HINDSIGHT_API_URL", default_url)
         self._llm_base_url = self._config.get("llm_base_url", "")
 
-        banks = cfg_get(self._config, "banks", "hermes", default={})
-        static_bank_id = self._config.get("bank_id") or banks.get("bankId", "hermes")
+        banks = cfg_get(self._config, "banks", "auraforge", default={})
+        static_bank_id = self._config.get("bank_id") or banks.get("bankId", "auraforge")
         self._bank_id_template = self._config.get("bank_id_template", "") or ""
         self._bank_id = _resolve_bank_id_template(
             self._bank_id_template,
@@ -1783,7 +1783,7 @@ class HindsightMemoryProvider(MemoryProvider):
                     "Hindsight local_embedded mode cannot run as root "
                     "(PostgreSQL initdb refuses root). Skipping the embedded "
                     "memory daemon. Run Aura Forge as a non-root user, or switch "
-                    "to cloud / local_external mode via 'hermes memory setup'."
+                    "to cloud / local_external mode via 'auraforge memory setup'."
                 )
                 logger.warning(msg)
                 # Surface to the terminal too — a daemon that never starts
@@ -1810,7 +1810,7 @@ class HindsightMemoryProvider(MemoryProvider):
                     dem.console = Console(file=open(log_path, "a", encoding="utf-8"), force_terminal=False)
 
                     client = self._get_client()
-                    profile = self._config.get("profile", "hermes")
+                    profile = self._config.get("profile", "auraforge")
 
                     # Update the profile .env to match our current config so
                     # the daemon always starts with the right settings.
@@ -2289,7 +2289,7 @@ class HindsightMemoryProvider(MemoryProvider):
         Without this hook, initialize()-cached state (``_session_id``,
         ``_document_id``, ``_session_turns``, ``_turn_counter``) would keep
         pointing at the previous session and writes would land in the wrong
-        document. See hermes-agent#6672.
+        document. See auraforge-agent#6672.
 
         Always update ``_session_id`` so metadata and tags on subsequent
         retains reflect the active session. Always mint a fresh

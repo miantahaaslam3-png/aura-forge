@@ -433,7 +433,7 @@ def _unwrap_exception_group(exc: BaseException) -> Exception:
     return RuntimeError(str(exc))
 
 
-# ─── hermes mcp add ──────────────────────────────────────────────────────────
+# ─── auraforge mcp add ──────────────────────────────────────────────────────────
 
 def cmd_mcp_add(args):
     """Add a new MCP server with discovery-first tool selection."""
@@ -474,9 +474,9 @@ def cmd_mcp_add(args):
     if not url and not command:
         _error("Must specify --url <endpoint>, --command <cmd>, or --preset <name>")
         _info("Examples:")
-        _info('  hermes mcp add ink --url "https://mcp.ml.ink/mcp"')
-        _info('  hermes mcp add github --command npx --args @modelcontextprotocol/server-github')
-        _info('  hermes mcp add myserver --preset mypreset')
+        _info('  auraforge mcp add ink --url "https://mcp.ml.ink/mcp"')
+        _info('  auraforge mcp add github --command npx --args @modelcontextprotocol/server-github')
+        _info('  auraforge mcp add myserver --preset mypreset')
         return
 
     # Check if server already exists
@@ -570,7 +570,7 @@ def cmd_mcp_add(args):
             server_config["enabled"] = False
             if _save_mcp_server(name, server_config):
                 _success(f"Saved '{name}' to config (disabled)")
-                _info("Fix the issue, then: hermes mcp test " + name)
+                _info("Fix the issue, then: auraforge mcp test " + name)
         return
 
     if not tools:
@@ -640,7 +640,7 @@ def cmd_mcp_add(args):
         _info("Start a new session to use these tools.")
 
 
-# ─── hermes mcp remove ───────────────────────────────────────────────────────
+# ─── auraforge mcp remove ───────────────────────────────────────────────────────
 
 def cmd_mcp_remove(args):
     """Remove an MCP server from config."""
@@ -672,7 +672,7 @@ def cmd_mcp_remove(args):
         pass
 
 
-# ─── hermes mcp list ──────────────────────────────────────────────────────────
+# ─── auraforge mcp list ──────────────────────────────────────────────────────────
 
 def cmd_mcp_list(args=None):
     """List all configured MCP servers."""
@@ -683,8 +683,8 @@ def cmd_mcp_list(args=None):
         _info("No MCP servers configured.")
         print()
         _info("Add one with:")
-        _info('  hermes mcp add <name> --url <endpoint>')
-        _info('  hermes mcp add <name> --command <cmd> --args <args...>')
+        _info('  auraforge mcp add <name> --url <endpoint>')
+        _info('  auraforge mcp add <name> --command <cmd> --args <args...>')
         print()
         return
 
@@ -741,7 +741,7 @@ def cmd_mcp_list(args=None):
     print()
 
 
-# ─── hermes mcp test ──────────────────────────────────────────────────────────
+# ─── auraforge mcp test ──────────────────────────────────────────────────────────
 
 def cmd_mcp_test(args):
     """Test connection to an MCP server."""
@@ -805,7 +805,7 @@ def cmd_mcp_test(args):
     print()
 
 
-# ─── hermes mcp login ────────────────────────────────────────────────────────
+# ─── auraforge mcp login ────────────────────────────────────────────────────────
 
 def _reauth_oauth_server(name: str, server_config: dict) -> bool:
     """Force a fresh OAuth flow for one server. Returns True on success.
@@ -971,7 +971,7 @@ def cmd_mcp_reauth(args):
 
     if not name:
         _error("Specify a server name, or use --all to re-auth every OAuth server.")
-        _info("Usage: hermes mcp reauth <name>   |   hermes mcp reauth --all")
+        _info("Usage: auraforge mcp reauth <name>   |   auraforge mcp reauth --all")
         return
     if name not in servers:
         _error(f"Server '{name}' not found in config.")
@@ -982,13 +982,13 @@ def cmd_mcp_reauth(args):
     _reauth_oauth_server(name, servers[name])
 
 
-# ─── hermes mcp configure ────────────────────────────────────────────────────
+# ─── auraforge mcp configure ────────────────────────────────────────────────────
 
 def cmd_mcp_configure(args):
     """Reconfigure which tools are enabled for an existing MCP server."""
     import sys as _sys
     if not _sys.stdin.isatty():
-        print("Error: 'hermes mcp configure' requires an interactive terminal.", file=_sys.stderr)
+        print("Error: 'auraforge mcp configure' requires an interactive terminal.", file=_sys.stderr)
         _sys.exit(1)
     name = args.name
     servers = _get_mcp_servers()
@@ -1188,17 +1188,17 @@ def mcp_command(args):
         from hermes_cli.mcp_picker import run_picker
         run_picker()
         print(color("  Commands:", Colors.CYAN))
-        _info("hermes mcp                                    Open the catalog picker (default)")
-        _info("hermes mcp catalog                            List Nous-approved MCPs")
-        _info("hermes mcp install <name>                     Install a catalog MCP")
-        _info("hermes mcp serve                              Run as MCP server")
-        _info("hermes mcp add <name> --url <endpoint>        Add a custom MCP server")
-        _info("hermes mcp add <name> --command <cmd>         Add a stdio server")
-        _info("hermes mcp add <name> --preset <preset>       Add from a known preset")
-        _info("hermes mcp remove <name>                      Remove a server")
-        _info("hermes mcp list                               List configured servers")
-        _info("hermes mcp test <name>                        Test connection")
-        _info("hermes mcp configure <name>                   Toggle tools")
-        _info("hermes mcp login <name>                       Re-authenticate OAuth")
-        _info("hermes mcp reauth <name> | --all              Re-auth one or all OAuth servers")
+        _info("auraforge mcp                                    Open the catalog picker (default)")
+        _info("auraforge mcp catalog                            List Nous-approved MCPs")
+        _info("auraforge mcp install <name>                     Install a catalog MCP")
+        _info("auraforge mcp serve                              Run as MCP server")
+        _info("auraforge mcp add <name> --url <endpoint>        Add a custom MCP server")
+        _info("auraforge mcp add <name> --command <cmd>         Add a stdio server")
+        _info("auraforge mcp add <name> --preset <preset>       Add from a known preset")
+        _info("auraforge mcp remove <name>                      Remove a server")
+        _info("auraforge mcp list                               List configured servers")
+        _info("auraforge mcp test <name>                        Test connection")
+        _info("auraforge mcp configure <name>                   Toggle tools")
+        _info("auraforge mcp login <name>                       Re-authenticate OAuth")
+        _info("auraforge mcp reauth <name> | --all              Re-auth one or all OAuth servers")
         print()

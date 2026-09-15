@@ -9,7 +9,7 @@ DEFAULT_CONFIG = {
     "providers": {},
     "fallback_providers": [],
     "credential_pool_strategies": {},
-    "toolsets": ["hermes-cli"],
+    "toolsets": ["auraforge-cli"],
     # SQLite journal mode used by every Aura Forge database opener. WAL is the
     # normal default; set DELETE for weak-fsync/shared filesystems where WAL is
     # not crash-safe (for example macOS virtiofs, NFS, or SMB).
@@ -128,7 +128,7 @@ DEFAULT_CONFIG = {
         # provider timeouts, 5xx, etc.) before the agent surfaces the
         # failure.  The OpenAI SDK already does its own low-level retries
         # (max_retries=2 default) for transient network errors; this is
-        # the Hermes-level retry loop that wraps the whole call.  Lower
+        # the Aura Forge-level retry loop that wraps the whole call.  Lower
         # this to 1 if you use fallback providers and want fast failover
         # on flaky primaries; raise it if you prefer to tolerate longer
         # provider hiccups on a single provider.
@@ -477,7 +477,7 @@ DEFAULT_CONFIG = {
         # Each entry is "host_path:container_path" (standard Docker -v syntax).
         # Example:
         # ["/home/user/projects:/workspace/projects",
-        #  "/home/user/.hermes/cache/documents:/output"]
+        #  "/home/user/.auraforge/cache/documents:/output"]
         # For gateway MEDIA delivery, write inside Docker to /output/... and emit
         # the host-visible path in MEDIA:, not the container path.
         "docker_volumes": [],
@@ -586,7 +586,7 @@ DEFAULT_CONFIG = {
         "cdp_url": "",  # Optional persistent CDP endpoint for attaching to an existing Chromium/Chrome
         # Consent to browse with the user's REAL logins for local browsing.
         # When true, local browsing (the Browser Use CLI, or the built-in
-        # browser tools) runs on a Hermes-managed SNAPSHOT of the user's
+        # browser tools) runs on a Aura Forge-managed SNAPSHOT of the user's
         # ACTIVE default-Chromium profile (Local State -> profile.last_used) —
         # its cookies, logins and preferences copied in and re-synced when a
         # fresh session launches — driven by Aura Forge' packaged Chromium. Only
@@ -673,7 +673,7 @@ DEFAULT_CONFIG = {
         # Prevents accidental snapshotting of datasets, model weights, and
         # other large generated assets.  0 disables the filter.
         "max_file_size_mb": 10,
-        # Auto-maintenance: hermes sweeps the checkpoint base at startup
+        # Auto-maintenance: auraforge sweeps the checkpoint base at startup
         # (at most once per ``min_interval_hours``) and:
         #   * deletes project entries whose last_touch is older than
         #     ``retention_days``
@@ -695,7 +695,7 @@ DEFAULT_CONFIG = {
     },
 
     # Hard cap (chars) for a single automatic context file such as SOUL.md,
-    # AGENTS.md, CLAUDE.md, .hermes.md, or .cursorrules before Aura Forge applies
+    # AGENTS.md, CLAUDE.md, .auraforge.md, or .cursorrules before Aura Forge applies
     # head/tail truncation. ``null`` (the default) lets the cap scale with the
     # model's context window (floor 20K, ceiling 500K) so large-context models
     # rarely truncate a project doc. Set a positive integer to pin a fixed cap
@@ -966,7 +966,7 @@ DEFAULT_CONFIG = {
                                       # compaction mode. The codex agent owns the real
                                       # thread context, so Aura Forge' summarizer cannot
                                       # shrink it (#36801). native = codex decides when
-                                      # to compact its own thread (default); hermes =
+                                      # to compact its own thread (default); auraforge =
                                       # Aura Forge' compression threshold triggers
                                       # thread/compact/start; off = never auto-trigger
                                       # (codex may still compact natively).
@@ -1596,7 +1596,7 @@ DEFAULT_CONFIG = {
         },
         # Gateway runtime-metadata footer appended to the FINAL message of a turn
         # (disabled by default to keep replies minimal). When enabled, renders
-        # e.g. `model · 68% · ~/projects/hermes`. Per-platform overrides go under
+        # e.g. `model · 68% · ~/projects/auraforge`. Per-platform overrides go under
         # display.platforms.<platform>.runtime_footer.
         "runtime_footer": {
             "enabled": False,
@@ -1611,7 +1611,7 @@ DEFAULT_CONFIG = {
         "pet": {
             "enabled": False,
             # Active pet slug; resolved against installed pets in
-            # get_hermes_home()/pets/. Empty → first installed pet.
+            # get_aura_forge_home()/pets/. Empty → first installed pet.
             "slug": "",
             # Terminal render protocol for CLI/TUI:
             #   auto  — detect kitty/iTerm2/sixel, else unicode half-blocks
@@ -1745,7 +1745,7 @@ DEFAULT_CONFIG = {
         },
         # Public URL override (env: ``HERMES_DASHBOARD_PUBLIC_URL``).
         # When set, this is the complete authority — scheme + host +
-        # optional path prefix (e.g. ``https://example.com/hermes``) —
+        # optional path prefix (e.g. ``https://example.com/auraforge``) —
         # the OAuth ``redirect_uri`` is built from. Its exact hostname is also
         # trusted by the HTTP Host / WebSocket Origin guards and engages the
         # auth gate when it is non-loopback, even if the backend binds to
@@ -1955,7 +1955,7 @@ DEFAULT_CONFIG = {
         "input_device": None,          # PortAudio input device index/name; null uses the process default
         "capture": "auto",            # auto | local | client — where PCM is captured (client = desktop streams mic via wake.feed)
         "provider": "openwakeword",   # "openwakeword" (free, local) | "sherpa" (free, ANY phrase, no training) | "porcupine" (premium; needs PORCUPINE_ACCESS_KEY)
-        "phrase": "hey hermes",       # for "sherpa" this IS the detected phrase (any text works); for other engines it's a cosmetic label — detection is keyed by the model/keyword below
+        "phrase": "hey auraforge",       # for "sherpa" this IS the detected phrase (any text works); for other engines it's a cosmetic label — detection is keyed by the model/keyword below
         "sensitivity": 0.6,           # 0.0-1.0 detection threshold, consistent across engines (higher = stricter, fewer false triggers)
         "confirmation_frames": 3,     # openWakeWord only: consecutive over-threshold frames required to fire (higher = fewer false triggers on ambient speech, slightly more latency; 1 = old single-frame behavior)
         "start_new_session": True,    # start a fresh session on wake vs. continue the current one
@@ -2165,7 +2165,7 @@ DEFAULT_CONFIG = {
         # When true, every MoA turn that runs the reference fan-out writes the
         # FULL turn (each reference's exact input messages + output + usage/cost,
         # and the aggregator's exact input + output) to a JSONL file at
-        # <hermes_home>/moa-traces/<session_id>.jsonl. Off by default — turn it
+        # <aura_forge_home>/moa-traces/<session_id>.jsonl. Off by default — turn it
         # on to audit / improve MoA behavior from real runs. Set trace_dir to
         # override the output directory.
         "save_traces": False,
@@ -2199,7 +2199,7 @@ DEFAULT_CONFIG = {
     "skills": {
         "external_dirs": [],   # e.g. ["~/.agents/skills", "/shared/team-skills"]
         # Project-local skill discovery: when a session starts inside a git
-        # checkout, ``<root>/.hermes/skills/`` and ``<root>/.agents/skills/``
+        # checkout, ``<root>/.auraforge/skills/`` and ``<root>/.agents/skills/``
         # are sourced as the highest-precedence skill tier — but ONLY when the
         # project root is listed in trusted_project_dirs below. Trust a repo
         # with ``auraforge skills trust`` (run from inside it). Set to false to
@@ -2323,7 +2323,7 @@ DEFAULT_CONFIG = {
     },
 
     # Honcho AI-native memory -- reads ~/.honcho/config.json as single source of truth.
-    # This section is only needed for hermes-specific overrides; everything else
+    # This section is only needed for auraforge-specific overrides; everything else
     # (apiKey, workspace, peerName, sessions, enabled) comes from the global config.
     "honcho": {},
 
@@ -3088,7 +3088,7 @@ DEFAULT_CONFIG = {
             "export_interval_seconds": 60,
             "logs_export_interval_seconds": 5,
             "resource_attributes": {
-                "service.name": "hermes-gateway",
+                "service.name": "auraforge-gateway",
                 "deployment.environment.name": "production",
             },
         },
@@ -3172,7 +3172,7 @@ DEFAULT_CONFIG = {
         # (launchd KeepAlive / systemd Restart=), it auto-resumes the
         # restart-interrupted session on the next boot. If the resumed turn
         # keeps triggering another kill (e.g. the agent runs a raw
-        # `launchctl kickstart ai.hermes.gateway` that defenses 1-2 don't
+        # `launchctl kickstart ai.auraforge.gateway` that defenses 1-2 don't
         # cover), the result is a tight SIGTERM-respawn loop. This breaker
         # chains restart-interrupted boots together and, once `max_restarts`
         # of them chain up, SKIPS auto-resume for that boot — the gateway
@@ -4823,7 +4823,7 @@ OPTIONAL_ENV_VARS = {
         "category": "messaging",
     },
     "MATRIX_USER_ID": {
-        "description": "Matrix user ID (e.g. @hermes:example.org)",
+        "description": "Matrix user ID (e.g. @auraforge:example.org)",
         "prompt": "Matrix user ID (@user:server)",
         "url": None,
         "password": False,
@@ -4960,14 +4960,14 @@ OPTIONAL_ENV_VARS = {
         "category": "messaging",
     },
     "IRC_CHANNEL": {
-        "description": "IRC channel to join (e.g. #hermes)",
+        "description": "IRC channel to join (e.g. #auraforge)",
         "prompt": "IRC channel",
         "url": None,
         "password": False,
         "category": "messaging",
     },
     "IRC_NICKNAME": {
-        "description": "Bot nickname on IRC (default: hermes-bot)",
+        "description": "Bot nickname on IRC (default: auraforge-bot)",
         "prompt": "IRC nickname",
         "url": None,
         "password": False,

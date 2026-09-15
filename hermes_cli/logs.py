@@ -6,17 +6,17 @@ under ``~/.aura-forge/logs/``.
 
 Usage examples::
 
-    hermes logs                    # last 50 lines of agent.log
-    hermes logs -f                 # follow agent.log in real time
-    hermes logs errors             # last 50 lines of errors.log
-    hermes logs gateway -n 100    # last 100 lines of gateway.log
-    hermes logs gui -f            # follow gui.log (dashboard/pty/ws)
-    hermes logs desktop -f        # follow desktop.log (Electron app boot/backend)
-    hermes logs --level WARNING    # only WARNING+ lines
-    hermes logs --session abc123   # filter by session ID substring
-    hermes logs --component tools  # only tool-related lines
-    hermes logs --since 1h         # lines from the last hour
-    hermes logs --since 30m -f     # follow, starting 30 min ago
+    auraforge logs                    # last 50 lines of agent.log
+    auraforge logs -f                 # follow agent.log in real time
+    auraforge logs errors             # last 50 lines of errors.log
+    auraforge logs gateway -n 100    # last 100 lines of gateway.log
+    auraforge logs gui -f            # follow gui.log (dashboard/pty/ws)
+    auraforge logs desktop -f        # follow desktop.log (Electron app boot/backend)
+    auraforge logs --level WARNING    # only WARNING+ lines
+    auraforge logs --session abc123   # filter by session ID substring
+    auraforge logs --component tools  # only tool-related lines
+    auraforge logs --since 1h         # lines from the last hour
+    auraforge logs --since 30m -f     # follow, starting 30 min ago
 """
 
 import re
@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Sequence
 
-from hermes_constants import get_hermes_home, display_hermes_home
+from hermes_constants import get_aura_forge_home, display_aura_forge_home
 
 # Known log files (name → filename)
 LOG_FILES = {
@@ -176,10 +176,10 @@ def tail_log(
         print(f"Unknown log: {log_name!r}. Available: {', '.join(sorted(LOG_FILES))}")
         sys.exit(1)
 
-    log_path = get_hermes_home() / "logs" / filename
+    log_path = get_aura_forge_home() / "logs" / filename
     if not log_path.exists():
         print(f"Log file not found: {log_path}")
-        print("(Logs are created when Aura Forge runs — try 'hermes chat' first)")
+        print("(Logs are created when Aura Forge runs — try 'auraforge chat' first)")
         sys.exit(1)
 
     # Parse --since into a datetime cutoff
@@ -235,9 +235,9 @@ def tail_log(
     filter_desc = f" [{', '.join(filter_parts)}]" if filter_parts else ""
 
     if follow:
-        print(f"--- {display_hermes_home()}/logs/{filename}{filter_desc} (Ctrl+C to stop) ---")
+        print(f"--- {display_aura_forge_home()}/logs/{filename}{filter_desc} (Ctrl+C to stop) ---")
     else:
-        print(f"--- {display_hermes_home()}/logs/{filename}{filter_desc} (last {num_lines}) ---")
+        print(f"--- {display_aura_forge_home()}/logs/{filename}{filter_desc} (last {num_lines}) ---")
 
     for line in lines:
         print(line, end="")
@@ -364,12 +364,12 @@ def _follow_log(
 
 def list_logs() -> None:
     """Print available log files with sizes."""
-    log_dir = get_hermes_home() / "logs"
+    log_dir = get_aura_forge_home() / "logs"
     if not log_dir.exists():
-        print(f"No logs directory at {display_hermes_home()}/logs/")
+        print(f"No logs directory at {display_aura_forge_home()}/logs/")
         return
 
-    print(f"Log files in {display_hermes_home()}/logs/:\n")
+    print(f"Log files in {display_aura_forge_home()}/logs/:\n")
     found = False
     for entry in sorted(log_dir.iterdir()):
         if entry.is_file() and entry.suffix == ".log":
@@ -394,4 +394,4 @@ def list_logs() -> None:
             found = True
 
     if not found:
-        print("  (no log files yet — run 'hermes chat' to generate logs)")
+        print("  (no log files yet — run 'auraforge chat' to generate logs)")

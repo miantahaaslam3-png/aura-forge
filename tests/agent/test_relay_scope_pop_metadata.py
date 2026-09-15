@@ -19,13 +19,13 @@ def test_pop_relay_scope_omits_unsupported_metadata_kwarg():
         calls.append((handle, {"output": output}))
 
     relay = SimpleNamespace(scope=SimpleNamespace(pop=pop_without_metadata))
-    handle = ("scope", "hermes.turn", 1)
+    handle = ("scope", "auraforge.turn", 1)
 
     relay_runtime.pop_relay_scope(
         relay,
         handle,
         output={"outcome": "success"},
-        metadata={"hermes.relay.schema_version": "hermes.relay.runtime.v1"},
+        metadata={"auraforge.relay.schema_version": "auraforge.relay.runtime.v1"},
     )
 
     assert calls == [(handle, {"output": {"outcome": "success"}})]
@@ -47,8 +47,8 @@ def test_pop_relay_scope_forwards_metadata_when_supported():
         )
 
     relay = SimpleNamespace(scope=SimpleNamespace(pop=pop_with_metadata))
-    handle = ("scope", "hermes.turn", 2)
-    metadata = {"hermes.relay.runtime_instance": "abc"}
+    handle = ("scope", "auraforge.turn", 2)
+    metadata = {"auraforge.relay.runtime_instance": "abc"}
 
     relay_runtime.pop_relay_scope(
         relay,
@@ -102,7 +102,7 @@ def test_end_turn_finalization_survives_pop_without_metadata(monkeypatch, caplog
         lease.host.relay.ScopeType.Custom,
         handle=turn.handle,
         input={},
-        metadata={"hermes.test": True},
+        metadata={"auraforge.test": True},
     )
     turn.logical_llm_calls["api-1"] = logical
 

@@ -11,7 +11,7 @@ thin dispatcher over the platform-injected callback.
 
 Lives in the ``desktop_ui`` toolset, which the GUI gateway enables only for
 desktop-sourced sessions — on every other surface the agent falls back to
-``hermes mcp install <name>`` in the terminal.
+``auraforge mcp install <name>`` in the terminal.
 """
 
 import json
@@ -32,8 +32,8 @@ def setup_mcp_tool(
     if callback is None:
         return tool_error(
             "setup_mcp is only available in the Aura Forge desktop app. Use the "
-            "terminal instead: `hermes mcp install <name>` for catalog entries, "
-            "`hermes mcp login <name>` for OAuth."
+            "terminal instead: `auraforge mcp install <name>` for catalog entries, "
+            "`auraforge mcp login <name>` for OAuth."
         )
 
     name = (server or "").strip()
@@ -78,7 +78,7 @@ SETUP_MCP_SCHEMA = {
         "entry, re-enable a disabled server, or run OAuth); blocks until the "
         "user acts. Use when they ask to add an MCP or a task clearly needs "
         "a missing one. Never re-ask after a decline — on declined/"
-        "unanswered, continue without it. Catalog names: `hermes mcp "
+        "unanswered, continue without it. Catalog names: `auraforge mcp "
         "catalog` in the terminal."
     ),
     "parameters": {

@@ -1,7 +1,7 @@
 """``auraforge debug`` debug tools for Aura Forge Agent.
 
 Currently supports:
-    hermes debug share    Upload debug report (system info + logs) to a
+    auraforge debug share    Upload debug report (system info + logs) to a
                           paste service and print a shareable URL.
                           By default, log content is run through
                           ``agent.redact.redact_sensitive_text`` with
@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from utils import atomic_replace
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 # Visible in the public paste so reviewers know the content was sanitized.
 # Kept short; the trailing newline guarantees the banner sits on its own line.
 _REDACTION_BANNER = (
-    "[hermes debug share: log content redacted at upload time. "
+    "[auraforge debug share: log content redacted at upload time. "
     "run with --no-redact to disable]\n"
 )
 
@@ -83,7 +83,7 @@ def _pending_file() -> Path:
     runs an opportunistic sweep on entry as a fallback for CLI-only users
     who never start the gateway.
     """
-    return get_hermes_home() / "pastes" / "pending.json"
+    return get_aura_forge_home() / "pastes" / "pending.json"
 
 
 def _load_pending() -> list[dict]:
@@ -295,7 +295,7 @@ def _upload_dpaste_com(content: str, expiry_days: int = 7) -> str:
 
     dpaste.com uses multipart form data.
     """
-    boundary = "----HermesDebugBoundary9f3c"
+    boundary = "----Aura ForgeDebugBoundary9f3c"
 
     def _field(name: str, value: str) -> str:
         return (
@@ -369,7 +369,7 @@ def _primary_log_path(log_name: str) -> Optional[Path]:
     from hermes_cli.logs import LOG_FILES
 
     filename = LOG_FILES.get(log_name)
-    return (get_hermes_home() / "logs" / filename) if filename else None
+    return (get_aura_forge_home() / "logs" / filename) if filename else None
 
 
 # Logs written by a client process rather than by this backend. When the
@@ -639,7 +639,7 @@ def collect_debug_report(
 
 # Bundle format identifier embedded in the Nous-S3 JSON envelope. The
 # discord-support viewer keys off this string to parse the bundle.
-_NOUS_BUNDLE_FORMAT = "hermes-debug-share/1"
+_NOUS_BUNDLE_FORMAT = "auraforge-debug-share/1"
 
 
 def collect_share_bundle(
@@ -716,7 +716,7 @@ def build_nous_bundle(bundle: dict[str, str], redact: bool = True) -> bytes:
 
     The JSON shape is what the discord-support viewer (Repo 3) parses::
 
-        {"format": "hermes-debug-share/1",
+        {"format": "auraforge-debug-share/1",
          "redacted": <bool>,
          "created": <iso8601>,
          "files": {"report": ..., "agent.log": ..., ...}}
@@ -778,7 +778,7 @@ def build_debug_share(
 
     if redact:
         logger.info(
-            "hermes debug share: applied force-mode redaction to log snapshots before upload"
+            "auraforge debug share: applied force-mode redaction to log snapshots before upload"
         )
 
     report = bundle["report"]
@@ -907,7 +907,7 @@ def run_debug_share(args):
     print(f"\n⏱  Pastes will auto-delete in {hours} hours.")
 
     # Manual delete fallback
-    print("To delete now:  hermes debug delete <url>")
+    print("To delete now:  auraforge debug delete <url>")
 
     print("\nShare these links with the Aura Forge team for support.")
 
@@ -915,7 +915,7 @@ def run_debug_share(args):
 _NOUS_PRIVACY_NOTICE = """\
 ⚠️  --nous: This uploads your debug bundle to Nous-INTERNAL storage (AWS S3),
     NOT a public paste service. The following is included:
-  • System info (OS, Python/Hermes version, provider, which API keys are
+  • System info (OS, Python/Aura Forge version, provider, which API keys are
     configured — NOT the actual keys)
   • Full agent.log, gateway.log, and desktop.log (up to 512 KB each — likely
     contains conversation content, tool outputs, and file paths)
@@ -951,7 +951,7 @@ def _run_debug_share_nous(args, *, log_lines: int, redact: bool) -> None:
     bundle = collect_share_bundle(log_lines=log_lines, redact=redact)
     if redact:
         logger.info(
-            "hermes debug share --nous: applied force-mode redaction before upload"
+            "auraforge debug share --nous: applied force-mode redaction before upload"
         )
     blob = build_nous_bundle(bundle, redact=redact)
 
@@ -998,8 +998,8 @@ def run_debug_delete(args):
     """Delete one or more paste URLs uploaded by /debug."""
     urls = getattr(args, "urls", [])
     if not urls:
-        print("Usage: hermes debug delete <url> [<url> ...]")
-        print("  Deletes paste.rs pastes uploaded by 'hermes debug share'.")
+        print("Usage: auraforge debug delete <url> [<url> ...]")
+        print("  Deletes paste.rs pastes uploaded by 'auraforge debug share'.")
         return
 
     for url in urls:
@@ -1034,7 +1034,7 @@ def run_debug(args):
         run_debug_delete(args)
     else:
         # Default: show help
-        print("Usage: hermes debug <command>")
+        print("Usage: auraforge debug <command>")
         print()
         print("Commands:")
         print("  share    Upload debug report to a paste service and print URL")

@@ -1,4 +1,4 @@
-"""Hermes-managed uv and Python runtime repair.
+"""Aura Forge-managed uv and Python runtime repair.
 
 Aura Forge owns its own uv binary at ``$AURA_FORGE_HOME/bin/uv`` (or ``uv.exe`` on
 Windows).  Every code path that needs uv resolves it from that single location.
@@ -9,7 +9,7 @@ probing, no conda guards, no multi-location resolution chains.
 
 The Python backing the install is different: it is shared by every Aura Forge
 profile because the checkout's ``venv`` is shared.  Runtime repair therefore
-uses an install-scoped store under ``<checkout>/.hermes-runtime/python``. A
+uses an install-scoped store under ``<checkout>/.auraforge-runtime/python``. A
 vulnerable interpreter is never reinstalled in place. We provision a new
 immutable Python generation, build and smoke-test a relocatable sibling venv,
 then cut over with same-filesystem renames. The old venv remains available for
@@ -34,13 +34,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from hermes_cli.sqlite_runtime import SQLiteRuntimeInfo, probe_sqlite_runtime
 
 logger = logging.getLogger(__name__)
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_RUNTIME_DIR_NAME = ".hermes-runtime"
+_RUNTIME_DIR_NAME = ".auraforge-runtime"
 _VENV_NAME = "venv"
 _ALT_VENV_NAME = ".venv"
 _REPAIR_LOCK_NAME = "runtime-repair.lock"
@@ -58,7 +58,7 @@ def managed_uv_path() -> Path:
     Windows.  The directory may not exist yet — callers should use
     ``ensure_uv()`` to bootstrap it.
     """
-    home = get_hermes_home()
+    home = get_aura_forge_home()
     if platform.system() == "Windows":
         return home / "bin" / "uv.exe"
     return home / "bin" / "uv"
@@ -87,7 +87,7 @@ def managed_python_env(
     install_dir: Path | None = None,
     base_env: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    """Return a sanitized environment for Hermes-private uv Python commands."""
+    """Return a sanitized environment for Aura Forge-private uv Python commands."""
     target = (
         Path(install_dir)
         if install_dir is not None
@@ -359,9 +359,9 @@ def _uv_self_update_is_fresh(now: float | None = None) -> bool:
     caches the last successful self-update time.
     """
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
 
-        stamp = get_hermes_home() / "cache" / ".uv_self_update_stamp"
+        stamp = get_aura_forge_home() / "cache" / ".uv_self_update_stamp"
         age = (now if now is not None else time.time()) - stamp.stat().st_mtime
         return 0 <= age < UV_SELF_UPDATE_INTERVAL_SECONDS
     except Exception:
@@ -370,9 +370,9 @@ def _uv_self_update_is_fresh(now: float | None = None) -> bool:
 
 def _touch_uv_self_update_stamp() -> None:
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
 
-        stamp = get_hermes_home() / "cache" / ".uv_self_update_stamp"
+        stamp = get_aura_forge_home() / "cache" / ".uv_self_update_stamp"
         stamp.parent.mkdir(parents=True, exist_ok=True)
         stamp.touch()
     except OSError:
@@ -1141,7 +1141,7 @@ def _refresh_managed_uv_catalog(uv_bin: str) -> bool:
     newer version number to retry with.
 
     Re-running the official installer is the only supported refresh path for
-    unmanaged installs.  Only the Hermes-managed binary is ever refreshed;
+    unmanaged installs.  Only the Aura Forge-managed binary is ever refreshed;
     a caller-supplied foreign uv path is left alone.
 
     Returns ``True`` when the binary's version actually changed — i.e. a

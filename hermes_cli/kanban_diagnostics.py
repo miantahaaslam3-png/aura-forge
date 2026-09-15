@@ -453,8 +453,8 @@ def _rule_triage_aux_unavailable(task, events, runs, now, cfg) -> list[Diagnosti
     if not auto_decompose:
         actions.append(DiagnosticAction(
             kind="cli_hint",
-            label=f"Specify manually: hermes kanban specify {task_id}",
-            payload={"command": f"hermes kanban specify {task_id}"},
+            label=f"Specify manually: auraforge kanban specify {task_id}",
+            payload={"command": f"auraforge kanban specify {task_id}"},
         ))
 
     return [Diagnostic(
@@ -582,14 +582,14 @@ def _rule_repeated_failures(task, events, runs, now, cfg) -> list[Diagnostic]:
         # Spawn is failing specifically — profile setup issue.
         actions.append(DiagnosticAction(
             kind="cli_hint",
-            label=f"Verify profile: hermes -p {assignee} doctor",
-            payload={"command": f"hermes -p {assignee} doctor"},
+            label=f"Verify profile: auraforge -p {assignee} doctor",
+            payload={"command": f"auraforge -p {assignee} doctor"},
             suggested=True,
         ))
         actions.append(DiagnosticAction(
             kind="cli_hint",
-            label=f"Fix profile auth: hermes -p {assignee} auth",
-            payload={"command": f"hermes -p {assignee} auth"},
+            label=f"Fix profile auth: auraforge -p {assignee} auth",
+            payload={"command": f"auraforge -p {assignee} auth"},
         ))
     elif most_recent_outcome in {"timed_out", "crashed"}:
         # Worker got off the ground but died. Logs are the right place
@@ -598,8 +598,8 @@ def _rule_repeated_failures(task, events, runs, now, cfg) -> list[Diagnostic]:
         if task_id:
             actions.append(DiagnosticAction(
                 kind="cli_hint",
-                label=f"Check logs: hermes kanban log {task_id}",
-                payload={"command": f"hermes kanban log {task_id}"},
+                label=f"Check logs: auraforge kanban log {task_id}",
+                payload={"command": f"auraforge kanban log {task_id}"},
                 suggested=True,
             ))
     actions.extend(_generic_recovery_actions(
@@ -713,8 +713,8 @@ def _rule_repeated_crashes(task, events, runs, now, cfg) -> list[Diagnostic]:
     if task_id:
         actions.append(DiagnosticAction(
             kind="cli_hint",
-            label=f"Check logs: hermes kanban log {task_id}",
-            payload={"command": f"hermes kanban log {task_id}"},
+            label=f"Check logs: auraforge kanban log {task_id}",
+            payload={"command": f"auraforge kanban log {task_id}"},
             suggested=True,
         ))
     running = _task_field(task, "status") == "running"
@@ -794,14 +794,14 @@ def _rule_review_dependency_deadlock(task, events, runs, now, cfg) -> list[Diagn
         actions.append(DiagnosticAction(
             kind="cli_hint",
             label="Complete the finished implementation phase",
-            payload={"command": f"hermes kanban complete {task_id}"},
+            payload={"command": f"auraforge kanban complete {task_id}"},
             suggested=True,
         ))
     if task_id and child_ids:
         actions.append(DiagnosticAction(
             kind="cli_hint",
             label="Or unlink the incorrectly gated reviewer",
-            payload={"command": f"hermes kanban unlink {task_id} {child_ids[0]}"},
+            payload={"command": f"auraforge kanban unlink {task_id} {child_ids[0]}"},
         ))
 
     blocked_at = _event_ts(latest_block) or now
@@ -929,8 +929,8 @@ def _rule_block_unblock_cycling(task, events, runs, now, cfg) -> list[Diagnostic
     if task_id:
         actions.append(DiagnosticAction(
             kind="cli_hint",
-            label=f"Check block reasons: hermes kanban events {task_id}",
-            payload={"command": f"hermes kanban events {task_id}"},
+            label=f"Check block reasons: auraforge kanban events {task_id}",
+            payload={"command": f"auraforge kanban events {task_id}"},
             suggested=True,
         ))
     return [Diagnostic(
@@ -1050,7 +1050,7 @@ def _rule_stranded_in_ready(task, events, runs, now, cfg) -> list[Diagnostic]:
         DiagnosticAction(
             kind="cli_hint",
             label="Check dispatcher status",
-            payload={"command": "hermes kanban diagnostics"},
+            payload={"command": "auraforge kanban diagnostics"},
         ),
     ]
 

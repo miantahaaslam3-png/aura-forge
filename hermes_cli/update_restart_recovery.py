@@ -98,12 +98,12 @@ def _systemd_unit_candidates(profile: str) -> tuple[str, ...]:
     """Unit names the existing systemd gateway lifecycle produces per profile."""
     if profile == "default":
         return (
-            "hermes-gateway.service",
+            "auraforge-gateway.service",
             "gateway.service",
             "gateway-default.service",
         )
     return (
-        f"hermes-gateway-{profile}.service",
+        f"auraforge-gateway-{profile}.service",
         f"gateway-{profile}.service",
     )
 

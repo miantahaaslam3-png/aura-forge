@@ -63,11 +63,11 @@ MIGRATION_OPTION_METADATA: Dict[str, Dict[str, str]] = {
     },
     "messaging-settings": {
         "label": "Messaging settings",
-        "description": "Import Hermes-compatible messaging settings such as allowlists and working directory.",
+        "description": "Import Aura Forge-compatible messaging settings such as allowlists and working directory.",
     },
     "secret-settings": {
         "label": "Allowlisted secrets",
-        "description": "Import the small allowlist of Hermes-compatible secrets when explicitly enabled.",
+        "description": "Import the small allowlist of Aura Forge-compatible secrets when explicitly enabled.",
     },
     "command-allowlist": {
         "label": "Command allowlist",
@@ -75,11 +75,11 @@ MIGRATION_OPTION_METADATA: Dict[str, Dict[str, str]] = {
     },
     "skills": {
         "label": "User skills",
-        "description": "Copy OpenClaw skills into ~/.hermes/skills/openclaw-imports/.",
+        "description": "Copy OpenClaw skills into ~/.auraforge/skills/openclaw-imports/.",
     },
     "tts-assets": {
         "label": "TTS assets",
-        "description": "Copy compatible workspace TTS assets into ~/.hermes/tts/.",
+        "description": "Copy compatible workspace TTS assets into ~/.auraforge/tts/.",
     },
     "discord-settings": {
         "label": "Discord settings",
@@ -131,7 +131,7 @@ MIGRATION_OPTION_METADATA: Dict[str, Dict[str, str]] = {
     },
     "cron-jobs": {
         "label": "Cron / scheduled tasks",
-        "description": "Import cron job definitions. Archive for manual recreation via 'hermes cron'.",
+        "description": "Import cron job definitions. Archive for manual recreation via 'auraforge cron'.",
     },
     "hooks-config": {
         "label": "Hooks and webhooks",
@@ -390,7 +390,7 @@ def load_yaml_file(path: Path) -> Dict[str, Any]:
     except yaml.YAMLError as exc:
         raise ConfigReadError(
             f"Refusing to overwrite {path}: the existing file is not valid YAML "
-            f"({exc}). Fix it with `hermes config edit` (or move it aside), then "
+            f"({exc}). Fix it with `auraforge config edit` (or move it aside), then "
             f"re-run the migration."
         ) from exc
     # An empty file parses to None — a legitimate state with nothing to lose.
@@ -400,7 +400,7 @@ def load_yaml_file(path: Path) -> Dict[str, Any]:
         raise ConfigReadError(
             f"Refusing to overwrite {path}: expected the existing file to hold a "
             f"YAML mapping but found {type(data).__name__}. Fix it with "
-            f"`hermes config edit` (or move it aside), then re-run the migration."
+            f"`auraforge config edit` (or move it aside), then re-run the migration."
         )
     return data
 
@@ -418,7 +418,7 @@ def dump_yaml_file(path: Path, data: Dict[str, Any]) -> None:
     cross-device handling mirrors ``utils.atomic_replace``: a plain
     ``os.replace`` onto a symlinked config.yaml would replace the *link* with a
     regular file, silently detaching managed deployments that symlink
-    ``~/.hermes/config.yaml`` into a dotfiles repo or profile package.
+    ``~/.auraforge/config.yaml`` into a dotfiles repo or profile package.
     """
     if yaml is None:
         raise RuntimeError("PyYAML is required to update Aura Forge config.yaml")
@@ -508,8 +508,8 @@ def backup_existing(path: Path, backup_root: Path) -> Optional[Path]:
 # read as self-referential to the new agent identity.
 #
 # Case-preserving: ``OpenClaw`` → ``Aura Forge`` (prose), but lowercase matches
-# like ``openclaw`` → ``hermes`` (so filesystem paths like ``~/.openclaw``
-# become ``~/.hermes`` — the real Aura Forge home — not the broken ``~/.Aura Forge``).
+# like ``openclaw`` → ``auraforge`` (so filesystem paths like ``~/.openclaw``
+# become ``~/.auraforge`` — the real Aura Forge home — not the broken ``~/.Aura Forge``).
 _REBRAND_PATTERNS: List[Tuple[re.Pattern, str]] = [
     (re.compile(r'\bOpen[\s-]?Claw\b', re.IGNORECASE), 'Aura Forge'),
     (re.compile(r'\bClawdBot\b', re.IGNORECASE), 'Aura Forge'),
@@ -521,9 +521,9 @@ def _case_preserving_replacement(replacement: str):
     """Return a re.sub replacement fn that lowercases the result when the
     matched text was all-lowercase.
 
-    Keeps ``OpenClaw`` → ``Aura Forge`` but maps ``openclaw`` → ``hermes`` so a
+    Keeps ``OpenClaw`` → ``Aura Forge`` but maps ``openclaw`` → ``auraforge`` so a
     filesystem path like ``~/.openclaw/config.yaml`` rewrites to
-    ``~/.hermes/config.yaml`` (the real Aura Forge home) instead of the broken
+    ``~/.auraforge/config.yaml`` (the real Aura Forge home) instead of the broken
     ``~/.Aura Forge/config.yaml``.
     """
     def _sub(match: "re.Match[str]") -> str:
@@ -856,7 +856,7 @@ class Migrator:
         # Once a config.yaml write hits conflict/error mid-run, later
         # config.yaml writes are deliberately short-circuited to avoid
         # leaving config in a partially-written state.  Modelled on
-        # OpenClaw's extensions/migrate-hermes/apply.ts "blocked by earlier
+        # OpenClaw's extensions/migrate-auraforge/apply.ts "blocked by earlier
         # apply conflict" sequencing.
         self._config_apply_blocked: bool = False
 
@@ -1171,7 +1171,7 @@ class Migrator:
     def _build_warnings(self, summary: Dict[str, int]) -> List[str]:
         """Structured warnings surfaced on the report for downstream consumers.
 
-        Modelled on OpenClaw's extensions/migrate-hermes/plan.ts warnings[].
+        Modelled on OpenClaw's extensions/migrate-auraforge/plan.ts warnings[].
         Keep the messages actionable — they show up in summary.md and the
         JSON report.
         """
@@ -1501,7 +1501,7 @@ class Migrator:
         if additions:
             self.merge_env_values(additions, "messaging-settings", self.source_root / "openclaw.json")
         else:
-            self.record("messaging-settings", self.source_root / "openclaw.json", self.target_root / ".env", "skipped", "No Hermes-compatible messaging settings found")
+            self.record("messaging-settings", self.source_root / "openclaw.json", self.target_root / ".env", "skipped", "No Aura Forge-compatible messaging settings found")
 
     def handle_secret_settings(self, config: Optional[Dict[str, Any]] = None) -> None:
         config = config or self.load_openclaw_config()
@@ -1545,7 +1545,7 @@ class Migrator:
                 self.source_root / "openclaw.json",
                 self.target_root / ".env",
                 "skipped",
-                "No allowlisted Hermes-compatible secrets found",
+                "No allowlisted Aura Forge-compatible secrets found",
                 supported_targets=sorted(SUPPORTED_SECRET_TARGETS),
             )
 
@@ -1678,7 +1678,7 @@ class Migrator:
                             None,
                             "skipped",
                             f"Provider '{provider_name}' uses a {raw_key['source']}-backed SecretRef "
-                            f"that cannot be auto-migrated. Add this key manually via: hermes config set",
+                            f"that cannot be auto-migrated. Add this key manually via: auraforge config set",
                         )
                     continue
 
@@ -2217,8 +2217,8 @@ class Migrator:
                 self.archive_path(candidate, reason="No direct Aura Forge destination; archived for manual review")
 
         partially_extracted = [
-            ("openclaw.json", "Selected Hermes-compatible values were extracted; raw OpenClaw config was not copied."),
-            ("credentials/telegram-default-allowFrom.json", "Selected Hermes-compatible values were extracted; raw credentials file was not copied."),
+            ("openclaw.json", "Selected Aura Forge-compatible values were extracted; raw OpenClaw config was not copied."),
+            ("credentials/telegram-default-allowFrom.json", "Selected Aura Forge-compatible values were extracted; raw credentials file was not copied."),
         ]
         for rel, reason in partially_extracted:
             candidate = self.source_root / rel
@@ -2378,7 +2378,7 @@ class Migrator:
                 dest = self.archive_dir / "cron-config.json"
                 dest.write_text(json.dumps(cron, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
                 self.record("cron-jobs", "openclaw.json cron.*", str(dest), "archived",
-                            "Cron config archived. Use 'hermes cron' to recreate jobs manually.")
+                            "Cron config archived. Use 'auraforge cron' to recreate jobs manually.")
             else:
                 self.record("cron-jobs", "openclaw.json cron.*", "archive/cron-config.json",
                             "archived", "Would archive cron config")
@@ -2558,7 +2558,7 @@ class Migrator:
             dest = self.archive_dir / "gateway-config.json"
             dest.write_text(json.dumps(gateway, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         self.record("gateway-config", "openclaw.json gateway.*", "archive/gateway-config.json",
-                    "archived", "Gateway config archived. Use 'hermes gateway' to configure.")
+                    "archived", "Gateway config archived. Use 'auraforge gateway' to configure.")
 
         # Extract gateway auth token to .env if present
         auth = gateway.get("auth") or {}
@@ -3047,25 +3047,25 @@ class Migrator:
             "directories, it may read/write to them instead of the Aura Forge state, causing",
             "confusion (e.g., cron jobs reading a different todo list than interactive sessions).",
             "",
-            "**Strongly recommended:** Run `hermes claw cleanup` to rename the OpenClaw",
+            "**Strongly recommended:** Run `auraforge claw cleanup` to rename the OpenClaw",
             "directory to `.openclaw.pre-migration`. This prevents the agent from finding it.",
             "The directory is renamed, not deleted — you can undo this at any time.",
             "",
             "If you skip this step and notice the agent getting confused about workspaces",
-            "or todo lists, run `hermes claw cleanup` to fix it.",
+            "or todo lists, run `auraforge claw cleanup` to fix it.",
             "",
-            "## Hermes-Specific Setup",
+            "## Aura Forge-Specific Setup",
             "",
             "After migration, you may want to:",
-            "- Run `hermes claw cleanup` to archive the OpenClaw directory (prevents state confusion)",
-            "- Run `hermes setup` to configure any remaining settings",
-            "- Run `hermes mcp list` to verify MCP servers were imported correctly",
+            "- Run `auraforge claw cleanup` to archive the OpenClaw directory (prevents state confusion)",
+            "- Run `auraforge setup` to configure any remaining settings",
+            "- Run `auraforge mcp list` to verify MCP servers were imported correctly",
         ])
 
         if has_cron_config_archive:
-            notes.append("- Run `hermes cron` to recreate scheduled tasks (see archive/cron-config.json)")
+            notes.append("- Run `auraforge cron` to recreate scheduled tasks (see archive/cron-config.json)")
         elif has_cron_store_archive:
-            notes.append("- Run `hermes cron` to recreate scheduled tasks (see archived cron-store)")
+            notes.append("- Run `auraforge cron` to recreate scheduled tasks (see archived cron-store)")
 
         # Check if skills were imported
         has_skills = any(i.kind == "skills" and i.status == "migrated" for i in self.items)
@@ -3090,13 +3090,13 @@ class Migrator:
                 "WhatsApp uses QR-code pairing, not token-based auth. Your allowlist",
                 "was migrated, but you must re-pair the device by running:",
                 "",
-                "    hermes whatsapp",
+                "    auraforge whatsapp",
                 "",
             ])
 
         notes.extend([
-            "- Run `hermes gateway install` if you need the gateway service",
-            "- Review `~/.hermes/config.yaml` for any adjustments",
+            "- Run `auraforge gateway install` if you need the gateway service",
+            "- Review `~/.auraforge/config.yaml` for any adjustments",
             "",
         ])
 
@@ -3110,7 +3110,7 @@ class Migrator:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Migrate OpenClaw user state into Aura Forge Agent.")
     parser.add_argument("--source", default=str(Path.home() / ".openclaw"), help="OpenClaw home directory")
-    parser.add_argument("--target", default=os.environ.get("HERMES_HOME") or str(Path.home() / ".hermes"), help="Aura Forge home directory")
+    parser.add_argument("--target", default=os.environ.get("HERMES_HOME") or str(Path.home() / ".auraforge"), help="Aura Forge home directory")
     parser.add_argument(
         "--workspace-target",
         help="Optional workspace root where the workspace instructions file should be copied",
@@ -3120,7 +3120,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--migrate-secrets",
         action="store_true",
-        help="Import a narrow allowlist of Hermes-compatible secrets into the target env file",
+        help="Import a narrow allowlist of Aura Forge-compatible secrets into the target env file",
     )
     parser.add_argument(
         "--skill-conflict",
@@ -3217,7 +3217,7 @@ def main() -> int:
             seen_kinds.add(label)
             dest = item.get("destination") or ""
             if dest.startswith(str(report["target_root"])):
-                dest = "~/.hermes/" + dest[len(str(report["target_root"])) + 1:]
+                dest = "~/.auraforge/" + dest[len(str(report["target_root"])) + 1:]
             meta = MIGRATION_OPTION_METADATA.get(label, {})
             display = meta.get("label", label)
             print(f"    ✔ {display:<35s} -> {dest}")
@@ -3263,10 +3263,10 @@ def main() -> int:
     if args.execute:
         print()
         print("  Next steps:")
-        print("    1. Review ~/.hermes/config.yaml")
-        print("    2. Run: hermes mcp list")
+        print("    1. Review ~/.auraforge/config.yaml")
+        print("    2. Run: auraforge mcp list")
         if any(i["kind"] == "cron-jobs" and i["status"] == "archived" for i in items):
-            print("    3. Recreate cron jobs: hermes cron")
+            print("    3. Recreate cron jobs: auraforge cron")
         if report.get("output_dir"):
             print(f"    → Full report: {report['output_dir']}/MIGRATION_NOTES.md")
     elif not args.execute:

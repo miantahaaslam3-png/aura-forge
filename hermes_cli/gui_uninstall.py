@@ -18,14 +18,14 @@ the Python agent or the user's config/data:
      Installed by the OS to a standard application location and carrying its
      own bundled Electron + a per-user Electron ``userData`` directory:
        - macOS:   ``/Applications/AuraForge.app`` or ``~/Applications/AuraForge.app``
-       - Windows: ``%LOCALAPPDATA%\\Programs\\Hermes`` (NSIS per-user)
+       - Windows: ``%LOCALAPPDATA%\\Programs\\Aura Forge`` (NSIS per-user)
        - Linux:   ``~/.local/share/applications`` .desktop entry + AppImage
 
 In both shapes the Electron runtime keeps a ``userData`` directory keyed on
 the app name ("Aura Forge"), separate from ``$AURA_FORGE_HOME``:
-  - macOS:   ``~/Library/Application Support/Hermes``
-  - Windows: ``%APPDATA%\\Hermes``
-  - Linux:   ``$XDG_CONFIG_HOME/Hermes`` (default ``~/.config/Hermes``)
+  - macOS:   ``~/Library/Application Support/Aura Forge``
+  - Windows: ``%APPDATA%\\Aura Forge``
+  - Linux:   ``$XDG_CONFIG_HOME/Aura Forge`` (default ``~/.config/Aura Forge``)
 
 This holds the desktop's own ``connection.json`` / ``updates.json`` and
 Chromium cache — pure GUI state, safe to remove on a GUI uninstall.
@@ -40,7 +40,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 from hermes_cli.colors import Colors, color
 
@@ -62,9 +62,9 @@ def log_warn(msg: str):
 # ---------------------------------------------------------------------------
 
 
-def _agent_root(hermes_home: Path) -> Path:
+def _agent_root(aura_forge_home: Path) -> Path:
     """The agent checkout root — same layout install.sh / install.ps1 use."""
-    return hermes_home / "aura-forge-agent"
+    return aura_forge_home / "aura-forge-agent"
 
 
 def desktop_userdata_dir() -> Path:
@@ -87,14 +87,14 @@ def desktop_userdata_dir() -> Path:
     return base / "Aura Forge"
 
 
-def source_built_gui_artifacts(hermes_home: Path) -> "list[Path]":
+def source_built_gui_artifacts(aura_forge_home: Path) -> "list[Path]":
     """GUI build artifacts produced by ``auraforge desktop`` inside the checkout.
 
     These are removable on a GUI uninstall without harming the agent: the
     Python agent runs from ``aura-forge-agent/`` source + ``venv/`` and never
     needs the Electron build output or node_modules.
     """
-    agent_root = _agent_root(hermes_home)
+    agent_root = _agent_root(aura_forge_home)
     desktop_dir = agent_root / "apps" / "desktop"
     return [
         desktop_dir / "dist",
@@ -104,7 +104,7 @@ def source_built_gui_artifacts(hermes_home: Path) -> "list[Path]":
         # desktop workspace, ~200MB). The agent does not use any npm package,
         # so this is GUI tooling — safe to drop on a GUI uninstall.
         agent_root / "node_modules",
-        hermes_home / "desktop-build-stamp.json",
+        aura_forge_home / "desktop-build-stamp.json",
     ]
 
 
@@ -126,10 +126,10 @@ def packaged_gui_app_paths() -> "list[Path]":
         local = os.environ.get("LOCALAPPDATA")
         local_base = Path(local) if local else (home / "AppData" / "Local")
         paths += [
-            # NSIS per-user install (perMachine=false → Programs\Hermes).
+            # NSIS per-user install (perMachine=false → Programs\Aura Forge).
             local_base / "Programs" / "Aura Forge",
             # Older / alternate layout some builds used.
-            local_base / "hermes-desktop",
+            local_base / "auraforge-desktop",
         ]
         program_files = os.environ.get("ProgramFiles")
         if program_files:
@@ -156,14 +156,14 @@ def packaged_gui_app_paths() -> "list[Path]":
     return paths
 
 
-def agent_is_installed(hermes_home: Path) -> bool:
+def agent_is_installed(aura_forge_home: Path) -> bool:
     """Return True when a usable Python agent install exists under AURA_FORGE_HOME.
 
     Used by the desktop UI to decide which uninstall options to offer: if the
     agent isn't present (a future "lite" GUI-only client), the "remove agent"
     options are hidden.
     """
-    agent_root = _agent_root(hermes_home)
+    agent_root = _agent_root(aura_forge_home)
     # A real install has the package source + a venv. Either signal alone is
     # enough — a source checkout without a venv is still "the agent is here".
     if (agent_root / "hermes_cli").is_dir():
@@ -173,9 +173,9 @@ def agent_is_installed(hermes_home: Path) -> bool:
     return False
 
 
-def gui_is_installed(hermes_home: Path) -> bool:
+def gui_is_installed(aura_forge_home: Path) -> bool:
     """Return True when any desktop GUI artifact exists (built or packaged)."""
-    for p in source_built_gui_artifacts(hermes_home):
+    for p in source_built_gui_artifacts(aura_forge_home):
         if p.exists():
             return True
     for p in packaged_gui_app_paths():
@@ -186,21 +186,21 @@ def gui_is_installed(hermes_home: Path) -> bool:
     return False
 
 
-def gui_install_summary(hermes_home: "Path | None" = None) -> dict:
+def gui_install_summary(aura_forge_home: "Path | None" = None) -> dict:
     """Structured snapshot of what's installed, for the desktop UI to render.
 
     Returns JSON-serializable primitives so the Electron main process can
     forward it to the renderer via IPC (paths as strings, booleans for the
     high-level questions the UI gates options on).
     """
-    home: Path = hermes_home if hermes_home is not None else get_hermes_home()
+    home: Path = aura_forge_home if aura_forge_home is not None else get_aura_forge_home()
 
     source_artifacts = [p for p in source_built_gui_artifacts(home) if p.exists()]
     packaged = [p for p in packaged_gui_app_paths() if p.exists()]
     userdata = desktop_userdata_dir()
 
     return {
-        "hermes_home": str(home),
+        "aura_forge_home": str(home),
         "agent_installed": agent_is_installed(home),
         "gui_installed": gui_is_installed(home),
         "source_built_artifacts": [str(p) for p in source_artifacts],
@@ -230,7 +230,7 @@ def _remove_path(path: Path) -> bool:
     return False
 
 
-def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
+def uninstall_gui(aura_forge_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
     """Remove the desktop GUI's artifacts, leaving the agent + user data intact.
 
     Removes:
@@ -244,7 +244,7 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
 
     Returns the list of paths actually removed.
     """
-    home: Path = hermes_home if hermes_home is not None else get_hermes_home()
+    home: Path = aura_forge_home if aura_forge_home is not None else get_aura_forge_home()
 
     removed: list[Path] = []
 
@@ -298,8 +298,8 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
 
         log_info(
             "If you installed the desktop via a .deb / .rpm package, remove it "
-            "with your package manager (e.g. 'sudo apt remove hermes' or "
-            "'sudo dnf remove hermes'). AppImage builds are a single file you "
+            "with your package manager (e.g. 'sudo apt remove auraforge' or "
+            "'sudo dnf remove auraforge'). AppImage builds are a single file you "
             "can delete from wherever you saved it."
         )
 

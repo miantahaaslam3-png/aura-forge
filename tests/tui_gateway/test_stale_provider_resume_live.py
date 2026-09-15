@@ -41,8 +41,8 @@ NEW_URL = "https://new-endpoint.invalid/v1"
 @pytest.fixture()
 def live_home(monkeypatch):
     """A REAL isolated HERMES_HOME with a config.yaml + state.db on disk."""
-    tmp = Path(tempfile.mkdtemp(prefix="hermes-live-staleprov-"))
-    home = tmp / ".hermes"
+    tmp = Path(tempfile.mkdtemp(prefix="auraforge-live-staleprov-"))
+    home = tmp / ".auraforge"
     home.mkdir(parents=True)
     config = {
         "model": {"default": "test-model-live", "provider": "custom:newone"},

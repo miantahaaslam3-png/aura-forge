@@ -284,7 +284,7 @@ class TestSendMessageTool:
 
     def test_ntfy_topic_target_bypasses_channel_directory(self):
         ntfy_platform = Platform("ntfy")
-        ntfy_cfg = SimpleNamespace(enabled=True, token=None, extra={"topic": "hermes-in"})
+        ntfy_cfg = SimpleNamespace(enabled=True, token=None, extra={"topic": "auraforge-in"})
         config = SimpleNamespace(
             platforms={ntfy_platform: ntfy_cfg},
             get_home_channel=lambda _platform: None,
@@ -493,7 +493,7 @@ class TestSendToPlatformChunking:
     def test_signal_long_message_is_chunked(self, monkeypatch):
         """Standalone Signal sends split at the adapter's 8000-char limit.
 
-        The standalone path (hermes send / cron / MCP) speaks raw JSON-RPC via
+        The standalone path (auraforge send / cron / MCP) speaks raw JSON-RPC via
         _send_signal and bypasses SignalAdapter.send(), so the shared
         truncate_message() pass in _send_to_platform must know Signal's limit
         (regression for #67279 / #57929 — long sends were rejected whole).
@@ -738,7 +738,7 @@ class TestSendToPlatformWhatsapp:
                     Platform.WHATSAPP,
                     SimpleNamespace(enabled=True, token=None, extra={"bridge_port": 3000}),
                     chat_id,
-                    "hello from hermes",
+                    "hello from auraforge",
                 )
             )
         finally:
@@ -749,7 +749,7 @@ class TestSendToPlatformWhatsapp:
         async_mock.assert_awaited_once()
         _call = async_mock.await_args
         assert _call.args[1] == chat_id
-        assert _call.args[2] == "hello from hermes"
+        assert _call.args[2] == "hello from auraforge"
 
 
 class TestSendTelegramHtmlDetection:
@@ -914,7 +914,7 @@ class TestParseTargetRef:
              "!HLOQwxYGgFPMPJUSNR:matrix.org", "$thread123:matrix.org"),
             ("matrix", "!HLOQwxYGgFPMPJUSNR:matrix.org",
              "!HLOQwxYGgFPMPJUSNR:matrix.org", None),
-            ("matrix", "@hermes:matrix.org", "@hermes:matrix.org", None),
+            ("matrix", "@auraforge:matrix.org", "@auraforge:matrix.org", None),
             # Phone platforms: E.164 keeps its '+' for signal-cli; groups and
             # bare digits also resolve.
             ("signal", "+41791234567", "+41791234567", None),
@@ -1666,8 +1666,8 @@ class _FakePlatform:
 class TestSendViaAdapterStandaloneFallback:
     """Coverage for the out-of-process plugin-platform send path.
 
-    When the gateway runner is not in this process (e.g. ``hermes cron``
-    runs separately from ``hermes gateway``), ``_send_via_adapter`` should
+    When the gateway runner is not in this process (e.g. ``auraforge cron``
+    runs separately from ``auraforge gateway``), ``_send_via_adapter`` should
     fall through to the plugin's ``standalone_sender_fn`` registered on
     its ``PlatformEntry``.  Without the hook, the existing error string
     is returned (with a more helpful tail).

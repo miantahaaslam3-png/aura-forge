@@ -1,7 +1,7 @@
 """Bot Mode roster probe — canonical Bot Chat system prompt section.
 
 When the desktop's Bot Mode manages this install (any profile carries a
-``ui_meta['hermes-bots']`` block in its profile.yaml), a bot's canonical
+``ui_meta['auraforge-bots']`` block in its profile.yaml), a bot's canonical
 "Bot Chat" session — and ONLY that session — gets a short "Messaging other
 agents" section so the bot can receive teammate DMs, reply with attribution,
 and hand off @mentions.  Regular sessions never carry the section; the
@@ -45,7 +45,7 @@ _cached: dict[str, str] = {}
 
 
 def _hermes_root(home: Path) -> Path:
-    """Root ~/.hermes for both the default profile and named profiles."""
+    """Root ~/.auraforge for both the default profile and named profiles."""
     if home.parent.name == "profiles":
         return home.parent.parent
     return home
@@ -58,7 +58,7 @@ def _profile_name(home: Path) -> str:
 
 
 def _is_bot_managed(profile_dir: Path) -> bool:
-    """True when profile.yaml carries a ui_meta['hermes-bots'] block.
+    """True when profile.yaml carries a ui_meta['auraforge-bots'] block.
 
     Cheap substring check before the YAML parse keeps the silent path fast.
     """
@@ -67,13 +67,13 @@ def _is_bot_managed(profile_dir: Path) -> bool:
         if not meta.is_file():
             return False
         raw = meta.read_text(encoding="utf-8", errors="replace")
-        if "hermes-bots" not in raw:
+        if "auraforge-bots" not in raw:
             return False
         import yaml
 
         data = yaml.safe_load(raw)
         ui_meta = data.get("ui_meta") if isinstance(data, dict) else None
-        return isinstance(ui_meta, dict) and isinstance(ui_meta.get("hermes-bots"), dict)
+        return isinstance(ui_meta, dict) and isinstance(ui_meta.get("auraforge-bots"), dict)
     except Exception:
         return False
 
@@ -102,7 +102,7 @@ def is_bot_mode_managed(home: str | os.PathLike | None = None) -> bool:
     """
     try:
         resolved = Path(
-            str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.hermes"))
+            str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.auraforge"))
         )
         root = _hermes_root(resolved)
         return any(_is_bot_managed(d) for _n, d in _roster(root))
@@ -119,14 +119,14 @@ def _soul_has_protocol(profile_dir: Path) -> bool:
 
 
 def _handle(name: str) -> str:
-    # The mention middleware aliases the default profile as @hermes.
-    return "hermes" if name == "default" else name
+    # The mention middleware aliases the default profile as @auraforge.
+    return "auraforge" if name == "default" else name
 
 
 def _profile_role(profile_dir: Path) -> str:
     """A teammate's role line: Bot Mode title, else profile description.
 
-    The ui_meta['hermes-bots'].title is the name the user gave the bot in
+    The ui_meta['auraforge-bots'].title is the name the user gave the bot in
     Bot Mode; profile.yaml's description is the profile's stated purpose.
     Either one tells a teammate WHO to message for a given job. Bounded and
     single-line; empty when neither exists. Never raises.
@@ -143,8 +143,8 @@ def _profile_role(profile_dir: Path) -> str:
             return ""
         parts = []
         ui_meta = data.get("ui_meta")
-        if isinstance(ui_meta, dict) and isinstance(ui_meta.get("hermes-bots"), dict):
-            title = str(ui_meta["hermes-bots"].get("title") or "").strip()
+        if isinstance(ui_meta, dict) and isinstance(ui_meta.get("auraforge-bots"), dict):
+            title = str(ui_meta["auraforge-bots"].get("title") or "").strip()
             if title:
                 parts.append(title)
         description = str(data.get("description") or "").strip()
@@ -169,7 +169,7 @@ def _roster_lines(root: Path, me: str) -> list[str]:
 
 
 def _peers(root: Path) -> list[str]:
-    """Registered peer gateway names (``hermes peer``), for the protocol text.
+    """Registered peer gateway names (``auraforge peer``), for the protocol text.
 
     Reads config.yaml directly (cheap, no config-loader import) — the section
     is optional and absent on most installs. Never raises.
@@ -234,7 +234,7 @@ def _peer_paragraph(root: Path) -> str:
         "\n\nTeammates on OTHER machines: this install also has peer gateways "
         f"registered ({listed}). Message an agent on a peer the same way — "
         'message_agent with target "<peer>/<agent-name>" (or "<peer>" alone '
-        "for the peer's main agent). Run `hermes peer list` for the live "
+        "for the peer's main agent). Run `auraforge peer list` for the live "
         "peer list."
     )
 
@@ -292,7 +292,7 @@ def get_bot_mode_protocol_section(home: str | os.PathLike | None = None, *, forc
     not the ambient HERMES_HOME — build threads can lose the ContextVar
     override and the env var would then name the wrong profile.
     """
-    resolved = str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.hermes"))
+    resolved = str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.auraforge"))
     with _lock:
         if force_refresh or resolved not in _cached:
             try:
@@ -332,7 +332,7 @@ def capability_fingerprint(home: str | os.PathLike | None = None) -> str:
     import hashlib
     import json
 
-    resolved = Path(str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.hermes")))
+    resolved = Path(str(home) if home else (os.getenv("HERMES_HOME") or os.path.expanduser("~/.auraforge")))
     surface: dict = {}
     try:
         # Canonical loader (managed overlay + env expansion + normalization),

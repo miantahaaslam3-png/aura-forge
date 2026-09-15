@@ -132,8 +132,8 @@ nous = NousProfile(
     description="Nous Research — Aura Forge model family",
     signup_url="https://nousresearch.com/",
     fallback_models=(
-        "hermes-3-405b",
-        "hermes-3-70b",
+        "auraforge-3-405b",
+        "auraforge-3-70b",
     ),
     base_url="https://inference-api.nousresearch.com/v1",
     auth_type="oauth_device_code",

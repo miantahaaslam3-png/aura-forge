@@ -22,7 +22,7 @@ import hermes_cli.update_receipt as ur
 @pytest.fixture()
 def receipt_home(tmp_path, monkeypatch):
     """Isolated HERMES_HOME for receipt writes."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setattr(
         "hermes_cli.config.get_hermes_home", lambda: home, raising=False
@@ -43,7 +43,7 @@ class TestReceiptLifecycle:
         ur.record_step("pre_update_backup", True, "snapshot=abc123")
         ur.record_skip("gateway_restart", "no gateways running")
         ur.record_gateway_restart(
-            restarted_services=["hermes-gateway"],
+            restarted_services=["auraforge-gateway"],
             relaunched_profiles=["work"],
             killed_pids=[123],
             failed_units=[],
@@ -60,7 +60,7 @@ class TestReceiptLifecycle:
         assert payload["steps"][0]["ok"] is True
         assert payload["skips"][0]["reason"] == "no gateways running"
         gr = payload["gateway_restart"]
-        assert gr["restarted_services"] == ["hermes-gateway"]
+        assert gr["restarted_services"] == ["auraforge-gateway"]
         assert gr["relaunched_profiles"] == ["work"]
         assert gr["killed_pids"] == [123]
         assert gr["incomplete"] is False
@@ -165,7 +165,7 @@ class TestCommandBoundaryFinalization:
 
     def test_pending_receipt_persisted_on_exit_2_refusal(self, receipt_home):
         ur.begin_update_receipt()
-        ur.record_step("windows_preflight", False, "another hermes.exe running")
+        ur.record_step("windows_preflight", False, "another auraforge.exe running")
         path = ur.finalize_pending_update_receipt(2, "sys.exit(2)")
         assert path is not None and path.is_file()
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -209,7 +209,7 @@ class TestCommandBoundaryFinalization:
 
         def _fake_impl(args, gateway_mode):
             ur.begin_update_receipt()
-            ur.record_step("windows_preflight", False, "hermes.exe holds venv")
+            ur.record_step("windows_preflight", False, "auraforge.exe holds venv")
             sys.exit(2)
 
         monkeypatch.setattr(hermes_main, "_cmd_update_impl", _fake_impl)
@@ -339,7 +339,7 @@ class TestFleetClassification:
         assert stale is True
         out = capsys.readouterr().out
         assert "STALE" in out
-        assert "hermes -p <profile> gateway restart" in out
+        assert "auraforge -p <profile> gateway restart" in out
 
     def test_unknown_does_not_fail_update(self, capsys):
         ok = ur.print_fleet_version_matrix(

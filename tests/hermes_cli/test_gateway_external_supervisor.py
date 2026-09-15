@@ -106,7 +106,7 @@ def test_update_follows_wrapper_upgrade_of_stale_plist_argv(monkeypatch):
         "--replace",
     ]
     upgraded = _prepare_child_command(
-        stale, {"XPC_SERVICE_NAME": "ai.hermes.gateway-work"}
+        stale, {"XPC_SERVICE_NAME": "ai.auraforge.gateway-work"}
     )
     assert upgraded[-1] == "--external-supervisor"
 

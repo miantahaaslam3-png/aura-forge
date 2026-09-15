@@ -143,7 +143,7 @@ def _set_reasoning_effort(config: Dict[str, Any], effort: str) -> None:
 from hermes_cli.config import (
     cfg_get,
     DEFAULT_CONFIG,
-    get_hermes_home,
+    get_aura_forge_home,
     get_config_path,
     get_env_path,
     load_config,
@@ -151,9 +151,9 @@ from hermes_cli.config import (
     save_env_value,
     remove_env_value,
     get_env_value,
-    ensure_hermes_home,
+    ensure_aura_forge_home,
 )
-# display_hermes_home imported lazily at call sites (stale-module safety during hermes update)
+# display_aura_forge_home imported lazily at call sites (stale-module safety during auraforge update)
 
 from hermes_cli.colors import Colors, color
 
@@ -471,7 +471,7 @@ def _prompt_api_key(var: dict):
         print_warning("  Skipped (configure later with 'auraforge setup')")
 
 
-def _print_setup_summary(config: dict, hermes_home):
+def _print_setup_summary(config: dict, aura_forge_home):
     """Print the setup completion summary."""
     # Provider readiness — the one thing setup absolutely must produce.
     # Previously a user could cancel the API-key prompt mid-wizard (Enter →
@@ -671,7 +671,7 @@ def _print_setup_summary(config: dict, hermes_home):
             tool_status.append(("Speech-to-Text (Local Whisper)", True, None))
         else:
             tool_status.append(
-                ("Speech-to-Text (Local Whisper — not installed)", False, "run 'hermes tools' → Speech-to-Text")
+                ("Speech-to-Text (Local Whisper — not installed)", False, "run 'auraforge tools' → Speech-to-Text")
             )
 
     if subscription_features.modal.managed_by_nous:
@@ -734,7 +734,7 @@ def _print_setup_summary(config: dict, hermes_home):
         print_warning(
             "Some tools are disabled. Run 'auraforge setup tools' to configure them,"
         )
-        from hermes_constants import display_hermes_home as _dhh
+        from hermes_constants import display_aura_forge_home as _dhh
         print_warning(f"or edit {_dhh()}/.env directly to add the missing API keys.")
         print()
 
@@ -758,13 +758,13 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
 
     # Show file locations prominently
-    from hermes_constants import display_hermes_home as _dhh
+    from hermes_constants import display_aura_forge_home as _dhh
     print(color(f"📁 All your files are in {_dhh()}/:", Colors.CYAN, Colors.BOLD))
     print()
     print(f"   {color('Settings:', Colors.YELLOW)}  {get_config_path()}")
     print(f"   {color('API Keys:', Colors.YELLOW)}  {get_env_path()}")
     print(
-        f"   {color('Data:', Colors.YELLOW)}      {hermes_home}/cron/, sessions/, logs/"
+        f"   {color('Data:', Colors.YELLOW)}      {aura_forge_home}/cron/, sessions/, logs/"
     )
     print()
 
@@ -794,8 +794,8 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
     print(color("🚀 Ready to go!", Colors.CYAN, Colors.BOLD))
     print()
-    print(f"   {color('hermes', Colors.GREEN)}              Start chatting")
-    print(f"   {color('hermes gateway', Colors.GREEN)}      Start messaging gateway")
+    print(f"   {color('auraforge', Colors.GREEN)}              Start chatting")
+    print(f"   {color('auraforge gateway', Colors.GREEN)}      Start messaging gateway")
     print(f"   {color('auraforge doctor', Colors.GREEN)}       Check for issues")
     print()
 
@@ -1302,7 +1302,7 @@ def _setup_tts_provider(config: dict):
                     save_env_value("XAI_API_KEY", api_key)
                     print_success("xAI TTS API key saved")
                 else:
-                    from hermes_constants import display_hermes_home as _dhh
+                    from hermes_constants import display_aura_forge_home as _dhh
                     print_warning(
                         "No xAI API key provided for TTS. Configure XAI_API_KEY "
                         f"via auraforge setup model or {_dhh()}/.env to use xAI TTS. "
@@ -1989,17 +1989,17 @@ def _setup_telegram_auto_result():
 
     profile_name: str | None = None
     try:
-        profile_name = _profile_name_from_hermes_home(Path(get_hermes_home()))
+        profile_name = _profile_name_from_aura_forge_home(Path(get_aura_forge_home()))
     except Exception:
         pass
 
     return auto_setup_telegram_bot_result(profile_name=profile_name)
 
 
-def _profile_name_from_hermes_home(hermes_home) -> str | None:
+def _profile_name_from_aura_forge_home(aura_forge_home) -> str | None:
     """Return the active profile name when AURA_FORGE_HOME is a profile dir."""
-    if hermes_home.parent.name == "profiles":
-        return hermes_home.name
+    if aura_forge_home.parent.name == "profiles":
+        return aura_forge_home.name
     return None
 
 
@@ -2249,7 +2249,7 @@ def _setup_webhooks():
     save_env_value("WEBHOOK_ENABLED", "true")
     print()
     print_success("Webhooks enabled! Next steps:")
-    from hermes_constants import display_hermes_home as _dhh
+    from hermes_constants import display_aura_forge_home as _dhh
     print_info(f"   1. Define webhook routes in {_dhh()}/config.yaml")
     print_info("   2. Point your service (GitHub, GitLab, etc.) at:")
     print_info("      http://your-server:8644/webhooks/<route-name>")
@@ -2718,7 +2718,7 @@ def _print_migration_preview(report: dict):
         print()
 
 
-def _offer_openclaw_migration(hermes_home: Path) -> bool:
+def _offer_openclaw_migration(aura_forge_home: Path) -> bool:
     """Detect ~/.openclaw and offer to migrate during first-time setup.
 
     Runs a dry-run first to show the user exactly what would be imported,
@@ -2741,7 +2741,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
 
     if not prompt_yes_no("Would you like to see what can be imported?", default=True):
         print_info(
-            "Skipping migration. You can run it later with: hermes claw migrate --dry-run"
+            "Skipping migration. You can run it later with: auraforge claw migrate --dry-run"
         )
         return False
 
@@ -2766,7 +2766,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
         selected = mod.resolve_selected_options(None, None, preset="full")
         dry_migrator = mod.Migrator(
             source_root=openclaw_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=False,  # dry-run — no files modified
             workspace_target=None,
             overwrite=True,  # show everything including conflicts
@@ -2799,7 +2799,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
     # ── Phase 2: Confirm and execute ──
     if not prompt_yes_no("Proceed with migration?", default=False):
         print_info(
-            "Migration cancelled. You can run it later with: hermes claw migrate"
+            "Migration cancelled. You can run it later with: auraforge claw migrate"
         )
         print_info(
             "Use --dry-run to preview again, or --preset minimal for a lighter import."
@@ -2811,7 +2811,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
     try:
         migrator = mod.Migrator(
             source_root=openclaw_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=aura_forge_home.resolve(),
             execute=True,
             workspace_target=None,
             overwrite=False,  # preserve existing Aura Forge config
@@ -2837,7 +2837,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
     if migrated:
         print_success(f"Imported {migrated} item(s) from OpenClaw.")
     if conflicts:
-        print_info(f"Skipped {conflicts} item(s) that already exist in Aura Forge (use hermes claw migrate --overwrite to force).")
+        print_info(f"Skipped {conflicts} item(s) that already exist in Aura Forge (use auraforge claw migrate --overwrite to force).")
     if skipped:
         print_info(f"Skipped {skipped} item(s) (not found or unchanged).")
     if errors:
@@ -3082,7 +3082,7 @@ def _run_setup_wizard_impl(args):
     if is_managed():
         managed_error("run setup wizard")
         return
-    ensure_hermes_home()
+    ensure_aura_forge_home()
 
     reset_requested = bool(getattr(args, "reset", False))
     if reset_requested:
@@ -3093,7 +3093,7 @@ def _run_setup_wizard_impl(args):
     quick_requested = bool(getattr(args, "quick", False))
 
     config = load_config()
-    hermes_home = get_hermes_home()
+    aura_forge_home = get_aura_forge_home()
 
     # Back up existing config before setup modifies it (#3522)
     config_path = get_config_path()
@@ -3212,7 +3212,7 @@ def _run_setup_wizard_impl(args):
         # or when a required API key got cleared).
         if quick_requested:
             _run_setup_steps(
-                [("Quick Setup", lambda: _run_quick_setup(config, hermes_home))]
+                [("Quick Setup", lambda: _run_quick_setup(config, aura_forge_home))]
             )
             return
 
@@ -3238,7 +3238,7 @@ def _run_setup_wizard_impl(args):
             print()
 
         # Offer OpenClaw migration before configuration begins
-        migration_ran = _offer_openclaw_migration(hermes_home)
+        migration_ran = _offer_openclaw_migration(aura_forge_home)
         if migration_ran:
             config = load_config()
 
@@ -3258,7 +3258,7 @@ def _run_setup_wizard_impl(args):
                     (
                         "Quick Setup",
                         lambda: _run_first_time_quick_setup(
-                            config, hermes_home, is_existing
+                            config, aura_forge_home, is_existing
                         ),
                     )
                 ]
@@ -3270,7 +3270,7 @@ def _run_setup_wizard_impl(args):
                     (
                         "Blank Slate",
                         lambda: _run_blank_slate_setup(
-                            config, hermes_home, is_existing
+                            config, aura_forge_home, is_existing
                         ),
                     )
                 ]
@@ -3281,7 +3281,7 @@ def _run_setup_wizard_impl(args):
     print_header("Configuration Location")
     print_info(f"Config file:  {get_config_path()}")
     print_info(f"Secrets file: {get_env_path()}")
-    print_info(f"Data folder:  {hermes_home}")
+    print_info(f"Data folder:  {aura_forge_home}")
     print_info(f"Install dir:  {PROJECT_ROOT}")
     print()
     print_info("You can edit these files directly or use 'auraforge config edit'")
@@ -3348,10 +3348,10 @@ def _run_setup_wizard_impl(args):
         print_info(f"Previous config backed up to: {_backup_path}")
         print_info("If setup changed a value you customized, restore it with:")
         print_info(f"  cp {_backup_path} {config_path}")
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, aura_forge_home)
 
 
-def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
+def _run_first_time_quick_setup(config: dict, aura_forge_home, is_existing: bool):
     """Streamlined first-time setup via Nous Portal: OAuth, model, terminal & messaging.
 
     Routes straight to the Nous Portal provider — runs the device-code OAuth
@@ -3428,7 +3428,7 @@ def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
     _print_macos_fda_tip()
     print()
 
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, aura_forge_home)
 
 
 def _print_macos_fda_tip() -> None:
@@ -3495,7 +3495,7 @@ def _blank_slate_minimal_toolsets(config: dict):
         # Plain (non-composite) TOOLSETS entries — catches recovered toolsets
         # like ``kanban`` that aren't in CONFIGURABLE_TOOLSETS but get re-added.
         for k, tdef in TOOLSETS.items():
-            if k.startswith("hermes-"):
+            if k.startswith("auraforge-"):
                 continue  # platform composites — not user-facing toolsets
             if isinstance(tdef, dict) and tdef.get("includes"):
                 continue  # composite groupings, not leaf toolsets
@@ -3539,7 +3539,7 @@ def _blank_slate_minimize_config(config: dict):
     config.setdefault("display", {})["tool_progress"] = "all"
 
 
-def _run_blank_slate_setup(config: dict, hermes_home, is_existing: bool):
+def _run_blank_slate_setup(config: dict, aura_forge_home, is_existing: bool):
     """Blank Slate setup — start with everything off except the bare minimum.
 
     Forces only the essentials to run an agent (provider + model, the file and
@@ -3610,20 +3610,20 @@ def _run_blank_slate_setup(config: dict, hermes_home, is_existing: bool):
         print()
         print_success("Blank Slate setup complete — minimal agent ready.")
         print_info("Enable anything later, on demand:")
-        print_info("  Enable tools:        hermes tools")
-        print_info("  Seed skills:         hermes skills opt-in --sync")
-        print_info("  Add MCP servers:     hermes mcp add")
-        print_info("  Enable plugins:      hermes plugins")
+        print_info("  Enable tools:        auraforge tools")
+        print_info("  Seed skills:         auraforge skills opt-in --sync")
+        print_info("  Add MCP servers:     auraforge mcp add")
+        print_info("  Enable plugins:      auraforge plugins")
         print_info("  Tune agent settings: auraforge setup agent")
         print()
-        _print_setup_summary(config, hermes_home)
+        _print_setup_summary(config, aura_forge_home)
         return
 
     # ── Walkthrough path — opt in to each capability ──
-    _blank_slate_walkthrough(config, hermes_home)
+    _blank_slate_walkthrough(config, aura_forge_home)
 
 
-def _blank_slate_walkthrough(config: dict, hermes_home):
+def _blank_slate_walkthrough(config: dict, aura_forge_home):
     """Opt-in walkthrough for Blank Slate: skills, tools, plugins, MCP, gateway."""
     from hermes_cli.config import load_config
 
@@ -3701,16 +3701,16 @@ def _blank_slate_walkthrough(config: dict, hermes_home):
 
     print()
     print_success("Blank Slate setup complete — minimal agent ready.")
-    print_info("  Enable more tools:   hermes tools")
-    print_info("  Seed skills:         hermes skills opt-in --sync")
-    print_info("  Add MCP servers:     hermes mcp add")
+    print_info("  Enable more tools:   auraforge tools")
+    print_info("  Seed skills:         auraforge skills opt-in --sync")
+    print_info("  Add MCP servers:     auraforge mcp add")
     print_info("  Tune agent settings: auraforge setup agent")
     print()
 
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, aura_forge_home)
 
 
-def _run_quick_setup(config: dict, hermes_home):
+def _run_quick_setup(config: dict, aura_forge_home):
     """Quick setup — only configure items that are missing."""
     from hermes_cli.config import (
         get_missing_env_vars,
@@ -3873,4 +3873,4 @@ def _run_quick_setup(config: dict, hermes_home):
         save_config(config)
 
     # Jump to summary
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, aura_forge_home)

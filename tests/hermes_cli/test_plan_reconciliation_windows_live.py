@@ -1,6 +1,6 @@
 """LIVE Windows E2E for plan-reconciliation (#92902) on windows-latest.
 
-Real processes with real Hermes-shaped argv, real inventory collection
+Real processes with real Aura Forge-shaped argv, real inventory collection
 (PID-file discovery + supervisor detection on REAL Windows), real
 reconciliation. No mocks on the components under test.
 
@@ -23,7 +23,7 @@ pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="live Windows E2
 
 
 def test_plan_reconciliation_live_windows(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
 
@@ -43,7 +43,7 @@ def test_plan_reconciliation_live_windows(tmp_path, monkeypatch):
             "pid": child.pid,
             "create_time": create_time,
             "gateway_state": "running",
-            "kind": "hermes-gateway",
+            "kind": "auraforge-gateway",
             "code_sha": "f" * 40,
             "code_version": "0.20.5",
         }), encoding="utf-8")

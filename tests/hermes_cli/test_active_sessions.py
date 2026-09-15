@@ -50,7 +50,7 @@ def test_resolve_max_concurrent_sessions_values(caplog):
 
 
 def test_cross_process_acquire_claims_only_one_last_slot(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     repo_root = Path(__file__).resolve().parents[2]
     ready_dir = tmp_path / "ready"
@@ -145,11 +145,11 @@ def test_cross_process_acquire_claims_only_one_last_slot(tmp_path, monkeypatch):
 def test_release_orphaned_leases_reclaims_only_unowned_own_pid_entries(tmp_path, monkeypatch):
     """A long-lived server must reclaim leases whose session skipped teardown.
 
-    ``_prune_dead`` only fires when the owning pid dies, so a ``hermes
+    ``_prune_dead`` only fires when the owning pid dies, so a ``auraforge
     dashboard`` running for days holds a leaked lease until restart. The
     process reconciles against the leases it still owns instead.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     cfg = {"max_concurrent_sessions": 5}
     kept, orphan = (
         active_sessions.try_acquire_active_session(
@@ -185,7 +185,7 @@ def test_release_under_profile_home_override_targets_acquisition_registry(
         set_hermes_home_override,
     )
 
-    root = tmp_path / "hermes"
+    root = tmp_path / "auraforge"
     profile = root / "profiles" / "worker"
     profile.mkdir(parents=True)
     monkeypatch.setenv("HERMES_HOME", str(root))
@@ -222,7 +222,7 @@ def test_transfer_under_profile_home_override_targets_acquisition_registry(
         set_hermes_home_override,
     )
 
-    root = tmp_path / "hermes"
+    root = tmp_path / "auraforge"
     profile = root / "profiles" / "worker"
     profile.mkdir(parents=True)
     monkeypatch.setenv("HERMES_HOME", str(root))
@@ -248,7 +248,7 @@ def test_transfer_under_profile_home_override_targets_acquisition_registry(
 def test_liveness_registry_corruption_fails_closed_without_overwrite(
     tmp_path, monkeypatch
 ):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     state_path = home / "runtime" / "active_sessions.json"
     state_path.parent.mkdir(parents=True)
@@ -288,7 +288,7 @@ def test_liveness_registry_corruption_fails_closed_without_overwrite(
 
 
 def test_strict_registry_rejects_structurally_invalid_entries(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     state_path = home / "runtime" / "active_sessions.json"
     base = {
@@ -329,7 +329,7 @@ def test_strict_registry_rejects_structurally_invalid_entries(tmp_path, monkeypa
 def test_strict_registry_rejects_duplicate_lease_ids(
     tmp_path, monkeypatch, second_session_id
 ):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     state_path = home / "runtime" / "active_sessions.json"
     active_sessions._write_entries(
@@ -360,7 +360,7 @@ def test_strict_registry_rejects_duplicate_lease_ids(
 
 
 def test_cap_transfer_does_not_overwrite_registry_corruption(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     state_path = home / "runtime" / "active_sessions.json"
     lease, message = active_sessions.try_acquire_active_session(
@@ -385,7 +385,7 @@ def test_cap_transfer_does_not_overwrite_registry_corruption(tmp_path, monkeypat
 
 
 def test_liveness_guard_rejects_unknown_pid_state(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     state_path = home / "runtime" / "active_sessions.json"
     active_sessions._write_entries(
@@ -421,7 +421,7 @@ def test_liveness_guard_rejects_unknown_pid_state(tmp_path, monkeypatch):
 
 
 def test_liveness_release_failure_is_retryable(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     lease, message = active_sessions.try_acquire_active_session(
         session_id="session-1",
@@ -450,7 +450,7 @@ def test_liveness_release_failure_is_retryable(tmp_path, monkeypatch):
 def test_liveness_transfer_upserts_missing_entry_without_consuming_a_new_slot(
     tmp_path, monkeypatch
 ):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     lease, message = active_sessions.try_acquire_active_session(
         session_id="session-old",
@@ -479,7 +479,7 @@ def test_liveness_transfer_upserts_missing_entry_without_consuming_a_new_slot(
 
 
 def test_liveness_transfer_write_failure_keeps_old_id_for_retry(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     lease, message = active_sessions.try_acquire_active_session(
         session_id="session-old",
@@ -508,7 +508,7 @@ def test_liveness_transfer_write_failure_keeps_old_id_for_retry(tmp_path, monkey
 def test_release_wins_against_transfer_waiting_on_same_lease_lock(
     tmp_path, monkeypatch
 ):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
     lease, message = active_sessions.try_acquire_active_session(
         session_id="session-old",

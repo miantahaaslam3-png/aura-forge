@@ -1,4 +1,4 @@
-"""Shared fixtures for the hermes-agent test suite.
+"""Shared fixtures for the auraforge-agent test suite.
 
 Hermetic-test invariants enforced here (see AGENTS.md for rationale):
 
@@ -6,9 +6,9 @@ Hermetic-test invariants enforced here (see AGENTS.md for rationale):
    (ending in _API_KEY, _TOKEN, _SECRET, _PASSWORD, _CREDENTIALS, etc.)
    are unset before every test. Local developer keys cannot leak in.
 2. **Isolated HERMES_HOME.** HERMES_HOME points to a per-test tempdir so
-   code reading ``~/.hermes/*`` via ``get_hermes_home()`` can't see the
+   code reading ``~/.auraforge/*`` via ``get_hermes_home()`` can't see the
    real one. (We do NOT also redirect HOME — that broke subprocesses in
-   CI. Code using ``Path.home() / ".hermes"`` instead of the canonical
+   CI. Code using ``Path.home() / ".auraforge"`` instead of the canonical
    ``get_hermes_home()`` is a bug to fix at the callsite.)
 3. **Deterministic runtime.** TZ=UTC, LANG=C.UTF-8, PYTHONHASHSEED=0.
 4. **No HERMES_SESSION_* inheritance** — the agent's current gateway
@@ -41,7 +41,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # `get_hermes_home()` and attaches rotating file handlers to the ROOT logger.
 # So merely importing it - which many test modules do, directly or
 # transitively - points the whole pytest session's logging at the operator's
-# real `~/.hermes/logs/agent.log` and `errors.log`.
+# real `~/.auraforge/logs/agent.log` and `errors.log`.
 #
 # The `_isolate_env` fixture below also sandboxes HERMES_HOME, but fixtures run
 # AFTER collection imports test modules, by which point the handler already
@@ -55,7 +55,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ORDER MATTERS: the kanban write guard's deny-list (further down) must know
 # the REAL Aura Forge root — capture it BEFORE the sandbox rewires HERMES_HOME,
 # otherwise the deny-list would point at the throwaway tempdir and the guard
-# would silently stop protecting the operator's actual ~/.hermes (#69385).
+# would silently stop protecting the operator's actual ~/.auraforge (#69385).
 _PRE_SANDBOX_KANBAN_OVERRIDE = os.environ.get("HERMES_KANBAN_HOME", "").strip()
 _PRE_SANDBOX_HERMES_HOME = os.environ.get("HERMES_HOME", "")
 
@@ -64,10 +64,10 @@ def _hermes_home_points_at_production(value: str) -> bool:
     """True when a pre-set HERMES_HOME resolves to the real production root.
 
     Gateway-launched shells (and developer shells that ``export
-    HERMES_HOME=~/.hermes``) hand pytest the PRODUCTION home. Historically
+    HERMES_HOME=~/.auraforge``) hand pytest the PRODUCTION home. Historically
     the session sandbox below honored any pre-set value, so collection-time
     imports (logging handlers, ``hermes_state.DEFAULT_DB_PATH``) froze paths
-    inside the real ``~/.hermes`` — the escape vector that landed pytest
+    inside the real ``~/.auraforge`` — the escape vector that landed pytest
     fixture rows (chat-1 / wx-chat sessions, /tmp/pytest-of-* routing
     scopes) in the live state.db and flipped its journal mode under the
     WAL-mode gateway writer. Only a genuinely custom (non-production)
@@ -77,7 +77,7 @@ def _hermes_home_points_at_production(value: str) -> bool:
         return True
     try:
         resolved = Path(value).expanduser().resolve()
-        real_root = (Path.home() / ".hermes").resolve()
+        real_root = (Path.home() / ".auraforge").resolve()
     except Exception:
         return True
     if resolved == real_root:
@@ -87,7 +87,7 @@ def _hermes_home_points_at_production(value: str) -> bool:
 
 
 if _hermes_home_points_at_production(os.environ.get("HERMES_HOME", "")):
-    _SESSION_HERMES_HOME = tempfile.mkdtemp(prefix="hermes-test-home-")
+    _SESSION_HERMES_HOME = tempfile.mkdtemp(prefix="auraforge-test-home-")
     os.environ["HERMES_HOME"] = _SESSION_HERMES_HOME
     atexit.register(shutil.rmtree, _SESSION_HERMES_HOME, True)
 
@@ -303,7 +303,7 @@ _HERMES_BEHAVIORAL_VARS = frozenset({
     "HERMES_AGENT_USE_LEGACY_SESSION_KEYS",
     # Kanban path/board pins must never leak from a developer shell or
     # dispatched worker into tests; otherwise tests can write fake tasks to
-    # the real ~/.hermes/kanban.db instead of the per-test HERMES_HOME.
+    # the real ~/.auraforge/kanban.db instead of the per-test HERMES_HOME.
     "HERMES_KANBAN_DB",
     "HERMES_KANBAN_BOARD",
     "HERMES_KANBAN_HOME",
@@ -321,7 +321,7 @@ _HERMES_BEHAVIORAL_VARS = frozenset({
     "HERMES_TENANT",
     # Honcho host selection changes which nested config block wins. A local
     # shell override leaked "myhost" into the full suite and flipped 20
-    # otherwise-unrelated config tests away from the default "hermes" host.
+    # otherwise-unrelated config tests away from the default "auraforge" host.
     "HERMES_HONCHO_HOST",
     # Dashboard OAuth auth gate (PR #30156). When set, the bundled
     # dashboard-auth `nous` plugin auto-registers itself on plugin discovery,
@@ -455,7 +455,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
     """Blank out all credential/behavioral env vars so local and CI match.
 
     Also redirects HOME and HERMES_HOME to per-test tempdirs so code that
-    reads ``~/.hermes/*`` can't touch the real one, and pins TZ/LANG so
+    reads ``~/.auraforge/*`` can't touch the real one, and pins TZ/LANG so
     datetime/locale-sensitive tests are deterministic.
     """
     # 1. Blank every credential-shaped env var that's currently set.
@@ -472,17 +472,17 @@ def _hermetic_environment(tmp_path, monkeypatch):
     # on it), but pin the host so ordinary tests cannot inherit a developer's
     # defaultHost and silently select the wrong nested config block. Tests of
     # custom host resolution override/delete this explicitly.
-    monkeypatch.setenv("HERMES_HONCHO_HOST", "hermes")
+    monkeypatch.setenv("HERMES_HONCHO_HOST", "auraforge")
 
     # 3. Redirect HERMES_HOME to a per-test tempdir. Code that reads
-    #    ``~/.hermes/*`` via ``get_hermes_home()`` now gets the tempdir.
+    #    ``~/.auraforge/*`` via ``get_hermes_home()`` now gets the tempdir.
     #
     #    NOTE: We do NOT also redirect HOME. Doing so broke CI because
     #    some tests (and their transitive deps) spawn subprocesses that
     #    inherit HOME and expect it to be stable. If a test genuinely
     #    needs HOME isolated, it should set it explicitly in its own
-    #    fixture. Any code in the codebase reading ``~/.hermes/*`` via
-    #    ``Path.home() / ".hermes"`` instead of ``get_hermes_home()``
+    #    fixture. Any code in the codebase reading ``~/.auraforge/*`` via
+    #    ``Path.home() / ".auraforge"`` instead of ``get_hermes_home()``
     #    is a bug to fix at the callsite.
     fake_hermes_home = tmp_path / "hermes_test"
     fake_hermes_home.mkdir()
@@ -544,7 +544,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_DISABLE_LAZY_INSTALLS", "1")
 
     # 5. Reset plugin singleton so tests don't leak plugins from
-    #    ~/.hermes/plugins/ (which, per step 3, is now empty — but the
+    #    ~/.auraforge/plugins/ (which, per step 3, is now empty — but the
     #    singleton might still be cached from a previous test).
     try:
         import hermes_cli.plugins as _plugins_mod
@@ -646,7 +646,7 @@ def _neutralize_macos_keychain_creds(request, monkeypatch):
 
 # ── Kanban write guard (#69283) ─────────────────────────────────────────────
 # When hermetic isolation is bypassed (stale checkout, wrong rootdir, direct
-# invocation), kanban writes silently pollute the real ~/.hermes. This autouse
+# invocation), kanban writes silently pollute the real ~/.auraforge. This autouse
 # fixture patches ``kanban_db.connect`` to refuse writes whose resolved DB
 # path lands under the REAL kanban root (captured at import time, before any
 # fixture rewires the environment). A deny-list is used instead of an
@@ -679,7 +679,7 @@ def _capture_real_kanban_root() -> Path:
         return get_default_hermes_root().resolve()
     # No pre-existing HERMES_HOME: the real root is the platform default,
     # NOT the sandbox tempdir now sitting in the env.
-    return (Path.home() / ".hermes").resolve()
+    return (Path.home() / ".auraforge").resolve()
 
 
 _REAL_KANBAN_ROOT = _capture_real_kanban_root()
@@ -691,7 +691,7 @@ def _kanban_write_guard(_hermetic_environment, monkeypatch):
 
     Uses a **deny-list**: only blocks writes where the resolved DB path
     (explicit ``db_path`` or ``kanban_db_path()``) lands under the real
-    ``~/.hermes`` captured at import time. Hermetic tests that legitimately
+    ``~/.auraforge`` captured at import time. Hermetic tests that legitimately
     move HERMES_HOME to sibling tempdirs are unaffected.
 
     Only patches when ``hermes_cli.kanban_db`` is *already imported* — a
@@ -733,7 +733,7 @@ def _kanban_write_guard(_hermetic_environment, monkeypatch):
             f"kanban_write_guard: kanban DB path resolved to {resolved}, "
             f"which is under the REAL kanban root ({_REAL_KANBAN_ROOT}). "
             f"Hermetic isolation has been bypassed — refusing to write "
-            f"to the real ~/.hermes. See #69283."
+            f"to the real ~/.auraforge. See #69283."
         )
 
     monkeypatch.setattr(_kdb, "connect", _guarded_connect)
@@ -748,7 +748,7 @@ def _kanban_write_guard(_hermetic_environment, monkeypatch):
 #   • honors ``@pytest.mark.live_system_guard_bypass`` (the established
 #     escape-hatch marker) by disabling the state-db guard for that test;
 #   • injects the pre-sandbox CUSTOM production root (Docker/portable
-#     installs where HERMES_HOME is not ~/.hermes) into the guard's
+#     installs where HERMES_HOME is not ~/.auraforge) into the guard's
 #     deny-list, mirroring the kanban deny-list capture above.
 # The guard itself is env-activated (PYTEST_CURRENT_TEST / PYTEST_VERSION),
 # so subprocess children that import hermes_state directly are covered even
@@ -902,7 +902,7 @@ def tmp_dir(tmp_path):
 
 @pytest.fixture()
 def mock_config():
-    """Return a minimal hermes config dict suitable for unit tests."""
+    """Return a minimal auraforge config dict suitable for unit tests."""
     return {
         "model": "test/mock-model",
         "toolsets": ["terminal", "file"],
@@ -975,7 +975,7 @@ def _ensure_current_event_loop(request):
 # (``cmd_update``, ``kill_gateway_processes``, ``stop_profile_gateway``).
 # When a single test forgets to mock either ``os.kill`` or the global
 # ``find_gateway_pids`` helper, the real call leaks out of the hermetic
-# environment and finds the developer's live ``hermes-gateway`` process
+# environment and finds the developer's live ``auraforge-gateway`` process
 # via ``psutil`` — sending it SIGTERM mid-test. The shutdown forensics in
 # PR #23285 caught this happening 5+ times in 3 days, every time
 # correlated with a ``tests/hermes_cli/`` pytest run starting up.
@@ -987,7 +987,7 @@ def _ensure_current_event_loop(request):
 #    a hard ``RuntimeError`` so the offending test gets a stack trace
 #    instead of silently murdering the real gateway.
 #  • ``subprocess.run`` / ``subprocess.Popen`` / ``call`` / ``check_call`` /
-#    ``check_output`` reject any ``systemctl ... <verb> hermes-gateway``
+#    ``check_output`` reject any ``systemctl ... <verb> auraforge-gateway``
 #    invocation that would mutate the live unit. Read-only systemctl
 #    calls (``status``, ``show``, ``list-units``) still pass through.
 #
@@ -1021,7 +1021,7 @@ def _wal_is_usable() -> bool:
     ``DEFAULT_DB_PATH`` from ``get_hermes_home()`` at import time, so importing
     it during collection — before the per-test ``_isolate_hermes_home`` fixture
     redirects ``HERMES_HOME`` — permanently caches the DEVELOPER'S REAL
-    ``~/.hermes/state.db`` for the whole session. Tests then read live
+    ``~/.auraforge/state.db`` for the whole session. Tests then read live
     production sessions instead of a tempdir. The version predicate is
     duplicated from ``hermes_state._is_sqlite_wal_reset_vulnerable`` (upstream
     fixed ranges, stable) rather than imported, and
@@ -1089,7 +1089,7 @@ _ALLOW_MACOS_KEYCHAIN_MARK = "allow_macos_keychain"
 #
 # Aura Forge runs on Linux, macOS and native Windows, and a lot of its behaviour
 # genuinely differs per host: PTY vs pywinpty, taskkill vs SIGTERM, launchd
-# vs systemd, Keychain vs libsecret, ``%LOCALAPPDATA%`` vs ``~/.hermes``.
+# vs systemd, Keychain vs libsecret, ``%LOCALAPPDATA%`` vs ``~/.auraforge``.
 #
 # Historically those code paths were tested by *faking* the host — patching
 # ``sys.platform`` to ``"win32"`` inside a Linux CI job. That gives a green
@@ -1303,10 +1303,10 @@ def _live_system_guard(request, monkeypatch):
       • pty.spawn
       • asyncio.create_subprocess_exec / create_subprocess_shell
     Subprocess inspection looks at the WHOLE command string (not just
-    tokens[0]), so ``bash -c "systemctl restart hermes-gateway"``,
+    tokens[0]), so ``bash -c "systemctl restart auraforge-gateway"``,
     ``sudo systemctl ...``, ``env systemctl ...``, ``setsid systemctl ...``
     are all caught. ``pkill``/``killall``/``taskkill`` invocations
-    targeting hermes/python patterns are also blocked.
+    targeting auraforge/python patterns are also blocked.
     """
     if request.node.get_closest_marker(_LIVE_SYSTEM_GUARD_BYPASS_MARK):
         yield
@@ -1405,12 +1405,12 @@ def _live_system_guard(request, monkeypatch):
 
     # ── Subprocess command-string inspection (whole-line) ──────────
     _HERMES_TOKENS = (
-        "hermes-gateway",
-        "hermes.service",
+        "auraforge-gateway",
+        "auraforge.service",
         "hermes_cli.main gateway",
         "hermes_cli/main.py gateway",
         "gateway/run.py",
-        "hermes gateway",
+        "auraforge gateway",
     )
     _MUTATING_VERBS = (
         "restart", "start", "stop", "kill", "reload",
@@ -1480,11 +1480,11 @@ def _live_system_guard(request, monkeypatch):
             head = tok.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
             if head in _PROCESS_KILLERS:
                 low = cmd_str.lower()
-                # pkill -f pattern: catch hermes-themed patterns + a
+                # pkill -f pattern: catch auraforge-themed patterns + a
                 # plain "python" -f which would catch the live gateway
                 # whose cmdline contains "python -m hermes_cli.main".
                 if (
-                    "hermes" in low
+                    "auraforge" in low
                     or "gateway" in low
                     or ("python" in low and "-f" in tokens)
                 ):
@@ -1496,7 +1496,7 @@ def _live_system_guard(request, monkeypatch):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — would mutate the "
-                "live hermes-gateway systemd unit. Mock "
+                "live auraforge-gateway systemd unit. Mock "
                 "subprocess.run / _run_systemctl in the test, or "
                 "mark with @pytest.mark.live_system_guard_bypass."
             )
@@ -1504,11 +1504,11 @@ def _live_system_guard(request, monkeypatch):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — process-killer command "
-                "targeting hermes/python could hit the live gateway. "
+                "targeting auraforge/python could hit the live gateway. "
                 "Mark with @pytest.mark.live_system_guard_bypass if "
                 "intentional."
             )
-        # Block any subprocess that would run `hermes update` (or the
+        # Block any subprocess that would run `auraforge update` (or the
         # equivalent `python -m hermes_cli.main update`).  These commands
         # run `git fetch origin + git pull` against the REAL checkout,
         # overwriting files like pyproject.toml mid-test-run and corrupting
@@ -1521,19 +1521,19 @@ def _live_system_guard(request, monkeypatch):
         cmd_str = _cmd_to_string(cmd)
         low = cmd_str.lower()
         if "update" in low and (
-            # hermes update / hermes update --gateway / setsid bash -c ... hermes update
-            ("hermes" in low and "update" in low.split())
+            # auraforge update / auraforge update --gateway / setsid bash -c ... auraforge update
+            ("auraforge" in low and "update" in low.split())
             or
             # python -m hermes_cli.main update --gateway
             ("hermes_cli" in low and "update" in low.split())
             or
-            # venv/bin/hermes update  (absolute path variant used in tests)
-            (".venv/bin/hermes" in low and "update" in low)
+            # venv/bin/auraforge update  (absolute path variant used in tests)
+            (".venv/bin/auraforge" in low and "update" in low)
         ):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — this command would run "
-                "`hermes update` against the real checkout, fetching "
+                "`auraforge update` against the real checkout, fetching "
                 "from origin and overwriting repo files (e.g. "
                 "pyproject.toml) mid-test-run. This corrupts every "
                 "subsequent subprocess in the same runner. "

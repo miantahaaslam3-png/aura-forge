@@ -226,11 +226,11 @@ def build_gateway_parser(
     # gateway migrate-legacy
     gateway_migrate_legacy = gateway_subparsers.add_parser(
         "migrate-legacy",
-        help="Remove legacy hermes.service units from pre-rename installs",
+        help="Remove legacy auraforge.service units from pre-rename installs",
         description=(
             "Stop, disable, and remove legacy Aura Forge gateway unit files "
-            "(e.g. hermes.service) left over from older installs. Profile "
-            "units (hermes-gateway-<profile>.service) and unrelated "
+            "(e.g. auraforge.service) left over from older installs. Profile "
+            "units (auraforge-gateway-<profile>.service) and unrelated "
             "third-party services are never touched."
         ),
     )

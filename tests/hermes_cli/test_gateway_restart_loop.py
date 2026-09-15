@@ -26,12 +26,12 @@ class TestGatewayLifecyclePattern:
     """Verify the regex catches gateway lifecycle commands."""
 
     @pytest.mark.parametrize("text", [
-        "hermes gateway restart",
-        "hermes gateway stop",
-        "hermes gateway uninstall",
-        "hermes  gateway  restart",         # double spaces
+        "auraforge gateway restart",
+        "auraforge gateway stop",
+        "auraforge gateway uninstall",
+        "auraforge  gateway  restart",         # double spaces
         "Hermez Gateway Restart".lower().replace("z", "s"),  # case handled
-        "HERMES GATEWAY RESTART",           # uppercase
+        "AURA_FORGE GATEWAY RESTART",           # uppercase
     ])
     def test_hermes_gateway_commands(self, text):
         assert _contains_gateway_lifecycle_command(text), f"Should match: {text!r}"
@@ -40,19 +40,19 @@ class TestGatewayLifecyclePattern:
         # #62891: a blocked direct restart/kill laundered through a NEW
         # launchd keepalive job wrapping a helper script, instead of a
         # direct kickstart/unload/stop/restart on the existing service.
-        "launchctl submit -l ai.hermes.gateway-hard-restart-no-photon-notice -- /bin/sh ~/.hermes/scripts/hard_restart_gateway_no_photon_notice.sh",
-        "launchctl submit -l hermes-gateway-restart-helper -- /bin/sh helper.sh",
+        "launchctl submit -l ai.auraforge.gateway-hard-restart-no-photon-notice -- /bin/sh ~/.auraforge/scripts/hard_restart_gateway_no_photon_notice.sh",
+        "launchctl submit -l auraforge-gateway-restart-helper -- /bin/sh helper.sh",
         # bootstrap loads an arbitrary plist — same laundering shape.
-        "launchctl bootstrap gui/501 ~/Library/LaunchAgents/ai.hermes.gateway.restart-once.plist",
-        "launchctl bootout gui/501/ai.hermes.gateway",
+        "launchctl bootstrap gui/501 ~/Library/LaunchAgents/ai.auraforge.gateway.restart-once.plist",
+        "launchctl bootout gui/501/ai.auraforge.gateway",
         # The exact reported shape: split across shell line-continuations
         # (`\` immediately followed by a newline). `[^\n]*` alone can't span
         # that, so the verb and the gateway-label token land on different
         # physical lines unless continuations are normalized first.
         (
             "launchctl submit \\\n"
-            "  -l ai.hermes.gateway-hard-restart-no-photon-notice \\\n"
-            "  -- /bin/sh ~/.hermes/scripts/hard_restart_gateway_no_photon_notice.sh"
+            "  -l ai.auraforge.gateway-hard-restart-no-photon-notice \\\n"
+            "  -- /bin/sh ~/.auraforge/scripts/hard_restart_gateway_no_photon_notice.sh"
         ),
     ])
     def test_launchctl_submit_bootstrap_commands(self, text):
@@ -64,7 +64,7 @@ class TestGatewayLifecyclePattern:
         the job outright, unlike stop/kickstart) and slipped past both this
         check and the missing-verb rule in tools/approval.py."""
         assert _contains_gateway_lifecycle_command(
-            "launchctl bootout gui/501/ai.hermes.gateway"
+            "launchctl bootout gui/501/ai.auraforge.gateway"
         )
 
     def test_label_defined_before_verb_is_caught(self):
@@ -75,9 +75,9 @@ class TestGatewayLifecyclePattern:
         label text to appear AFTER the verb IN THE SAME SEGMENT and never
         sees it — restarted 4 gateways with zero approval."""
         cmd = (
-            "uid=$(id -u); for item in 'ai.hermes.gateway-apollo:/a.plist' "
-            "'ai.hermes.gateway-cronus:/c.plist' 'ai.hermes.gateway-plutus:/p.plist' "
-            "'ai.hermes.gateway:/Users/botuser/Library/LaunchAgents/ai.hermes.gateway.plist'; "
+            "uid=$(id -u); for item in 'ai.auraforge.gateway-apollo:/a.plist' "
+            "'ai.auraforge.gateway-cronus:/c.plist' 'ai.auraforge.gateway-plutus:/p.plist' "
+            "'ai.auraforge.gateway:/Users/botuser/Library/LaunchAgents/ai.auraforge.gateway.plist'; "
             "do label=${item%%:*}; plist=${item#*:}; "
             'launchctl bootout "gui/$uid/$label"; '
             'launchctl bootstrap "gui/$uid" "$plist"; done'
@@ -90,29 +90,29 @@ class TestGatewayLifecyclePattern:
         # (no trailing backslash) must not be bridged into a false match.
         text = (
             "this restarts the payment gateway\n"
-            "unrelated hermes note on the next line"
+            "unrelated auraforge note on the next line"
         )
         assert not _contains_gateway_lifecycle_command(text), f"Should NOT match: {text!r}"
 
     @pytest.mark.parametrize("text", [
         # #80269: the shell resolves quote-splicing and backslash-escaping
         # into a single literal word BEFORE the command runs, so
-        # `launchctl kick"start" ... ai.hermes.gateway` executes exactly as
+        # `launchctl kick"start" ... ai.auraforge.gateway` executes exactly as
         # the blocked `kickstart` form. Raw-text matching sees the quote (or
         # backslash) wedged between the verb's halves and misses it, leaving
         # the bypassable approval layer as the only cover.
-        'launchctl kick"start" -k gui/501/ai.hermes.gateway',
-        "launchctl kick'start' -k gui/501/ai.hermes.gateway",
-        "launchctl kick\\start -k gui/501/ai.hermes.gateway",
-        'launchctl "kickstart" -k gui/501/ai.hermes.gateway',
+        'launchctl kick"start" -k gui/501/ai.auraforge.gateway',
+        "launchctl kick'start' -k gui/501/ai.auraforge.gateway",
+        "launchctl kick\\start -k gui/501/ai.auraforge.gateway",
+        'launchctl "kickstart" -k gui/501/ai.auraforge.gateway',
         # Splices on the newer/legacy unload spellings this PR added.
-        'launchctl boot"out" gui/501/ai.hermes.gateway',
-        "launchctl dis\\able gui/501/ai.hermes.gateway",
+        'launchctl boot"out" gui/501/ai.auraforge.gateway',
+        "launchctl dis\\able gui/501/ai.auraforge.gateway",
         # The gateway identifier itself can be spliced just as easily.
-        'launchctl bootout gui/501/ai.hermes."gateway"',
-        # Same class on the systemctl and hermes-CLI branches.
-        'systemctl re"start" hermes-gateway',
-        'hermes gateway re"start"',
+        'launchctl bootout gui/501/ai.auraforge."gateway"',
+        # Same class on the systemctl and auraforge-CLI branches.
+        'systemctl re"start" auraforge-gateway',
+        'auraforge gateway re"start"',
     ])
     def test_shell_token_spliced_lifecycle_verbs(self, text):
         assert _contains_gateway_lifecycle_command(text), f"Should match: {text!r}"
@@ -129,7 +129,7 @@ class TestGatewayLifecyclePattern:
             contains_gateway_lifecycle_command_or_referenced_script,
         )
 
-        command = 'sh -c \'launchctl kick"start" -k gui/501/ai.hermes.gateway\''
+        command = 'sh -c \'launchctl kick"start" -k gui/501/ai.auraforge.gateway\''
         assert contains_gateway_lifecycle_command_or_referenced_script(command)
 
     @pytest.mark.parametrize("text", [
@@ -137,8 +137,8 @@ class TestGatewayLifecyclePattern:
         # non-gateway services stay allowed even though tokenization now
         # strips their quotes too.
         'echo "restart the payment gateway"',
-        'launchctl kick"start" -k gui/501/ai.hermes.update-checker',
-        'systemctl re"start" hermes-meta.service',
+        'launchctl kick"start" -k gui/501/ai.auraforge.update-checker',
+        'systemctl re"start" auraforge-meta.service',
         "Summarize how the API gateway handles a restart after rate limiting",
     ])
     def test_tokenizing_pass_does_not_overmatch(self, text):
@@ -147,30 +147,30 @@ class TestGatewayLifecyclePattern:
 
     @pytest.mark.parametrize("text", [
         "restart the server application",
-        "hermes cron list",
-        "hermes update",
-        "hermes config set model claude",
+        "auraforge cron list",
+        "auraforge update",
+        "auraforge config set model claude",
         "echo 'just a normal cron job'",
         "run the backup script",
         "gateway is running fine",
-        # `hermes gateway start` is benign — starting a gateway from inside a
+        # `auraforge gateway start` is benign — starting a gateway from inside a
         # gateway is a no-op / "already running", and a legit cron job may
         # start a sibling profile's gateway. Only restart/stop/kill are the
         # foot-gun (#30719 lists only those).
-        "hermes gateway start",
-        "hermes gateway start --all",
-        # Tightened launchctl/systemctl branches: ops on NON-gateway hermes
-        # services must not be falsely blocked (the old `.*hermes` matched any
-        # hermes token).
-        "launchctl unload ai.hermes.update-checker.plist",
-        "launchctl restart ai.hermes.daemon",
+        "auraforge gateway start",
+        "auraforge gateway start --all",
+        # Tightened launchctl/systemctl branches: ops on NON-gateway auraforge
+        # services must not be falsely blocked (the old `.*auraforge` matched any
+        # auraforge token).
+        "launchctl unload ai.auraforge.update-checker.plist",
+        "launchctl restart ai.auraforge.daemon",
         # `submit` on an unrelated launchd label must not match the text
         # pattern (a cron PROMPT is prose fed to an LLM). The execution-aware
         # `contains_launchctl_submit_command` handles neutral-label submits
         # at the terminal/cron-script chokepoints instead.
         "launchctl submit -l com.example.backup -- /bin/sh backup.sh",
-        "systemctl restart hermes-meta.service",
-        "systemctl restart hermes-cron-helper",
+        "systemctl restart auraforge-meta.service",
+        "systemctl restart auraforge-cron-helper",
         # Regression (#30728 follow-up): legit prompts that merely mention an
         # unrelated gateway + a restart must NOT be blocked. The cron prompt is
         # fed to an LLM, not a shell, so substring detection on English text is
@@ -183,31 +183,31 @@ class TestGatewayLifecyclePattern:
         # #92372 Branch A: no trailing boundary meant ordinary prose matched —
         # "restarted" carries the "restart" prefix and the old pattern ended
         # exactly there. \b after the verb group fixes it.
-        "echo after the hermes gateway restarted cleanly",
-        "the hermes gateway stopped responding, please investigate",
+        "echo after the auraforge gateway restarted cleanly",
+        "the auraforge gateway stopped responding, please investigate",
         # #92372 Branch D: `p?kill` without a leading \b matched the "kill"
         # tail of "skill".
-        "hermes skill view gateway-notes && echo hermes gateway docs",
+        "auraforge skill view gateway-notes && echo auraforge gateway docs",
         # #77173/#77536: a file path with embedded spaces containing the
-        # lifecycle words must not match — `hermes` is a path component
+        # lifecycle words must not match — `auraforge` is a path component
         # there, not a command.
-        "cat '/docs/hermes gateway restart-notes.md'",
-        "less /home/user/notes/hermes gateway restart runbook.txt",
+        "cat '/docs/auraforge gateway restart-notes.md'",
+        "less /home/user/notes/auraforge gateway restart runbook.txt",
     ])
     def test_safe_commands(self, text):
         assert not _contains_gateway_lifecycle_command(text), f"Should NOT match: {text!r}"
 
     @pytest.mark.parametrize("text", [
         # Trailing-boundary fix must not weaken real commands.
-        "hermes gateway restart",
-        "hermes gateway restart; echo done",
-        "hermes gateway stop && echo stopped",
+        "auraforge gateway restart",
+        "auraforge gateway restart; echo done",
+        "auraforge gateway stop && echo stopped",
         # #77173 command-position anchor must not weaken separator/subshell
         # forms either.
-        "true;hermes gateway restart",
-        "true && hermes gateway stop",
-        "echo $(hermes gateway restart)",
-        "echo `hermes gateway restart`",
+        "true;auraforge gateway restart",
+        "true && auraforge gateway stop",
+        "echo $(auraforge gateway restart)",
+        "echo `auraforge gateway restart`",
     ])
     def test_boundary_fix_still_blocks_real_commands(self, text):
         assert _contains_gateway_lifecycle_command(text), f"Should match: {text!r}"
@@ -235,9 +235,9 @@ class TestGatewayLifecyclePattern:
     @pytest.mark.parametrize("text", [
         # #68289: execute_code payloads carry the argv as a Python list —
         # brackets/commas separate the words the OS will exec.
-        'import subprocess\nsubprocess.run(["launchctl", "bootout", "gui/501/ai.hermes.gateway"])',
-        'subprocess.run(["hermes", "gateway", "restart"])',
-        'os.system("launchctl kickstart -k gui/501/ai.hermes.gateway")',
+        'import subprocess\nsubprocess.run(["launchctl", "bootout", "gui/501/ai.auraforge.gateway"])',
+        'subprocess.run(["auraforge", "gateway", "restart"])',
+        'os.system("launchctl kickstart -k gui/501/ai.auraforge.gateway")',
     ])
     def test_python_argv_list_forms_blocked(self, text):
         assert _contains_gateway_lifecycle_command(text), f"Should match: {text!r}"
@@ -245,7 +245,7 @@ class TestGatewayLifecyclePattern:
     @pytest.mark.parametrize("text", [
         # Argv-punctuation stripping must not create prose false positives.
         'print("checking gateway restart docs")',
-        'data = ["hermes", "notes"]  # unrelated list',
+        'data = ["auraforge", "notes"]  # unrelated list',
     ])
     def test_python_argv_stripping_stays_narrow(self, text):
         assert not _contains_gateway_lifecycle_command(text), f"Should NOT match: {text!r}"
@@ -255,7 +255,7 @@ class TestGatewayLifecyclePattern:
         # data — runbook prose inside it must not block.
         text = (
             "cat > /tmp/runbook.md <<'EOF'\n"
-            "If the box is wedged, a human can run: hermes gateway restart\n"
+            "If the box is wedged, a human can run: auraforge gateway restart\n"
             "EOF"
         )
         assert not _contains_gateway_lifecycle_command(text), f"Should NOT match: {text!r}"
@@ -271,7 +271,7 @@ class TestGatewayLifecyclePattern:
 
 
 class TestProfileFlagGatewayLifecycle:
-    """#78028: `hermes -p <profile> gateway restart|stop` bypasses Branch A's
+    """#78028: `auraforge -p <profile> gateway restart|stop` bypasses Branch A's
     literal adjacency, so it needs its own pattern. It is only the same
     self-termination foot-gun when the named profile IS the profile running
     the guard; sibling-profile restarts are legitimate fleet operations and
@@ -285,35 +285,35 @@ class TestProfileFlagGatewayLifecycle:
         monkeypatch.delenv("HERMES_PROFILE_NAME", raising=False)
 
     @pytest.mark.parametrize("text", [
-        "hermes -p zeus gateway stop",
-        "hermes -p zeus gateway restart",
-        "hermes --profile zeus gateway restart",
-        "hermes --profile zeus gateway stop",
-        "hermes --profile=zeus gateway restart",
+        "auraforge -p zeus gateway stop",
+        "auraforge -p zeus gateway restart",
+        "auraforge --profile zeus gateway restart",
+        "auraforge --profile zeus gateway stop",
+        "auraforge --profile=zeus gateway restart",
         # Global flags before/after the selector must not hide the shape.
-        "hermes -v -p zeus gateway restart",
-        "hermes -p zeus -v gateway restart",
-        "hermes --debug --profile zeus gateway stop",
+        "auraforge -v -p zeus gateway restart",
+        "auraforge -p zeus -v gateway restart",
+        "auraforge --debug --profile zeus gateway stop",
         # Shell quoting of the profile id is equivalent to the bare name.
-        "hermes -p 'zeus' gateway restart",
-        "hermes --profile \"zeus\" gateway stop",
+        "auraforge -p 'zeus' gateway restart",
+        "auraforge --profile \"zeus\" gateway stop",
     ])
     def test_self_target_blocked(self, text):
         assert _contains_gateway_lifecycle_command(text), f"Should block: {text!r}"
 
     @pytest.mark.parametrize("text", [
-        "hermes -p venus gateway stop",
-        "hermes -p venus gateway restart",
-        "hermes --profile venus gateway restart",
-        "hermes --profile=venus gateway stop",
-        "hermes -p venus -v gateway restart",
+        "auraforge -p venus gateway stop",
+        "auraforge -p venus gateway restart",
+        "auraforge --profile venus gateway restart",
+        "auraforge --profile=venus gateway stop",
+        "auraforge -p venus -v gateway restart",
     ])
     def test_sibling_allowed(self, text):
         assert not _contains_gateway_lifecycle_command(text), f"Should allow: {text!r}"
 
     @pytest.mark.parametrize("text", [
-        "hermes -p zeus gateway start",
-        "hermes -p zeus gateway start --all",
+        "auraforge -p zeus gateway start",
+        "auraforge -p zeus gateway start --all",
     ])
     def test_start_still_allowed(self, text):
         # `start` is intentionally excluded from the guard, with or without
@@ -323,8 +323,8 @@ class TestProfileFlagGatewayLifecycle:
     def test_adjacent_form_still_blocked(self):
         # Branch A remains unconditional — the profile-flag check is an
         # additional layer, not a replacement.
-        assert _contains_gateway_lifecycle_command("hermes gateway restart")
-        assert _contains_gateway_lifecycle_command("hermes gateway stop")
+        assert _contains_gateway_lifecycle_command("auraforge gateway restart")
+        assert _contains_gateway_lifecycle_command("auraforge gateway stop")
 
     def test_hermes_home_derived_profile(self, monkeypatch):
         # Without HERMES_PROFILE the guard falls back to the HERMES_HOME-
@@ -335,8 +335,8 @@ class TestProfileFlagGatewayLifecycle:
         import hermes_cli.profiles as profiles_mod
 
         monkeypatch.setattr(profiles_mod, "get_active_profile_name", lambda: "zeus")
-        assert _contains_gateway_lifecycle_command("hermes -p zeus gateway restart")
-        assert not _contains_gateway_lifecycle_command("hermes -p venus gateway restart")
+        assert _contains_gateway_lifecycle_command("auraforge -p zeus gateway restart")
+        assert not _contains_gateway_lifecycle_command("auraforge -p venus gateway restart")
 
     def test_no_profile_context_conservative_allow(self, monkeypatch):
         # With no profile identity the guard cannot prove self-targeting, so
@@ -345,8 +345,8 @@ class TestProfileFlagGatewayLifecycle:
         import cron.lifecycle_guard as lifecycle_guard
 
         monkeypatch.setattr(lifecycle_guard, "_current_profile_name", lambda: None)
-        assert not _contains_gateway_lifecycle_command("hermes -p zeus gateway restart")
-        assert _contains_gateway_lifecycle_command("hermes gateway restart")
+        assert not _contains_gateway_lifecycle_command("auraforge -p zeus gateway restart")
+        assert _contains_gateway_lifecycle_command("auraforge gateway restart")
 
 
 class TestCronCreateLifecycleBlock:
@@ -362,7 +362,7 @@ class TestCronCreateLifecycleBlock:
         args = Namespace(
             cron_command="create",
             schedule="30m",
-            prompt="Upgrade hermes then run hermes gateway restart",
+            prompt="Upgrade auraforge then run auraforge gateway restart",
             name=None,
             deliver=None,
             repeat=None,
@@ -384,8 +384,8 @@ class TestCronCreateLifecycleBlock:
         # A no_agent job whose script IS the job (the issue's real abuse path:
         # restart_hermes_gateway_once.sh). The script must live under
         # HERMES_HOME/scripts so the scheduler — and the guard — resolve it.
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        scripts_dir = tmp_path / ".hermes" / "scripts"
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        scripts_dir = tmp_path / ".auraforge" / "scripts"
         scripts_dir.mkdir(parents=True)
         (scripts_dir / "restart.sh").write_text("#!/bin/bash\nhermes gateway restart\n", encoding="utf-8")
         args = Namespace(
@@ -493,7 +493,7 @@ class TestGatewaySelfTargetingGuard:
 class TestTerminalToolGatewayLifecycleGuard:
     """terminal_tool must refuse gateway lifecycle commands when _HERMES_GATEWAY=1.
 
-    Issue #37453: systemctl --user restart hermes-gateway runs as a child of the
+    Issue #37453: systemctl --user restart auraforge-gateway runs as a child of the
     gateway process.  When systemd delivers SIGTERM the gateway kills its own
     restart command mid-execution — the service may never restart.  The guard
     must fire before execution, unconditionally (force=True cannot bypass it).
@@ -523,18 +523,18 @@ class TestTerminalToolGatewayLifecycleGuard:
         )
 
     @pytest.mark.parametrize("cmd", [
-        "systemctl restart hermes-gateway",
-        "systemctl --user restart hermes-gateway",
-        "systemctl stop hermes-gateway.service",
-        "hermes gateway restart",
-        "hermes gateway uninstall",
-        "launchctl kickstart gui/501/ai.hermes.gateway",
-        "launchctl bootout gui/501/ai.hermes.gateway",
+        "systemctl restart auraforge-gateway",
+        "systemctl --user restart auraforge-gateway",
+        "systemctl stop auraforge-gateway.service",
+        "auraforge gateway restart",
+        "auraforge gateway uninstall",
+        "launchctl kickstart gui/501/ai.auraforge.gateway",
+        "launchctl bootout gui/501/ai.auraforge.gateway",
         # #62891 exact reported shape and its bootstrap sibling.
-        "launchctl submit -l ai.hermes.gateway-hard-restart-no-photon-notice -- /bin/sh ~/.hermes/scripts/hard_restart_gateway_no_photon_notice.sh",
+        "launchctl submit -l ai.auraforge.gateway-hard-restart-no-photon-notice -- /bin/sh ~/.auraforge/scripts/hard_restart_gateway_no_photon_notice.sh",
         "launchctl submit -l com.foo -- /path/gateway",
-        "launchctl bootstrap gui/501 ~/Library/LaunchAgents/ai.hermes.gateway.restart-once.plist",
-        "pkill -f hermes.*gateway",
+        "launchctl bootstrap gui/501 ~/Library/LaunchAgents/ai.auraforge.gateway.restart-once.plist",
+        "pkill -f auraforge.*gateway",
     ])
     def test_blocks_lifecycle_commands_inside_gateway(self, monkeypatch, cmd):
         import tools.terminal_tool as tt
@@ -550,7 +550,7 @@ class TestTerminalToolGatewayLifecycleGuard:
         self._patch_env(monkeypatch, self._make_fake_env(), inside_gateway=True)
 
         result = json.loads(tt.terminal_tool(
-            command="systemctl restart hermes-gateway", force=True
+            command="systemctl restart auraforge-gateway", force=True
         ))
 
         assert result["exit_code"] == 1
@@ -579,7 +579,7 @@ class TestTerminalToolGatewayLifecycleGuard:
 
         result = json.loads(tt.terminal_tool(
             command=(
-                "launchctl submit -l ai.hermes.delayed-ops -- "
+                "launchctl submit -l ai.auraforge.delayed-ops -- "
                 f"/bin/bash {script}"
             )
         ))
@@ -588,10 +588,10 @@ class TestTerminalToolGatewayLifecycleGuard:
         assert "KeepAlive" in result["error"]
 
     @pytest.mark.parametrize("command", [
-        # Neutral, non-hermes label: label-independent detection is the point
-        # (#62891 second reproduction used `ai.hermes.svc-reload-tmp`).
+        # Neutral, non-auraforge label: label-independent detection is the point
+        # (#62891 second reproduction used `ai.auraforge.svc-reload-tmp`).
         "launchctl submit -l com.foo -- /path/gateway",
-        "launchctl submit -l ai.hermes.svc-reload-tmp -- /bin/sh /tmp/h-svc-reload.sh",
+        "launchctl submit -l ai.auraforge.svc-reload-tmp -- /bin/sh /tmp/h-svc-reload.sh",
         # bootstrap variant: loads an arbitrary plist as a persistent job.
         "launchctl bootstrap gui/501 /tmp/com.foo.plist",
     ])
@@ -660,10 +660,10 @@ class TestTerminalToolGatewayLifecycleGuard:
             tt, "_check_all_guards", lambda cmd, env, **kwargs: {"approved": True}
         )
 
-        result = json.loads(tt.terminal_tool(command="hermes gateway restart"))
+        result = json.loads(tt.terminal_tool(command="auraforge gateway restart"))
 
         assert result["exit_code"] == 0
-        assert calls == ["hermes gateway restart"]
+        assert calls == ["auraforge gateway restart"]
 
     def test_blocks_launchctl_submit_hidden_in_referenced_script(
         self, monkeypatch, tmp_path
@@ -672,7 +672,7 @@ class TestTerminalToolGatewayLifecycleGuard:
 
         script = tmp_path / "wrapper.sh"
         script.write_text(
-            "#!/bin/bash\nlaunchctl submit -l ai.hermes.loop -- /bin/true\n"
+            "#!/bin/bash\nlaunchctl submit -l ai.auraforge.loop -- /bin/true\n"
         )
         self._patch_env(monkeypatch, self._make_fake_env(), inside_gateway=True)
 
@@ -717,7 +717,7 @@ class TestTerminalToolGatewayLifecycleGuard:
 
         self._patch_env(monkeypatch, self._make_fake_env(), inside_gateway=True)
         result = json.loads(tt.terminal_tool(
-            command="launchctl sub\"\"mit -l ai.hermes.loop -- /bin/true"
+            command="launchctl sub\"\"mit -l ai.auraforge.loop -- /bin/true"
         ))
 
         assert result["exit_code"] == 1
@@ -740,7 +740,7 @@ class TestTerminalToolGatewayLifecycleGuard:
         import tools.terminal_tool as tt
 
         script = tmp_path / "nested.sh"
-        script.write_text("#!/bin/bash\nlaunchctl submit -l ai.hermes.loop -- /bin/true\n", encoding="utf-8")
+        script.write_text("#!/bin/bash\nlaunchctl submit -l ai.auraforge.loop -- /bin/true\n", encoding="utf-8")
 
         class _FakeEnv:
             env = {}
@@ -834,7 +834,7 @@ class TestTerminalToolGatewayLifecycleGuard:
         assert calls == [command]
 
     def test_safe_systemctl_commands_pass_through(self, monkeypatch):
-        """Non-hermes systemctl commands must not be blocked by this guard."""
+        """Non-auraforge systemctl commands must not be blocked by this guard."""
         import tools.terminal_tool as tt
 
         calls = []
@@ -1003,7 +1003,7 @@ class TestLifecycleGuardModule:
     def test_prompt_with_command_raises(self):
         from cron.lifecycle_guard import GatewayLifecycleBlocked, check_gateway_lifecycle
         with pytest.raises(GatewayLifecycleBlocked) as exc:
-            check_gateway_lifecycle("please run hermes gateway restart", None)
+            check_gateway_lifecycle("please run auraforge gateway restart", None)
         assert "#30719" in str(exc.value)
 
     def test_clean_prompt_does_not_raise(self):
@@ -1022,7 +1022,7 @@ class TestLifecycleGuardModule:
         from cron.lifecycle_guard import GatewayLifecycleBlocked, check_gateway_lifecycle
         script = tmp_path / "persistent.sh"
         script.write_text(
-            "#!/bin/bash\nlaunchctl submit -l ai.hermes.loop -- /bin/true\n"
+            "#!/bin/bash\nlaunchctl submit -l ai.auraforge.loop -- /bin/true\n"
         )
         with pytest.raises(GatewayLifecycleBlocked):
             check_gateway_lifecycle("clean prompt", str(script))
@@ -1047,7 +1047,7 @@ class TestLifecycleGuardModule:
         script to slip through."""
         from cron.lifecycle_guard import GatewayLifecycleBlocked, check_gateway_lifecycle
         script = tmp_path / "ops.sh"
-        script.write_text("hermes gateway stop\n", encoding="utf-8")
+        script.write_text("auraforge gateway stop\n", encoding="utf-8")
         with pytest.raises(GatewayLifecycleBlocked):
             check_gateway_lifecycle("daily ops job", str(script))
 
@@ -1066,18 +1066,18 @@ class TestLifecycleGuardModule:
         same place the scheduler runs it from) — otherwise the guard would read
         a nonexistent relative path and scan prompt-only content."""
         from cron.lifecycle_guard import GatewayLifecycleBlocked, check_gateway_lifecycle
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        scripts_dir = tmp_path / ".hermes" / "scripts"
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        scripts_dir = tmp_path / ".auraforge" / "scripts"
         scripts_dir.mkdir(parents=True)
         (scripts_dir / "restart.sh").write_text(
-            "launchctl kickstart -k gui/501/ai.hermes.gateway\n"
+            "launchctl kickstart -k gui/501/ai.auraforge.gateway\n"
         )
         with pytest.raises(GatewayLifecycleBlocked):
             check_gateway_lifecycle("daily", "restart.sh")
 
     def test_python_script_with_pathlib_division_not_blocked(self, tmp_path):
         """#77131: a .py cron script using pathlib division (Path.home() /
-        ".hermes") must NOT be blocked.
+        ".auraforge") must NOT be blocked.
 
         Before the fix, the shell-script reference walk tokenized Python
         sources and treated pathlib's bare "/" operator as an executable
@@ -1091,7 +1091,7 @@ class TestLifecycleGuardModule:
         script = tmp_path / "digest.py"
         script.write_text(
             "from pathlib import Path\n"
-            'ENV = Path.home() / ".hermes" / ".env"\n'
+            'ENV = Path.home() / ".auraforge" / ".env"\n'
             'print("digest ok")\n'
         )
         check_gateway_lifecycle("clean prompt", str(script))
@@ -1104,7 +1104,7 @@ class TestLifecycleGuardModule:
         by the direct regex scan."""
         from cron.lifecycle_guard import GatewayLifecycleBlocked, check_gateway_lifecycle
         script = tmp_path / "evil.py"
-        script.write_text('import os\nos.system("hermes gateway restart")\n', encoding="utf-8")
+        script.write_text('import os\nos.system("auraforge gateway restart")\n', encoding="utf-8")
         with pytest.raises(GatewayLifecycleBlocked):
             check_gateway_lifecycle("clean prompt", str(script))
 
@@ -1152,7 +1152,7 @@ class TestLifecycleGuardModule:
 
         from cron.lifecycle_guard import _read_referenced_script
 
-        text, unsafe = _read_referenced_script(Path("/tmp/hermes\x00binary"))
+        text, unsafe = _read_referenced_script(Path("/tmp/auraforge\x00binary"))
         assert text is None
         assert unsafe is False
 
@@ -1364,7 +1364,7 @@ class TestLifecycleGuardModule:
         )
 
         def _remote_read(_path: str):
-            return "MZ\x00\x00\x90\x00 hermes gateway restart \x00\x00junk"
+            return "MZ\x00\x00\x90\x00 auraforge gateway restart \x00\x00junk"
 
         result = contains_gateway_lifecycle_command_or_referenced_script(
             "bash /nonexistent/dir/helper.sh",
@@ -1428,7 +1428,7 @@ class TestLifecycleGuardModule:
         monkeypatch.setattr(lg, "_contains_unsafe_gateway_action", _boom)
         # Direct scan still blocks a literal lifecycle command...
         assert lg.contains_gateway_lifecycle_command_or_referenced_script(
-            "hermes gateway restart"
+            "auraforge gateway restart"
         ) is True
         # ...and a benign command fails open instead of crashing.
         assert lg.contains_gateway_lifecycle_command_or_referenced_script(
@@ -1661,10 +1661,10 @@ class TestRelativePathDoesNotDisableDataExemption:
         return contains_gateway_lifecycle_command_or_referenced_script(command)
 
     @pytest.mark.parametrize("command", [
-        "grep -r 'systemctl restart hermes-gateway' .",
-        "grep -rn 'hermes gateway restart' ./logs",
-        "rg 'hermes gateway restart' ../archive",
-        "grep -c 'systemctl stop hermes-gateway' ./var/log/syslog",
+        "grep -r 'systemctl restart auraforge-gateway' .",
+        "grep -rn 'auraforge gateway restart' ./logs",
+        "rg 'auraforge gateway restart' ../archive",
+        "grep -c 'systemctl stop auraforge-gateway' ./var/log/syslog",
         "sqlite3 ./stats.db \"SELECT restart_reason FROM hermes_gateway_restarts\"",
     ])
     def test_relative_path_operands_keep_the_exemption(self, command):
@@ -1673,25 +1673,25 @@ class TestRelativePathDoesNotDisableDataExemption:
     @pytest.mark.parametrize("command", [
         # Narrowing the dot test must not open an execution route: every
         # escape hatch still fires with a relative-path operand present.
-        'sqlite3 ./db ".shell hermes gateway restart"',
-        'sqlite3 ./db ".system systemctl restart hermes-gateway"',
-        'psql ./x -c "\\! systemctl restart hermes-gateway"',
-        "grep -r 'hermes gateway restart' . | sh",
-        "grep -r 'hermes gateway restart' ./logs | bash",
-        "grep -r 'hermes gateway restart' . | sudo sh",
-        "grep -r 'x' . ; hermes gateway restart",
-        "grep -r 'x' . && systemctl restart hermes-gateway",
-        'grep -r "$(hermes gateway restart)" .',
-        "rg 'x' ./logs | xargs systemctl restart hermes-gateway",
+        'sqlite3 ./db ".shell auraforge gateway restart"',
+        'sqlite3 ./db ".system systemctl restart auraforge-gateway"',
+        'psql ./x -c "\\! systemctl restart auraforge-gateway"',
+        "grep -r 'auraforge gateway restart' . | sh",
+        "grep -r 'auraforge gateway restart' ./logs | bash",
+        "grep -r 'auraforge gateway restart' . | sudo sh",
+        "grep -r 'x' . ; auraforge gateway restart",
+        "grep -r 'x' . && systemctl restart auraforge-gateway",
+        'grep -r "$(auraforge gateway restart)" .',
+        "rg 'x' ./logs | xargs systemctl restart auraforge-gateway",
     ])
     def test_relative_path_does_not_open_an_execution_route(self, command):
         assert self._scan(command) is True
 
     @pytest.mark.parametrize("command", [
         # Real dot-commands must still defeat the exemption.
-        'sqlite3 db ".shell hermes gateway restart"',
-        'sqlite3 db ".system systemctl restart hermes-gateway"',
-        'psql -c "\\! systemctl restart hermes-gateway"',
+        'sqlite3 db ".shell auraforge gateway restart"',
+        'sqlite3 db ".system systemctl restart auraforge-gateway"',
+        'psql -c "\\! systemctl restart auraforge-gateway"',
     ])
     def test_dot_commands_still_block(self, command):
         assert self._scan(command) is True
@@ -1712,7 +1712,7 @@ class TestCreateJobBlocksLifecycleCommands:
         from cron.jobs import create_job
         from cron.lifecycle_guard import GatewayLifecycleBlocked
         with pytest.raises(GatewayLifecycleBlocked):
-            create_job(prompt="then run hermes gateway restart", schedule="30m")
+            create_job(prompt="then run auraforge gateway restart", schedule="30m")
 
     def test_create_job_allows_benign_prompt(self):
         from cron.jobs import create_job
@@ -1723,12 +1723,12 @@ class TestCreateJobBlocksLifecycleCommands:
     def test_cronjob_tool_surfaces_block_as_error(self, tmp_path, monkeypatch):
         """End-to-end through the model tool: the block comes back as
         result['error'] with the #30719 hint, not an unhandled exception."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        (tmp_path / ".hermes").mkdir(parents=True)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        (tmp_path / ".auraforge").mkdir(parents=True)
         from tools.cronjob_tools import cronjob
         result = json.loads(cronjob(
             action="create", schedule="0 9 * * *",
-            prompt="please run hermes gateway restart nightly",
+            prompt="please run auraforge gateway restart nightly",
         ))
         assert result.get("success") is False
         assert "#30719" in result.get("error", "")
@@ -1745,8 +1745,8 @@ class TestRestartLoopGuard:
 
     @pytest.fixture(autouse=True)
     def _isolate_state(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        (tmp_path / ".hermes").mkdir(parents=True)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        (tmp_path / ".auraforge").mkdir(parents=True)
         import gateway.restart_loop_guard as rlg
         rlg.clear()
 
@@ -1879,8 +1879,8 @@ class TestCronCreateLifecycleBlockExtra:
         monkeypatch.setattr("cron.jobs.OUTPUT_DIR", tmp_path / "cron" / "output")
 
     def test_cron_nested_wrapper_script_is_scanned(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        scripts_dir = tmp_path / ".hermes" / "scripts"
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        scripts_dir = tmp_path / ".auraforge" / "scripts"
         scripts_dir.mkdir(parents=True)
         (scripts_dir / "inner.sh").write_text("#!/bin/bash\nhermes gateway restart\n", encoding="utf-8")
         (scripts_dir / "outer.sh").write_text("#!/bin/bash\n/bin/bash inner.sh\n", encoding="utf-8")
@@ -1921,13 +1921,13 @@ class TestLifecycleGuardDataArgumentExemption:
         # Exact live false-positive shapes: SQL string literals carrying the
         # full lifecycle command as text.
         'sqlite3 db "SELECT msg FROM log WHERE msg LIKE '
-        "'%systemctl restart hermes-gateway%'\"",
+        "'%systemctl restart auraforge-gateway%'\"",
         'psql -c "SELECT * FROM events WHERE cmd = '
-        "'systemctl stop hermes-gateway'\"",
+        "'systemctl stop auraforge-gateway'\"",
         # grep/rg pattern arguments hunting for the lifecycle string.
-        "grep -c 'systemctl restart hermes-gateway' /var/log/syslog",
-        "rg 'hermes gateway restart' /home/user/.hermes/logs/",
-        "journalctl -u hermes-gateway --grep 'systemctl restart hermes-gateway'",
+        "grep -c 'systemctl restart auraforge-gateway' /var/log/syslog",
+        "rg 'auraforge gateway restart' /home/user/.auraforge/logs/",
+        "journalctl -u auraforge-gateway --grep 'systemctl restart auraforge-gateway'",
         # SQL with stop/restart column/value words but no command shape.
         'sqlite3 stats.db "SELECT stop_time, restart_reason FROM '
         'hermes_gateway_restarts"',
@@ -1939,16 +1939,16 @@ class TestLifecycleGuardDataArgumentExemption:
 
     @pytest.mark.parametrize("command", [
         # Execution smuggled through or around a data sink must still block.
-        'sqlite3 db ".shell hermes gateway restart"',
-        'psql -c "\\! systemctl restart hermes-gateway"',
-        "grep 'systemctl restart hermes-gateway' cmds.txt | sh",
-        "grep gateway f | xargs systemctl restart hermes-gateway",
-        'grep "$(systemctl restart hermes-gateway)" f',
-        "grep 'restart' log; systemctl restart hermes-gateway",
-        'sqlite3 db "SELECT 1"; hermes gateway stop',
+        'sqlite3 db ".shell auraforge gateway restart"',
+        'psql -c "\\! systemctl restart auraforge-gateway"',
+        "grep 'systemctl restart auraforge-gateway' cmds.txt | sh",
+        "grep gateway f | xargs systemctl restart auraforge-gateway",
+        'grep "$(systemctl restart auraforge-gateway)" f',
+        "grep 'restart' log; systemctl restart auraforge-gateway",
+        'sqlite3 db "SELECT 1"; auraforge gateway stop',
         # Plain lifecycle commands are unaffected by the exemption.
-        "hermes gateway restart",
-        "sudo systemctl stop hermes-gateway",
+        "auraforge gateway restart",
+        "sudo systemctl stop auraforge-gateway",
     ])
     def test_command_position_lifecycle_still_blocked(self, command):
         assert self._scan(command) is True
@@ -1966,7 +1966,7 @@ class TestLifecycleGuardDataArgumentExemption:
         script.write_text("print('nightly report')\n", encoding="utf-8")
         prompt = (
             'sqlite3 db "SELECT msg FROM log '
-            "WHERE msg LIKE '%systemctl restart hermes-gateway%'\""
+            "WHERE msg LIKE '%systemctl restart auraforge-gateway%'\""
         )
         check_gateway_lifecycle(prompt, str(script))
 

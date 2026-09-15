@@ -79,7 +79,7 @@ def build_update_parser(subparsers, *, cmd_update: Callable) -> None:
         metavar="NAME",
         help=(
             "Update against this branch instead of the default (main). "
-            "If the local checkout is on a different branch, hermes will "
+            "If the local checkout is on a different branch, auraforge will "
             "switch to the requested branch first (auto-stashing any "
             "uncommitted changes)."
         ),
@@ -103,7 +103,7 @@ def build_update_parser(subparsers, *, cmd_update: Callable) -> None:
         "--force",
         action="store_true",
         default=False,
-        help="Windows: proceed with the update even when another hermes.exe is detected. The concurrent process will likely cause WinError 32 warnings. Does NOT bypass the venv-process guard (see --force-venv).",
+        help="Windows: proceed with the update even when another auraforge.exe is detected. The concurrent process will likely cause WinError 32 warnings. Does NOT bypass the venv-process guard (see --force-venv).",
     )
     update_parser.add_argument(
         "--force-venv",

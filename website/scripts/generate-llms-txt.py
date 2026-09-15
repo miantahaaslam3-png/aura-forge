@@ -17,8 +17,8 @@ use, web search, and 22 messaging platforms were absent from the index every
 LLM reads to learn what Aura Forge does.
 
 Both publish at:
-  https://hermes-agent.nousresearch.com/docs/llms.txt
-  https://hermes-agent.nousresearch.com/docs/llms-full.txt
+  https://auraforge-agent.nousresearch.com/docs/llms.txt
+  https://auraforge-agent.nousresearch.com/docs/llms-full.txt
 
 The `/docs/` prefix is not a mistake — Docusaurus serves `website/static/`
 at the `docs/` base path. Clients and IDE plugins that probe the classic
@@ -39,7 +39,7 @@ WEBSITE = SCRIPT_DIR.parent
 DOCS = WEBSITE / "docs"
 STATIC = WEBSITE / "static"
 
-SITE_BASE = "https://hermes-agent.nousresearch.com/docs"
+SITE_BASE = "https://auraforge-agent.nousresearch.com/docs"
 
 # The product story: which pages lead, and in what order. Everything not named
 # here is still indexed — ABSORB decides where it lands — so this list is safe
@@ -128,9 +128,9 @@ SECTIONS: list[tuple[str, list[tuple[str, str, str | None]]]] = [
         ("guides/daily-briefing-bot", "Daily Briefing Bot", None),
         ("guides/team-telegram-assistant", "Team Telegram Assistant", None),
         ("guides/python-library", "Use Aura Forge as a Python Library", None),
-        ("guides/use-mcp-with-hermes", "Use MCP with Aura Forge", None),
-        ("guides/use-voice-mode-with-hermes", "Use Voice Mode with Aura Forge", None),
-        ("guides/use-soul-with-hermes", "Use SOUL.md with Aura Forge", None),
+        ("guides/use-mcp-with-auraforge", "Use MCP with Aura Forge", None),
+        ("guides/use-voice-mode-with-auraforge", "Use Voice Mode with Aura Forge", None),
+        ("guides/use-soul-with-auraforge", "Use SOUL.md with Aura Forge", None),
         ("guides/automate-with-cron", "Automate with Cron", None),
         ("guides/work-with-skills", "Work with Skills", None),
         ("guides/delegation-patterns", "Delegation Patterns", None),
@@ -307,7 +307,7 @@ def emit_llms_index() -> str:
     lines.append("")
     lines.append(
         "Install: `curl -fsSL https://raw.githubusercontent.com/NousResearch/"
-        "hermes-agent/main/scripts/install.sh | bash`  "
+        "auraforge-agent/main/scripts/install.sh | bash`  "
         "(Linux, macOS, WSL2, Termux)"
     )
     lines.append("")
@@ -345,8 +345,8 @@ def emit_llms_full() -> str:
             "Started, Using Aura Forge, Features, Messaging, Integrations, Guides, "
             "Developer Guide, Reference, then everything else.\n"
         ),
-        "Canonical site: https://hermes-agent.nousresearch.com/docs\n",
-        "Short index: https://hermes-agent.nousresearch.com/docs/llms.txt\n",
+        "Canonical site: https://auraforge-agent.nousresearch.com/docs\n",
+        "Short index: https://auraforge-agent.nousresearch.com/docs/llms.txt\n",
         "\n---\n\n",
     ]
 

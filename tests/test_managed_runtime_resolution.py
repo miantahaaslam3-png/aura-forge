@@ -1,4 +1,4 @@
-"""Guard: Hermes-owned subprocesses must not resolve managed runtimes by bare PATH.
+"""Guard: Aura Forge-owned subprocesses must not resolve managed runtimes by bare PATH.
 
 Aura Forge installs runtimes for itself — ``uv`` at ``$HERMES_HOME/bin/uv``, Node at
 ``$HERMES_HOME/node``. Neither directory is on the ambient PATH of an arbitrary
@@ -37,7 +37,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # through a managed-aware helper rather than PATH.
 _MANAGED_COMMANDS = frozenset({"uv", "node", "npm", "npx"})
 
-# Directories that are not Hermes-owned subprocess code: plugins ship their own
+# Directories that are not Aura Forge-owned subprocess code: plugins ship their own
 # resolution policy, tests assert against PATH deliberately, and skills/scripts
 # run as standalone user-invoked programs.
 _EXEMPT_DIRS = (
@@ -180,7 +180,7 @@ def test_no_unreviewed_bare_managed_runtime_lookups():
     ]
 
     assert not unexpected, (
-        "Bare PATH lookup for a Hermes-managed runtime.\n\n"
+        "Bare PATH lookup for a Aura Forge-managed runtime.\n\n"
         + "\n".join(f"  {rel}:{lineno}  which({cmd!r})" for rel, cmd, lineno in unexpected)
         + "\n\n$HERMES_HOME/bin (uv) and $HERMES_HOME/node are not on an "
         "arbitrary process's PATH, so this resolves a system copy — or nothing "

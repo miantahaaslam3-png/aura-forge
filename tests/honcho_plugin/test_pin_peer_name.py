@@ -54,7 +54,7 @@ class TestPinPeerNameConfigParsing:
             "apiKey": "k",
             "peerName": "Igor",
             "hosts": {
-                "hermes": {"pinPeerName": True},
+                "auraforge": {"pinPeerName": True},
             },
         }))
         monkeypatch.setenv("HERMES_HOME", str(tmp_path / "isolated"))
@@ -440,7 +440,7 @@ class TestPinUserPeerAlias:
         config_file.write_text(json.dumps({
             "apiKey": "***",
             "peerName": "eri",
-            "hosts": {"hermes": {"pinPeerName": True}},
+            "hosts": {"auraforge": {"pinPeerName": True}},
         }))
         config = HonchoClientConfig.from_global_config(config_path=config_file)
         assert config.pin_peer_name is True
@@ -534,7 +534,7 @@ class TestProfilePeerUniqueness:
     """Each Aura Forge profile can pin to its own unique peerName.
 
     Profile cloning copies host blocks, but operators routinely diverge them
-    afterwards (e.g. `hermes -p partner` pinned to a different person's peer).
+    afterwards (e.g. `auraforge -p partner` pinned to a different person's peer).
     The resolver must honor host-level ``peerName`` so two profiles in the
     same workspace stay scoped to different Honcho peers.
     """

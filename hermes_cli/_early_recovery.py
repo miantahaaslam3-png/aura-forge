@@ -59,10 +59,10 @@ LAZY_REFRESH_REPAIR_PACKAGES: dict[str, str] = {
 
 # --- Windows entry-point shim quarantine -----------------------------------
 #
-# ``auraforge update`` renames the live ``hermes*.exe`` shims aside
-# (``hermes.exe.old.<unix-ms>``) so uv can write replacements. Putting them BACK
+# ``auraforge update`` renames the live ``auraforge*.exe`` shims aside
+# (``auraforge.exe.old.<unix-ms>``) so uv can write replacements. Putting them BACK
 # is the safety-critical direction: losing that rename leaves the install with
-# no ``auraforge`` on PATH, and the command that would repair it IS ``hermes
+# no ``auraforge`` on PATH, and the command that would repair it IS ``auraforge
 # update`` (#75584).
 #
 # Three call sites restore a quarantined shim -- the updater, the
@@ -91,7 +91,7 @@ def restore_quarantined_shims(
     race. Both are silent, so two processes sweeping the same orphan cannot
     produce a spurious error.
 
-    Messages go to stderr by default -- the startup sweep runs on EVERY hermes
+    Messages go to stderr by default -- the startup sweep runs on EVERY auraforge
     invocation, and ``auraforge acp`` speaks JSON-RPC on stdout.
     """
     if stream is None:
@@ -303,7 +303,7 @@ def _find_uv_binary() -> str | None:
     """
     exe = "uv.exe" if sys.platform == "win32" else "uv"
     candidates = [
-        Path.home() / ".hermes" / "bin" / exe,
+        Path.home() / ".aura-forge" / "bin" / exe,
         Path.home() / ".local" / "bin" / exe,
         Path.home() / ".cargo" / "bin" / exe,
     ]
@@ -644,7 +644,7 @@ def _complete_pending_core_install(root: Path, core_marker: Path) -> bool:
                 file=sys.stderr,
             )
             print(
-                "  The next launch will retry; hermes will keep working from "
+                "  The next launch will retry; auraforge will keep working from "
                 "the current venv in the meantime.",
                 file=sys.stderr,
             )

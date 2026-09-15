@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ def active_session_limit_message(
 
 
 def _registry_home(registry_home: str | Path | None = None) -> Path:
-    return Path(registry_home) if registry_home is not None else Path(get_hermes_home())
+    return Path(registry_home) if registry_home is not None else Path(get_aura_forge_home())
 
 
 def _state_dir(registry_home: str | Path | None = None) -> Path:

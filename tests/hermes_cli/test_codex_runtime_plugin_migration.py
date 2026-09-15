@@ -245,7 +245,7 @@ class TestMigrate:
             'args = ["--above"]\n'
         )
         # First migrate — adds managed block below user content
-        migrate({"mcp_servers": {"hermes-mcp": {"command": "npx"}}},
+        migrate({"mcp_servers": {"auraforge-mcp": {"command": "npx"}}},
                 codex_home=tmp_path, discover_plugins=False,
                 expose_hermes_tools=False)
         text = target.read_text()
@@ -257,14 +257,14 @@ class TestMigrate:
             text + "\n[mcp_servers.user-below]\ncommand = \"below-server\"\n"
         )
         # Re-migrate — both should survive
-        migrate({"mcp_servers": {"hermes-mcp": {"command": "npx"}}},
+        migrate({"mcp_servers": {"auraforge-mcp": {"command": "npx"}}},
                 codex_home=tmp_path, discover_plugins=False,
                 expose_hermes_tools=False)
         final = target.read_text()
         assert "user-above" in final
         assert "user-below" in final
         # And our managed block is still there with the new content
-        assert "[mcp_servers.hermes-mcp]" in final
+        assert "[mcp_servers.auraforge-mcp]" in final
 
 
 
@@ -286,7 +286,7 @@ class TestStripUnmanagedPluginTables:
 
     When codex itself writes ``[plugins."<name>@<marketplace>"]`` tables
     (via the user running ``codex plugins enable`` directly), re-running
-    ``hermes codex-runtime migrate`` would re-emit them inside the managed
+    ``auraforge codex-runtime migrate`` would re-emit them inside the managed
     block and the resulting duplicate-table-header would crash codex.
     """
 
@@ -389,7 +389,7 @@ class TestHermesHomeLeakGuard:
     Previously ``_build_hermes_tools_mcp_entry()`` read ``HERMES_HOME``
     directly from ``os.environ``, so a pytest ``monkeypatch.setenv`` would
     leak a transient tempdir path into the user's real ``~/.codex/config.toml``
-    once codex spawned the hermes-tools MCP subprocess.
+    once codex spawned the auraforge-tools MCP subprocess.
     """
 
 
@@ -402,7 +402,7 @@ class TestHermesHomeLeakGuard:
         # We can't easily create one in the test, so just use a stable path
         # outside any tempdir-detector needle. The detector checks for tempdir
         # markers, not for path existence.
-        real_path = "/Users/alice/.hermes"
+        real_path = "/Users/alice/.auraforge"
         monkeypatch.setenv("HERMES_HOME", real_path)
         entry = _build_hermes_tools_mcp_entry()
         env = entry.get("env", {})

@@ -159,15 +159,15 @@ def get_secret_source(env_var: str) -> str | None:
 
 
 def get_secret_source_values(
-    hermes_home: str | os.PathLike,
+    aura_forge_home: str | os.PathLike,
 ) -> dict[str, str]:
-    """Return the external-secret value snapshot for ``hermes_home``."""
-    home_key = str(Path(hermes_home).resolve())
+    """Return the external-secret value snapshot for ``aura_forge_home``."""
+    home_key = str(Path(aura_forge_home).resolve())
     return dict(_SECRET_SOURCE_VALUES_BY_HOME.get(home_key, {}))
 
 
 def hydrate_profile_secret_sources(
-    hermes_home: str | os.PathLike,
+    aura_forge_home: str | os.PathLike,
 ) -> dict[str, str]:
     """Resolve one profile's configured sources without mutating ``os.environ``.
 
@@ -182,7 +182,7 @@ def hydrate_profile_secret_sources(
     plaintext ``.env`` entries.
     """
     with _SECRET_SOURCE_CACHE_LOCK:
-        return _hydrate_profile_secret_sources(Path(hermes_home))
+        return _hydrate_profile_secret_sources(Path(aura_forge_home))
 
 
 def _hydrate_profile_secret_sources(home: Path) -> dict[str, str]:
@@ -469,7 +469,7 @@ def _sanitize_env_file_if_needed(path: Path) -> None:
 
 def load_hermes_dotenv(
     *,
-    hermes_home: str | os.PathLike | None = None,
+    aura_forge_home: str | os.PathLike | None = None,
     project_env: str | os.PathLike | None = None,
     load_external_secrets: bool = True,
 ) -> list[Path]:
@@ -486,7 +486,7 @@ def load_hermes_dotenv(
     """
     loaded: list[Path] = []
 
-    home_path = Path(hermes_home or os.getenv("AURA_FORGE_HOME", Path.home() / ".hermes"))
+    home_path = Path(aura_forge_home or os.getenv("AURA_FORGE_HOME", Path.home() / ".aura-forge"))
     user_env = home_path / ".env"
     project_env_path = Path(project_env) if project_env else None
 
@@ -510,7 +510,7 @@ def load_hermes_dotenv(
     # .op.env is gitignored — the service-account token never enters the
     # committed .env file.
     # Users on systemd can alternatively use:
-    #   EnvironmentFile=-/path/to/.hermes/.op.env
+    #   EnvironmentFile=-/path/to/.auraforge/.op.env
     # in their gateway unit, which takes precedence (override=False below
     # ensures .op.env never clobbers a token already in the environment).
     op_env = home_path / ".op.env"
@@ -568,12 +568,12 @@ def _reapply_terminal_config_bridge(home_path: Path) -> None:
 
     Scoped to the process AURA_FORGE_HOME: the shared bridge reads the
     process-global config, so re-applying it for a *different* profile's
-    ``load_hermes_dotenv(hermes_home=...)`` call would bridge the wrong
+    ``load_hermes_dotenv(aura_forge_home=...)`` call would bridge the wrong
     profile's config. Fail-open — a config problem must never break dotenv
     loading (the historical env-driven behavior still applies).
     """
     try:
-        if Path(home_path).resolve() != _process_hermes_home().resolve():
+        if Path(home_path).resolve() != _process_aura_forge_home().resolve():
             return
         from hermes_cli.config import apply_terminal_config_to_env
 
@@ -662,7 +662,7 @@ def _apply_external_secret_sources(home_path: Path) -> None:
     # A config with no enabled sources costs one dict scan; a config with
     # enabled sources pays the crypto load exactly once, on demand.
     # NOTE: only keys that smell like a real secret source trigger the import —
-    # a generic dict entry must not force crypto load on every hermes launch.
+    # a generic dict entry must not force crypto load on every auraforge launch.
     # We whitelist by *shape* (source dict with enabled flag) rather than
     # hardcoding names, so plugin/test sources pass through unknown keys.
     any_enabled = any(
@@ -773,7 +773,7 @@ def _load_secrets_config(home_path: Path) -> dict:
     # direct isolated parse if the shared reader is unavailable, preserving
     # the "malformed config can't take down dotenv loading" property (the
     # shared reader also swallows parse errors and returns {}).
-    if home_path == _process_hermes_home():
+    if home_path == _process_aura_forge_home():
         try:
             from hermes_cli.config import read_raw_config
 
@@ -793,11 +793,11 @@ def _load_secrets_config(home_path: Path) -> dict:
     return data.get("secrets") or {}
 
 
-def _process_hermes_home() -> Path:
+def _process_aura_forge_home() -> Path:
     """The AURA_FORGE_HOME the shared config cache is keyed to."""
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
 
-        return get_hermes_home()
+        return get_aura_forge_home()
     except Exception:
-        return Path.home() / ".hermes"
+        return Path.home() / ".aura-forge"

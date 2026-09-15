@@ -2,10 +2,10 @@
 
 Port of earendil-works/pi#7493: entry points advertise the agent harness to
 child processes via the cross-agent ``AI_AGENT`` standard plus a
-Hermes-specific marker, without clobbering an outer harness.
+Aura Forge-specific marker, without clobbering an outer harness.
 
 The AI_AGENT value must equal Aura Forge' id in the public agent-harness
-registry (``hermes-agent`` in huggingface.js ``agent-harnesses.ts``) —
+registry (``auraforge-agent`` in huggingface.js ``agent-harnesses.ts``) —
 standard-var matching there is exact, so any other value is attributed to
 "unknown".
 
@@ -23,7 +23,7 @@ import subprocess
 from hermes_cli.main import _advertise_agent_env
 
 # Registry id — must stay in sync with huggingface.js agent-harnesses.ts.
-HARNESS_ID = "hermes-agent"
+HARNESS_ID = "auraforge-agent"
 
 
 class TestAdvertiseAgentEnv:
@@ -60,7 +60,7 @@ class TestWrapCommandAdvertisesHarness:
         env._snapshot_ready = False
         env._session_id = "testsession0"
         env._cwd_marker = "__HERMES_CWD_testsession0__"
-        env._snapshot_path = "/tmp/hermes-snap-testsession0.sh"
+        env._snapshot_path = "/tmp/auraforge-snap-testsession0.sh"
         env._snapshot_passthrough_names = set()
         return env._wrap_command(command, "/tmp")
 
@@ -75,7 +75,7 @@ class TestWrapCommandAdvertisesHarness:
 
     def test_shell_sets_default_and_preserves_outer(self):
         """Run the wrapped script through real bash both ways."""
-        wrapped = self._wrap('echo "AI=$AI_AGENT HERMES=$HERMES_AGENT"')
+        wrapped = self._wrap('echo "AI=$AI_AGENT AURA_FORGE=$HERMES_AGENT"')
 
         clean_env = {k: v for k, v in os.environ.items()
                      if k not in ("AI_AGENT", "HERMES_AGENT")}
@@ -83,11 +83,11 @@ class TestWrapCommandAdvertisesHarness:
             ["bash", "-c", wrapped], capture_output=True, text=True,
             env=clean_env, timeout=30,
         )
-        assert f"AI={HARNESS_ID} HERMES=true" in out.stdout
+        assert f"AI={HARNESS_ID} AURA_FORGE=true" in out.stdout
 
         outer_env = dict(clean_env, AI_AGENT="pi", HERMES_AGENT="false")
         out = subprocess.run(
             ["bash", "-c", wrapped], capture_output=True, text=True,
             env=outer_env, timeout=30,
         )
-        assert "AI=pi HERMES=false" in out.stdout
+        assert "AI=pi AURA_FORGE=false" in out.stdout

@@ -24,7 +24,7 @@ import tui_gateway.server as srv
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    h = tmp_path / ".hermes"
+    h = tmp_path / ".auraforge"
     h.mkdir(parents=True)
     monkeypatch.setenv("HERMES_HOME", str(h))
     return h

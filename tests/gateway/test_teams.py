@@ -337,7 +337,7 @@ class TestTeamsInteractiveSetup:
         from hermes_cli.cli_output (not hermes_cli.config) and persist
         credentials to .env without crashing.
         """
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
         import hermes_cli.cli_output as cli_output_mod

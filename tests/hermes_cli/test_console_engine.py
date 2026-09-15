@@ -214,8 +214,8 @@ MUTATING_CONFIRMATION_SMOKE_COMMANDS = [
     "mcp add demo --url https://example.com/sse",
     "mcp configure github",
     "mcp picker",
-    "backup --quick -o /tmp/hermes-console-test.zip",
-    "import /tmp/hermes-console-test.zip",
+    "backup --quick -o /tmp/auraforge-console-test.zip",
+    "import /tmp/auraforge-console-test.zip",
     "send --to telegram hello",
     "memory reset --target memory",
     "auth remove openrouter 1",
@@ -472,7 +472,7 @@ def test_repl_runs_non_interactive_lines_without_prompts(_isolate_hermes_home):
 
     assert code == 0
     assert "Aura Forge Console" in stdout.getvalue()
-    assert "hermes>" not in stdout.getvalue()
+    assert "auraforge>" not in stdout.getvalue()
     assert stderr.getvalue() == ""
 
 

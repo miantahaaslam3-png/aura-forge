@@ -16,7 +16,7 @@ def main_mod():
 
 
 def _touch_ink(root: Path) -> None:
-    ink = root / "node_modules" / "@hermes" / "ink" / "package.json"
+    ink = root / "node_modules" / "@auraforge" / "ink" / "package.json"
     ink.parent.mkdir(parents=True, exist_ok=True)
     ink.write_text("{}")
 
@@ -115,7 +115,7 @@ def test_no_install_without_lockfile_when_ink_present(tmp_path: Path, main_mod) 
 def _write_ws(root: Path, ws_lock: str, hidden_lock: str) -> Path:
     """Lay out a workspace root + ui-tui member and return the ui-tui dir.
 
-    ``@hermes/ink`` and the marker live at the workspace root (hoisted);
+    ``@auraforge/ink`` and the marker live at the workspace root (hoisted);
     ``ui-tui/`` has no lockfile of its own so ``_workspace_root`` treats the
     parent as the workspace root and the launch scopes to ``--workspace ui-tui``.
     """
@@ -126,7 +126,7 @@ def _write_ws(root: Path, ws_lock: str, hidden_lock: str) -> Path:
     tui_dir.mkdir(parents=True, exist_ok=True)
     # package.json (and no own lockfile) is what makes _workspace_root treat the
     # parent as the workspace root and the launch scope to --workspace ui-tui.
-    (tui_dir / "package.json").write_text('{"name":"hermes-tui"}')
+    (tui_dir / "package.json").write_text('{"name":"auraforge-tui"}')
     return tui_dir
 
 
@@ -168,20 +168,20 @@ def test_need_install_when_ui_tui_dep_missing_in_workspace_layout(tmp_path: Path
 
 
 def test_need_install_when_linked_workspace_dep_missing(tmp_path: Path, main_mod) -> None:
-    """The closure follows workspace symlinks (@hermes/ink → ui-tui/packages/…)
+    """The closure follows workspace symlinks (@auraforge/ink → ui-tui/packages/…)
     so a linked workspace's own missing dep triggers a reinstall."""
     tui_dir = _write_ws(
         tmp_path,
         '{"packages":{'
-        '"ui-tui":{"dependencies":{"@hermes/ink":"*"}},'
-        '"node_modules/@hermes/ink":{"link":true,"resolved":"ui-tui/packages/hermes-ink"},'
-        '"ui-tui/packages/hermes-ink":{"dependencies":{"inkdep":"1.0.0"}},'
+        '"ui-tui":{"dependencies":{"@auraforge/ink":"*"}},'
+        '"node_modules/@auraforge/ink":{"link":true,"resolved":"ui-tui/packages/auraforge-ink"},'
+        '"ui-tui/packages/auraforge-ink":{"dependencies":{"inkdep":"1.0.0"}},'
         '"node_modules/inkdep":{"version":"1.0.0"}'
         "}}",
         '{"packages":{'
-        '"ui-tui":{"dependencies":{"@hermes/ink":"*"}},'
-        '"node_modules/@hermes/ink":{"link":true,"resolved":"ui-tui/packages/hermes-ink"},'
-        '"ui-tui/packages/hermes-ink":{"dependencies":{"inkdep":"1.0.0"}}'
+        '"ui-tui":{"dependencies":{"@auraforge/ink":"*"}},'
+        '"node_modules/@auraforge/ink":{"link":true,"resolved":"ui-tui/packages/auraforge-ink"},'
+        '"ui-tui/packages/auraforge-ink":{"dependencies":{"inkdep":"1.0.0"}}'
         "}}",
     )
     assert main_mod._tui_need_npm_install(tui_dir) is True
@@ -230,12 +230,12 @@ def test_workspace_closure_includes_dev_deps_of_selected_child_workspace(main_mo
     so each selected child's devDependencies join the closure — a dev dep unique
     to a child is NOT dropped (regression for the child-scope false-negative)."""
     packages = {
-        "ui-tui": {"dependencies": {"@hermes/ink": "*"}},
-        "node_modules/@hermes/ink": {
+        "ui-tui": {"dependencies": {"@auraforge/ink": "*"}},
+        "node_modules/@auraforge/ink": {
             "link": True,
-            "resolved": "ui-tui/packages/hermes-ink",
+            "resolved": "ui-tui/packages/auraforge-ink",
         },
-        "ui-tui/packages/hermes-ink": {"devDependencies": {"child-dev-only": "1"}},
+        "ui-tui/packages/auraforge-ink": {"devDependencies": {"child-dev-only": "1"}},
         "node_modules/child-dev-only": {},
     }
     # Only ui-tui selected (desktop): the child's dev dep is not installed.
@@ -243,7 +243,7 @@ def test_workspace_closure_includes_dev_deps_of_selected_child_workspace(main_mo
     assert "node_modules/child-dev-only" not in desktop
     # ui-tui + child selected (Termux): the child's dev dep is in the closure.
     termux = main_mod._npm_lock_workspace_closure(
-        packages, {"ui-tui", "ui-tui/packages/hermes-ink"}
+        packages, {"ui-tui", "ui-tui/packages/auraforge-ink"}
     )
     assert "node_modules/child-dev-only" in termux
 
@@ -256,23 +256,23 @@ def test_termux_install_catches_missing_child_workspace_dev_dep(
     must trigger a reinstall — off Termux (child not selected) it must not."""
     ws_lock = (
         '{"packages":{'
-        '"ui-tui":{"dependencies":{"@hermes/ink":"*"}},'
-        '"node_modules/@hermes/ink":{"link":true,"resolved":"ui-tui/packages/hermes-ink"},'
-        '"ui-tui/packages/hermes-ink":{"devDependencies":{"child-dev-only":"1.0.0"}},'
+        '"ui-tui":{"dependencies":{"@auraforge/ink":"*"}},'
+        '"node_modules/@auraforge/ink":{"link":true,"resolved":"ui-tui/packages/auraforge-ink"},'
+        '"ui-tui/packages/auraforge-ink":{"devDependencies":{"child-dev-only":"1.0.0"}},'
         '"node_modules/child-dev-only":{"version":"1.0.0"}'
         "}}"
     )
     hidden_lock = (
         '{"packages":{'
-        '"ui-tui":{"dependencies":{"@hermes/ink":"*"}},'
-        '"node_modules/@hermes/ink":{"link":true,"resolved":"ui-tui/packages/hermes-ink"},'
-        '"ui-tui/packages/hermes-ink":{"devDependencies":{"child-dev-only":"1.0.0"}}'
+        '"ui-tui":{"dependencies":{"@auraforge/ink":"*"}},'
+        '"node_modules/@auraforge/ink":{"link":true,"resolved":"ui-tui/packages/auraforge-ink"},'
+        '"ui-tui/packages/auraforge-ink":{"devDependencies":{"child-dev-only":"1.0.0"}}'
         "}}"
     )
     tui_dir = _write_ws(tmp_path, ws_lock, hidden_lock)
-    child = tui_dir / "packages" / "hermes-ink"
+    child = tui_dir / "packages" / "auraforge-ink"
     child.mkdir(parents=True, exist_ok=True)
-    (child / "package.json").write_text('{"name":"@hermes/ink"}')
+    (child / "package.json").write_text('{"name":"@auraforge/ink"}')
 
     monkeypatch.setattr(main_mod, "_is_termux_startup_environment", lambda: False)
     assert main_mod._tui_need_npm_install(tui_dir) is False
@@ -362,7 +362,7 @@ def test_make_tui_argv_scopes_npm_install_on_termux_workspace(
     tui_dir = tmp_path / "ui-tui"
     tui_dir.mkdir()
     (tui_dir / "package.json").write_text("{}")
-    ink_dir = tui_dir / "packages" / "hermes-ink"
+    ink_dir = tui_dir / "packages" / "auraforge-ink"
     ink_dir.mkdir(parents=True)
     (ink_dir / "package.json").write_text("{}")
     (tmp_path / "package-lock.json").write_text("{}")
@@ -388,7 +388,7 @@ def test_make_tui_argv_scopes_npm_install_on_termux_workspace(
         "--workspace",
         "ui-tui",
         "--workspace",
-        "ui-tui/packages/hermes-ink",
+        "ui-tui/packages/auraforge-ink",
         "--include-workspace-root=false",
     ]
     assert calls[0][1]["cwd"] == str(tmp_path)
@@ -494,7 +494,7 @@ def test_make_tui_argv_keeps_desktop_always_build_behaviour(
 def test_make_tui_argv_decodes_dev_prebuild_with_utf8_replace(
     tmp_path: Path, main_mod, monkeypatch
 ) -> None:
-    ink_dir = tmp_path / "packages" / "hermes-ink"
+    ink_dir = tmp_path / "packages" / "auraforge-ink"
     ink_dir.mkdir(parents=True)
     tsx = tmp_path / "node_modules" / ".bin" / "tsx"
     tsx.parent.mkdir(parents=True)
@@ -719,7 +719,7 @@ def test_no_stray_lockfiles_in_workspace_subdirs(main_mod) -> None:
         root / "apps" / "desktop",
         root / "apps" / "shared",
     ]
-    # Also sweep ui-tui/packages/* (hermes-ink etc.)
+    # Also sweep ui-tui/packages/* (auraforge-ink etc.)
     tui_pkgs = root / "ui-tui" / "packages"
     if tui_pkgs.is_dir():
         subdirs.extend(d for d in tui_pkgs.iterdir() if d.is_dir())

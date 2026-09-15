@@ -32,7 +32,7 @@ def _clean_state():
 
 class TestRegisterCredentialFiles:
     def test_dict_with_path_key(self, tmp_path):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         (hermes_home / "token.json").write_text("{}")
 
@@ -43,12 +43,12 @@ class TestRegisterCredentialFiles:
         mounts = get_credential_file_mounts()
         assert len(mounts) == 1
         assert mounts[0]["host_path"] == str(hermes_home / "token.json")
-        assert mounts[0]["container_path"] == "/root/.hermes/token.json"
+        assert mounts[0]["container_path"] == "/root/.auraforge/token.json"
 
 
     def test_path_takes_precedence_over_name(self, tmp_path):
         """When both path and name are present, path wins."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         (hermes_home / "real.json").write_text("{}")
 
@@ -64,7 +64,7 @@ class TestRegisterCredentialFiles:
 
 class TestSkillsDirectoryMount:
     def test_returns_mount_when_skills_dir_exists(self, tmp_path):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         skills_dir = hermes_home / "skills"
         skills_dir.mkdir(parents=True)
         (skills_dir / "test-skill").mkdir()
@@ -75,21 +75,21 @@ class TestSkillsDirectoryMount:
 
         assert len(mounts) >= 1
         assert mounts[0]["host_path"] == str(skills_dir)
-        assert mounts[0]["container_path"] == "/root/.hermes/skills"
+        assert mounts[0]["container_path"] == "/root/.auraforge/skills"
 
 
     def test_custom_container_base(self, tmp_path):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         (hermes_home / "skills").mkdir(parents=True)
 
         with patch.dict(os.environ, {"HERMES_HOME": str(hermes_home)}):
-            mounts = get_skills_directory_mount(container_base="/home/user/.hermes")
+            mounts = get_skills_directory_mount(container_base="/home/user/.auraforge")
 
-        assert mounts[0]["container_path"] == "/home/user/.hermes/skills"
+        assert mounts[0]["container_path"] == "/home/user/.auraforge/skills"
 
     def test_symlinks_are_sanitized(self, tmp_path):
         """Symlinks in skills dir should be excluded from the mount."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         skills_dir = hermes_home / "skills"
         skills_dir.mkdir(parents=True)
         (skills_dir / "legit.md").write_text("# real skill")
@@ -114,7 +114,7 @@ class TestSkillsDirectoryMount:
 
     def test_no_symlinks_returns_original_dir(self, tmp_path):
         """When no symlinks exist, the original dir is returned (no copy)."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         skills_dir = hermes_home / "skills"
         skills_dir.mkdir(parents=True)
         (skills_dir / "skill.md").write_text("ok")
@@ -127,7 +127,7 @@ class TestSkillsDirectoryMount:
 
 class TestIterSkillsFiles:
     def test_returns_files_skipping_symlinks(self, tmp_path):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         skills_dir = hermes_home / "skills"
         (skills_dir / "cat" / "myskill").mkdir(parents=True)
         (skills_dir / "cat" / "myskill" / "SKILL.md").write_text("# skill")
@@ -142,13 +142,13 @@ class TestIterSkillsFiles:
             files = iter_skills_files()
 
         paths = {f["container_path"] for f in files}
-        assert "/root/.hermes/skills/cat/myskill/SKILL.md" in paths
-        assert "/root/.hermes/skills/cat/myskill/scripts/run.sh" in paths
+        assert "/root/.auraforge/skills/cat/myskill/SKILL.md" in paths
+        assert "/root/.auraforge/skills/cat/myskill/scripts/run.sh" in paths
         # Symlink should be excluded
         assert not any("evil" in f["container_path"] for f in files)
 
     def test_empty_when_no_skills_dir(self, tmp_path):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
 
         with patch.dict(os.environ, {"HERMES_HOME": str(hermes_home)}):
@@ -168,8 +168,8 @@ class TestPathTraversalSecurity:
 
     def test_dotdot_traversal_rejected(self, tmp_path, monkeypatch):
         """'../sensitive' must not escape HERMES_HOME."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        (tmp_path / ".hermes").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        (tmp_path / ".auraforge").mkdir()
 
         # Create a sensitive file one level above hermes_home
         sensitive = tmp_path / "sensitive.json"
@@ -182,7 +182,7 @@ class TestPathTraversalSecurity:
 
     def test_deep_traversal_rejected(self, tmp_path, monkeypatch):
         """'../../etc/passwd' style traversal must be rejected."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -198,7 +198,7 @@ class TestPathTraversalSecurity:
 
     def test_absolute_path_rejected(self, tmp_path, monkeypatch):
         """Absolute paths must be rejected regardless of whether they exist."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -214,7 +214,7 @@ class TestPathTraversalSecurity:
 
     def test_nested_subdir_inside_hermes_home_allowed(self, tmp_path, monkeypatch):
         """Files in subdirectories of HERMES_HOME must be allowed."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         subdir = hermes_home / "creds"
         subdir.mkdir()
@@ -227,7 +227,7 @@ class TestPathTraversalSecurity:
 
     def test_symlink_traversal_rejected(self, tmp_path, monkeypatch):
         """A symlink inside HERMES_HOME pointing outside must be rejected."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -263,7 +263,7 @@ class TestConfigPathTraversal:
 
     def test_config_traversal_rejected(self, tmp_path, monkeypatch):
         """'../secret' in config.yaml must not escape HERMES_HOME."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -278,7 +278,7 @@ class TestConfigPathTraversal:
 
     def test_config_absolute_path_rejected(self, tmp_path, monkeypatch):
         """Absolute paths in config.yaml must be rejected."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -291,7 +291,7 @@ class TestConfigPathTraversal:
 
     def test_config_legitimate_file_works(self, tmp_path, monkeypatch):
         """Normal files inside HERMES_HOME via config must still mount."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -312,7 +312,7 @@ class TestCacheDirectoryMounts:
 
     def test_returns_existing_cache_dirs(self, tmp_path, monkeypatch):
         """Existing cache dirs are returned with correct container paths."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         (hermes_home / "cache" / "documents").mkdir(parents=True)
         (hermes_home / "cache" / "audio").mkdir(parents=True)
@@ -321,9 +321,9 @@ class TestCacheDirectoryMounts:
 
         mounts = get_cache_directory_mounts()
         paths = {m["container_path"] for m in mounts}
-        assert "/root/.hermes/cache/documents" in paths
-        assert "/root/.hermes/cache/audio" in paths
-        assert "/root/.hermes/cache/videos" in paths
+        assert "/root/.auraforge/cache/documents" in paths
+        assert "/root/.auraforge/cache/audio" in paths
+        assert "/root/.auraforge/cache/videos" in paths
 
 
     def test_legacy_dir_names_resolved(self, tmp_path, monkeypatch):
@@ -333,7 +333,7 @@ class TestCacheDirectoryMounts:
         ``has content`` for ``get_hermes_dir``'s populated-legacy check
         (see #27602 — empty legacy stubs are no longer honoured).
         """
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         # Use legacy dir name with content — get_hermes_dir prefers
         # populated old over new.
@@ -351,8 +351,8 @@ class TestCacheDirectoryMounts:
         assert str(hermes_home / "image_cache") in host_paths
         # Container paths always use the new layout
         container_paths = {m["container_path"] for m in mounts}
-        assert "/root/.hermes/cache/documents" in container_paths
-        assert "/root/.hermes/cache/images" in container_paths
+        assert "/root/.auraforge/cache/documents" in container_paths
+        assert "/root/.auraforge/cache/images" in container_paths
 
     def test_empty_hermes_home(self, tmp_path, monkeypatch):
         """Empty home → every staging dir is created and mounted (#76577).
@@ -360,15 +360,15 @@ class TestCacheDirectoryMounts:
         Docker snapshots the mount list at container creation; skipping
         not-yet-existing dirs meant the first attachment/clipboard file after
         container start dangled forever. All _CACHE_DIRS entries mount."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
         mounts = get_cache_directory_mounts()
         container_paths = {m["container_path"] for m in mounts}
-        assert "/root/.hermes/attachments" in container_paths
-        assert "/root/.hermes/images" in container_paths
-        assert "/root/.hermes/cache/images" in container_paths
+        assert "/root/.auraforge/attachments" in container_paths
+        assert "/root/.auraforge/images" in container_paths
+        assert "/root/.auraforge/cache/images" in container_paths
         for mount in mounts:
             assert Path(mount["host_path"]).is_dir()
 
@@ -379,14 +379,14 @@ class TestCacheDirectoryMounts:
         under ``cache/``. Without this entry vision_analyze on a desktop upload
         fails because the file is not reachable inside the sandbox.
         """
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         (hermes_home / "images").mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
         mounts = get_cache_directory_mounts()
         by_container = {m["container_path"]: m["host_path"] for m in mounts}
-        assert "/root/.hermes/images" in by_container
-        assert by_container["/root/.hermes/images"] == str(hermes_home / "images")
+        assert "/root/.auraforge/images" in by_container
+        assert by_container["/root/.auraforge/images"] == str(hermes_home / "images")
 
     def test_images_upload_file_maps_into_container(self, tmp_path, monkeypatch):
         """A concrete upload under ``images/`` maps to its container path.
@@ -394,7 +394,7 @@ class TestCacheDirectoryMounts:
         This is the reverse mapping vision uses to translate a container-visible
         path back to the host mount; it must recognise the ``images/`` dir.
         """
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         (hermes_home / "images").mkdir(parents=True)
         upload = hermes_home / "images" / "upload_20260722_181019_1.png"
         upload.write_bytes(bytes.fromhex("89504e470d0a1a0a"))
@@ -402,7 +402,7 @@ class TestCacheDirectoryMounts:
 
         assert (
             map_cache_path_to_container(str(upload))
-            == "/root/.hermes/images/upload_20260722_181019_1.png"
+            == "/root/.auraforge/images/upload_20260722_181019_1.png"
         )
 
 
@@ -410,7 +410,7 @@ class TestMapCachePathToContainer:
     """Tests for map_cache_path_to_container() — the backend-agnostic mapper."""
 
     def test_maps_path_under_cache_dir(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         img_dir = hermes_home / "cache" / "images"
         img_dir.mkdir(parents=True)
         host_path = str(img_dir / "generated.png")
@@ -418,7 +418,7 @@ class TestMapCachePathToContainer:
 
         assert (
             map_cache_path_to_container(host_path)
-            == "/root/.hermes/cache/images/generated.png"
+            == "/root/.auraforge/cache/images/generated.png"
         )
 
 
@@ -427,12 +427,12 @@ class TestMapCachePathToContainer:
         Docker snapshots mounts at container creation, so a dir that appears
         later would dangle for the container's whole life. The map must
         therefore succeed (and the dir exist) even before first use."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
         mapped = map_cache_path_to_container(str(hermes_home / "cache" / "images" / "x.png"))
-        assert mapped == "/root/.hermes/cache/images/x.png"
+        assert mapped == "/root/.auraforge/cache/images/x.png"
         assert (hermes_home / "cache" / "images").is_dir()
 
 
@@ -442,7 +442,7 @@ class TestToAgentVisiblePathPerBackend:
     stays correct (local; singularity auto-binds the host home)."""
 
     def _staged(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         (hermes_home / "attachments").mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
         return str(hermes_home / "attachments" / "drop.zip")
@@ -451,13 +451,13 @@ class TestToAgentVisiblePathPerBackend:
         staged = self._staged(tmp_path, monkeypatch)
         monkeypatch.setenv("TERMINAL_ENV", "docker")
         from tools.credential_files import to_agent_visible_cache_path
-        assert to_agent_visible_cache_path(staged) == "/root/.hermes/attachments/drop.zip"
+        assert to_agent_visible_cache_path(staged) == "/root/.auraforge/attachments/drop.zip"
 
     def test_ssh_maps_to_tilde_hermes(self, tmp_path, monkeypatch):
         staged = self._staged(tmp_path, monkeypatch)
         monkeypatch.setenv("TERMINAL_ENV", "ssh")
         from tools.credential_files import to_agent_visible_cache_path
-        assert to_agent_visible_cache_path(staged) == "~/.hermes/attachments/drop.zip"
+        assert to_agent_visible_cache_path(staged) == "~/.auraforge/attachments/drop.zip"
 
     @pytest.mark.parametrize("backend", ["local", "singularity", ""])
     def test_untranslated_backends_keep_host_path(self, tmp_path, monkeypatch, backend):
@@ -478,7 +478,7 @@ class TestIterCacheFiles:
 
     def test_enumerates_files(self, tmp_path, monkeypatch):
         """Regular files in cache dirs are returned."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         doc_dir = hermes_home / "cache" / "documents"
         doc_dir.mkdir(parents=True)
         (doc_dir / "upload.zip").write_bytes(b"PK\x03\x04")
@@ -492,7 +492,7 @@ class TestIterCacheFiles:
 
     def test_skips_symlinks(self, tmp_path, monkeypatch):
         """Symlinks inside cache dirs are skipped."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         doc_dir = hermes_home / "cache" / "documents"
         doc_dir.mkdir(parents=True)
         real_file = doc_dir / "real.txt"
@@ -508,7 +508,7 @@ class TestIterCacheFiles:
 
     def test_empty_cache(self, tmp_path, monkeypatch):
         """No cache dirs → empty list."""
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
 
@@ -533,7 +533,7 @@ class TestMasterCredentialStoresAreNeverMountable:
 
     @staticmethod
     def _home(tmp_path):
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".auraforge"
         home.mkdir()
         (home / ".env").write_text("OPENAI_API_KEY=sk-proj-REAL\n")
         (home / "auth.json").write_text('{"providers":{}}')
@@ -572,7 +572,7 @@ class TestMasterCredentialStoresAreNeverMountable:
             assert register_credential_file("google_token.json") is True
             mounts = get_credential_file_mounts()
         assert [m["container_path"] for m in mounts] == [
-            "/root/.hermes/google_token.json"
+            "/root/.auraforge/google_token.json"
         ]
 
     def test_refused_entry_does_not_block_the_rest_of_the_batch(self, tmp_path):
@@ -582,8 +582,8 @@ class TestMasterCredentialStoresAreNeverMountable:
             mounts = get_credential_file_mounts()
 
         paths = [m["container_path"] for m in mounts]
-        assert "/root/.hermes/google_token.json" in paths
-        assert "/root/.hermes/.env" not in paths
+        assert "/root/.auraforge/google_token.json" in paths
+        assert "/root/.auraforge/.env" not in paths
         assert ".env" in missing, "a refused store is reported back to the skill"
 
     def test_traversal_guard_still_applies(self, tmp_path):

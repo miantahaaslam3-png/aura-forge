@@ -241,13 +241,13 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
 
     _require_token(request)
     _gc_mcp_oauth_flows()
-    from hermes_constants import get_hermes_home
+    from hermes_constants import get_aura_forge_home
 
-    process_home = str(get_hermes_home().expanduser().resolve(strict=False))
+    process_home = str(get_aura_forge_home().expanduser().resolve(strict=False))
 
     def _read():
         with _profile_scope(profile):
-            return _get_mcp_servers(), str(get_hermes_home().expanduser().resolve(strict=False))
+            return _get_mcp_servers(), str(get_aura_forge_home().expanduser().resolve(strict=False))
 
     servers, flow_home = await asyncio.to_thread(_read)
     if name not in servers:
@@ -264,7 +264,7 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
         flow_id=flow_id,
         server_name=name,
         profile=profile,
-        hermes_home=flow_home,
+        aura_forge_home=flow_home,
         redirect_uri=(cfg.get("oauth") or {}).get("redirect_uri")
         or _mcp_oauth_callback_url(request, name),
         reconnect_live=flow_home == process_home,
@@ -281,7 +281,7 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
             )
         if any(
             flow.server_name == name
-            and flow.hermes_home == flow_home
+            and flow.aura_forge_home == flow_home
             and not flow.worker_done
             for flow in _mcp_oauth_flows.values()
         ):

@@ -93,7 +93,7 @@ class TestFireworksDoctor:
         dropped — that heuristic is for aggregator vendor slugs only."""
         from hermes_cli import doctor as doctor_mod
 
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".auraforge"
         home.mkdir(parents=True)
         (home / "config.yaml").write_text(
             "model:\n"
@@ -160,7 +160,7 @@ class TestFireworksAuxiliary:
         client, model, kwargs = self._resolve("fireworks")
         assert client is not None
         headers = kwargs.get("default_headers", {})
-        assert headers["HTTP-Referer"] == "https://hermes-agent.nousresearch.com"
+        assert headers["HTTP-Referer"] == "https://auraforge-agent.nousresearch.com"
         assert headers["X-Title"] == "Aura Forge Agent"
         assert kwargs["base_url"] == "https://api.fireworks.ai/inference/v1"
 

@@ -26,13 +26,13 @@ from hermes_cli.relay_plugin_cutover import (
 
 logger = logging.getLogger(__name__)
 
-SESSION_SCOPE = "hermes.session"
-TURN_SCOPE = "hermes.turn"
-LOGICAL_LLM_SCOPE = "hermes.logical_llm_call"
-RUNTIME_SCHEMA_KEY = "hermes.relay.schema_version"
-RUNTIME_SCHEMA_VERSION = "hermes.relay.runtime.v1"
-RUNTIME_INSTANCE_KEY = "hermes.relay.runtime_instance"
-RELAY_PLUGINS_EXECUTION_CONSUMER = "hermes.nemo_relay.plugins"
+SESSION_SCOPE = "auraforge.session"
+TURN_SCOPE = "auraforge.turn"
+LOGICAL_LLM_SCOPE = "auraforge.logical_llm_call"
+RUNTIME_SCHEMA_KEY = "auraforge.relay.schema_version"
+RUNTIME_SCHEMA_VERSION = "auraforge.relay.runtime.v1"
+RUNTIME_INSTANCE_KEY = "auraforge.relay.runtime_instance"
+RELAY_PLUGINS_EXECUTION_CONSUMER = "auraforge.nemo_relay.plugins"
 _PROFILE_KEY_CACHE: dict[str, str] = {}
 
 # Bound for native scope lifecycle operations (push/pop/flush) that gate
@@ -307,7 +307,7 @@ class _ProcessRelayPluginConfiguration:
                 logger.warning(
                     "A process-global Relay plugin configuration is already active "
                     "outside Aura Forge native ownership; leaving it unchanged and "
-                    "disabling Hermes-managed Relay middleware for this process"
+                    "disabling Aura Forge-managed Relay middleware for this process"
                 )
                 return self._remember(
                     owner_id,
@@ -491,7 +491,7 @@ class RelayRuntime:
             self._execution_consumers.discard(consumer)
 
     def managed_execution_enabled(self) -> bool:
-        """Return whether a Hermes-managed consumer needs the Relay pipeline."""
+        """Return whether a Aura Forge-managed consumer needs the Relay pipeline."""
         with self._execution_consumers_lock:
             return bool(self._execution_consumers)
 
@@ -592,7 +592,7 @@ class RelayRuntime:
                     session,
                     self.relay.scope.pop,
                     old_handle,
-                    output={"hermes.session.segment_reason": reason},
+                    output={"auraforge.session.segment_reason": reason},
                     metadata={
                         RUNTIME_SCHEMA_KEY: RUNTIME_SCHEMA_VERSION,
                         RUNTIME_INSTANCE_KEY: self.runtime_id,
@@ -610,8 +610,8 @@ class RelayRuntime:
             scope_metadata = {
                 RUNTIME_SCHEMA_KEY: RUNTIME_SCHEMA_VERSION,
                 RUNTIME_INSTANCE_KEY: self.runtime_id,
-                "hermes.session.segment": session.segment,
-                "hermes.session.segment_reason": reason,
+                "auraforge.session.segment": session.segment,
+                "auraforge.session.segment_reason": reason,
             }
             parent_handle = None
             if session.parent_session_id:
@@ -986,7 +986,7 @@ class RelayRuntime:
                         top,
                         output={
                             "outcome": "cancelled",
-                            "hermes.orphan_drain": True,
+                            "auraforge.orphan_drain": True,
                         },
                         metadata=metadata,
                     )
@@ -1103,7 +1103,7 @@ class RelayRuntime:
         if has_active_operations:
             thread = threading.Thread(
                 target=self._finish_shutdown_after_operations,
-                name=f"hermes-nemo-relay-shutdown-{self.runtime_id[:8]}",
+                name=f"auraforge-nemo-relay-shutdown-{self.runtime_id[:8]}",
                 daemon=True,
             )
             try:
@@ -1385,7 +1385,7 @@ class RelaySessionCoordinator:
                     "model": model,
                 }
                 self._prepare_session(host, session_context)
-                metadata = {"hermes.execution_surface": platform or "unknown"}
+                metadata = {"auraforge.execution_surface": platform or "unknown"}
                 if parent_session_id and parent_session_id != session_id:
                     session = host.register_subagent(
                         {
@@ -1477,7 +1477,7 @@ class RelaySessionCoordinator:
                     metadata={
                         RUNTIME_SCHEMA_KEY: RUNTIME_SCHEMA_VERSION,
                         RUNTIME_INSTANCE_KEY: lease.host.runtime_id,
-                        "hermes.execution_surface": lease.platform or "unknown",
+                        "auraforge.execution_surface": lease.platform or "unknown",
                     },
                     timeout=_SCOPE_OP_TIMEOUT,
                 )
@@ -2051,7 +2051,7 @@ def _resolve_plugin_awaitable(value: Any) -> Any:
 
     thread = threading.Thread(
         target=_runner,
-        name="hermes-nemo-relay-plugin-lifecycle",
+        name="auraforge-nemo-relay-plugin-lifecycle",
         daemon=True,
     )
     thread.start()

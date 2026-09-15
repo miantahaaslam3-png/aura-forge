@@ -259,7 +259,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     )
 
     # Preserve tokens for providers we already had unless the operator
-    # explicitly requested rotation.  This prevents re-running `hermes
+    # explicitly requested rotation.  This prevents re-running `auraforge
     # egress setup` from invalidating tokens baked into already-running
     # sandboxes.
     existing = ip.load_mappings()
@@ -509,7 +509,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
                 f"config: {exc}[/yellow]"
             )
             console.print(
-                "  Run [cyan]hermes egress start[/cyan] manually before "
+                "  Run [cyan]auraforge egress start[/cyan] manually before "
                 "launching new Docker sandboxes."
             )
         else:
@@ -522,7 +522,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     elif was_running:
         console.print(
             "  [yellow]⚠ stopped the running iron-proxy; config or tokens "
-            "changed.  Run [cyan]hermes egress restart[/cyan] (or "
+            "changed.  Run [cyan]auraforge egress restart[/cyan] (or "
             "[cyan]start[/cyan]) before launching new Docker sandboxes.[/yellow]"
         )
 
@@ -532,13 +532,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
         "Sandboxes will route outbound traffic through it."
     )
     console.print(
-        "  Start:   [cyan]hermes egress start[/cyan]\n"
-        "  Restart: [cyan]hermes egress restart[/cyan]  (after any re-setup)\n"
-        "  Reload:  [cyan]hermes egress reload[/cyan]   (apply ruleset edits "
+        "  Start:   [cyan]auraforge egress start[/cyan]\n"
+        "  Restart: [cyan]auraforge egress restart[/cyan]  (after any re-setup)\n"
+        "  Reload:  [cyan]auraforge egress reload[/cyan]   (apply ruleset edits "
         "in-place, no restart)\n"
-        "  Status:  [cyan]hermes egress status[/cyan]\n"
-        "  Stop:    [cyan]hermes egress stop[/cyan]\n"
-        "  Disable: [cyan]hermes egress disable[/cyan]"
+        "  Status:  [cyan]auraforge egress status[/cyan]\n"
+        "  Stop:    [cyan]auraforge egress stop[/cyan]\n"
+        "  Disable: [cyan]auraforge egress disable[/cyan]"
     )
     return 0
 
@@ -838,7 +838,7 @@ def cmd_disable(args: argparse.Namespace) -> int:
     if ip.get_status().pid is not None:
         console.print(
             "  iron-proxy is still running — stop it with "
-            "[cyan]hermes egress stop[/cyan] if you want it down too."
+            "[cyan]auraforge egress stop[/cyan] if you want it down too."
         )
     return 0
 

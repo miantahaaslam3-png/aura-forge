@@ -7,7 +7,7 @@ from hermes_cli import config as cfg
 
 
 def test_repeat_calls_are_memoized_but_deleted_home_is_recreated(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     monkeypatch.setenv("HERMES_HOME", str(home))
 
     cfg.ensure_hermes_home()
@@ -26,8 +26,8 @@ def test_repeat_calls_are_memoized_but_deleted_home_is_recreated(tmp_path, monke
 
 
 def test_distinct_home_paths_each_get_the_skeleton(tmp_path, monkeypatch):
-    first = tmp_path / "a" / ".hermes"
-    second = tmp_path / "b" / ".hermes"
+    first = tmp_path / "a" / ".auraforge"
+    second = tmp_path / "b" / ".auraforge"
 
     monkeypatch.setenv("HERMES_HOME", str(first))
     cfg.ensure_hermes_home()

@@ -87,7 +87,7 @@ def _slack_unfurl_kwargs(extra: Optional[Dict[str, Any]]) -> Dict[str, bool]:
     in the message untouched.
 
     String booleans are coerced the same way as the relay plane's
-    ``_slack_unfurl_hints``: ``hermes config set`` and Railway persist YAML
+    ``_slack_unfurl_hints``: ``auraforge config set`` and Railway persist YAML
     ``"true"``/``"false"`` as strings, and a silently dropped string would
     make the knob a no-op on the native plane only. Unrecognized values are
     dropped (NOT coerced to False) so junk config keeps Slack's default
@@ -704,7 +704,7 @@ def _normalize_slack_text_for_dedupe(text: str, bot_uid: str = "") -> str:
     canonical = _SLACK_PERMALINK_RE.sub(r"\1", canonical)
     # After the date form, which carries a label of its own.
     canonical = _SLACK_ENTITY_LABEL_RE.sub(r"<\1>", canonical)
-    # After the label, so that ``<@U…|hermes>`` is stripped like ``<@U…>``.
+    # After the label, so that ``<@U…|auraforge>`` is stripped like ``<@U…>``.
     if bot_uid:
         canonical = canonical.replace(f"<@{bot_uid}>", "")
     canonical = _SLACK_FENCED_CODE_RE.sub(r"\1", canonical)
@@ -1114,7 +1114,7 @@ class SlackAdapter(BasePlatformAdapter):
       - DMs and channel messages (mention-gated in channels)
       - Thread support
       - File/image/audio attachments
-      - Slash commands (/hermes)
+      - Slash commands (/auraforge)
       - Typing indicators (not natively supported by Slack bots)
     """
 
@@ -1947,7 +1947,7 @@ class SlackAdapter(BasePlatformAdapter):
                     "and 'message.mpim' event. Add 'mpim:history' (and "
                     "'mpim:read') to bot scopes, add 'message.mpim' to event "
                     "subscriptions, then REINSTALL the app to the workspace. "
-                    "Regenerating the app from `hermes slack` produces a "
+                    "Regenerating the app from `auraforge slack` produces a "
                     "manifest with these already included.",
                     team_key or "this workspace",
                 )
@@ -2043,14 +2043,14 @@ class SlackAdapter(BasePlatformAdapter):
         if not raw_token:
             logger.error(
                 "[Slack] SLACK_BOT_TOKEN not set — this is a permanent config "
-                "error; set SLACK_BOT_TOKEN via `hermes gateway setup` "
-                "or in the active profile's ~/.hermes/.env file, then restart "
+                "error; set SLACK_BOT_TOKEN via `auraforge gateway setup` "
+                "or in the active profile's ~/.auraforge/.env file, then restart "
                 "the gateway.",
             )
             self._set_fatal_error(
                 "missing_slack_bot_token",
-                "SLACK_BOT_TOKEN not configured. Use `hermes gateway setup` "
-                "or add it to your active profile's ~/.hermes/.env file, "
+                "SLACK_BOT_TOKEN not configured. Use `auraforge gateway setup` "
+                "or add it to your active profile's ~/.auraforge/.env file, "
                 "then restart the gateway.",
                 retryable=False,
             )
@@ -2058,14 +2058,14 @@ class SlackAdapter(BasePlatformAdapter):
         if not app_token:
             logger.error(
                 "[Slack] SLACK_APP_TOKEN not set — this is a permanent config "
-                "error; set SLACK_APP_TOKEN via `hermes gateway setup` "
-                "or in the active profile's ~/.hermes/.env file, then restart "
+                "error; set SLACK_APP_TOKEN via `auraforge gateway setup` "
+                "or in the active profile's ~/.auraforge/.env file, then restart "
                 "the gateway.",
             )
             self._set_fatal_error(
                 "missing_slack_app_token",
-                "SLACK_APP_TOKEN not configured. Use `hermes gateway setup` "
-                "or add it to your active profile's ~/.hermes/.env file, "
+                "SLACK_APP_TOKEN not configured. Use `auraforge gateway setup` "
+                "or add it to your active profile's ~/.auraforge/.env file, "
                 "then restart the gateway.",
                 retryable=False,
             )
@@ -2303,7 +2303,7 @@ class SlackAdapter(BasePlatformAdapter):
                     "[Slack] Ignoring unhandled event type=%s (no listener "
                     "registered; subscribed events not handled by Aura Forge can "
                     "be removed from the Slack app manifest via "
-                    "`hermes slack manifest`)",
+                    "`auraforge slack manifest`)",
                     (event or {}).get(
                         "type",
                         (body or {}).get("event", {}).get("type", "unknown"),
@@ -2314,12 +2314,12 @@ class SlackAdapter(BasePlatformAdapter):
             #
             # Every gateway command from COMMAND_REGISTRY is a native Slack
             # slash, matching Discord and Telegram's model (e.g. /btw, /stop,
-            # /model work directly without /hermes prefix). A single regex
+            # /model work directly without /auraforge prefix). A single regex
             # matcher dispatches all of them to one handler so we don't need
             # N identical @app.command() decorators.
             #
             # The slash commands must ALSO be declared in the Slack app
-            # manifest (see `hermes slack manifest`). In Socket Mode, Slack
+            # manifest (see `auraforge slack manifest`). In Socket Mode, Slack
             # routes the command event through the socket regardless of the
             # manifest's request URL, but it will not deliver an event for
             # a slash command the manifest doesn't declare.
@@ -2332,7 +2332,7 @@ class SlackAdapter(BasePlatformAdapter):
                     r"^/(?:" + "|".join(_re.escape(n) for n in _slash_names) + r")$"
                 )
             else:  # pragma: no cover - registry always non-empty
-                _slash_pattern = _re.compile(r"^/hermes$")
+                _slash_pattern = _re.compile(r"^/auraforge$")
 
             @self._app.command(_slash_pattern)
             async def handle_hermes_command(ack, command):
@@ -2482,7 +2482,7 @@ class SlackAdapter(BasePlatformAdapter):
                     "[Slack] allow_bots=%s — for bot-to-bot interop also ensure: "
                     "(a) the Slack app manifest subscribes to message.channels / "
                     "message.groups / message.im as appropriate (run "
-                    "'hermes slack manifest' if unsure), and (b) the other bot's "
+                    "'auraforge slack manifest' if unsure), and (b) the other bot's "
                     "Slack user id is in SLACK_ALLOWED_USERS or "
                     "GATEWAY_ALLOW_ALL_USERS=true. Without these, bot events are "
                     "silently dropped upstream of the allow_bots gate.",
@@ -8453,9 +8453,9 @@ class SlackAdapter(BasePlatformAdapter):
         Discord and Telegram model. The slash name itself is the command;
         any text after it is the argument list.
 
-        The legacy ``/hermes <subcommand> [args]`` form is preserved for
+        The legacy ``/auraforge <subcommand> [args]`` form is preserved for
         backward compatibility with older workspace manifests and for users
-        who want a single entry point for free-form questions (``/hermes
+        who want a single entry point for free-form questions (``/auraforge
         what's the weather`` — non-slash text is treated as a regular
         message).
         """
@@ -8470,8 +8470,8 @@ class SlackAdapter(BasePlatformAdapter):
         if team_id and channel_id:
             self._remember_channel_team(channel_id, team_id)
 
-        if slash_name in {"hermes", ""}:
-            # Legacy /hermes <subcommand> [args] routing + free-form questions.
+        if slash_name in {"auraforge", ""}:
+            # Legacy /auraforge <subcommand> [args] routing + free-form questions.
             # Empty slash_name falls into this branch for backward compat
             # with any caller that didn't populate command["command"].
             legacy_text = raw_text.strip()
@@ -8480,7 +8480,7 @@ class SlackAdapter(BasePlatformAdapter):
             subcommand_map = slack_subcommand_map()
             subcommand_map["compact"] = "/compress"
             # Guard against whitespace-only text where ``text`` is truthy but
-            # ``text.split()`` returns ``[]`` (e.g. user sends ``/hermes   ``).
+            # ``text.split()`` returns ``[]`` (e.g. user sends ``/auraforge   ``).
             parts = legacy_text.split() if legacy_text else []
             first_word = parts[0] if parts else ""
             if first_word in subcommand_map:
@@ -8559,7 +8559,7 @@ class SlackAdapter(BasePlatformAdapter):
         # channel+user can be routed ephemerally (replaces the initial
         # "Running /cmd…" ack shown by handle_hermes_command).
         # Only stash for COMMAND events (text starts with "/") — free-form
-        # questions via "/hermes <question>" must produce public replies so
+        # questions via "/auraforge <question>" must produce public replies so
         # the whole channel can see the agent's answer.
         response_url = command.get("response_url", "")
         if response_url and user_id and channel_id and text.startswith("/"):
@@ -9723,7 +9723,7 @@ def interactive_setup() -> None:
                 "reinstall if scopes or slash commands changed."
             )
             print_info(
-                "   Re-run `hermes slack manifest --write` anytime to refresh after "
+                "   Re-run `auraforge slack manifest --write` anytime to refresh after "
                 "Aura Forge adds new commands."
             )
         except Exception as e:
@@ -9738,7 +9738,7 @@ def interactive_setup() -> None:
             # new commands (e.g. /btw, /stop, ...) get registered in Slack.
             if prompt_yes_no(
                 "Regenerate the Slack app manifest with the latest command "
-                "list? (recommended after `hermes update`)",
+                "list? (recommended after `auraforge update`)",
                 True,
             ):
                 _write_slack_manifest_and_instruct()
@@ -9752,7 +9752,7 @@ def interactive_setup() -> None:
     print_info("   3. Install to Workspace: Settings → Install App")
     print_info("   4. After installing, invite the bot to channels: /invite @YourBot")
     print()
-    print_info("   Full guide: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack/")
+    print_info("   Full guide: https://auraforge-agent.nousresearch.com/docs/user-guide/messaging/slack/")
     print()
 
     # Generate and write manifest up-front so the user can paste it into
@@ -9895,7 +9895,7 @@ def register(ctx) -> None:
         ensure_deps_fn=check_slack_requirements,
         is_connected=_is_connected,
         required_env=["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"],
-        install_hint="Run `hermes setup` to install Slack support.",
+        install_hint="Run `auraforge setup` to install Slack support.",
         # Interactive setup wizard — replaces hermes_cli/setup.py::_setup_slack
         # and the static _PLATFORMS["slack"] dict in hermes_cli/gateway.py.
         setup_fn=interactive_setup,

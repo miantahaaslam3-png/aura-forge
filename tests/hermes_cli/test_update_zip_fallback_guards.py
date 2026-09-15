@@ -1,7 +1,7 @@
 """ZIP fallback must not fire on dependency failures or clobber a dirty tree.
 
 Issue #87304: on Windows the update ``try`` spans git pull *and* ``uv pip
-install``. A locked ``hermes.exe`` makes the install exit 2, the handler
+install``. A locked ``auraforge.exe`` makes the install exit 2, the handler
 prints ``Git update failed``, and ``_update_via_zip`` replaces every
 top-level entry except ``venv`` / ``node_modules`` / ``.git`` / ``.env`` —
 permanently deleting uncommitted edits and untracked files. The git pull
@@ -211,14 +211,14 @@ def test_status_uses_untracked_files_all(tmp_path, monkeypatch):
 
 def test_staging_artifact_lines_are_recognized():
     is_artifact = update_cmd._is_zip_staging_artifact_status_line
-    assert is_artifact("?? agent.hermes-update-staging/")
-    assert is_artifact("?? cli.py.hermes-update-staging")
-    assert is_artifact("?? tools.hermes-update-old/")
+    assert is_artifact("?? agent.auraforge-update-staging/")
+    assert is_artifact("?? cli.py.auraforge-update-staging")
+    assert is_artifact("?? tools.auraforge-update-old/")
     # Nested user files under a staging-lookalike directory don't match the
     # top-level test only when the TOP level itself is not an artifact.
     assert not is_artifact("?? agent/scratch/wip.py")
     assert not is_artifact(" M hermes_cli/update_cmd.py")
-    assert not is_artifact("?? notes.hermes-update-staging.txt")
+    assert not is_artifact("?? notes.auraforge-update-staging.txt")
 
 
 def test_recheck_ignores_own_staging_artifacts(tmp_path, monkeypatch):
@@ -226,7 +226,7 @@ def test_recheck_ignores_own_staging_artifacts(tmp_path, monkeypatch):
     monkeypatch.setattr(
         update_cmd.subprocess,
         "run",
-        _porcelain_run("?? agent.hermes-update-staging/\n?? cli.py.hermes-update-old\n"),
+        _porcelain_run("?? agent.auraforge-update-staging/\n?? cli.py.auraforge-update-old\n"),
     )
     assert (
         update_cmd._zip_overlay_block_reason(tmp_path, ignore_staging_artifacts=True)
@@ -241,7 +241,7 @@ def test_recheck_still_blocks_user_files_amid_staging_artifacts(tmp_path, monkey
     monkeypatch.setattr(
         update_cmd.subprocess,
         "run",
-        _porcelain_run("?? agent.hermes-update-staging/\n?? my-notes.md\n"),
+        _porcelain_run("?? agent.auraforge-update-staging/\n?? my-notes.md\n"),
     )
     reason = update_cmd._zip_overlay_block_reason(
         tmp_path, ignore_staging_artifacts=True

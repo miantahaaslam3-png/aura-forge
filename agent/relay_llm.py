@@ -66,7 +66,7 @@ def _relay_metadata(
     relay_metadata = _jsonable(metadata or {})
     if not isinstance(relay_metadata, dict):
         relay_metadata = {}
-    relay_metadata.setdefault("hermes.provider", provider_name)
+    relay_metadata.setdefault("auraforge.provider", provider_name)
     return relay_metadata
 
 
@@ -461,7 +461,7 @@ class ManagedLlmStream(Iterator[Any]):
             # Relay can invoke stream surfaces while another callback still
             # owns the captured Context. A fresh copy is safe to enter.
             def guarded() -> Any:
-                # Hermes-side callbacks run while the native pipeline drives
+                # Aura Forge-side callbacks run while the native pipeline drives
                 # this stream; nested relay calls they make must bypass
                 # managed execution (#77244).
                 with relay_runtime.managed_callback_guard():
@@ -951,7 +951,7 @@ def _logical_parent(
                     metadata={
                         relay_runtime.RUNTIME_SCHEMA_KEY: relay_runtime.RUNTIME_SCHEMA_VERSION,
                         relay_runtime.RUNTIME_INSTANCE_KEY: runtime.runtime_id,
-                        "hermes.call_role": str(
+                        "auraforge.call_role": str(
                             (metadata or {}).get("call_role") or "primary"
                         ),
                     },

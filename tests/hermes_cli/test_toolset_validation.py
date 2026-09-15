@@ -8,12 +8,12 @@ import pytest
 
 from hermes_cli.toolset_validation import validate_platform_toolsets
 
-# A representative set of real toolset names. `hermes` is deliberately absent —
-# that is the corruption #38798 reported (`hermes-cli` rewritten to `hermes`).
+# A representative set of real toolset names. `auraforge` is deliberately absent —
+# that is the corruption #38798 reported (`auraforge-cli` rewritten to `auraforge`).
 _KNOWN = {
-    "hermes-cli",
-    "hermes-telegram",
-    "hermes-discord",
+    "auraforge-cli",
+    "auraforge-telegram",
+    "auraforge-discord",
     "terminal",
     "web",
 }
@@ -26,18 +26,18 @@ def _is_valid(name):
 
 
 def test_38798_corruption_warns_and_suggests_correct_name():
-    # The exact reported shape: cli holds 'hermes' instead of 'hermes-cli'.
-    warnings = validate_platform_toolsets({"cli": ["hermes"]}, _is_valid)
-    unknown = [w for w in warnings if "unknown toolset 'hermes'" in w]
+    # The exact reported shape: cli holds 'auraforge' instead of 'auraforge-cli'.
+    warnings = validate_platform_toolsets({"cli": ["auraforge"]}, _is_valid)
+    unknown = [w for w in warnings if "unknown toolset 'auraforge'" in w]
     assert len(unknown) == 1
     # Actionable: points at the valid name the entry should have been.
-    assert "did you mean 'hermes-cli'?" in unknown[0]
+    assert "did you mean 'auraforge-cli'?" in unknown[0]
     # And the zero-valid-toolsets safety net fires.
     assert any("zero valid toolsets" in w for w in warnings)
 
 
 def test_mixed_valid_and_invalid_flags_only_the_invalid():
-    cfg = {"cli": ["hermes-cli"], "discord": ["bogus"]}
+    cfg = {"cli": ["auraforge-cli"], "discord": ["bogus"]}
     warnings = validate_platform_toolsets(cfg, _is_valid)
     # One valid entry exists, so no zero-valid warning.
     assert not any("zero valid toolsets" in w for w in warnings)

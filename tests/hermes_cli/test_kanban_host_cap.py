@@ -2,7 +2,7 @@
 
 Three gaps found in review of the original memory-guard PR:
 
-1. The standalone daemon path (``hermes kanban daemon --force`` /
+1. The standalone daemon path (``auraforge kanban daemon --force`` /
    :func:`hermes_cli.kanban_db.run_daemon`) never resolved
    ``kanban.max_in_progress`` at all — the one shipped entry point that
    could still fan out an entire backlog in a single tick.
@@ -27,7 +27,7 @@ from hermes_cli import kanban_db as kb
 @pytest.fixture
 def kanban_home(tmp_path, monkeypatch):
     """Isolated HERMES_HOME with an empty kanban DB."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -59,7 +59,7 @@ def test_run_daemon_resolves_and_passes_max_in_progress(
     Regression guard for the OOF-30 review finding: ``run_daemon`` only
     forwarded ``max_spawn`` — with no explicit ``--max`` (the shipped
     systemd shape) nothing capped the tick even though the gateway and
-    ``hermes kanban dispatch`` paths both resolved the memory-derived
+    ``auraforge kanban dispatch`` paths both resolved the memory-derived
     default.
     """
     captured: dict = {}

@@ -364,14 +364,14 @@ _CODEX_TOOL_ITEM_TYPES = frozenset(
 
 # Internal MCP server that wraps Aura Forge' native tools for codex. When
 # codex calls back through it, the inner dispatch runs in a SEPARATE
-# hermes-tools-mcp-server subprocess that has no access to the parent
+# auraforge-tools-mcp-server subprocess that has no access to the parent
 # agent's tool_progress_callback — so the inner call can never surface
 # its own native progress event. The codex-level mcpToolCall event IS
-# the display event for those calls; we strip the mcp.hermes-tools.*
+# the display event for those calls; we strip the mcp.auraforge-tools.*
 # namespacing and emit the bare tool name (web_search, browser_navigate,
 # vision_analyze, ...) since the user thinks of these as Aura Forge tools,
 # not as MCP calls.
-_INTERNAL_MCP_SERVER = "hermes-tools"
+_INTERNAL_MCP_SERVER = "auraforge-tools"
 
 
 def _codex_item_to_tool_name(item: dict) -> str:

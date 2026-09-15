@@ -578,7 +578,7 @@ class ResponsesApiTransport(ProviderTransport):
             strip_codex_context_variant_suffix as _strip_ctx_variant,
         )
         kwargs = {
-            # ``-900k`` large-context picker variants are Hermes-side aliases
+            # ``-900k`` large-context picker variants are Aura Forge-side aliases
             # (gpt-5.6-sol-900k etc.) — the Codex/OpenAI backend only knows
             # the base slug, so strip the suffix before it hits the wire.
             "model": _strip_ctx_variant(model),

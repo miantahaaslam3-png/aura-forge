@@ -13,7 +13,7 @@ or a linked OpenViking CLI config:
   OPENVIKING_API_KEY   — API key (required for authenticated servers)
   OPENVIKING_ACCOUNT   — Tenant account for local/trusted mode (default: default)
   OPENVIKING_USER      — Tenant user for local/trusted mode (default: default)
-  OPENVIKING_AGENT     — Aura Forge peer ID in OpenViking (default: hermes)
+  OPENVIKING_AGENT     — Aura Forge peer ID in OpenViking (default: auraforge)
 
 Capabilities:
   - Automatic memory extraction on session commit (6 categories)
@@ -65,8 +65,8 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_ENDPOINT = "http://127.0.0.1:1933"
 _OPENVIKING_SERVICE_ENDPOINT = "https://api.vikingdb.cn-beijing.volces.com/openviking"
-_DEFAULT_AGENT = "hermes"
-_OPENVIKING_USER_AGENT = f"openviking-memory-hermes/{_HERMES_VERSION}"
+_DEFAULT_AGENT = "auraforge"
+_OPENVIKING_USER_AGENT = f"openviking-memory-auraforge/{_HERMES_VERSION}"
 _AGENT_PROMPT_LABEL = "Aura Forge peer ID in OpenViking"
 _OVCLI_CONFIG_ENV = "OPENVIKING_CLI_CONFIG_FILE"
 _OVCLI_DEFAULT_RELATIVE_PATH = ".openviking/ovcli.conf"
@@ -1492,7 +1492,7 @@ def _openviking_server_log_path() -> Path:
         from hermes_constants import get_hermes_home
         home = get_hermes_home()
     except Exception:
-        home = Path(os.environ.get("HERMES_HOME", "")).expanduser() if os.environ.get("HERMES_HOME") else Path.home() / ".hermes"
+        home = Path(os.environ.get("HERMES_HOME", "")).expanduser() if os.environ.get("HERMES_HOME") else Path.home() / ".auraforge"
     return home / _OPENVIKING_SERVER_LOG_RELATIVE_PATH
 
 
@@ -1596,7 +1596,7 @@ def _start_local_openviking_server(endpoint: str) -> tuple[str, str]:
         # (its venv's site-packages are shadowed because PYTHONPATH precedes
         # them) —
         # and on Windows the loaded DLLs then lock the Aura Forge venv,
-        # aborting `hermes update` with access-denied on .pyd files.
+        # aborting `auraforge update` with access-denied on .pyd files.
         # Strip PYTHONPATH so the server resolves packages from its own
         # venv. (#78153)
         child_env = os.environ.copy()
@@ -2297,7 +2297,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
         # MemoryManager's background sync executor while on_session_end /
         # on_session_switch run on the caller's thread, so the snapshot+reset
         # of the turn counter and the session-id rotation must be atomic
-        # against a concurrent increment. See hermes-agent#28296 review.
+        # against a concurrent increment. See auraforge-agent#28296 review.
         self._session_state_lock = threading.Lock()
         # Commit only after session writes drain. The set is keyed by the sid
         # the writer is POSTing under (snapshotted at spawn), so on_session_end
@@ -2389,7 +2389,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
                     "Aura Forge peer ID in OpenViking, sent as the actor peer and "
                     "used for peer-scoped memories"
                 ),
-                "default": "hermes",
+                "default": "auraforge",
                 "env_var": "OPENVIKING_AGENT",
             },
             {
@@ -2800,7 +2800,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
                 from hermes_constants import get_hermes_home
                 hermes_home = str(get_hermes_home())
             except Exception:
-                hermes_home = str(Path.home() / ".hermes")
+                hermes_home = str(Path.home() / ".auraforge")
         self._hermes_home = hermes_home
         self._acquire_run_lock()
         self._profile_prefetched_sessions.clear()
@@ -2857,8 +2857,8 @@ class OpenVikingMemoryProvider(MemoryProvider):
 
         ``/reload`` only refreshes ``os.environ`` — the existing provider
         instance is not re-initialized — so OPENVIKING_* values added to
-        ``~/.hermes/.env`` after startup never reach the live client and tools
-        keep running against stale auth until the user restarts hermes (#21130).
+        ``~/.auraforge/.env`` after startup never reach the live client and tools
+        keep running against stale auth until the user restarts auraforge (#21130).
 
         Re-resolve the connection settings on each access (same layering as
         ``initialize``) and rebuild + health-check only when a value actually
@@ -4805,7 +4805,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
         ``initialize()`` cached, so subsequent ``sync_turn()`` writes land in
         the already-closed old session and ``on_session_end()`` tries to
         commit it a second time. The new session never accumulates messages,
-        and memory extraction never fires for it. See hermes-agent#28296.
+        and memory extraction never fires for it. See auraforge-agent#28296.
 
         Flushes any in-flight sync under the old session_id, commits the old
         session if it has pending turns (same extraction semantics as
@@ -5106,7 +5106,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
     ) -> Dict[str, Any]:
         summary_level = level in {"abstract", "overview"}
         # OpenViking expects directory URIs for pseudo summary files
-        # (e.g. viking://user/hermes/.overview.md).
+        # (e.g. viking://user/auraforge/.overview.md).
         resolved_uri = self._normalize_summary_uri(uri) if summary_level else uri
         used_fallback = False
 

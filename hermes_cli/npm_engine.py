@@ -36,7 +36,7 @@ from pathlib import Path
 
 from hermes_constants import (
     bootstrap_hermes_managed_node,
-    get_hermes_home,
+    get_aura_forge_home,
     managed_node_tree_in_use,
     with_hermes_node_path,
 )
@@ -134,7 +134,7 @@ def _repo_npm_range() -> str | None:
 
 
 def managed_npm_prefix(npm: str | os.PathLike[str] | None) -> Path | None:
-    """Return the Hermes-managed Node root *npm* lives in, else ``None``.
+    """Return the Aura Forge-managed Node root *npm* lives in, else ``None``.
 
     Symlinks are resolved first: an install links ``~/.local/bin/npm`` at
     ``$AURA_FORGE_HOME/node/bin/npm``, which itself links into
@@ -144,7 +144,7 @@ def managed_npm_prefix(npm: str | os.PathLike[str] | None) -> Path | None:
     """
     if not npm:
         return None
-    prefix = get_hermes_home() / "node"
+    prefix = get_aura_forge_home() / "node"
     try:
         resolved = Path(npm).resolve()
         prefix_resolved = prefix.resolve()
@@ -182,7 +182,7 @@ def upgrade_managed_npm(
     """
     if not quiet:
         print(
-            f"→ Upgrading Hermes-managed npm to satisfy {npm_range}…",
+            f"→ Upgrading Aura Forge-managed npm to satisfy {npm_range}…",
             flush=True,
         )
     # The managed npm lives inside the very tree the desktop app's Node
@@ -193,7 +193,7 @@ def upgrade_managed_npm(
     if managed_node_tree_in_use():
         if not quiet:
             print(
-                "  ⚠ deferred: the Hermes-managed Node.js tree is in use by a "
+                "  ⚠ deferred: the Aura Forge-managed Node.js tree is in use by a "
                 "running app; the npm upgrade will apply on a later update "
                 "once the app is closed.",
                 file=sys.stderr,
@@ -202,7 +202,7 @@ def upgrade_managed_npm(
     try:
         # A temp cwd keeps the checkout's .npmrc (engine-strict, min-release-age)
         # from applying to the upgrade itself.
-        with tempfile.TemporaryDirectory(prefix="hermes-npm-upgrade-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="auraforge-npm-upgrade-") as tmp:
             result = subprocess.run(
                 [
                     npm,
@@ -272,7 +272,7 @@ def _print_manual_fix(npm: str, npm_range: str, actual: str | None) -> None:
 
 
 def _provision_managed_npm(npm_range: str | None, *, quiet: bool = False) -> str | None:
-    """Provision a Hermes-managed Node tree and return a satisfying npm.
+    """Provision a Aura Forge-managed Node tree and return a satisfying npm.
 
     Installs the managed tree under ``$AURA_FORGE_HOME/node`` (reusing a healthy
     one when present), then upgrades its bundled npm to *npm_range* — a fresh
@@ -284,7 +284,7 @@ def _provision_managed_npm(npm_range: str | None, *, quiet: bool = False) -> str
     """
     if not quiet:
         print(
-            "→ Provisioning a Hermes-managed Node.js runtime "
+            "→ Provisioning a Aura Forge-managed Node.js runtime "
             "(the resolved npm belongs to your system and is left alone)…",
             flush=True,
         )
@@ -316,7 +316,7 @@ def maybe_repair_npm_engine(
 
     *output* is the combined stdout/stderr of the npm command that just failed.
     Returns the npm executable the caller should retry its command with —
-    the same *npm* after an in-place upgrade of a Hermes-managed install, or
+    the same *npm* after an in-place upgrade of a Aura Forge-managed install, or
     a freshly provisioned managed npm when the failing npm belongs to the
     user (system / nvm / brew / Nix installs are never modified). Returns
     ``None`` when no repair happened — not an engine failure, a Node mismatch

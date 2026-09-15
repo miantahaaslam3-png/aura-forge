@@ -63,10 +63,10 @@ def test_default_is_hermes_cache_not_tmp(tmp_path, monkeypatch):
 
     for var in ("TERMINAL_TEMP_DIR", "TMPDIR", "TMP", "TEMP"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     env = _make_local_env({})
     result = env.get_temp_dir()
-    assert result == str(tmp_path / ".hermes" / "cache" / "terminal")
+    assert result == str(tmp_path / ".auraforge" / "cache" / "terminal")
     assert os.path.isdir(result)
 
 
@@ -92,12 +92,12 @@ def test_cleanup_terminal_temp_cache(tmp_path, monkeypatch):
     fresh = time.time()
 
     # Stale loose artifact — pruned.
-    stale = root / "hermes-snap-deadbeef.sh"
+    stale = root / "auraforge-snap-deadbeef.sh"
     stale.write_text("x")
     os.utime(stale, (old, old))
 
     # Fresh artifact — kept.
-    keep = root / "hermes-snap-cafef00d.sh"
+    keep = root / "auraforge-snap-cafef00d.sh"
     keep.write_text("x")
 
     # Live bg group: stale .pid but fresh .log — WHOLE group kept.

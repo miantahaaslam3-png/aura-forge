@@ -1265,7 +1265,7 @@ def _execute_remote(
                 "duration_seconds": 0,
             })
 
-        # --- Session-kernel path (hermes-agent#96873) -------------------
+        # --- Session-kernel path (auraforge-agent#96873) -------------------
         # Same always-on model as local: one persistent kernel per owner,
         # rebuilt on the run-to-completion transport (detached runner +
         # file cell protocol). Spawn failure falls OPEN to the per-call
@@ -1487,9 +1487,9 @@ def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
     # can mix incompatible compiled extensions (for example, Python 3.12
     # NumPy with a Python 3.9 project interpreter).
     #
-    # Before re-injecting PYTHONPATH, strip Hermes-owned entries that
+    # Before re-injecting PYTHONPATH, strip Aura Forge-owned entries that
     # leaked through _scrub_child_env (PYTHONPATH is in _SAFE_ENV_PREFIXES
-    # so it passes the scrub).  They are redundant for same-Hermes-
+    # so it passes the scrub).  They are redundant for same-Aura Forge-
     # environment children and may be incompatible with external
     # interpreters (project mode can select a different venv), so they
     # must not shadow or poison the child's sys.path (#74817).
@@ -1507,7 +1507,7 @@ def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
         _external_env_logged.add(child_python)
         logger.info(
             "execute_code: child interpreter %s is outside the Aura Forge "
-            "environment; hermes root omitted from PYTHONPATH",
+            "environment; auraforge root omitted from PYTHONPATH",
             child_python,
         )
     if _existing_pp:
@@ -1562,7 +1562,7 @@ def execute_code(
 
     # Hard-block gateway-lifecycle commands, mirroring the terminal_tool
     # guard (#68289): without this, execute_code is a straight bypass — the
-    # terminal() path refuses `launchctl bootout ai.hermes.gateway`, but the
+    # terminal() path refuses `launchctl bootout ai.auraforge.gateway`, but the
     # identical command inside `os.system(...)` / `subprocess.run([...])`
     # here sailed through and SIGTERM'd the gateway mid-task. Gated on
     # PID-file ownership, not the inherited env marker (#92560).
@@ -1908,7 +1908,7 @@ def execute_code(
 
         # Redact secrets (API keys, tokens, etc.) from sandbox output.
         # The sandbox env-var filter (lines 434-454) blocks os.environ access,
-        # but scripts can still read secrets from disk (e.g. open('~/.hermes/.env')).
+        # but scripts can still read secrets from disk (e.g. open('~/.auraforge/.env')).
         # This ensures leaked secrets never enter the model context.
         # code_file=True: this is code-execution output — skip false-positive
         # ENV/JSON/f-string-template redaction; real credentials still masked.
@@ -2036,7 +2036,7 @@ def _load_config() -> dict:
     This helper is called while building the module-level execute_code schema
     during tool discovery.  Importing ``cli`` here pulls prompt_toolkit/Rich and
     a large chunk of the classic REPL onto every agent startup path, including
-    ``hermes --tui`` where it is never used.  Read the lightweight raw config
+    ``auraforge --tui`` where it is never used.  Read the lightweight raw config
     instead; the config layer already caches by (mtime, size), and an absent
     key cleanly falls back to DEFAULT_EXECUTION_MODE.
     """
@@ -2086,7 +2086,7 @@ def _get_execution_mode() -> str:
         with the active virtual environment's python, so project dependencies
         (pandas, torch, project packages) and files resolve naturally.
       - ``strict``: scripts run in an isolated temp directory with
-        ``sys.executable`` (hermes-agent's python). Reproducible and the
+        ``sys.executable`` (auraforge-agent's python). Reproducible and the
         interpreter is guaranteed to work, but project deps and relative paths
         won't resolve.
 
@@ -2171,7 +2171,7 @@ def _python_environment_prefix(python_path: str) -> str:
     Successful probes are cached per interpreter path (bounded, FIFO-evicted).
     Failures are NOT cached: a transient probe failure (fork pressure, 5s
     timeout on a loaded host) must not stick for the process lifetime — a
-    sticky empty result would silently drop the hermes root from every
+    sticky empty result would silently drop the auraforge root from every
     subsequent execute_code call's PYTHONPATH.
     """
     cached = _python_prefix_cache.get(python_path)
@@ -2329,7 +2329,7 @@ def build_execute_code_schema(enabled_sandbox_tools: set = None,
                               mode: str = None) -> dict:
     """Build the execute_code schema with description listing only enabled tools.
 
-    When tools are disabled via ``hermes tools`` (e.g. web is turned off),
+    When tools are disabled via ``auraforge tools`` (e.g. web is turned off),
     the schema description should NOT mention web_search / web_extract —
     otherwise the model thinks they are available and keeps trying to use them.
 
@@ -2360,11 +2360,11 @@ def build_execute_code_schema(enabled_sandbox_tools: set = None,
 
     # Mode-specific CWD guidance. Project mode is the default and matches
     # terminal()'s filesystem/interpreter; strict mode retains the isolated
-    # temp-dir staging and hermes-agent's own python.
+    # temp-dir staging and auraforge-agent's own python.
     if mode == "strict":
         cwd_note = (
             "Scripts run in their own temp dir, not the session's CWD — use absolute paths "
-            "(os.path.expanduser('~/.hermes/.env')) or terminal()/read_file() for user files."
+            "(os.path.expanduser('~/.auraforge/.env')) or terminal()/read_file() for user files."
         )
     else:
         cwd_note = (

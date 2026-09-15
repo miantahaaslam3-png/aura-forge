@@ -45,7 +45,7 @@ def test_mechanism_ids_are_machine_readable_and_described():
     assert "systemctl" in describe_restart_mechanism("systemd", "default")
     assert "kickstart" in describe_restart_mechanism("launchd", "work")
     assert "-p work" in describe_restart_mechanism("manual", "work")
-    assert describe_restart_mechanism("manual", "default") == "hermes gateway restart"
+    assert describe_restart_mechanism("manual", "default") == "auraforge gateway restart"
     assert "sc.exe" in describe_restart_mechanism("windows-service", "default")
 
 
@@ -71,7 +71,7 @@ def test_windows_service_runtime_reconciles_via_service_profiles():
     # must not trip the unaccounted tripwire.
     outcomes = match_runtime_outcomes(
         _plan(_rt("default", 500, supervisor="windows-service")),
-        restarted_services=["hermes-gateway"], relaunched_profiles=["default"],
+        restarted_services=["auraforge-gateway"], relaunched_profiles=["default"],
         externally_supervised_profiles=[], killed_pids=set(), failed_units=[],
     )
     assert outcomes == [
@@ -119,7 +119,7 @@ def test_failed_unit_is_failed():
         _plan(_rt("work", 300, supervisor="systemd")),
         restarted_services=[], relaunched_profiles=[],
         externally_supervised_profiles=[], killed_pids=set(),
-        failed_units=["hermes-gateway-work.service"],
+        failed_units=["auraforge-gateway-work.service"],
     )
     assert outcomes[0]["outcome"] == "failed"
 
@@ -127,7 +127,7 @@ def test_failed_unit_is_failed():
 def test_restarted_service_unit_matches_profile():
     outcomes = match_runtime_outcomes(
         _plan(_rt("default", 400, supervisor="systemd")),
-        restarted_services=["hermes-gateway.service"], relaunched_profiles=[],
+        restarted_services=["auraforge-gateway.service"], relaunched_profiles=[],
         externally_supervised_profiles=[], killed_pids=set(), failed_units=[],
     )
     assert outcomes[0]["outcome"] == "restarted"
@@ -137,7 +137,7 @@ def test_untouched_runtime_is_unaccounted_and_escalates(capsys):
     """The tripwire: plan saw it, NO bookkeeping mentions it."""
     outcomes = match_runtime_outcomes(
         _plan(_rt("coder", 500)),
-        restarted_services=["hermes-gateway.service"],
+        restarted_services=["auraforge-gateway.service"],
         relaunched_profiles=["default"],
         externally_supervised_profiles=[], killed_pids={123}, failed_units=[],
     )
@@ -146,7 +146,7 @@ def test_untouched_runtime_is_unaccounted_and_escalates(capsys):
     out = capsys.readouterr().out
     assert "never touched" in out
     assert "coder" in out and "500" in out
-    assert "hermes -p <profile> gateway restart" in out
+    assert "auraforge -p <profile> gateway restart" in out
 
 
 def test_external_supervisor_counts_as_restarted():
@@ -166,7 +166,7 @@ def test_mixed_fleet_only_the_missed_one_escalates(capsys):
             _rt("work", 701),
             _rt("ghost", 702),
         ),
-        restarted_services=["hermes-gateway.service"],
+        restarted_services=["auraforge-gateway.service"],
         relaunched_profiles=["work"],
         externally_supervised_profiles=[], killed_pids=set(), failed_units=[],
     )

@@ -243,7 +243,7 @@ class TestWsAuthOkGated:
         missing_public = _fake_ws(
             query={},
             path="/api/ws",
-            protocols=(f"hermes-gateway-ticket.{first}",),
+            protocols=(f"auraforge-gateway-ticket.{first}",),
         )
         assert web_server._ws_auth_ok(missing_public) is False
 
@@ -252,9 +252,9 @@ class TestWsAuthOkGated:
             query={},
             path="/api/ws",
             protocols=(
-                "hermes-gateway-v1",
-                f"hermes-gateway-ticket.{first}",
-                f"hermes-gateway-ticket.{second}",
+                "auraforge-gateway-v1",
+                f"auraforge-gateway-ticket.{first}",
+                f"auraforge-gateway-ticket.{second}",
             ),
         )
         assert web_server._ws_auth_ok(ambiguous) is False

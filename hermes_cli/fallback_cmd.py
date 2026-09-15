@@ -1,16 +1,16 @@
 """
-hermes fallback — manage the fallback provider chain.
+auraforge fallback — manage the fallback provider chain.
 
 Fallback providers are tried in order when the primary model fails with
 rate-limit, overload, or connection errors. See:
 https://aura-forge-agent.nousresearch.com/docs/user-guide/features/fallback-providers
 
 Subcommands:
-  hermes fallback [list]   Show the current fallback chain (default when no subcommand)
-  hermes fallback add      Pick provider + model via the same picker as `auraforge model`,
+  auraforge fallback [list]   Show the current fallback chain (default when no subcommand)
+  auraforge fallback add      Pick provider + model via the same picker as `auraforge model`,
                            then append the selection to the chain
-  hermes fallback remove   Pick an entry to delete from the chain
-  hermes fallback clear    Remove all fallback entries
+  auraforge fallback remove   Pick an entry to delete from the chain
+  auraforge fallback clear    Remove all fallback entries
 
 Storage: ``fallback_providers`` in ``~/.aura-forge/config.yaml`` (top-level, list of
 ``{provider, model, base_url?, api_mode?}`` dicts).  The legacy single-dict
@@ -115,7 +115,7 @@ def cmd_fallback_list(args) -> None:  # noqa: ARG001
     if not chain:
         print("  No fallback providers configured.")
         print()
-        print("  Add one with:  hermes fallback add")
+        print("  Add one with:  auraforge fallback add")
         print()
         return
 

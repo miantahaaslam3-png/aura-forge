@@ -203,7 +203,7 @@ def adapter():
 
 @pytest.fixture(autouse=True)
 def _redirect_cache(tmp_path, monkeypatch):
-    """Point document cache to tmp_path so tests don't touch ~/.hermes."""
+    """Point document cache to tmp_path so tests don't touch ~/.auraforge."""
     monkeypatch.setattr(
         "gateway.platforms.base.DOCUMENT_CACHE_DIR", tmp_path / "doc_cache"
     )
@@ -380,7 +380,7 @@ class TestAppMentionHandler:
         assert "assistant_thread_started" in registered_events
         assert "assistant_thread_context_changed" in registered_events
         # Slack slash commands are registered via a single regex matcher
-        # covering every COMMAND_REGISTRY entry (e.g. /hermes, /btw, /stop,
+        # covering every COMMAND_REGISTRY entry (e.g. /auraforge, /btw, /stop,
         # /model, ...) so users get native-slash parity with Discord and
         # Telegram. Verify the regex matches the key expected slashes.
         assert (
@@ -390,7 +390,7 @@ class TestAppMentionHandler:
         import re as _re
 
         assert isinstance(slash_matcher, _re.Pattern)
-        for expected in ("/hermes", "/btw", "/stop", "/model", "/help"):
+        for expected in ("/auraforge", "/btw", "/stop", "/model", "/help"):
             assert slash_matcher.match(
                 expected
             ), f"Slack slash regex does not match {expected}"
@@ -559,7 +559,7 @@ class TestSlackConnectCleanup:
     async def test_disconnect_closes_workspace_clients_and_clears_runtime_state(self):
         """Regression for #51465: shutdown must close Slack WebClients.
 
-        ``hermes gateway run --replace`` takes the old process through the
+        ``auraforge gateway run --replace`` takes the old process through the
         normal adapter.disconnect() path. If Slack leaves AsyncWebClient
         instances open there, aiohttp logs ``Unclosed client session`` while
         the old gateway exits after SIGTERM.
@@ -1195,12 +1195,12 @@ class TestStandaloneSendUserDmResolution:
             result = await _slack_mod._standalone_send(
                 config,
                 "C123",
-                "[Aura Forge](https://example.com/hermes)",
+                "[Aura Forge](https://example.com/auraforge)",
             )
 
         assert result["success"] is True
         payload = session.post.call_args.kwargs["json"]
-        assert payload["text"] == "<https://example.com/hermes|Aura Forge>"
+        assert payload["text"] == "<https://example.com/auraforge|Aura Forge>"
         assert payload["unfurl_links"] is False
         assert payload["unfurl_media"] is False
 
@@ -3416,7 +3416,7 @@ class TestSlashCommands:
 
     # ------------------------------------------------------------------
     # Native slash commands — /btw, /stop, /model, ... dispatched directly
-    # instead of as /hermes subcommands. This is the Discord/Telegram parity
+    # instead of as /auraforge subcommands. This is the Discord/Telegram parity
     # fix: the slash name itself becomes the command.
     # ------------------------------------------------------------------
 
@@ -3460,14 +3460,14 @@ class TestSlashCommands:
 
     @pytest.mark.asyncio
     async def test_legacy_hermes_prefix_still_works(self, adapter):
-        """Backward compat: /hermes btw foo must still route to /btw foo.
+        """Backward compat: /auraforge btw foo must still route to /btw foo.
 
-        Old workspace manifests only declared /hermes as the single slash.
+        Old workspace manifests only declared /auraforge as the single slash.
         After users refresh their manifest they get /btw natively, but the
         legacy form must keep working during the transition.
         """
         command = {
-            "command": "/hermes",
+            "command": "/auraforge",
             "text": "btw run the tests",
             "user_id": "U1",
             "channel_id": "C1",
@@ -3521,7 +3521,7 @@ class TestMessageSplitting:
 
     @pytest.mark.asyncio
     async def test_send_coerces_string_unfurl_options(self, adapter):
-        """`hermes config set` / Railway persist YAML booleans as strings.
+        """`auraforge config set` / Railway persist YAML booleans as strings.
 
         Relay-plane parity: string "false"/"true" must coerce instead of
         being silently dropped (which would leave previews on with no error).
@@ -4428,7 +4428,7 @@ class TestMissingCredentials:
         assert fatal_errors[0]["code"] == "missing_slack_app_token"
         assert fatal_errors[0]["retryable"] is False
         assert "SLACK_APP_TOKEN" in fatal_errors[0]["message"]
-        assert "hermes gateway setup" in fatal_errors[0]["message"].lower() or ".env" in fatal_errors[0]["message"]
+        assert "auraforge gateway setup" in fatal_errors[0]["message"].lower() or ".env" in fatal_errors[0]["message"]
 
 
 # ---------------------------------------------------------------------------
@@ -4523,7 +4523,7 @@ class TestTrackingStructureBounds:
         adapter.handle_hermes_command = AsyncMock(return_value=None)
         for i in range(10):
             command = {
-                "command": "/hermes",
+                "command": "/auraforge",
                 "text": "/status",
                 "user_id": f"U{i}",
                 "channel_id": "C1",
@@ -4788,7 +4788,7 @@ class TestThreadImageContext:
             ("T_TEAM", "U_ALICE"): "Alice",
             ("T_TEAM", "U_USER"): "User",
         }
-        a._download_slack_file = AsyncMock(return_value="/tmp/hermes-cached.png")
+        a._download_slack_file = AsyncMock(return_value="/tmp/auraforge-cached.png")
         return a
 
     @pytest.fixture()
@@ -4848,7 +4848,7 @@ class TestThreadImageContext:
 
         a.handle_message.assert_awaited_once()
         msg_event = a.handle_message.call_args[0][0]
-        assert msg_event.media_urls == ["/tmp/hermes-cached.png"]
+        assert msg_event.media_urls == ["/tmp/auraforge-cached.png"]
         assert msg_event.media_types == ["image/png"]
         assert msg_event.message_type == MessageType.PHOTO
         # The context marker AND the delivered image coexist.
@@ -5751,7 +5751,7 @@ class TestSlackAuthoredTextDeduplication:
     @pytest.mark.parametrize(
         "flat",
         [
-            "hey <@U_BOT|hermes> please look",
+            "hey <@U_BOT|auraforge> please look",
             "hey <@U_BOT> please look",
             "hey &lt;@U_BOT&gt; please look",
         ],

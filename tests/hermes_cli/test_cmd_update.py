@@ -112,7 +112,7 @@ class TestCmdUpdateNpmLockfileCache:
 
     def test_package_json_only_edit_defeats_skip(self, tmp_path, monkeypatch):
         """Reviewer scenario (#61580): dev edits package.json WITHOUT running
-        npm — lockfile unchanged. `hermes update` must still install (the
+        npm — lockfile unchanged. `auraforge update` must still install (the
         npm-install fallback is what syncs node_modules in that state)."""
         from hermes_cli import main as hm
 
@@ -144,7 +144,7 @@ class TestCmdUpdateNpmLockfileCache:
         checkout = tmp_path / "checkout"
         checkout.mkdir()
         (checkout / "package.json").write_text("{}")
-        shared_root = tmp_path / ".hermes"
+        shared_root = tmp_path / ".auraforge"
         named_profile = shared_root / "profiles" / "work"
         named_profile.mkdir(parents=True)
 
@@ -222,7 +222,7 @@ class TestUpdateManagedPythonEnvIsolation:
 
     The update path builds uv_env via managed_python_env() (drops
     VIRTUAL_ENV/PYTHONPATH/UV_PYTHON, pins UV_MANAGED_PYTHON=1 + UV_NO_CONFIG=1,
-    forces UV_PYTHON_INSTALL_DIR to .hermes-runtime/python), then re-points
+    forces UV_PYTHON_INSTALL_DIR to .auraforge-runtime/python), then re-points
     VIRTUAL_ENV at this install's venv. These tests lock that contract in.
     """
 
@@ -264,7 +264,7 @@ class TestUpdateManagedPythonEnvIsolation:
 
         assert uv_env["VIRTUAL_ENV"] == str(PROJECT_ROOT / "venv")
         # Managed store stays the install-scoped runtime dir, not a third-party one.
-        assert ".hermes-runtime" in uv_env.get("UV_PYTHON_INSTALL_DIR", "")
+        assert ".auraforge-runtime" in uv_env.get("UV_PYTHON_INSTALL_DIR", "")
         assert uv_env.get("UV_MANAGED_PYTHON") == "1"
         assert uv_env.get("UV_NO_CONFIG") == "1"
 
@@ -294,7 +294,7 @@ class TestCmdUpdateBranchFallback:
         with patch.object(
             hm,
             "_get_origin_url",
-            return_value="https://github.com/example/hermes-agent.git",
+            return_value="https://github.com/example/auraforge-agent.git",
         ), patch.object(hm, "_sync_with_upstream_if_needed") as sync_mock:
             cmd_update(mock_args)
 
@@ -329,7 +329,7 @@ class TestCmdUpdateBranchFallback:
         with patch.object(
             hm,
             "_get_origin_url",
-            return_value="https://github.com/example/hermes-agent.git",
+            return_value="https://github.com/example/auraforge-agent.git",
         ), patch.object(
             update_cmd, "_has_upstream_remote", return_value=False
         ), patch.object(
@@ -372,7 +372,7 @@ class TestCmdUpdateBranchFallback:
         with patch.object(
             hm,
             "_get_origin_url",
-            return_value="https://github.com/example/hermes-agent.git",
+            return_value="https://github.com/example/auraforge-agent.git",
         ), patch.object(
             update_cmd,
             "_capture_head_sha",
@@ -579,7 +579,7 @@ class TestConfigVersionCheckUsesFreshModules:
     """Regression: config migration must use freshly-reloaded modules, not the
     sys.modules cache from before git pull.
 
-    Before the fix, ``hermes update`` ran in the PRE-pull Python process.
+    Before the fix, ``auraforge update`` ran in the PRE-pull Python process.
     After ``git pull`` updated the source on disk, function-level imports
     returned the OLD cached ``hermes_cli.config`` module — so
     ``DEFAULT_CONFIG["_config_version"]`` was stale and
@@ -624,9 +624,9 @@ class TestCmdUpdateProfileSkillSync:
             branch="main", verify_ok=True, commit_count="1"
         )
 
-        default_p = SimpleNamespace(name="default", path=Path("/fake/.hermes"))
-        active_p = SimpleNamespace(name="bit", path=Path("/fake/.hermes/profiles/bit"))
-        other_p = SimpleNamespace(name="work", path=Path("/fake/.hermes/profiles/work"))
+        default_p = SimpleNamespace(name="default", path=Path("/fake/.auraforge"))
+        active_p = SimpleNamespace(name="bit", path=Path("/fake/.auraforge/profiles/bit"))
+        other_p = SimpleNamespace(name="work", path=Path("/fake/.auraforge/profiles/work"))
         all_profiles = [default_p, active_p, other_p]
 
         synced_paths = []
@@ -662,7 +662,7 @@ class TestCmdUpdateProfileSkillSync:
             branch="main", verify_ok=True, commit_count="1"
         )
 
-        default_p = SimpleNamespace(name="default", path=Path("/fake/.hermes"))
+        default_p = SimpleNamespace(name="default", path=Path("/fake/.auraforge"))
         synced_paths = []
 
         def fake_seed(path, quiet=False):
@@ -682,7 +682,7 @@ class TestCmdUpdateProfileSkillSync:
 
 
 class TestCmdUpdateBranchFlag:
-    """``hermes update --branch <name>`` targets the requested branch.
+    """``auraforge update --branch <name>`` targets the requested branch.
 
     The CLI default stays 'main'; --branch lets callers pick a different
     target without monkey-patching the implementation.
@@ -769,7 +769,7 @@ class TestCmdUpdateBranchFlag:
 
 
 class TestCmdUpdateCheckBranchFlag:
-    """``hermes update --check --branch <name>`` honors the branch override.
+    """``auraforge update --check --branch <name>`` honors the branch override.
 
     The check path used to call ``git rev-list HEAD..origin/<branch> --count``
     with ``check=True``. When the branch didn't exist on origin, the fetch
@@ -896,7 +896,7 @@ class TestCmdUpdateCheckBranchFlag:
 
 
 class TestCmdUpdateZipBranchRefusal:
-    """``hermes update --branch=<non-main>`` must refuse on the ZIP fallback path.
+    """``auraforge update --branch=<non-main>`` must refuse on the ZIP fallback path.
 
     The ZIP fallback hard-codes a GitHub archive URL for main.zip; honoring
     --branch arbitrarily would require remote-branch existence checks the
@@ -1055,7 +1055,7 @@ class TestNodeRuntimeNpmResolution:
         """The Windows ZIP fallback keeps Desktop intact when replacing ``apps/``.
 
         Contract updated for the #70337/#87331 release-dir graft: the built
-        desktop app (release/win-unpacked/Hermes.exe) is preserved THROUGH
+        desktop app (release/win-unpacked/Aura Forge.exe) is preserved THROUGH
         the swap — previously this test pinned the old repair shape (exe
         deleted by the swap, then rebuilt from scratch). The rebuild hook
         still runs (mocked _desktop_build_needed=True), but it now finds
@@ -1066,7 +1066,7 @@ class TestNodeRuntimeNpmResolution:
         from hermes_cli import main as hm
         from hermes_cli import update_cmd
 
-        project_root = tmp_path / "hermes-agent"
+        project_root = tmp_path / "auraforge-agent"
         (project_root / ".git").mkdir(parents=True)
         desktop_dir = project_root / "apps" / "desktop"
         packaged_exe = desktop_dir / "release" / "win-unpacked" / "AuraForge.exe"
@@ -1075,7 +1075,7 @@ class TestNodeRuntimeNpmResolution:
 
         def write_source_zip(_url, destination):
             with zipfile.ZipFile(destination, "w") as archive:
-                archive.writestr("hermes-agent-main/apps/desktop/package.json", "{}")
+                archive.writestr("auraforge-agent-main/apps/desktop/package.json", "{}")
 
         def fail_git_fetch(command, **_kwargs):
             if "fetch" in command:
@@ -1121,7 +1121,7 @@ class TestNodeRuntimeNpmResolution:
         monkeypatch.setattr(update_cmd, "_print_curator_first_run_notice", lambda: None)
         monkeypatch.setattr(update_cmd, "_print_curator_recent_run_notice", lambda: None)
         monkeypatch.setattr(update_cmd, "_finish_dashboard_update_cleanup", lambda _failures: None)
-        monkeypatch.setattr(update_cmd, "get_hermes_home", lambda: tmp_path / "hermes-home")
+        monkeypatch.setattr(update_cmd, "get_hermes_home", lambda: tmp_path / "auraforge-home")
 
         with (
             patch("hermes_cli.config.load_config", return_value={}),

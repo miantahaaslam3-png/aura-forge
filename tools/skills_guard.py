@@ -125,7 +125,7 @@ MODIFY_VERB_RE = (
 
 # Config-file groups shared by the agent-config persistence tiers below.
 _AGENT_CONFIG_FILES = r'(?:AGENTS\.md|CLAUDE\.md|\.cursorrules|\.clinerules)'
-_HERMES_CONFIG_FILES = r'\.hermes/(?:config\.yaml|SOUL\.md)'
+_HERMES_CONFIG_FILES = r'\.auraforge/(?:config\.yaml|SOUL\.md)'
 # Path prefixes (real files are e.g. .claude/settings.json), so consume any
 # trailing filename characters rather than requiring a clean end-of-word.
 _OTHER_AGENT_CONFIG_FILES = r'\.(?:claude/settings|codex/config)[\w.]*'
@@ -219,7 +219,7 @@ THREAT_PATTERNS = [
     (r'\$HOME/\.docker|\~/\.docker',
      "docker_dir_access", "high", "exfiltration",
      "references Docker config (may contain registry creds)"),
-    (r'\$HOME/\.hermes/\.env|\~/\.hermes/\.env',
+    (r'\$HOME/\.auraforge/\.env|\~/\.auraforge/\.env',
      "hermes_env_access", "critical", "exfiltration",
      "directly references Aura Forge secrets file"),
     # Match `cat <secrets-file>` (reading credentials) but NOT `cat > <file>`
@@ -587,7 +587,7 @@ THREAT_PATTERNS = [
     (_shell_write_re(_HERMES_CONFIG_FILES),
      "hermes_config_mod_shell", "critical", "persistence",
      "shell write (redirect/sed -i/tee/cp/mv) targeting Aura Forge configuration files"),
-    (r'\.hermes/config\.yaml|\.hermes/SOUL\.md',
+    (r'\.auraforge/config\.yaml|\.auraforge/SOUL\.md',
      "hermes_config_ref", "low", "persistence",
      "references Aura Forge configuration files (informational; only modification intent is scored)"),
     (_prose_modify_re(_OTHER_AGENT_CONFIG_FILES),
@@ -1217,7 +1217,7 @@ def _unicode_char_name(char: str) -> str:
 # ---------------------------------------------------------------------------
 
 # Ignore-file names a skill may ship to exclude dev/docs artifacts from the
-# scan. `.skillignore` is the Hermes-native name; `.clawhubignore` is honored
+# scan. `.skillignore` is the Aura Forge-native name; `.clawhubignore` is honored
 # for compatibility with skills published through ClawHub.
 _SKILL_IGNORE_FILENAMES = (".skillignore", ".clawhubignore")
 

@@ -18,7 +18,7 @@ something different on each:
 The universal signal on every platform is ``cua-driver doctor --json`` (binary
 integrity + platform support). ``computer_use_status`` folds that together with
 the macOS permission detail into one payload for the desktop card, the
-``hermes computer-use permissions`` CLI, and ``/api/tools/computer-use/status``.
+``auraforge computer-use permissions`` CLI, and ``/api/tools/computer-use/status``.
 """
 
 from __future__ import annotations
@@ -175,7 +175,7 @@ def request_permissions_grant(driver_cmd: Optional[str] = None) -> int:
 
     binary = _resolve_driver_cmd(driver_cmd)
     if not binary:
-        print("cua-driver: not installed. Run: hermes computer-use install")
+        print("cua-driver: not installed. Run: auraforge computer-use install")
         return 2
 
     print(

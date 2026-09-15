@@ -71,12 +71,12 @@ class TestSendMessageBlocks:
         adapter, client = _make_adapter(
             {"unfurl_links": False, "unfurl_media": False}
         )
-        content = "[Aura Forge](https://example.com/hermes)"
+        content = "[Aura Forge](https://example.com/auraforge)"
 
         await adapter.send("C1", content)
 
         kwargs = client.chat_postMessage.await_args.kwargs
-        assert kwargs["text"] == "<https://example.com/hermes|Aura Forge>"
+        assert kwargs["text"] == "<https://example.com/auraforge|Aura Forge>"
         assert kwargs["unfurl_links"] is False
         assert kwargs["unfurl_media"] is False
 

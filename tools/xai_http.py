@@ -17,7 +17,7 @@ def has_xai_credentials() -> bool:
     """Cheap probe — return True when xAI credentials are *likely* usable.
 
     Deliberately avoids :func:`resolve_xai_http_credentials` so callers in
-    hot-paint paths (``hermes tools`` repaint, tool-registration scans,
+    hot-paint paths (``auraforge tools`` repaint, tool-registration scans,
     ``WebSearchProvider.is_available()``) don't incur disk locks or — in
     the OAuth path — a network token refresh. The ABC contract on
     :meth:`agent.web_search_provider.WebSearchProvider.is_available`
@@ -26,10 +26,10 @@ def has_xai_credentials() -> bool:
     Resolution order, fast-to-slow:
 
     1. ``XAI_API_KEY`` env var (cheapest; covers explicit-key users).
-    2. ``~/.hermes/auth.json`` has a non-empty ``providers.xai-oauth.tokens.access_token``
+    2. ``~/.auraforge/auth.json`` has a non-empty ``providers.xai-oauth.tokens.access_token``
        (single file read, no expiry check, no refresh).
     3. ``credential_pool.xai-oauth`` has any entry with a non-empty
-       ``access_token`` (covers multi-account ``hermes auth add xai-oauth``
+       ``access_token`` (covers multi-account ``auraforge auth add xai-oauth``
        grants that are pool-only / ``manual:device_code``).
 
     Returns False on any exception so a corrupted auth store can't block
@@ -77,7 +77,7 @@ def has_xai_credentials() -> bool:
 
 
 def get_env_value(name: str, default=None):
-    """Read ``name`` from ``~/.hermes/.env`` first, then ``os.environ``.
+    """Read ``name`` from ``~/.auraforge/.env`` first, then ``os.environ``.
 
     Wraps :func:`hermes_cli.config.get_env_value` so tests can patch
     ``tools.xai_http.get_env_value`` to inject dotenv-only secrets into the
@@ -93,12 +93,12 @@ def get_env_value(name: str, default=None):
 
 
 def hermes_xai_user_agent() -> str:
-    """Return a stable Hermes-specific User-Agent for xAI HTTP calls."""
+    """Return a stable Aura Forge-specific User-Agent for xAI HTTP calls."""
     try:
         from hermes_cli import __version__
     except Exception:
         __version__ = "unknown"
-    return f"Hermes-Agent/{__version__}"
+    return f"Aura Forge-Agent/{__version__}"
 
 
 def hermes_xai_default_headers() -> Dict[str, str]:
@@ -301,9 +301,9 @@ def resolve_xai_http_credentials(
 ) -> Dict[str, str]:
     """Resolve bearer credentials for direct xAI HTTP endpoints.
 
-    Prefers Hermes-managed xAI OAuth credentials when available, then falls back
+    Prefers Aura Forge-managed xAI OAuth credentials when available, then falls back
     to ``XAI_API_KEY`` resolved via ``hermes_cli.config.get_env_value`` so keys
-    stored in ``~/.hermes/.env`` (the standard Aura Forge location) are honored —
+    stored in ``~/.auraforge/.env`` (the standard Aura Forge location) are honored —
     not just ones already exported into ``os.environ``. This keeps direct xAI
     endpoints (images, TTS, STT, etc.) aligned with the main runtime auth model
     and preserves the regression contract from PR #17140 / #17163.

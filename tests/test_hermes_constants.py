@@ -34,11 +34,11 @@ class TestGetDefaultHermesRoot:
     """Tests for get_default_hermes_root() — Docker/custom deployment awareness."""
 
     def test_no_hermes_home_returns_native(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is not set, returns ~/.hermes."""
+        """When HERMES_HOME is not set, returns ~/.auraforge."""
         monkeypatch.delenv("HERMES_HOME", raising=False)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-        assert get_default_hermes_root() == tmp_path / ".hermes"
+        assert get_default_hermes_root() == tmp_path / ".auraforge"
 
 
 
@@ -56,13 +56,13 @@ class TestGetDefaultHermesRoot:
 
     @pytest.mark.windows_only
     def test_no_hermes_home_returns_localappdata_root_on_windows(self, tmp_path, monkeypatch):
-        """Native Windows falls back to %LOCALAPPDATA%\\hermes, not ~/.hermes."""
+        """Native Windows falls back to %LOCALAPPDATA%\\auraforge, not ~/.auraforge."""
         local_appdata = tmp_path / "LocalAppData"
         monkeypatch.delenv("HERMES_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
 
-        assert get_default_hermes_root() == local_appdata / "hermes"
+        assert get_default_hermes_root() == local_appdata / "auraforge"
 
     def test_result_memoised_until_env_or_home_changes(self, tmp_path, monkeypatch):
         """Repeated calls reuse the memo; HERMES_HOME / home changes invalidate.
@@ -129,14 +129,14 @@ class TestGetHermesHome:
 
     @pytest.mark.windows_only
     def test_windows_fallback_uses_localappdata(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is unset on Windows, use %LOCALAPPDATA%\\hermes."""
+        """When HERMES_HOME is unset on Windows, use %LOCALAPPDATA%\\auraforge."""
         local_appdata = tmp_path / "LocalAppData"
         monkeypatch.delenv("HERMES_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
         monkeypatch.setattr(hermes_constants, "_profile_fallback_warned", False)
 
-        assert get_hermes_home() == local_appdata / "hermes"
+        assert get_hermes_home() == local_appdata / "auraforge"
 
 
 class TestGetProcessHermesHome:
@@ -158,7 +158,7 @@ class TestGetProcessHermesHome:
 class TestHermesManagedNode:
     @pytest.mark.windows_only
     def test_windows_node_dir_prefers_portable_root(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         node_dir = home / "node"
         bin_dir = node_dir / "bin"
         node_dir.mkdir(parents=True)
@@ -169,7 +169,7 @@ class TestHermesManagedNode:
 
     @pytest.mark.windows_only
     def test_windows_finds_npm_cmd_before_path(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         node_dir = home / "node"
         node_dir.mkdir(parents=True)
         npm_cmd = node_dir / "npm.cmd"
@@ -183,7 +183,7 @@ class TestHermesManagedNode:
 
     @pytest.mark.windows_only
     def test_windows_skips_broken_managed_npm_without_path_fallback(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         managed_npm = home / "node" / "npm.cmd"
         managed_npm.parent.mkdir(parents=True)
         managed_npm.write_text("@echo off\n")
@@ -209,7 +209,7 @@ class TestHermesManagedNode:
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX shell stubs; Windows uses .cmd shims")
 class TestNodeToolRunnable:
-    """node_tool_runnable() rejects broken Hermes-managed npm/node wrappers."""
+    """node_tool_runnable() rejects broken Aura Forge-managed npm/node wrappers."""
 
     def _stub(self, tmp_path, name, body, mode=0o755):
         path = tmp_path / name
@@ -539,7 +539,7 @@ class TestSecureParentDir:
 
     def test_safe_path_calls_chmod(self, tmp_path, monkeypatch):
         """Normal nested path (depth >= 3) should call os.chmod."""
-        safe_dir = tmp_path / "home" / "user" / ".hermes"
+        safe_dir = tmp_path / "home" / "user" / ".auraforge"
         safe_dir.mkdir(parents=True)
         target = safe_dir / "auth.json"
         target.touch()
@@ -563,13 +563,13 @@ class TestSecureParentDir:
     def test_install_tree_skipped(self, monkeypatch):
         """Parent dir equal to (or inside) the install tree must NOT be chmod'd.
 
-        Regression test for #93050: secure_parent_dir() chmod'd /opt/hermes to
+        Regression test for #93050: secure_parent_dir() chmod'd /opt/auraforge to
         0700 because it has 3 path parts and passed the ``< 3`` guard, locking
-        out UID 10000 (hermes user) from traversing the install dir.
+        out UID 10000 (auraforge user) from traversing the install dir.
         """
         install_root = Path(hermes_constants.__file__).resolve().parent
 
-        # Directly under the install root (e.g. /opt/hermes/auth.json)
+        # Directly under the install root (e.g. /opt/auraforge/auth.json)
         target = install_root / "auth.json"
         called_with = []
         monkeypatch.setattr(os, "chmod", lambda p, m: called_with.append((str(p), m)))
@@ -595,7 +595,7 @@ class TestSecureParentDir:
         """
         install_root = Path(hermes_constants.__file__).resolve().parent
 
-        # Prefix-named sibling of the install root (/opt/hermes-data/...).
+        # Prefix-named sibling of the install root (/opt/auraforge-data/...).
         prefix_sibling = Path(str(install_root) + "-data")
         called_with = []
         monkeypatch.setattr(os, "chmod", lambda p, m: called_with.append((str(p), m)))
@@ -800,7 +800,7 @@ class TestManagedNodeTreeInUse:
         assert hermes_constants.managed_node_tree_in_use() is False
 
     def test_exe_under_node_dir_counts(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(home))
         self._install_fake_psutil(
@@ -810,7 +810,7 @@ class TestManagedNodeTreeInUse:
         assert hermes_constants.managed_node_tree_in_use() is True
 
     def test_cmdline_arg_under_node_dir_counts(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(home))
         self._install_fake_psutil(
@@ -825,7 +825,7 @@ class TestManagedNodeTreeInUse:
         assert hermes_constants.managed_node_tree_in_use() is True
 
     def test_unrelated_process_does_not_count(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         monkeypatch.setenv("HERMES_HOME", str(home))
         self._install_fake_psutil(
@@ -913,7 +913,7 @@ class TestWindowsHealStageSwap:
     def test_in_use_defers_without_touching_tree(self, tmp_path, monkeypatch):
         import urllib.request
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         old = home / "node"
         old.mkdir(parents=True)
         (old / "node.exe").write_text("old", encoding="utf-8")
@@ -935,7 +935,7 @@ class TestWindowsHealStageSwap:
         assert list(home.glob("node.old-*")) == []
 
     def test_swap_replaces_tree_and_cleans_up(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         old = home / "node"
         old.mkdir(parents=True)
         (old / "node.exe").write_text("old", encoding="utf-8")
@@ -952,7 +952,7 @@ class TestWindowsHealStageSwap:
         assert list(home.glob("node.old-*")) == []
 
     def test_creates_tree_when_absent(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         home.mkdir()
         zip_name, zip_bytes = _make_node_zip(hermes_constants._HERMES_NODE_TARGET_MAJOR)
         self._stub_env(monkeypatch, home, zip_name, zip_bytes, in_use=False)
@@ -966,7 +966,7 @@ class TestWindowsHealStageSwap:
     def test_rename_refusal_defers_and_preserves_tree(self, tmp_path, monkeypatch):
         import os as _os
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         old = home / "node"
         old.mkdir(parents=True)
         (old / "node.exe").write_text("old", encoding="utf-8")
@@ -998,7 +998,7 @@ class TestWindowsHealStageSwap:
         not abort a swap that already succeeded."""
         import os as _os
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         old = home / "node"
         old.mkdir(parents=True)
         (old / "node.exe").write_text("old", encoding="utf-8")
@@ -1027,7 +1027,7 @@ class TestWindowsHealStageSwap:
         remove the staged copy, reporting a genuine failure (not a deferral)."""
         import os as _os
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         old = home / "node"
         old.mkdir(parents=True)
         (old / "node.exe").write_text("old", encoding="utf-8")
@@ -1057,7 +1057,7 @@ class TestWindowsHealStageSwap:
         import os as _os
         import time as _time
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         (home / "node" / "node.exe").write_text("old", encoding="utf-8")
         stale_backup = home / "node.old-deadbeef"
@@ -1088,7 +1088,7 @@ class TestWindowsHealStageSwap:
         import os as _os
         import time as _time
 
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         (home / "node" / "node.exe").write_text("old", encoding="utf-8")
         # Simulate a long-lived tree being renamed aside mid-swap: backdate
@@ -1112,7 +1112,7 @@ class TestHealAttemptFlagSemantics:
     so a later call can retry once the tree is free (#80926)."""
 
     def test_deferral_keeps_flag_clear_and_retries(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         (home / "node" / "node.exe").write_text("x", encoding="utf-8")
         monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
@@ -1133,7 +1133,7 @@ class TestHealAttemptFlagSemantics:
         assert calls["n"] == 2
 
     def test_real_failure_records_attempt(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "auraforge"
         (home / "node").mkdir(parents=True)
         (home / "node" / "node.exe").write_text("x", encoding="utf-8")
         monkeypatch.setattr(hermes_constants.sys, "platform", "win32")

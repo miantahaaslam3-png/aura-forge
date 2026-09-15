@@ -283,7 +283,7 @@ class QQAdapter(BasePlatformAdapter):
 
         # Default interaction dispatcher: routes approval-button clicks to
         # tools.approval.resolve_gateway_approval() and update-prompt clicks
-        # to ~/.hermes/.update_response. Set here so the cross-adapter gateway
+        # to ~/.auraforge/.update_response. Set here so the cross-adapter gateway
         # contract (send_exec_approval / send_update_prompt) works out of the
         # box; callers can override with set_interaction_callback(None) or
         # register a custom handler.
@@ -781,8 +781,8 @@ class QQAdapter(BasePlatformAdapter):
                 "shard": [0, 1],
                 "properties": {
                     "$os": "macOS",
-                    "$browser": "hermes-agent",
-                    "$device": "hermes-agent",
+                    "$browser": "auraforge-agent",
+                    "$device": "auraforge-agent",
                 },
             },
         }
@@ -1153,8 +1153,8 @@ class QQAdapter(BasePlatformAdapter):
           :func:`tools.approval.resolve_gateway_approval`
           (unblocks the agent thread waiting on a dangerous-command approval).
         - ``update_prompt:<answer>`` →
-          writes the answer to ``~/.hermes/.update_response`` for the
-          detached ``hermes update --gateway`` process to consume.
+          writes the answer to ``~/.auraforge/.update_response`` for the
+          detached ``auraforge update --gateway`` process to consume.
         - Anything else is logged at DEBUG and ignored.
 
         Installed as the adapter's default interaction callback in
@@ -1223,7 +1223,7 @@ class QQAdapter(BasePlatformAdapter):
         """Atomically write the update-prompt answer to ``.update_response``.
 
         Mirrors the Discord / Telegram / Feishu adapters: the detached
-        ``hermes update --gateway`` watcher polls this file for a ``y``/``n``
+        ``auraforge update --gateway`` watcher polls this file for a ``y``/``n``
         response to its interactive prompts (stash-restore, config migration).
         Writes via ``tmp + rename`` so a partial write can't fool the reader.
         """
@@ -2230,7 +2230,7 @@ class QQAdapter(BasePlatformAdapter):
                                  or ("glm-asr" if provider in {"zai", "glm"} else "whisper-1"),
                     }
 
-        # 2. QQ-specific env vars (set by `hermes setup gateway` / `hermes gateway`)
+        # 2. QQ-specific env vars (set by `auraforge setup gateway` / `auraforge gateway`)
         qq_stt_key = _resolve_qq_secret("QQ_STT_API_KEY", "")
         if qq_stt_key:
             base_url = _resolve_qq_secret(
@@ -2753,11 +2753,11 @@ class QQAdapter(BasePlatformAdapter):
         """Send a Yes/No update-confirmation prompt with inline buttons.
 
         Matches the cross-adapter contract used by
-        ``gateway/run.py``'s ``hermes update --gateway`` watcher. Button
+        ``gateway/run.py``'s ``auraforge update --gateway`` watcher. Button
         clicks surface as ``INTERACTION_CREATE`` with
         ``button_data = 'update_prompt:y'`` or ``'update_prompt:n'``;
         the adapter's interaction callback writes the answer to
-        ``~/.hermes/.update_response`` so the detached update process
+        ``~/.auraforge/.update_response`` so the detached update process
         can read it.
         """
         del session_key, metadata  # present for contract parity only.

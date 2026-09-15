@@ -444,7 +444,7 @@ class HonchoMemoryProvider(MemoryProvider):
                 gateway_session_key=gateway_session_key,
             )
             or session_id
-            or "hermes-default"
+            or "auraforge-default"
         )
 
     def _start_session_init_background(self, *, wait_timeout: float = 0.0) -> None:
@@ -471,7 +471,7 @@ class HonchoMemoryProvider(MemoryProvider):
 
             cfg = self._config
             init_kwargs = dict(self._lazy_init_kwargs)
-            init_session_id = self._lazy_init_session_id or "hermes-default"
+            init_session_id = self._lazy_init_session_id or "auraforge-default"
 
             def _run() -> None:
                 from plugins.memory.honcho.session import HonchoAuthError
@@ -603,7 +603,7 @@ class HonchoMemoryProvider(MemoryProvider):
         try:
             self._do_session_init(
                 self._config,
-                self._lazy_init_session_id or "hermes-default",
+                self._lazy_init_session_id or "auraforge-default",
                 **self._lazy_init_kwargs,
             )
             # Clear lazy refs
@@ -919,7 +919,7 @@ class HonchoMemoryProvider(MemoryProvider):
             "has expired and automatic token refresh failed, so memory sync and "
             f"recall are paused. Reason: {msg}\n"
             "Tell the user (once) that Honcho memory is paused and that running "
-            "'hermes honcho setup' to re-authenticate will restore it."
+            "'auraforge honcho setup' to re-authenticate will restore it."
         )
 
     def _consume_pending_dialectic(self) -> str:

@@ -3,10 +3,10 @@
 Attended counterpart of the silent startup pruner (see
 ``hermes_cli/worktree_gc.py`` for the policy and shared invariants). Usage:
 
-    hermes worktree list             # audit: verdict + reason per tree
-    hermes worktree prune            # reap safe trees + merged branches
-    hermes worktree prune --dry-run  # show the plan, change nothing
-    hermes worktree prune --trees-only / --branches-only
+    auraforge worktree list             # audit: verdict + reason per tree
+    auraforge worktree prune            # reap safe trees + merged branches
+    auraforge worktree prune --dry-run  # show the plan, change nothing
+    auraforge worktree prune --trees-only / --branches-only
 """
 
 from __future__ import annotations

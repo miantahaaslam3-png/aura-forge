@@ -44,9 +44,9 @@ _SANITIZE_RE = re.compile(r"[^A-Za-z0-9._-]")
 
 
 def _breadcrumbs_dir() -> Path:
-    from hermes_constants import get_hermes_home
+    from hermes_constants import get_aura_forge_home
 
-    return get_hermes_home() / "terminal-sessions"
+    return get_aura_forge_home() / "terminal-sessions"
 
 
 def _sanitize(raw: str) -> str:

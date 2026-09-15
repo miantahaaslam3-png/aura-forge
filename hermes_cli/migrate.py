@@ -19,7 +19,7 @@ def cmd_migrate(args: Any) -> int:
     if sub == "xai":
         return cmd_migrate_xai(args)
 
-    print("usage: hermes migrate xai [--apply] [--no-backup]", file=sys.stderr)
+    print("usage: auraforge migrate xai [--apply] [--no-backup]", file=sys.stderr)
     return 2
 
 
@@ -110,6 +110,6 @@ def cmd_migrate_xai(args: Any) -> int:
 
 def _resolve_config_path() -> Path:
     """Best-effort: locate the active config.yaml on disk."""
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    return get_hermes_home() / "config.yaml"
+    return get_aura_forge_home() / "config.yaml"

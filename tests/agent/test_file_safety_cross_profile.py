@@ -1,13 +1,13 @@
-"""Tests for the cross-Hermes-profile write guard in agent/file_safety.
+"""Tests for the cross-Aura Forge-profile write guard in agent/file_safety.
 
 The guard fires when a tool tries to write into another Aura Forge profile's
 skills/plugins/cron/memories directory. It's a soft guard — defense in
 depth, NOT a security boundary — but it prevents the agent from silently
 corrupting a profile that belongs to a different session.
 
-Reference: May 2026 incident — a hermes-security profile session
-accidentally edited skills under both ~/.hermes/profiles/hermes-security/skills/
-AND ~/.hermes/skills/ (the default profile's skills), realizing only
+Reference: May 2026 incident — a auraforge-security profile session
+accidentally edited skills under both ~/.auraforge/profiles/auraforge-security/skills/
+AND ~/.auraforge/skills/ (the default profile's skills), realizing only
 afterwards that the second path belonged to a different profile.
 """
 from __future__ import annotations
@@ -33,20 +33,20 @@ def fake_hermes(tmp_path, monkeypatch):
           cron/<state>
           memories/MEMORY.md
           profiles/
-            hermes-security/
+            auraforge-security/
               skills/foo/SKILL.md       # named profile
               plugins/...
             coder/
               skills/foo/SKILL.md       # another named profile
     """
-    root = tmp_path / "fake-hermes"
+    root = tmp_path / "fake-auraforge"
     (root / "skills" / "foo").mkdir(parents=True)
     (root / "skills" / "foo" / "SKILL.md").write_text("# default skill\n")
     (root / "plugins" / "foo").mkdir(parents=True)
     (root / "memories").mkdir(parents=True)
     (root / "cron").mkdir(parents=True)
 
-    sec_home = root / "profiles" / "hermes-security"
+    sec_home = root / "profiles" / "auraforge-security"
     (sec_home / "skills" / "foo").mkdir(parents=True)
     (sec_home / "skills" / "foo" / "SKILL.md").write_text("# sec skill\n")
     (sec_home / "plugins").mkdir(parents=True)
@@ -117,7 +117,7 @@ class TestClassifyCrossProfileTarget:
             str(fake_hermes["default_home"] / "skills" / "foo" / "SKILL.md")
         )
         assert result is not None
-        assert result["active_profile"] == "hermes-security"
+        assert result["active_profile"] == "auraforge-security"
         assert result["target_profile"] == "default"
         assert result["area"] == "skills"
 
@@ -130,7 +130,7 @@ class TestClassifyCrossProfileTarget:
         )
         assert result is not None
         assert result["active_profile"] == "default"
-        assert result["target_profile"] == "hermes-security"
+        assert result["target_profile"] == "auraforge-security"
 
 
     @pytest.mark.parametrize("area", ["skills", "plugins", "cron", "memories"])

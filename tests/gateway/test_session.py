@@ -264,10 +264,10 @@ class TestBuildSessionContextPrompt:
         )
         ctx = build_session_context(source, config)
 
-        with patch("hermes_constants.display_hermes_home", return_value="~/.hermes/profiles/coder"):
+        with patch("hermes_constants.display_hermes_home", return_value="~/.auraforge/profiles/coder"):
             prompt = build_session_context_prompt(ctx)
 
-        assert "~/.hermes/profiles/coder/cron/output/" in prompt
+        assert "~/.auraforge/profiles/coder/cron/output/" in prompt
 
 
     def test_prompt_quotes_untrusted_metadata_labels(self):
@@ -646,7 +646,7 @@ class TestWhatsAppSessionKeyConsistency:
         """With group_sessions_per_user, the same human flipping between
         phone-JID and LID inside a group must not produce two isolated
         per-user sessions."""
-        tmp_home = tmp_path / "hermes-home"
+        tmp_home = tmp_path / "auraforge-home"
         mapping_dir = tmp_home / "whatsapp" / "session"
         mapping_dir.mkdir(parents=True, exist_ok=True)
         (mapping_dir / "lid-mapping-999999999999999.json").write_text(

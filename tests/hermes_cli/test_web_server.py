@@ -54,7 +54,7 @@ def _install_example_plugin(_isolate_hermes_home):
     The user-plugin source is preferred over a transient
     ``HERMES_BUNDLED_PLUGINS`` override because the bundled dir is
     resolved per-call (other tests in the suite implicitly rely on the
-    real bundled plugins — kanban, hermes-achievements, model providers
+    real bundled plugins — kanban, auraforge-achievements, model providers
     — being available, and globally swapping that root would yank them
     all). User plugins are first in the discovery search order, so
     laying down the fixture here is enough.
@@ -74,7 +74,7 @@ def _install_example_plugin(_isolate_hermes_home):
     # An installed-but-not-enabled user plugin has its API mount skipped
     # and its assets 404'd — which is the whole point of the gate. These
     # fixtures exist to exercise the *serving* paths, so opt the example
-    # plugin in exactly as a real operator would with `hermes plugins
+    # plugin in exactly as a real operator would with `auraforge plugins
     # enable example`.
     from hermes_cli.config import load_config, save_config
     _cfg = load_config()
@@ -443,7 +443,7 @@ class TestWebServerEndpoints:
         The shipped regression (#72424 aftermath): a store predating
         ``sessions.last_activity_at`` made every per-profile read raise
         "no such column", which this endpoint swallowed into its ``errors``
-        array — the desktop rendered "No sessions yet" after `hermes update`
+        array — the desktop rendered "No sessions yet" after `auraforge update`
         until the user's first message forced a writable open elsewhere.
         """
         import sqlite3
@@ -480,7 +480,7 @@ class TestWebServerEndpoints:
     def test_startup_eager_reconcile_heals_stale_store(self):
         """The lifespan's eager reconcile brings a stale store current.
 
-        #79531/#80037: after `hermes update` an old-schema state.db used to
+        #79531/#80037: after `auraforge update` an old-schema state.db used to
         stay stale until the first NEW session forced a writable open —
         every /api/sessions poll 500ed with "no such column" in between.
         The lifespan now schedules one writable open at startup; this
@@ -912,7 +912,7 @@ class TestWebServerEndpoints:
                     "mode": "cloud",
                     "api_url": "https://api.hindsight.vectorize.io",
                     "api_key": "secret-value",
-                    "bank_id": "hermes",
+                    "bank_id": "auraforge",
                     "recall_budget": "mid",
                 }
             },
@@ -973,7 +973,7 @@ class TestWebServerEndpoints:
                     "environment": "local",
                     "workspace": "myws",
                     "peerName": "eri",
-                    "aiPeer": "hermes",
+                    "aiPeer": "auraforge",
                     "sessionStrategy": "per-repo",
                 }
             },
@@ -987,12 +987,12 @@ class TestWebServerEndpoints:
         cfg = json.loads((get_hermes_home() / "honcho.json").read_text(encoding="utf-8"))
         # baseUrl is root-scoped; the rest live in the active host block.
         assert cfg["baseUrl"] == "https://honcho.example.dev"
-        assert cfg["hosts"]["hermes"]["workspace"] == "myws"
-        assert cfg["hosts"]["hermes"]["peerName"] == "eri"
-        assert cfg["hosts"]["hermes"]["environment"] == "local"
-        assert cfg["hosts"]["hermes"]["sessionStrategy"] == "per-repo"
+        assert cfg["hosts"]["auraforge"]["workspace"] == "myws"
+        assert cfg["hosts"]["auraforge"]["peerName"] == "eri"
+        assert cfg["hosts"]["auraforge"]["environment"] == "local"
+        assert cfg["hosts"]["auraforge"]["sessionStrategy"] == "per-repo"
         # The key lands where the client reads first; GET keeps it write-only.
-        assert cfg["hosts"]["hermes"]["apiKey"] == "hch-test-key"
+        assert cfg["hosts"]["auraforge"]["apiKey"] == "hch-test-key"
 
 
     def test_get_honcho_config_does_not_return_secret(self, monkeypatch, tmp_path):
@@ -1169,7 +1169,7 @@ class TestWebServerEndpoints:
         def fail_spawn(*_args, **_kwargs):
             nonlocal spawned
             spawned = True
-            raise AssertionError("docker update guard should not spawn hermes update")
+            raise AssertionError("docker update guard should not spawn auraforge update")
 
         # Bypass the managed-externally gate so we reach the docker install check.
         monkeypatch.setattr(web_server, "_dashboard_local_update_managed_externally", lambda: False)
@@ -1180,27 +1180,27 @@ class TestWebServerEndpoints:
         )
         monkeypatch.setattr(web_server, "detect_install_method", lambda _root: "docker")
         monkeypatch.setattr(web_server, "_spawn_hermes_action", fail_spawn)
-        web_server._ACTION_PROCS.pop("hermes-update", None)
-        web_server._ACTION_RESULTS.pop("hermes-update", None)
+        web_server._ACTION_PROCS.pop("auraforge-update", None)
+        web_server._ACTION_RESULTS.pop("auraforge-update", None)
 
-        resp = self.client.post("/api/hermes/update")
+        resp = self.client.post("/api/auraforge/update")
 
         assert resp.status_code == 200
         data = resp.json()
         assert data["ok"] is False
-        assert data["name"] == "hermes-update"
+        assert data["name"] == "auraforge-update"
         assert data["pid"] is None
         assert data["error"] == "docker_update_unsupported"
-        assert "docker pull nousresearch/hermes-agent:latest" in data["message"]
+        assert "docker pull nousresearch/auraforge-agent:latest" in data["message"]
         assert spawned is False
 
-        status = self.client.get("/api/actions/hermes-update/status")
+        status = self.client.get("/api/actions/auraforge-update/status")
         assert status.status_code == 200
         status_data = status.json()
         assert status_data["running"] is False
         assert status_data["exit_code"] == 1
         assert status_data["pid"] is None
-        assert any("docker pull nousresearch/hermes-agent:latest" in line for line in status_data["lines"])
+        assert any("docker pull nousresearch/auraforge-agent:latest" in line for line in status_data["lines"])
 
     def test_update_hermes_returns_apt_guidance_without_spawning(self, monkeypatch):
         import hermes_cli.web_server as web_server
@@ -1210,7 +1210,7 @@ class TestWebServerEndpoints:
         def fail_spawn(*_args, **_kwargs):
             nonlocal spawned
             spawned = True
-            raise AssertionError("APT-managed update guard should not spawn hermes update")
+            raise AssertionError("APT-managed update guard should not spawn auraforge update")
 
         monkeypatch.setattr(web_server, "_dashboard_local_update_managed_externally", lambda: False)
         # The shared admission gate (#91277 Phase 3) resolves the install
@@ -1221,40 +1221,40 @@ class TestWebServerEndpoints:
         )
         monkeypatch.setattr(web_server, "detect_install_method", lambda _root: "apt")
         monkeypatch.setattr(web_server, "_spawn_hermes_action", fail_spawn)
-        web_server._ACTION_PROCS.pop("hermes-update", None)
-        web_server._ACTION_RESULTS.pop("hermes-update", None)
+        web_server._ACTION_PROCS.pop("auraforge-update", None)
+        web_server._ACTION_RESULTS.pop("auraforge-update", None)
 
-        resp = self.client.post("/api/hermes/update")
+        resp = self.client.post("/api/auraforge/update")
 
         assert resp.status_code == 200
         data = resp.json()
         assert data["ok"] is False
         assert data["pid"] is None
         assert data["error"] == "apt_update_required"
-        assert data["update_command"] == "pkg upgrade hermes-agent"
+        assert data["update_command"] == "pkg upgrade auraforge-agent"
         assert spawned is False
 
-        check = self.client.get("/api/hermes/update/check")
+        check = self.client.get("/api/auraforge/update/check")
         assert check.status_code == 200
         check_data = check.json()
         assert check_data["install_method"] == "apt"
         assert check_data["can_apply"] is False
-        assert check_data["update_command"] == "pkg upgrade hermes-agent"
+        assert check_data["update_command"] == "pkg upgrade auraforge-agent"
         assert "Termux APT" in check_data["message"]
 
     def test_update_status_recovers_completed_result_after_dashboard_restart(self, monkeypatch, tmp_path):
         import hermes_cli.web_server as web_server
 
         action_id = "c" * 32
-        (tmp_path / "hermes-update.log").write_text(
-            "=== hermes-update started 2026-08-17 11:19:34 ===\n"
+        (tmp_path / "auraforge-update.log").write_text(
+            "=== auraforge-update started 2026-08-17 11:19:34 ===\n"
             "pulling updates...\n",
             encoding="utf-8",
         )
         (tmp_path / "update.log").write_text(
-            "=== hermes update started 2026-08-17T11:19:35 ===\n"
+            "=== auraforge update started 2026-08-17T11:19:35 ===\n"
             "✓ Update complete!\n"
-            f"=== hermes-update completed {action_id} ===\n",
+            f"=== auraforge-update completed {action_id} ===\n",
             encoding="utf-8",
         )
         monkeypatch.setattr(web_server, "_ACTION_LOG_DIR", tmp_path)
@@ -1263,14 +1263,14 @@ class TestWebServerEndpoints:
         monkeypatch.setattr(web_server, "_ACTION_COMMANDS", {})
         monkeypatch.setattr(web_server, "_ACTION_IDS", {})
 
-        status = self.client.get("/api/actions/hermes-update/status?lines=2000")
+        status = self.client.get("/api/actions/auraforge-update/status?lines=2000")
 
         assert status.status_code == 200
         data = status.json()
         assert data["running"] is False
         assert data["exit_code"] == 0
         assert data["action_id"] == action_id
-        assert f"=== hermes-update completed {action_id} ===" in data["lines"]
+        assert f"=== auraforge-update completed {action_id} ===" in data["lines"]
 
     def test_update_hermes_spawns_with_action_id(self, monkeypatch):
         import hermes_cli.web_server as web_server
@@ -1288,20 +1288,20 @@ class TestWebServerEndpoints:
         monkeypatch.setattr(web_server, "detect_install_method", lambda _root: "git")
         monkeypatch.setattr(web_server.secrets, "token_hex", lambda _size: "a" * 32)
         monkeypatch.setattr(web_server, "_spawn_hermes_action", fake_spawn)
-        web_server._ACTION_PROCS.pop("hermes-update", None)
-        web_server._ACTION_RESULTS.pop("hermes-update", None)
+        web_server._ACTION_PROCS.pop("auraforge-update", None)
+        web_server._ACTION_RESULTS.pop("auraforge-update", None)
 
-        resp = self.client.post("/api/hermes/update")
+        resp = self.client.post("/api/auraforge/update")
 
         assert resp.status_code == 200
         assert resp.json() == {
             "ok": True,
             "pid": 12345,
-            "name": "hermes-update",
+            "name": "auraforge-update",
             "action_id": "a" * 32,
         }
         assert calls == [
-            (["update"], "hermes-update", {"HERMES_ACTION_ID": "a" * 32})
+            (["update"], "auraforge-update", {"HERMES_ACTION_ID": "a" * 32})
         ]
 
     def test_update_hermes_reuses_running_action(self, monkeypatch):
@@ -1320,20 +1320,20 @@ class TestWebServerEndpoints:
             "_spawn_hermes_action",
             lambda *_args, **_kwargs: pytest.fail("must not spawn a duplicate update"),
         )
-        web_server._ACTION_PROCS["hermes-update"] = Proc()
-        web_server._ACTION_IDS["hermes-update"] = "b" * 32
+        web_server._ACTION_PROCS["auraforge-update"] = Proc()
+        web_server._ACTION_IDS["auraforge-update"] = "b" * 32
 
         try:
-            resp = self.client.post("/api/hermes/update")
+            resp = self.client.post("/api/auraforge/update")
         finally:
-            web_server._ACTION_PROCS.pop("hermes-update", None)
-            web_server._ACTION_IDS.pop("hermes-update", None)
+            web_server._ACTION_PROCS.pop("auraforge-update", None)
+            web_server._ACTION_IDS.pop("auraforge-update", None)
 
         assert resp.status_code == 200
         assert resp.json() == {
             "ok": True,
             "pid": 24680,
-            "name": "hermes-update",
+            "name": "auraforge-update",
             "already_running": True,
             "action_id": "b" * 32,
         }
@@ -1642,7 +1642,7 @@ class TestWebServerEndpoints:
         """A custom endpoint that requires auth must persist model.api_key (where
         the runtime reads it) AND register a named custom_providers entry so the
         endpoint reappears as a ready row in the picker — matching the
-        ``hermes model`` custom flow. Regression for the desktop loop where a
+        ``auraforge model`` custom flow. Regression for the desktop loop where a
         keyed custom endpoint could never be configured from the GUI."""
         from hermes_cli.config import load_config
 
@@ -2909,13 +2909,13 @@ class TestNewEndpoints:
         config = load_config()
         config.setdefault("terminal", {})
         config["terminal"]["ssh_host"] = "devbox.example.com"
-        config["terminal"]["ssh_user"] = "hermes"
+        config["terminal"]["ssh_user"] = "auraforge"
         save_config(config)
 
         body = self.client.get("/api/tools/terminal/backends").json()
         ssh = next(r for r in body["backends"] if r["name"] == "ssh")
         assert ssh["status"] == "ready"
-        assert "hermes@devbox.example.com" in ssh["detail"]
+        assert "auraforge@devbox.example.com" in ssh["detail"]
 
 
 
@@ -3379,7 +3379,7 @@ class TestStatusInstallId:
         the same id file — profiles share one physical install identity."""
         import hermes_cli.web_server as ws
 
-        root = tmp_path / "hermes-root"
+        root = tmp_path / "auraforge-root"
         profile_home = root / "profiles" / "research"
         profile_home.mkdir(parents=True)
 
@@ -3398,7 +3398,7 @@ class TestStatusInstallId:
     def test_corrupt_id_file_is_replaced_not_propagated(self, monkeypatch, tmp_path):
         import hermes_cli.web_server as ws
 
-        root = tmp_path / "hermes-root"
+        root = tmp_path / "auraforge-root"
         root.mkdir()
         (root / "install_id").write_text("not-a-valid-id\n", encoding="utf-8")
         monkeypatch.setenv("HERMES_HOME", str(root))
@@ -3634,7 +3634,7 @@ class TestNormaliseThemeDefinition:
 
 
 class TestDiscoverUserThemes:
-    """Tests for _discover_user_themes() — scans ~/.hermes/dashboard-themes/."""
+    """Tests for _discover_user_themes() — scans ~/.auraforge/dashboard-themes/."""
 
     def test_returns_empty_when_dir_missing(self, tmp_path, monkeypatch):
         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
@@ -3723,7 +3723,7 @@ class TestThemeBootstrapCSS:
             web_server, "load_config", lambda: {"dashboard": {"theme": "ocean"}}
         )
         css = web_server._render_active_theme_bootstrap_css()
-        assert css.startswith('<style id="hermes-theme-bootstrap">')
+        assert css.startswith('<style id="auraforge-theme-bootstrap">')
         assert css.endswith("</style>")
         # Real bundle tokens (web/src/themes/context.tsx + index.css).
         assert "--background-base:#0a1628;" in css
@@ -3774,11 +3774,11 @@ class TestThemeBootstrapCSS:
         client = self._mount_spa_client(tmp_path, monkeypatch)
         resp = client.get("/chat")
         assert resp.status_code == 200
-        assert '<style id="hermes-theme-bootstrap">' in resp.text
+        assert '<style id="auraforge-theme-bootstrap">' in resp.text
         assert "--background-base:#0a1628;" in resp.text
         # Injected inside <head>, before the closing tag.
         head = resp.text.split("</head>")[0]
-        assert "hermes-theme-bootstrap" in head
+        assert "auraforge-theme-bootstrap" in head
 
 
 
@@ -4165,12 +4165,12 @@ class TestPluginAPIAuth:
         """Auth must be plugin-agnostic, not kanban-specific.
 
         The middleware fix is at the gate level (no per-plugin allowlist),
-        so any plugin's API surface — kanban, hermes-achievements, future
+        so any plugin's API surface — kanban, auraforge-achievements, future
         plugins — must require the session token. Hit a non-kanban plugin
         path to lock that in.
         """
-        # Real plugin path (hermes-achievements is loaded by default).
-        resp = self.client.get("/api/plugins/hermes-achievements/overview")
+        # Real plugin path (auraforge-achievements is loaded by default).
+        resp = self.client.get("/api/plugins/auraforge-achievements/overview")
         assert resp.status_code == 401
         # Same for an arbitrary plugin namespace that doesn't even exist —
         # the middleware should 401 before routing decides 404, so an
@@ -4265,8 +4265,8 @@ class TestDashboardPluginManifestExtensions:
     def test_user_plugins_found_under_profile_scoped_process(self, tmp_path, monkeypatch):
         """Regression #87197: a profile-scoped process (``--profile <name>``
         sets HERMES_HOME=<root>/profiles/<name>) must still discover user
-        plugins installed in the hermes root's plugins/ directory."""
-        root = tmp_path / "hermes-root"
+        plugins installed in the auraforge root's plugins/ directory."""
+        root = tmp_path / "auraforge-root"
         profile_home = root / "profiles" / "presale"
         profile_home.mkdir(parents=True)
         self._write_plugin(root, "meeting-intelligence", {
@@ -4284,7 +4284,7 @@ class TestDashboardPluginManifestExtensions:
     def test_profile_local_plugin_wins_over_root_plugin(self, tmp_path, monkeypatch):
         """A same-named plugin in the profile home takes precedence over the
         root copy (seen_names dedupe, profile scanned first)."""
-        root = tmp_path / "hermes-root"
+        root = tmp_path / "auraforge-root"
         profile_home = root / "profiles" / "presale"
         profile_home.mkdir(parents=True)
         self._write_plugin(profile_home, "dupe", {
@@ -4314,7 +4314,7 @@ class TestDashboardPluginManifestExtensions:
 # /api/pty WebSocket — terminal bridge for the dashboard "Chat" tab.
 #
 # These tests drive the endpoint with a tiny fake command (typically ``cat``
-# or ``sh -c 'printf …'``) instead of the real ``hermes --tui`` binary.  The
+# or ``sh -c 'printf …'``) instead of the real ``auraforge --tui`` binary.  The
 # endpoint resolves its argv through ``_resolve_chat_argv``, so tests
 # monkeypatch that hook.
 # ---------------------------------------------------------------------------
@@ -4358,7 +4358,7 @@ class TestPtyWebSocket:
         """Bare Python commands are resolved from the TUI child's PATH."""
         import hermes_cli.main as main_mod
 
-        command = f"hermes-review-python{Path(sys.executable).suffix}"
+        command = f"auraforge-review-python{Path(sys.executable).suffix}"
         bin_dir = tmp_path / "bin"
         bin_dir.mkdir()
         executable = bin_dir / command
@@ -4900,7 +4900,7 @@ class TestServeIndexMissingIndex:
 
 
 class TestHeadlessServeTokenPage:
-    """Headless `hermes serve` must serve the Desktop token handshake page
+    """Headless `auraforge serve` must serve the Desktop token handshake page
     at `/` when the dashboard auth gate is off (#94227).
 
     The Electron renderer boots by fetching `/` and extracting
@@ -5009,12 +5009,12 @@ class TestHashedAssetCacheHeaders:
         # handling) must survive the header change.
         prefixed = client.get(
             "/assets/index-abc123.css",
-            headers={"X-Forwarded-Prefix": "/hermes"},
+            headers={"X-Forwarded-Prefix": "/auraforge"},
         )
         assert prefixed.status_code == 200
         assert prefixed.headers["cache-control"] == self._IMMUTABLE
-        assert "url(/hermes/ds-assets/bg.png)" in prefixed.text
-        assert "url(/hermes/fonts-terminal/x.woff2)" in prefixed.text
+        assert "url(/auraforge/ds-assets/bg.png)" in prefixed.text
+        assert "url(/auraforge/fonts-terminal/x.woff2)" in prefixed.text
 
     def test_index_html_stays_no_store(self, tmp_path, monkeypatch):
         client = self._client(tmp_path, monkeypatch)

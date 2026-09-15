@@ -10,7 +10,7 @@ the consolidation fix intentionally pin the CORRECT behavior, so on
 unfixed main the buggy ones fail — that failure on the Windows runner is
 the empirical premise-check for each issue:
 
-  #90778 — holder message mislabels `hermes dashboard` as the Desktop
+  #90778 — holder message mislabels `auraforge dashboard` as the Desktop
            backend, and matches subcommands by substring ("--preserve"
            contains "serve").
   #78089 — pausable-gateway exemption vs. long managed-runtime
@@ -103,7 +103,7 @@ class TestDetection:
         path must surface with its FULL argv so the pausable exemption can
         see `gateway run` past the 120-char mark."""
         # Pad the argv front so `gateway run` sits beyond 120 chars.
-        padding = os.path.join("C:\\", "Users", "x" * 90, ".hermes-runtime")
+        padding = os.path.join("C:\\", "Users", "x" * 90, ".auraforge-runtime")
         proc = _spawn([padding, "-m", "hermes_cli.main", "gateway", "run"])
         try:
             matches = _detect()
@@ -122,7 +122,7 @@ class TestClassification:
         classify the long-path gateway as pausable (not None)."""
         from hermes_cli.update_cmd import _leftover_pausable_gateway_pids
 
-        padding = os.path.join("C:\\", "Users", "y" * 90, ".hermes-runtime")
+        padding = os.path.join("C:\\", "Users", "y" * 90, ".auraforge-runtime")
         proc = _spawn([padding, "-m", "hermes_cli.main", "gateway", "run"])
         try:
             matches = [m for m in _detect() if m[0] == proc.pid]
@@ -160,7 +160,7 @@ class TestHolderMessage:
             assert matches, "dashboard process not detected"
             message = _format_venv_python_holders_message(matches)
             assert "close the desktop app" not in message.lower(), (
-                "standalone `hermes dashboard` mislabeled as the Desktop "
+                "standalone `auraforge dashboard` mislabeled as the Desktop "
                 f"backend (#90778):\n{message}"
             )
         finally:
@@ -294,9 +294,9 @@ class TestConcurrentGateClassification:
         _kill(dead)  # reaped → unreadable cmdline → unknown → kept
         try:
             matches = [
-                (gw.pid, "hermes.exe"),
-                (backend.pid, "hermes.exe"),
-                (dead.pid, "hermes.exe"),
+                (gw.pid, "auraforge.exe"),
+                (backend.pid, "auraforge.exe"),
+                (dead.pid, "auraforge.exe"),
             ]
             kept = _filter_non_gateway_concurrent_instances(matches)
             kept_pids = {pid for pid, _ in kept}

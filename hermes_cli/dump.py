@@ -1,5 +1,5 @@
 """
-Dump command for hermes CLI.
+Dump command for auraforge CLI.
 
 Outputs a compact, plain-text summary of the user's Aura Forge setup
 that can be copy-pasted into Discord/GitHub/Telegram for support context.
@@ -13,9 +13,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from hermes_cli.config import get_hermes_home, get_env_path, get_project_root, load_config
+from hermes_cli.config import get_aura_forge_home, get_env_path, get_project_root, load_config
 from hermes_cli.env_loader import load_hermes_dotenv
-from hermes_constants import display_hermes_home
+from hermes_constants import display_aura_forge_home
 from agent.skill_utils import is_excluded_skill_path
 
 
@@ -141,9 +141,9 @@ def _gateway_status() -> str:
         return "unknown" if sys.platform.startswith(("linux", "darwin")) else "N/A"
 
 
-def _count_skills(hermes_home: Path) -> int:
+def _count_skills(aura_forge_home: Path) -> int:
     """Count installed skills."""
-    skills_dir = hermes_home / "skills"
+    skills_dir = aura_forge_home / "skills"
     if not skills_dir.is_dir():
         return 0
     count = 0
@@ -161,9 +161,9 @@ def _count_mcp_servers(config: dict) -> int:
     return len(servers)
 
 
-def _cron_summary(hermes_home: Path) -> str:
+def _cron_summary(aura_forge_home: Path) -> str:
     """Return cron jobs summary."""
-    jobs_file = hermes_home / "cron" / "jobs.json"
+    jobs_file = aura_forge_home / "cron" / "jobs.json"
     if not jobs_file.exists():
         return "0"
     try:
@@ -284,12 +284,12 @@ def run_dump(args):
     # Load env from .env file so key checks work
     env_path = get_env_path()
     load_hermes_dotenv(
-        hermes_home=env_path.parent,
+        aura_forge_home=env_path.parent,
         project_env=get_project_root() / ".env",
     )
 
     project_root = get_project_root()
-    hermes_home = get_hermes_home()
+    aura_forge_home = get_aura_forge_home()
 
     try:
         from hermes_cli import __version__
@@ -343,7 +343,7 @@ def run_dump(args):
     os_info = f"{platform.system()} {platform.release()} {platform.machine()}"
 
     lines = []
-    lines.append("--- hermes dump ---")
+    lines.append("--- auraforge dump ---")
     # Identify the build by commit + the date that commit was made, resolved
     # live via git.  __release_date__ (the package release date) is
     # intentionally NOT shown here — it reads like a wall-clock timestamp and
@@ -357,7 +357,7 @@ def run_dump(args):
     lines.append(f"python:           {sys.version.split()[0]}")
     lines.append(f"openai_sdk:       {openai_ver}")
     lines.append(f"profile:          {profile}")
-    lines.append(f"hermes_home:      {display_hermes_home()}")
+    lines.append(f"aura_forge_home:      {display_aura_forge_home()}")
     lines.append(f"model:            {model}")
     lines.append(f"provider:         {provider}")
     lines.append(f"terminal:         {backend}")
@@ -426,7 +426,7 @@ def run_dump(args):
     lines.append("")
     lines.append("features:")
 
-    toolsets = config.get("toolsets", ["hermes-cli"])
+    toolsets = config.get("toolsets", ["auraforge-cli"])
     lines.append(f"  toolsets:           {', '.join(toolsets) if toolsets else '(default)'}")
     lines.append(f"  mcp_servers:        {_count_mcp_servers(config)}")
     lines.append(f"  memory_provider:    {_memory_provider(config)}")
@@ -434,8 +434,8 @@ def run_dump(args):
 
     platforms = _configured_platforms()
     lines.append(f"  platforms:          {', '.join(platforms) if platforms else 'none'}")
-    lines.append(f"  cron_jobs:          {_cron_summary(hermes_home)}")
-    lines.append(f"  skills:             {_count_skills(hermes_home)}")
+    lines.append(f"  cron_jobs:          {_cron_summary(aura_forge_home)}")
+    lines.append(f"  skills:             {_count_skills(aura_forge_home)}")
 
     # Config overrides (non-default values)
     overrides = _config_overrides(config)

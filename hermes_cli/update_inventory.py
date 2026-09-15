@@ -63,7 +63,7 @@ class UpdatePlan:
 
     install_method: str = "unknown"       # git | docker | nix | apt | ...
     updatable_in_place: bool = True
-    update_mechanism: str = "hermes update"
+    update_mechanism: str = "auraforge update"
     expected_sha: Optional[str] = None    # current checkout HEAD (pre-pull)
     expected_version: Optional[str] = None
     profiles: list = field(default_factory=list)
@@ -137,8 +137,8 @@ def describe_restart_mechanism(mechanism: str, profile: str) -> str:
     if mechanism == "respawn-argv":
         return "stop before code swap, relaunch with recorded launch args"
     if profile != "default":
-        return f"hermes -p {profile} gateway restart"
-    return "hermes gateway restart"
+        return f"auraforge -p {profile} gateway restart"
+    return "auraforge gateway restart"
 
 
 def collect_runtime_inventory() -> UpdatePlan:
@@ -197,12 +197,12 @@ def collect_runtime_inventory() -> UpdatePlan:
     profile_homes: list[tuple[str, Path]] = []
     try:
         from hermes_cli.profiles import (
-            _get_default_hermes_home,
+            _get_default_aura_forge_home,
             _get_profiles_root,
             _PROFILE_ID_RE,
         )
 
-        default_home = _get_default_hermes_home()
+        default_home = _get_default_aura_forge_home()
         if default_home.is_dir():
             profile_homes.append(("default", default_home))
         root = _get_profiles_root()
@@ -464,12 +464,12 @@ def match_runtime_outcomes(
             elif r.pid is not None and r.pid in killed:
                 outcome = "stopped"
             elif any(
-                r.profile in unit or (r.profile == "default" and "hermes-gateway" in unit)
+                r.profile in unit or (r.profile == "default" and "auraforge-gateway" in unit)
                 for unit in failed_set
             ):
                 outcome = "failed"
             elif any(
-                r.profile in svc or (r.profile == "default" and "hermes-gateway" in svc)
+                r.profile in svc or (r.profile == "default" and "auraforge-gateway" in svc)
                 for svc in restarted_set
             ):
                 outcome = "restarted"
@@ -506,8 +506,8 @@ def report_unaccounted_runtimes(outcomes: list[dict[str, Any]]) -> bool:
             f" — planned mechanism: {o['mechanism']}"
         )
     print("    Restart them manually, then verify:")
-    print("      hermes gateway restart                # active profile")
-    print("      hermes -p <profile> gateway restart   # named profile")
+    print("      auraforge gateway restart                # active profile")
+    print("      auraforge -p <profile> gateway restart   # named profile")
     return True
 
 

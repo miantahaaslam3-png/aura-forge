@@ -25,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _probe_startup_modules(
     tmp_path: Path, argv: list[str], *, run_main: bool = False
 ) -> set[str]:
-    home = tmp_path / "hermes-home"
+    home = tmp_path / "auraforge-home"
     home.mkdir()
     (home / "config.yaml").write_text(
         """\
@@ -66,7 +66,7 @@ secrets:
 
 
 def test_update_startup_does_not_import_bitwarden_or_cryptography(tmp_path):
-    loaded = _probe_startup_modules(tmp_path, ["hermes", "update", "--check"])
+    loaded = _probe_startup_modules(tmp_path, ["auraforge", "update", "--check"])
 
     assert "agent.secret_sources.bitwarden" not in loaded
     assert not any(
@@ -78,7 +78,7 @@ def test_complete_update_dispatch_does_not_import_cryptography(tmp_path):
     """Building every CLI parser used to re-import Bitwarden via secrets_cli."""
     loaded = _probe_startup_modules(
         tmp_path,
-        ["hermes", "update", "--check"],
+        ["auraforge", "update", "--check"],
         run_main=True,
     )
 
@@ -88,7 +88,7 @@ def test_complete_update_dispatch_does_not_import_cryptography(tmp_path):
 
 
 def test_normal_startup_still_loads_enabled_external_secret_source(tmp_path):
-    loaded = _probe_startup_modules(tmp_path, ["hermes", "chat"])
+    loaded = _probe_startup_modules(tmp_path, ["auraforge", "chat"])
 
     assert "agent.secret_sources.bitwarden" in loaded
 
@@ -97,7 +97,7 @@ def test_normal_startup_still_loads_enabled_external_secret_source(tmp_path):
 def test_dotenv_loading_is_preserved_when_external_secrets_are_skipped(
     tmp_path, monkeypatch, external_secrets
 ):
-    home = tmp_path / "hermes-home"
+    home = tmp_path / "auraforge-home"
     home.mkdir()
     env_file = home / ".env"
     env_file.write_text("UPDATE_TEST_VALUE=from-dotenv\n", encoding="utf-8")

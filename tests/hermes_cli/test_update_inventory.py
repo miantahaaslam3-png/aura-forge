@@ -61,7 +61,7 @@ class TestCollectInventory:
         assert by_profile["work"].restart_via == "manual"
         from hermes_cli.update_inventory import describe_restart_mechanism
 
-        assert "hermes -p work gateway restart" in describe_restart_mechanism(
+        assert "auraforge -p work gateway restart" in describe_restart_mechanism(
             by_profile["work"].restart_via, "work"
         )
 
@@ -69,7 +69,7 @@ class TestCollectInventory:
         monkeypatch.setattr("hermes_cli.config.detect_install_method", lambda *a, **k: "docker")
         monkeypatch.setattr(
             "hermes_cli.config.recommended_update_command_for_method",
-            lambda m: "docker pull nousresearch/hermes-agent:latest",
+            lambda m: "docker pull nousresearch/auraforge-agent:latest",
         )
         plan = ui.collect_runtime_inventory()
         assert plan.install_method == "docker"
@@ -140,7 +140,7 @@ class TestPrintPlan:
         monkeypatch.setattr("hermes_cli.config.detect_install_method", lambda *a, **k: "docker")
         monkeypatch.setattr(
             "hermes_cli.config.recommended_update_command_for_method",
-            lambda m: "docker pull nousresearch/hermes-agent:latest",
+            lambda m: "docker pull nousresearch/auraforge-agent:latest",
         )
         ui.print_update_plan(ui.collect_runtime_inventory())
         out = capsys.readouterr().out

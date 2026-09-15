@@ -85,7 +85,7 @@ except (ModuleNotFoundError, ImportError):
     # _hermes_home.py shim).
     def get_hermes_home() -> Path:
         val = os.environ.get("HERMES_HOME", "").strip()
-        return Path(val) if val else Path.home() / ".hermes"
+        return Path(val) if val else Path.home() / ".auraforge"
 
     def display_hermes_home() -> str:
         home = get_hermes_home()
@@ -110,7 +110,7 @@ def _hermes_home() -> Path:
 # Filesystem-safe key: lowercase, allow ``[a-z0-9._-@]``, replace anything
 # else with ``_``. ``ramon.fernandez@nttdata.com`` stays human-readable
 # (``ramon.fernandez@nttdata.com.json``) which makes admin debugging by
-# ``ls ~/.hermes/google_chat_user_tokens/`` trivial.
+# ``ls ~/.auraforge/google_chat_user_tokens/`` trivial.
 _EMAIL_FS_RE = re.compile(r"[^a-z0-9._@-]+")
 
 
@@ -214,7 +214,7 @@ def load_user_credentials(email: Optional[str] = None) -> Optional[Any]:
     except ImportError:
         logger.warning(
             "[google_chat_user_oauth] google-auth not installed; user-OAuth "
-            "attachment delivery is disabled. Run `hermes setup` to install Google Chat support."
+            "attachment delivery is disabled. Run `auraforge setup` to install Google Chat support."
         )
         return None
 
@@ -416,7 +416,7 @@ def install_deps() -> bool:
         return True
     except Exception as exc:
         print(f"ERROR: Failed to install dependencies: {exc}")
-        print("Run `hermes setup` to repair the managed installation, then retry.")
+        print("Run `auraforge setup` to repair the managed installation, then retry.")
         return False
 
 

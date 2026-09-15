@@ -1,7 +1,7 @@
 """Interactive prompt callbacks for terminal_tool integration.
 
 These bridge terminal_tool's interactive prompts (clarify, sudo, approval)
-into prompt_toolkit's event loop. Each function takes the HermesCLI instance
+into prompt_toolkit's event loop. Each function takes the Aura ForgeCLI instance
 as its first argument and uses its state (queues, app reference) to coordinate
 with the TUI.
 """
@@ -12,7 +12,7 @@ import time as _time
 from hermes_cli.banner import cprint, _DIM, _RST
 from hermes_cli.config import save_env_value_secure
 from hermes_cli.secret_prompt import masked_secret_prompt
-from hermes_constants import display_hermes_home
+from hermes_constants import display_aura_forge_home
 
 
 def clarify_callback(cli, question, choices, multi_select=False):
@@ -102,7 +102,7 @@ def prompt_for_secret(cli, var_name: str, prompt: str, metadata=None) -> dict:
             }
 
         stored = save_env_value_secure(var_name, value)
-        _dhh = display_hermes_home()
+        _dhh = display_aura_forge_home()
         cprint(f"\n{_DIM}  ✓ Stored secret in {_dhh}/.env as {var_name}{_RST}")
         return {
             **stored,
@@ -155,7 +155,7 @@ def prompt_for_secret(cli, var_name: str, prompt: str, metadata=None) -> dict:
                 }
 
             stored = save_env_value_secure(var_name, value)
-            _dhh = display_hermes_home()
+            _dhh = display_aura_forge_home()
             cprint(f"\n{_DIM}  ✓ Stored secret in {_dhh}/.env as {var_name}{_RST}")
             return {
                 **stored,

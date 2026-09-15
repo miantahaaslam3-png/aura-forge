@@ -120,7 +120,7 @@ def make_approval_callback(
     timeout: float = 60.0,
 ) -> Callable[..., str]:
     """
-    Return a Hermes-compatible approval callback that bridges to ACP.
+    Return a Aura Forge-compatible approval callback that bridges to ACP.
 
     The callback accepts ``command`` and ``description`` plus optional
     keyword arguments such as ``allow_permanent`` used by

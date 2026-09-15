@@ -32,7 +32,7 @@ Or via environment variables (overrides config.yaml):
     BUZZ_ALLOW_ALL_USERS
 
 The only secret is BUZZ_PRIVATE_KEY (nsec or hex) — it belongs in
-``~/.hermes/.env``.  It is passed to the CLI via the subprocess
+``~/.auraforge/.env``.  It is passed to the CLI via the subprocess
 environment and is never logged.
 """
 
@@ -105,7 +105,7 @@ _CLI_TIMEOUT = 30.0
 _WS_AUTH_TIMEOUT = 20.0
 _WS_MAX_MESSAGE_BYTES = 2_000_000
 _WS_MEMBERSHIP_KIND = 44100
-_WS_MEMBERSHIP_SUB_ID = "hermes-buzz-membership"
+_WS_MEMBERSHIP_SUB_ID = "auraforge-buzz-membership"
 
 # Where to look for a credentials JSON (keys: nsec / private_key_hex) when
 # BUZZ_PRIVATE_KEY is not set.  Module-level so tests can point it at a tmpdir.
@@ -807,7 +807,7 @@ class BuzzAdapter(BasePlatformAdapter):
         (kind 44100 p-tagged to us) for live DM discovery."""
         subscriptions: Dict[str, Optional[str]] = {}
         for index, channel_id in enumerate(list(self._channel_state)):
-            subscription_id = f"hermes-buzz-{index}"
+            subscription_id = f"auraforge-buzz-{index}"
             subscriptions[subscription_id] = channel_id
             await self._send_channel_subscription(websocket, subscription_id, channel_id)
         if self._self_pubkey:
@@ -833,7 +833,7 @@ class BuzzAdapter(BasePlatformAdapter):
         for channel_id in self._channel_state:
             if channel_id in before:
                 continue
-            subscription_id = f"hermes-buzz-dm-{len(subscriptions)}"
+            subscription_id = f"auraforge-buzz-dm-{len(subscriptions)}"
             subscriptions[subscription_id] = channel_id
             await self._send_channel_subscription(websocket, subscription_id, channel_id)
             logger.info("Buzz: subscribed to new conversation %s", channel_id)
@@ -1325,7 +1325,7 @@ def _env_enablement() -> Optional[dict]:
     """Seed ``PlatformConfig.extra`` from env vars during gateway config load.
 
     Called BEFORE adapter construction so env-only setups show up in
-    ``hermes gateway status`` and ``get_connected_platforms()``.  Returns
+    ``auraforge gateway status`` and ``get_connected_platforms()``.  Returns
     ``None`` when Buzz isn't minimally configured.
 
     The special ``home_channel`` key is handled by the core hook — it becomes
@@ -1369,7 +1369,7 @@ async def _standalone_send(
 ) -> Dict[str, Any]:
     """One-shot send without a live adapter (out-of-process cron delivery).
 
-    Used by ``tools/send_message_tool`` when ``hermes cron`` runs separately
+    Used by ``tools/send_message_tool`` when ``auraforge cron`` runs separately
     from the gateway process.  Without this hook, ``deliver=buzz`` cron jobs
     fail with ``No live adapter for platform 'buzz'``.
     """
@@ -1410,7 +1410,7 @@ async def _standalone_send(
 
 
 def interactive_setup() -> None:
-    """Interactive ``hermes gateway setup`` flow for the Buzz platform.
+    """Interactive ``auraforge gateway setup`` flow for the Buzz platform.
 
     Lazy-imports ``hermes_cli.setup`` helpers so the plugin stays importable
     in non-CLI contexts (gateway runtime, tests).
@@ -1482,8 +1482,8 @@ def interactive_setup() -> None:
         save_env_value("BUZZ_ALLOWED_USERS", allowed.replace(" ", "") if allowed else "")
 
     print()
-    print_success("Buzz configuration saved to ~/.hermes/.env")
-    print_info("Restart the gateway for changes to take effect: hermes gateway restart")
+    print_success("Buzz configuration saved to ~/.auraforge/.env")
+    print_info("Restart the gateway for changes to take effect: auraforge gateway restart")
 
 
 def register(ctx):

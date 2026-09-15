@@ -15,7 +15,7 @@ def test_legacy_plugin_loads_and_ignores_additive_hook_and_manifest_fields(
     tmp_path, monkeypatch
 ):
     """A frozen plugin keeps working as manifests and hook payloads grow."""
-    hermes_home = tmp_path / "hermes-home"
+    hermes_home = tmp_path / "auraforge-home"
     plugins_dir = hermes_home / "plugins"
     plugins_dir.mkdir(parents=True)
     shutil.copytree(LEGACY_PLUGIN, plugins_dir / "legacy-contract-fixture")

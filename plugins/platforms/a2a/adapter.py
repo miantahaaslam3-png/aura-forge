@@ -80,9 +80,9 @@ def _default_agent_name() -> str:
         return name
     try:
         import socket
-        return f"hermes-{socket.gethostname()}"
+        return f"auraforge-{socket.gethostname()}"
     except Exception:
-        return "hermes-agent"
+        return "auraforge-agent"
 
 
 def _clean_slug(value: str) -> str:
@@ -120,7 +120,7 @@ def _profile_home(profile: str) -> Optional[str]:
                 return str(get_hermes_home())
             except Exception:
                 return None
-        return os.path.expanduser(f"~/.hermes/profiles/{profile}")
+        return os.path.expanduser(f"~/.auraforge/profiles/{profile}")
 
 def _safe_context_slug(value: str, max_len: int = 96) -> str:
     """Sanitize attacker-provided context ids before using in session titles."""
@@ -866,7 +866,7 @@ class A2AAdapter(BasePlatformAdapter):
         lock = self._forward_lock(key)
         with lock:
             session_id = self._profile_sessions.get(key) or self._lookup_forward_session(profile, session_title)
-            cmd = ["hermes", "chat", "-q", framed_text, "-Q", "--source", "a2a"]
+            cmd = ["auraforge", "chat", "-q", framed_text, "-Q", "--source", "a2a"]
             if session_id:
                 cmd.extend(["--resume", session_id])
 

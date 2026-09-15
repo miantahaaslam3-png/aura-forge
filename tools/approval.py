@@ -268,7 +268,7 @@ def _is_cron_approval_context() -> bool:
 def _is_single_query_approval_context() -> bool:
     """True when the current approval decision is from a single-query (-q) session.
 
-    ``hermes chat -q "..."`` runs one turn and exits with no user waiting to
+    ``auraforge chat -q "..."`` runs one turn and exits with no user waiting to
     answer approval prompts, but it still exports ``HERMES_INTERACTIVE=1`` so
     interactive sudo password prompts can be driven from stdin. Without an
     explicit marker, ``_is_interactive_cli()`` would report True and the gate
@@ -344,30 +344,30 @@ def _should_fall_through_to_cli_approval(
 
 # Sensitive write targets that should trigger approval even when referenced
 # via shell expansions like $HOME or $HERMES_HOME, or by the resolved absolute
-# active profile home path such as /home/hermes/.hermes/config.yaml. The
-# resolved-absolute form is folded into the ~/.hermes/ patterns at detection
+# active profile home path such as /home/auraforge/.auraforge/config.yaml. The
+# resolved-absolute form is folded into the ~/.auraforge/ patterns at detection
 # time by _normalize_command_for_detection() — see the rewrite step there — so
 # these static patterns stay free of any import-time path snapshot (which would
 # go stale when HERMES_HOME is set after this module is imported, e.g. under the
 # hermetic test conftest or any deferred-profile-resolution path).
 _SSH_SENSITIVE_PATH = r'(?:~|\$home|\$\{home\})/\.ssh(?:/|$)'
 _HERMES_ENV_PATH = (
-    r'(?:~\/\.hermes/|'
-    r'(?:\$home|\$\{home\})/\.hermes/|'
+    r'(?:~\/\.auraforge/|'
+    r'(?:\$home|\$\{home\})/\.auraforge/|'
     r'(?:\$hermes_home|\$\{hermes_home\})/)'
     r'\.env\b'
 )
-# ~/.hermes/config.yaml IS the security policy: approvals.mode, yolo, and the
+# ~/.auraforge/config.yaml IS the security policy: approvals.mode, yolo, and the
 # permanent-approval allowlist live here, and the config cache is mtime-keyed
 # so a write takes effect mid-session (the agent could flip approvals.mode=off
 # and immediately bypass the gate). Pair the write_file/patch deny (file_tools
 # _check_sensitive_path) with terminal-side coverage so `sed -i`, `tee`, `>`,
 # `cp`, etc. targeting it are gated too — otherwise the deny is unpaired
 # theater. Mirrors _HERMES_ENV_PATH; matches the HERMES_HOME override form as
-# well as ~/.hermes/.
+# well as ~/.auraforge/.
 _HERMES_CONFIG_PATH = (
-    r'(?:~\/\.hermes/|'
-    r'(?:\$home|\$\{home\})/\.hermes/|'
+    r'(?:~\/\.auraforge/|'
+    r'(?:\$home|\$\{home\})/\.auraforge/|'
     r'(?:\$hermes_home|\$\{hermes_home\})/)'
     r'config\.yaml\b'
 )
@@ -987,7 +987,7 @@ DANGEROUS_PATTERNS = [
     # Credential/key paths in Windows form — the POSIX ~/.ssh patterns never
     # match drive-letter or backslash spellings. Match both separators.
     (r'\busers[\\/][^\\/\s]+[\\/]\.ssh\b', "access to SSH keys (Windows path)"),
-    (r'\bappdata[\\/](?:local|roaming)[\\/]hermes[^\n]*\.env\b', "access to Aura Forge secrets (Windows path)"),
+    (r'\bappdata[\\/](?:local|roaming)[\\/]auraforge[^\n]*\.env\b', "access to Aura Forge secrets (Windows path)"),
     # ─────────────────────────────────────────────────────────────────────
     (r'\bchmod\s+(-[^\s]*\s+)*(777|666|o\+[rwx]*w|a\+[rwx]*w)\b', "world/other-writable permissions"),
     (r'\bchmod\s+--recursive\b.*(777|666|o\+[rwx]*w|a\+[rwx]*w)', "recursive world/other-writable (long flag)"),
@@ -1053,14 +1053,14 @@ DANGEROUS_PATTERNS = [
     # Gateway lifecycle protection: prevent the agent from killing its own
     # gateway process.  These commands trigger a gateway restart/stop that
     # terminates all running agents mid-work.  Allow global flags between
-    # `hermes` and `gateway` (e.g. `hermes -p ade gateway restart`) so a
+    # `auraforge` and `gateway` (e.g. `auraforge -p ade gateway restart`) so a
     # profile flag can't slip the agent past the guard.
-    (r'\bhermes\s+(?:-{1,2}\S+(?:\s+\S+)?\s+)*gateway\s+(stop|restart)\b', "stop/restart hermes gateway (kills running agents)"),
-    (r'\bhermes\s+update\b', "hermes update (restarts gateway, kills running agents)"),
+    (r'\bhermes\s+(?:-{1,2}\S+(?:\s+\S+)?\s+)*gateway\s+(stop|restart)\b', "stop/restart auraforge gateway (kills running agents)"),
+    (r'\bhermes\s+update\b', "auraforge update (restarts gateway, kills running agents)"),
     # Docker container lifecycle — any user with docker.sock mounted (a common
     # Docker Compose pattern) gives the agent the ability to restart/stop/kill
     # containers without approval.  These are agent-initiated lifecycle operations
-    # that should always require user consent, just like `hermes gateway restart`
+    # that should always require user consent, just like `auraforge gateway restart`
     # already does for the gateway process.
     # Docker/Podman daemon redirect — global flags or env prefixes that point
     # the CLI at a DIFFERENT daemon, often a remote host over ssh/tcp.  A
@@ -1090,53 +1090,53 @@ DANGEROUS_PATTERNS = [
     # Allow global flags between `docker`/`compose` and the verb (e.g.
     # `docker compose -f prod.yml down`, `docker --log-level debug stop app`)
     # and the legacy hyphenated `docker-compose` binary, so a flag can't slip
-    # a lifecycle command past the guard — same treatment as the `hermes ...
+    # a lifecycle command past the guard — same treatment as the `auraforge ...
     # gateway` pattern above.
     (r'\bdocker(?:-compose|\s+compose)\s+(?:-{1,2}\S+(?:[=\s]\S+)?\s+)*(restart|stop|kill|down)\b',
      "docker compose restart/stop/kill/down (container lifecycle)"),
     (r'\bdocker\s+(?:-{1,2}\S+(?:[=\s]\S+)?\s+)*(restart|stop|kill)\b',
      "docker restart/stop/kill (container lifecycle)"),
     # Gateway protection: never start gateway outside systemd management
-    (r'gateway\s+run\b.*(&\s*$|&\s*;|\bdisown\b|\bsetsid\b)', "start gateway outside systemd (use 'systemctl --user restart hermes-gateway')"),
-    (r'\bnohup\b.*gateway\s+run\b', "start gateway outside systemd (use 'systemctl --user restart hermes-gateway')"),
+    (r'gateway\s+run\b.*(&\s*$|&\s*;|\bdisown\b|\bsetsid\b)', "start gateway outside systemd (use 'systemctl --user restart auraforge-gateway')"),
+    (r'\bnohup\b.*gateway\s+run\b', "start gateway outside systemd (use 'systemctl --user restart auraforge-gateway')"),
     # Self-termination protection: prevent agent from killing its own process
-    (r'\b(pkill|killall)\b.*\b(hermes|gateway|cli\.py)\b', "kill hermes/gateway process (self-termination)"),
+    (r'\b(pkill|killall)\b.*\b(auraforge|gateway|cli\.py)\b', "kill auraforge/gateway process (self-termination)"),
     # Self-termination via kill + command substitution (pgrep/pidof).
-    # The name-based pattern above catches `pkill hermes` but not
-    # `kill -9 $(pgrep -f hermes)` because the substitution is opaque
+    # The name-based pattern above catches `pkill auraforge` but not
+    # `kill -9 $(pgrep -f auraforge)` because the substitution is opaque
     # to regex at detection time. Catch the structural pattern instead.
     # `pidof` is the BSD/Linux alternative to `pgrep` and is equally
     # opaque, so include it in the same alternation.
     (r'\bkill\b.*\$\(\s*(pgrep|pidof)\b', "kill process via pgrep/pidof expansion (self-termination)"),
     (r'\bkill\b.*`\s*(pgrep|pidof)\b', "kill process via backtick pgrep/pidof expansion (self-termination)"),
     # launchctl-driven gateway stop/restart on macOS. The agent can bypass
-    # the `hermes gateway stop|restart` pattern above by driving launchd
-    # directly against the service label (commonly `ai.hermes.gateway`).
+    # the `auraforge gateway stop|restart` pattern above by driving launchd
+    # directly against the service label (commonly `ai.auraforge.gateway`).
     # Catch the operations that stop, restart, or unload it.
     #
     # Order-independent (2026-08-02 incident): the previous version required
-    # "hermes"/"ai.hermes" to appear AFTER the launchctl verb in the same
+    # "auraforge"/"ai.auraforge" to appear AFTER the launchctl verb in the same
     # string (`.*` only scans forward). A shell for-loop that builds the
     # label from a list defined earlier in the command — e.g. `for item in
-    # 'ai.hermes.gateway-apollo:...' ...; do label=${item%%:*}; launchctl
-    # bootout "$label"; done` — never has the literal text "hermes" appear
+    # 'ai.auraforge.gateway-apollo:...' ...; do label=${item%%:*}; launchctl
+    # bootout "$label"; done` — never has the literal text "auraforge" appear
     # after "bootout" (only the expanded variable does), so it slipped past
     # undetected and restarted 4 gateways with zero approval. Two
     # independent lookaheads instead of one sequential match: both
     # substrings must appear SOMEWHERE in the command, in either order.
     # This is intentionally broader (a launchctl-verb command anywhere near
-    # an unrelated "hermes" mention now also matches) — for an approval gate
+    # an unrelated "auraforge" mention now also matches) — for an approval gate
     # that's the correct direction to err: an extra approval prompt is
     # cheap, a missed one took down the whole gateway fleet.
-    (r'(?=[\s\S]*\blaunchctl\s+(?:stop|kickstart|bootout|unload|kill|disable|remove)\b)(?=[\s\S]*\b(?:hermes|ai\.hermes)\b)', "stop/restart hermes launchd service (kills running agents)"),
+    (r'(?=[\s\S]*\blaunchctl\s+(?:stop|kickstart|bootout|unload|kill|disable|remove)\b)(?=[\s\S]*\b(?:auraforge|ai\.auraforge)\b)', "stop/restart auraforge launchd service (kills running agents)"),
     # File copy/move/edit into sensitive system paths (/etc/ and macOS
     # /private/etc/ mirror).
     (rf'\b(cp|mv|install)\b.*\s{_SYSTEM_CONFIG_PATH}', "copy/move file into system config path"),
     (rf'\b(cp|mv|install)\b.*\s["\']?{_PROJECT_SENSITIVE_WRITE_TARGET}["\']?{_COMMAND_TAIL}', "overwrite project env/config file"),
-    # cp/mv/install OVERWRITING a sensitive credential/SSH/shell-rc/Hermes file.
+    # cp/mv/install OVERWRITING a sensitive credential/SSH/shell-rc/Aura Forge file.
     # The tee/redirection patterns above already gate _SENSITIVE_WRITE_TARGET
     # (~/.ssh/*, ~/.netrc/.pgpass/.npmrc/.pypirc, shell rc files,
-    # ~/.hermes/config.yaml/.env), but cp/mv/install was only paired for /etc and
+    # ~/.auraforge/config.yaml/.env), but cp/mv/install was only paired for /etc and
     # project-relative env/config — so `cp evil ~/.ssh/authorized_keys` (key
     # implant), `cp creds ~/.netrc`, and `cp evil ~/.bashrc` (login-time command
     # injection) slipped through with auto-approve. Same unpaired-door rationale
@@ -1156,7 +1156,7 @@ DANGEROUS_PATTERNS = [
     (rf'\b(?:perl|ruby)\b.*(?:^|\s)-[^\s]*i\b.*(?:{_USER_SENSITIVE_WRITE_TARGET})[^\s"\']*', "in-place edit of sensitive credential/SSH/shell-rc path (perl/ruby)"),
     (rf'\bsed\s+-[^\s]*i.*\s{_SYSTEM_CONFIG_PATH}', "in-place edit of system config"),
     (rf'\bsed\s+--in-place\b.*\s{_SYSTEM_CONFIG_PATH}', "in-place edit of system config (long flag)"),
-    # In-place edit of a Hermes-managed security file (~/.hermes/config.yaml or
+    # In-place edit of a Aura Forge-managed security file (~/.auraforge/config.yaml or
     # .env). sed -i bypasses the redirection/tee patterns above because it
     # mutates the file directly. Pairs the file_tools write_file/patch deny so
     # the terminal side is not an open door. See #14639.
@@ -1308,7 +1308,7 @@ def _normalize_command_for_detection(command: str) -> str:
     # home-prefix folds below (which match C:\Users\alice\... — no newline).
     command = re.sub(r'\\\r?\n', '', command)
     # Fold absolute home / active-profile-home prefixes into their canonical
-    # ~/ and ~/.hermes/ forms so static user-sensitive patterns catch
+    # ~/ and ~/.auraforge/ forms so static user-sensitive patterns catch
     # /home/alice/.bashrc and C:\Users\alice\.bashrc the same way they catch
     # ~/.bashrc. Resolve at detection time (not via an import-time snapshot) so
     # it tracks HOME / HERMES_HOME even when those are set after this module is
@@ -1320,8 +1320,8 @@ def _normalize_command_for_detection(command: str) -> str:
     # The fold matches either separator, so POSIX paths are unaffected by order.
     #
     # Fold the (more specific) Aura Forge home first: on Windows it nests under the
-    # user home (C:\Users\alice\AppData\...\hermes), so folding the user home
-    # first would eat the prefix the Hermes-home fold needs.
+    # user home (C:\Users\alice\AppData\...\auraforge), so folding the user home
+    # first would eat the prefix the Aura Forge-home fold needs.
     command = _rewrite_resolved_hermes_home(command)
     command = _rewrite_resolved_user_home(command)
     # Strip shell backslash-escapes: r\m → rm. Prevents \-injection bypass.
@@ -1385,7 +1385,7 @@ def _home_prefix_fold_regex(path: str):
 def _fold_home_prefixes(command: str, paths, replacement: str) -> str:
     """Fold each resolved home *path* prefix in *command* to *replacement*.
 
-    *replacement* has no trailing separator (``~`` / ``~/.hermes``); the matched
+    *replacement* has no trailing separator (``~`` / ``~/.auraforge``); the matched
     path tail (with its backslashes normalized to ``/``) supplies it. Longest
     candidate first so a deeper home (e.g. an explicit HOME under USERPROFILE)
     folds before a shorter overlapping one that would otherwise clobber it.
@@ -1428,14 +1428,14 @@ def _rewrite_resolved_user_home(command: str) -> str:
 
 
 def _rewrite_resolved_hermes_home(command: str) -> str:
-    """Rewrite the resolved absolute Aura Forge home prefix to ``~/.hermes/``.
+    """Rewrite the resolved absolute Aura Forge home prefix to ``~/.auraforge/``.
 
     Resolves the active ``HERMES_HOME`` at call time (and its symlink-resolved
     form) and folds an occurrence of ``<home>/`` in *command* into
-    ``~/.hermes/`` so the static ``_HERMES_CONFIG_PATH`` / ``_HERMES_ENV_PATH``
+    ``~/.auraforge/`` so the static ``_HERMES_CONFIG_PATH`` / ``_HERMES_ENV_PATH``
     patterns match. In Docker and gateway deployments the agent often references
     the resolved absolute path directly (e.g. ``sed -i ...
-    /home/hermes/.hermes/config.yaml``) rather than ``~``, ``$HOME``, or
+    /home/auraforge/.auraforge/config.yaml``) rather than ``~``, ``$HOME``, or
     ``$HERMES_HOME``. Matches both POSIX and Windows separators. No-op when the
     path can't be resolved or doesn't appear.
     """
@@ -1448,7 +1448,7 @@ def _rewrite_resolved_hermes_home(command: str) -> str:
         ]
     except Exception:
         return command
-    return _fold_home_prefixes(command, candidates, "~/.hermes")
+    return _fold_home_prefixes(command, candidates, "~/.auraforge")
 
 
 _PARAM_REPLACEMENT_RE = re.compile(r"\$\{[^}/\s]+/[^}/]*/(?P<replacement>[^}]*)\}")
@@ -2289,7 +2289,7 @@ def _mask_quoted_newlines(command: str) -> str:
     Detection-only rewrite. A newline inside a quoted string is DATA to the
     shell — part of the argument, not a command separator — yet the flat
     ``_CMDPOS`` start-position class treats every raw ``\\n`` as a command
-    start. That made any multi-line quoted argument (``hermes send`` message
+    start. That made any multi-line quoted argument (``auraforge send`` message
     bodies, ``git commit -m`` messages, heredoc text) trip the hardline
     blocklist when a data line began with e.g. ``sudo reboot``.
 
@@ -2467,11 +2467,11 @@ def _is_verification_artifact_cleanup(command: str) -> bool:
     target = os.path.realpath(operand)
     if os.path.dirname(target) != temp_dir:
         return False
-    return re.fullmatch(r"hermes-(?:verify|ad-hoc)-[A-Za-z0-9_.-]+", basename) is not None
+    return re.fullmatch(r"auraforge-(?:verify|ad-hoc)-[A-Za-z0-9_.-]+", basename) is not None
 
 
 _GATEWAY_LIFECYCLE_SPLICE_DESCRIPTION = (
-    "stop/restart hermes gateway via shell-spliced verb (kills running agents)"
+    "stop/restart auraforge gateway via shell-spliced verb (kills running agents)"
 )
 
 
@@ -2484,11 +2484,11 @@ def _is_shell_token_spliced_gateway_lifecycle(command: str) -> bool:
     deliberately scoped to command-position words (widening it would let
     quoted prose like ``git commit -m "rm -rf /"`` match the destructive
     patterns), and the spliced verb sits in an ARGUMENT position. So
-    ``launchctl kick"start" -k gui/501/ai.hermes.gateway`` auto-approved
+    ``launchctl kick"start" -k gui/501/ai.auraforge.gateway`` auto-approved
     while executing exactly as the gated ``kickstart`` form (#80269).
 
     Delegate to ``cron.lifecycle_guard``, which tokenizes with shlex and is
-    anchored on a hermes-gateway identifier — reusing its prose
+    anchored on a auraforge-gateway identifier — reusing its prose
     false-positive coverage instead of loosening the generic pattern
     engine. This runs last, so an ordinary pattern match still wins and
     keeps its more specific reason string. Unlike the guard's use inside

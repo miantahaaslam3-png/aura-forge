@@ -12,7 +12,7 @@ from agent.model_metadata import MINIMUM_CONTEXT_LENGTH
 @pytest.fixture
 def _isolate(tmp_path, monkeypatch):
     """Isolate HERMES_HOME so tests don't touch real config."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
 
@@ -28,7 +28,7 @@ def cli_obj(_isolate):
         from cli import HermesCLI
         obj = HermesCLI.__new__(HermesCLI)
         obj.model = "test-model"
-        obj.enabled_toolsets = ["hermes-core"]
+        obj.enabled_toolsets = ["auraforge-core"]
         obj.compact = False
         obj.console = MagicMock()
         obj.session_id = None

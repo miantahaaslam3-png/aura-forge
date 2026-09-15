@@ -259,7 +259,7 @@ def test_keygen_weak_env_key_warning_suppressed_when_env_file_key_wins(
 
 
 def test_dockerignore_keeps_env_example_template() -> None:
-    """The first-boot seed copies /opt/hermes/.env.example -> $HERMES_HOME/.env.
+    """The first-boot seed copies /opt/auraforge/.env.example -> $HERMES_HOME/.env.
 
     ``.env.*`` in .dockerignore matches the template, so an explicit
     ``!.env.example`` re-include must appear AFTER it (last match wins), and

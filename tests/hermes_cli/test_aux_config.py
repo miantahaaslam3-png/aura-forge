@@ -1,4 +1,4 @@
-"""Tests for the auxiliary-model configuration UI in ``hermes model``.
+"""Tests for the auxiliary-model configuration UI in ``auraforge model``.
 
 Covers the helper functions:
   - ``_save_aux_choice`` writes to config.yaml without touching main model config
@@ -61,9 +61,9 @@ def test_title_generation_present_in_default_config():
 def test_save_aux_choice_persists_to_config_yaml(tmp_path, monkeypatch):
     """Saving a task writes provider/model/base_url/api_key to auxiliary.<task>."""
     from pathlib import Path
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".auraforge").mkdir(exist_ok=True)
 
     _save_aux_choice(
         "vision", provider="openrouter", model="google/gemini-2.5-flash",
@@ -96,9 +96,9 @@ def test_save_aux_choice_persists_to_config_yaml(tmp_path, monkeypatch):
 def _isolate_home(tmp_path, monkeypatch):
     from pathlib import Path
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".auraforge").mkdir(exist_ok=True)
 
 
 def test_save_delegation_writes_top_level_section(tmp_path, monkeypatch):
@@ -164,9 +164,9 @@ def test_delegation_cfg_as_task_projection():
     """Projection renders empty provider as auto via _format_aux_current."""
     assert _format_aux_current(_delegation_cfg_as_task({})) == "auto"
     shaped = _delegation_cfg_as_task(
-        {"delegation": {"provider": "nous", "model": "Hermes-4.5"}}
+        {"delegation": {"provider": "nous", "model": "Aura Forge-4.5"}}
     )
-    assert _format_aux_current(shaped) == "nous · Hermes-4.5"
+    assert _format_aux_current(shaped) == "nous · Aura Forge-4.5"
     # Non-dict delegation section must not crash
     assert _format_aux_current(_delegation_cfg_as_task({"delegation": "bogus"})) == "auto"
 
@@ -174,9 +174,9 @@ def test_delegation_cfg_as_task_projection():
 def test_leave_unchanged_replaces_cancel_label(tmp_path, monkeypatch):
     """The bottom cancel entry now reads 'Leave unchanged' (UX polish)."""
     from pathlib import Path
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".auraforge").mkdir(exist_ok=True)
 
     from hermes_cli import main as main_mod
 

@@ -29,13 +29,13 @@ INSTALLED_SKILL_CANARY = "relay-smoke-private-installed-skill"
 
 def _resolve_hermes_executable(hermes_repo: Path) -> Path:
     for relative_path in (
-        Path(".venv") / "bin" / "hermes",
-        Path(".venv") / "Scripts" / "hermes.exe",
+        Path(".venv") / "bin" / "auraforge",
+        Path(".venv") / "Scripts" / "auraforge.exe",
     ):
         candidate = hermes_repo / relative_path
         if candidate.is_file():
             return candidate
-    discovered = shutil.which("hermes")
+    discovered = shutil.which("auraforge")
     if discovered:
         return Path(discovered)
     raise SystemExit(
@@ -235,10 +235,10 @@ class _ModelHandler(BaseHTTPRequestHandler):
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--hermes-repo",
+        "--auraforge-repo",
         type=Path,
         default=Path.cwd(),
-        help="Aura Forge source checkout containing .venv/bin/hermes",
+        help="Aura Forge source checkout containing .venv/bin/auraforge",
     )
     parser.add_argument(
         "--relay-python",
@@ -298,31 +298,31 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
     for counter in counters:
         by_name.setdefault(counter["name"], []).append(counter)
     if set(by_name) != {
-        "hermes.client.active",
-        "hermes.model_route.count",
-        "hermes.skill.lifecycle.count",
-        "hermes.skill.load.count",
-        "hermes.task_run.finished",
-        "hermes.task_run.started",
-        "hermes.tool_call.count",
+        "auraforge.client.active",
+        "auraforge.model_route.count",
+        "auraforge.skill.lifecycle.count",
+        "auraforge.skill.load.count",
+        "auraforge.task_run.finished",
+        "auraforge.task_run.started",
+        "auraforge.tool_call.count",
     }:
         raise AssertionError(
             f"Unexpected SQLite counters:\n{json.dumps(counters, indent=2)}"
         )
-    if by_name["hermes.client.active"] != [
+    if by_name["auraforge.client.active"] != [
         {
-            "name": "hermes.client.active",
+            "name": "auraforge.client.active",
             "dimensions": {},
             "value": 1,
             "packaged_value": 1,
         }
     ]:
         raise AssertionError(
-            f"Unexpected client-active counter: {by_name['hermes.client.active']}"
+            f"Unexpected client-active counter: {by_name['auraforge.client.active']}"
         )
-    [model] = by_name["hermes.model_route.count"]
+    [model] = by_name["auraforge.model_route.count"]
     expected_model = {
-        "name": "hermes.model_route.count",
+        "name": "auraforge.model_route.count",
         "dimensions": {
             "model": MODEL_CANARY,
             "provider": "custom",
@@ -332,10 +332,10 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
     }
     if model != expected_model:
         raise AssertionError(
-            f"Unexpected model counter: {by_name['hermes.model_route.count']}"
+            f"Unexpected model counter: {by_name['auraforge.model_route.count']}"
         )
     expected_start = {
-        "name": "hermes.task_run.started",
+        "name": "auraforge.task_run.started",
         "dimensions": {
             "entrypoint": "interactive",
             "execution_surface": "cli",
@@ -343,11 +343,11 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
         "value": 1,
         "packaged_value": 1,
     }
-    if by_name["hermes.task_run.started"] != [expected_start]:
+    if by_name["auraforge.task_run.started"] != [expected_start]:
         raise AssertionError(
-            f"Unexpected task start: {by_name['hermes.task_run.started']}"
+            f"Unexpected task start: {by_name['auraforge.task_run.started']}"
         )
-    [terminal] = by_name["hermes.task_run.finished"]
+    [terminal] = by_name["auraforge.task_run.finished"]
     expected_terminal_dimensions = {
         "duration_bucket": terminal["dimensions"].get("duration_bucket"),
         "end_reason": "completed",
@@ -365,7 +365,7 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
         or terminal["packaged_value"] != 1
     ):
         raise AssertionError(f"Unexpected task terminal counter: {terminal}")
-    [tool] = by_name["hermes.tool_call.count"]
+    [tool] = by_name["auraforge.tool_call.count"]
     expected_tool_dimensions = {
         "approval_outcome": "not_required",
         "latency_bucket": tool["dimensions"].get("latency_bucket"),
@@ -380,7 +380,7 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
         or tool["packaged_value"] != 1
     ):
         raise AssertionError(f"Unexpected tool counter: {tool}")
-    lifecycle = by_name["hermes.skill.lifecycle.count"]
+    lifecycle = by_name["auraforge.skill.lifecycle.count"]
     expected_actions = {
         "archived",
         "created",
@@ -396,7 +396,7 @@ def _validate_store(database_path: Path) -> list[dict[str, Any]]:
         or any(counter["packaged_value"] != 1 for counter in lifecycle)
     ):
         raise AssertionError(f"Unexpected skill lifecycle counters: {lifecycle}")
-    loads = by_name["hermes.skill.load.count"]
+    loads = by_name["auraforge.skill.load.count"]
     expected_load_states = {
         ("first_use", "not_applicable", "1"),
         ("reused", "no_new_patch", "2"),
@@ -467,37 +467,37 @@ def _validate_packages(
         for metric in package.get("metrics", []):
             metrics.setdefault(metric["name"], []).append(metric)
     if set(metrics) != {
-        "hermes.client.active",
-        "hermes.model_route.count",
-        "hermes.skill.lifecycle.count",
-        "hermes.skill.load.count",
-        "hermes.task_run.finished",
-        "hermes.task_run.started",
-        "hermes.tool_call.count",
+        "auraforge.client.active",
+        "auraforge.model_route.count",
+        "auraforge.skill.lifecycle.count",
+        "auraforge.skill.load.count",
+        "auraforge.task_run.finished",
+        "auraforge.task_run.started",
+        "auraforge.tool_call.count",
     }:
         raise AssertionError(
             f"Unexpected package metrics:\n{json.dumps(metrics, indent=2)}"
         )
-    if metrics["hermes.client.active"] != [
+    if metrics["auraforge.client.active"] != [
         {
-            "name": "hermes.client.active",
+            "name": "auraforge.client.active",
             "type": "counter",
             "dimensions": {},
             "value": 1,
         }
     ]:
         raise AssertionError(
-            f"Unexpected client-active metric: {metrics['hermes.client.active']}"
+            f"Unexpected client-active metric: {metrics['auraforge.client.active']}"
         )
-    [model] = metrics["hermes.model_route.count"]
+    [model] = metrics["auraforge.model_route.count"]
     if model["dimensions"] != {
         "model": MODEL_CANARY,
         "provider": "custom",
     } or model["value"] != 2:
         raise AssertionError(
-            f"Unexpected model metric: {metrics['hermes.model_route.count']}"
+            f"Unexpected model metric: {metrics['auraforge.model_route.count']}"
         )
-    [terminal] = metrics["hermes.task_run.finished"]
+    [terminal] = metrics["auraforge.task_run.finished"]
     if terminal["dimensions"] != {
         "duration_bucket": terminal["dimensions"].get("duration_bucket"),
         "end_reason": "completed",
@@ -510,7 +510,7 @@ def _validate_packages(
         "tool_call_count_bucket": "1",
     }:
         raise AssertionError(f"Unexpected task terminal metric: {terminal}")
-    [tool] = metrics["hermes.tool_call.count"]
+    [tool] = metrics["auraforge.tool_call.count"]
     if (
         tool["dimensions"]
         != {
@@ -523,7 +523,7 @@ def _validate_packages(
         or tool["dimensions"]["latency_bucket"] == "unknown"
     ):
         raise AssertionError(f"Unexpected tool metric: {tool}")
-    lifecycle = metrics["hermes.skill.lifecycle.count"]
+    lifecycle = metrics["auraforge.skill.lifecycle.count"]
     if {metric["dimensions"]["action"] for metric in lifecycle} != {
         "archived",
         "created",
@@ -534,7 +534,7 @@ def _validate_packages(
         "stale",
     }:
         raise AssertionError(f"Unexpected skill lifecycle metrics: {lifecycle}")
-    loads = metrics["hermes.skill.load.count"]
+    loads = metrics["auraforge.skill.load.count"]
     if {
         (
             metric["dimensions"]["reuse_state"],
@@ -555,7 +555,7 @@ def main() -> int:
     args = _arguments()
     hermes_repo = args.hermes_repo.resolve()
     relay_python = args.relay_python.resolve() if args.relay_python else None
-    hermes = _resolve_hermes_executable(hermes_repo)
+    auraforge = _resolve_hermes_executable(hermes_repo)
     if relay_python is not None and not any(
         (relay_python / "nemo_relay").glob("_native.*")
     ):
@@ -570,8 +570,8 @@ def main() -> int:
             raise SystemExit(f"Refusing to replace existing output directory: {root}")
         root.mkdir(parents=True)
     else:
-        root = Path(tempfile.mkdtemp(prefix="hermes-relay-shared-metrics-"))
-    home = root / "hermes-home"
+        root = Path(tempfile.mkdtemp(prefix="auraforge-relay-shared-metrics-"))
+    home = root / "auraforge-home"
     workdir = root / "workspace"
     workdir.mkdir()
     (workdir / TOOL_FILE).write_text(TOOL_RESULT_CANARY, encoding="utf-8")
@@ -616,7 +616,7 @@ def main() -> int:
         env["PYTHONPATH"] = os.pathsep.join(python_paths).rstrip(os.pathsep)
         result = subprocess.run(
             [
-                str(hermes),
+                str(auraforge),
                 "chat",
                 "--query",
                 PROMPT_CANARY,
@@ -642,8 +642,8 @@ def main() -> int:
         server.server_close()
         thread.join(timeout=5)
 
-    (root / "hermes.stdout.txt").write_text(result.stdout, encoding="utf-8")
-    (root / "hermes.stderr.txt").write_text(result.stderr, encoding="utf-8")
+    (root / "auraforge.stdout.txt").write_text(result.stdout, encoding="utf-8")
+    (root / "auraforge.stderr.txt").write_text(result.stderr, encoding="utf-8")
     if result.returncode != 0:
         raise AssertionError(
             f"Aura Forge exited with {result.returncode}\n"
@@ -723,7 +723,7 @@ def main() -> int:
         / "hermes_cli"
         / "observability"
         / "schemas"
-        / "hermes.shared_metrics.v2.schema.json",
+        / "auraforge.shared_metrics.v2.schema.json",
     )
 
     print("Aura Forge -> NeMo Relay shared-metrics smoke test passed")

@@ -49,13 +49,13 @@ def client_loopback():
     ("localhost", False, False),
     ("::1",       False, False),
     # --insecure (allow_public=True) NO LONGER bypasses the gate on a public
-    # bind (June 2026 hermes-0day hardening). Non-loopback always requires auth.
+    # bind (June 2026 auraforge-0day hardening). Non-loopback always requires auth.
     ("0.0.0.0",   True,  True),
     ("0.0.0.0",   False, True),
     ("192.168.1.5", False, True),
     ("10.0.0.1",  True,  True),     # allow_public ignored — LAN IP is public
     ("100.64.0.1", False, True),    # Tailscale CGNAT — treated as public
-    ("hermes-agent-prod-abc.fly.dev", False, True),
+    ("auraforge-agent-prod-abc.fly.dev", False, True),
 ])
 def test_should_require_auth_truth_table(host, allow_public, expected):
     from hermes_cli.web_server import should_require_auth
@@ -76,7 +76,7 @@ def test_empty_provider_login_page_shows_supported_auth_paths():
     assert "SSH tunnel" in html
     assert "Tailscale" in html
     assert (
-        'href="https://hermes-agent.nousresearch.com/docs/'
+        'href="https://auraforge-agent.nousresearch.com/docs/'
         'user-guide/features/web-dashboard#authentication-gated-mode"'
     ) in html
 
@@ -311,7 +311,7 @@ def test_trusted_container_proxy_controls_https_detection():
             "root_path": "",
             "headers": [(b"x-forwarded-proto", b"https")],
             "client": (peer, 43120),
-            "server": ("hermes", 9119),
+            "server": ("auraforge", 9119),
         }
 
         async def receive():
@@ -444,7 +444,7 @@ def test_loopback_public_url_fail_closed_message_is_actionable(monkeypatch):
     assert "https://dashboard.example.test:9443" in msg
     # Exit 1: configure auth.
     assert "basic_auth" in msg
-    assert "hermes dashboard register" in msg
+    assert "auraforge dashboard register" in msg
     # Exit 2: remove public_url to restore local-only mode.
     assert "remove dashboard.public_url" in msg
     assert "LOCAL-ONLY" in msg

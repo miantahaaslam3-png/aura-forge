@@ -1,6 +1,6 @@
 """Session-persistent kernels for REMOTE terminal backends (docker/ssh/modal).
 
-Closes the gap tracked in hermes-agent#96873: local execute_code holds a
+Closes the gap tracked in auraforge-agent#96873: local execute_code holds a
 persistent kernel child (tools/code_kernel.py); remote backends previously
 re-shipped and re-ran a fresh script per call, losing all interpreter state.
 

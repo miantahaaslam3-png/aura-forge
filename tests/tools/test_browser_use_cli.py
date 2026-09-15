@@ -3,7 +3,7 @@
 Covers the three seams the integration relies on:
 
 * Mode detection — ``browser.backend: browser-use`` in config (set via the
-  ``hermes tools`` picker); off by default.
+  ``auraforge tools`` picker); off by default.
 * Tool-surface swap — when the mode is on, ``check_browser_requirements``
   returns False so every legacy ``browser_*`` tool (including
   browser_cdp/browser_dialog, whose check_fns funnel through it) is hidden,
@@ -111,8 +111,8 @@ class TestSubprocessEnvironment:
 
         browser_tool = ModuleType("tools.browser_tool")
         browser_tool._build_browser_env = lambda: {
-            "PYTHONPATH": "/hermes:/hermes/venv/lib/site-packages",
-            "PYTHONHOME": "/hermes/venv",
+            "PYTHONPATH": "/auraforge:/auraforge/venv/lib/site-packages",
+            "PYTHONHOME": "/auraforge/venv",
             "KEEP_ME": "yes",
         }
         monkeypatch.setitem(sys.modules, "tools.browser_tool", browser_tool)
@@ -575,7 +575,7 @@ class TestOwnTabPreamble:
 
 
 class TestProviderPickerIntegration:
-    """The `hermes tools` Browser Automation picker row (browser_backend
+    """The `auraforge tools` Browser Automation picker row (browser_backend
     marker) must enter/leave CLI mode cleanly and highlight correctly."""
 
     def _rows(self):
@@ -892,7 +892,7 @@ class TestBrowserExec:
 
 class TestFindCliManagedBin:
     """MANAGED-FIRST: _find_cli probes $HERMES_HOME/bin before PATH and
-    ~/.local/bin, so the Hermes-installed copy always wins."""
+    ~/.local/bin, so the Aura Forge-installed copy always wins."""
 
     @pytest.fixture(autouse=True)
     def _hermetic_home(self, tmp_path, monkeypatch):
@@ -1071,7 +1071,7 @@ class TestDefaultDowngradeNotice:
         monkeypatch.setattr(bu_cli, "_find_cli", lambda: None)
         notice = bu_cli.default_downgrade_notice()
         assert notice is not None
-        assert "hermes tools" in notice
+        assert "auraforge tools" in notice
 
     def test_rate_limited_within_24h(self, tmp_path, monkeypatch):
         self._isolate(tmp_path, monkeypatch)

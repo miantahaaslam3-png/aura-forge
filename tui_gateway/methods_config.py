@@ -466,7 +466,7 @@ def _(rid, params: dict) -> dict:
     """Upload a redacted debug bundle to Nous-internal diagnostics storage.
 
     Desktop's "Send Diagnostics" action (error card / diagnostics UI). Same
-    collection + force-redaction pipeline as ``hermes debug share --nous``
+    collection + force-redaction pipeline as ``auraforge debug share --nous``
     (collect_share_bundle → build_nous_bundle → share_to_nous); redaction is
     NOT client-controllable — this handler always redacts.
 

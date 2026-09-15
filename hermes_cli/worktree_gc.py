@@ -10,7 +10,7 @@ startup pass can never touch:
 - **Preserved trees** whose only "dirt" is untracked scratch (PR body drafts,
   logs) on an otherwise merged branch — preserved forever by the dirty guard.
 - **Orphaned local branches** beyond the two auto-generated prefixes the
-  startup pass deletes (``hermes/hermes-*``, ``pr-*``): salvage lanes, port
+  startup pass deletes (``auraforge/auraforge-*``, ``pr-*``): salvage lanes, port
   branches, feature branches whose PRs merged months ago. Multi-agent boxes
   reach hundreds.
 
@@ -147,7 +147,7 @@ def _archive_untracked(tree: Path, untracked: List[str]) -> Optional[Path]:
     """
     stamp = time.strftime("%Y%m%d-%H%M%S")
     dest = (
-        Path.home() / ".hermes" / "archive" / "worktree-prune"
+        Path.home() / ".aura-forge" / "archive" / "worktree-prune"
         / f"{tree.name}-{stamp}"
     )
     try:
@@ -212,7 +212,7 @@ def audit_worktrees(repo_root: str, *, with_sizes: bool = True) -> List[TreeReco
 
         lock_state = _cli._worktree_lock_is_live(repo_root, str(entry), timeout=5)
         if lock_state == "live":
-            rec("keep", "in use by a running hermes session")
+            rec("keep", "in use by a running auraforge session")
             continue
 
         tracked_dirty, untracked = _dirty_split(str(entry))
@@ -306,7 +306,7 @@ def audit_branches(repo_root: str) -> List[BranchRecord]:
     upstream (fully merged OR every commit patch-equivalent via ``git
     cherry``) and they are not checked out anywhere.
 
-    Generalizes the startup pass's prefix list (``hermes/hermes-*``/``pr-*``)
+    Generalizes the startup pass's prefix list (``auraforge/auraforge-*``/``pr-*``)
     to EVERY local branch, because deletion is gated on content reachability
     rather than name: a branch whose commits are all upstream loses nothing
     when its ref goes. Branch names checked out in any worktree, protected
@@ -376,7 +376,7 @@ def audit_branches(repo_root: str) -> List[BranchRecord]:
     if workers > 1:
         try:
             with concurrent.futures.ThreadPoolExecutor(
-                max_workers=workers, thread_name_prefix="hermes-branch-gc"
+                max_workers=workers, thread_name_prefix="auraforge-branch-gc"
             ) as pool:
                 return list(pool.map(_classify_branch, branches))
         except Exception:

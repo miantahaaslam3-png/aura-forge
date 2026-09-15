@@ -216,7 +216,7 @@ def _print_post_register_hint(
         print("  at its /login page.")
     else:
         print("  To require Nous login (e.g. exposing on your LAN or a public host):")
-        print("    hermes dashboard --host 0.0.0.0")
+        print("    auraforge dashboard --host 0.0.0.0")
         print("  …then log in at the dashboard's /login page.")
     print()
     print(
@@ -377,7 +377,7 @@ def cmd_dashboard_register(args) -> None:
     # Persist the dashboard public URL derived from the OAuth redirect URI.
     #
     # --redirect-uri is the full public HTTPS callback the user registered with
-    # the portal, e.g. https://hermes.example.com/auth/callback. At serve time
+    # the portal, e.g. https://auraforge.example.com/auth/callback. At serve time
     # the dashboard auth layer (dashboard_auth/routes._redirect_uri) reconstructs
     # that same callback by taking HERMES_DASHBOARD_PUBLIC_URL and appending
     # "/auth/callback" verbatim. So the value the runtime actually consumes is

@@ -130,9 +130,9 @@ def agent_env():
     t.start()
 
     test_home = tempfile.mkdtemp(prefix="hermes_e2e_47967_")
-    os.makedirs(os.path.join(test_home, ".hermes"))
+    os.makedirs(os.path.join(test_home, ".auraforge"))
     prev_home = os.environ.get("HERMES_HOME")
-    os.environ["HERMES_HOME"] = os.path.join(test_home, ".hermes")
+    os.environ["HERMES_HOME"] = os.path.join(test_home, ".auraforge")
 
     # Import fresh so the patched conversation_loop is exercised even when the
     # module was imported earlier in the same worker.

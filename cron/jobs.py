@@ -1,8 +1,8 @@
 """
 Cron job storage and management.
 
-Jobs are stored in ~/.hermes/cron/jobs.json
-Output is saved to ~/.hermes/cron/output/{job_id}/{timestamp}.md
+Jobs are stored in ~/.auraforge/cron/jobs.json
+Output is saved to ~/.auraforge/cron/output/{job_id}/{timestamp}.md
 """
 
 import contextlib
@@ -68,7 +68,7 @@ def _ensure_croniter() -> bool:
 # Cron is per-profile by design (issue #4707). Each profile owns its own cron
 # store under its own HERMES_HOME, and a profile-scoped gateway runs that
 # profile's jobs under that same HERMES_HOME — so a job authored in profile
-# `coder` lives in `~/.hermes/profiles/coder/cron/jobs.json` and executes with
+# `coder` lives in `~/.auraforge/profiles/coder/cron/jobs.json` and executes with
 # `coder`'s `.env`, `config.yaml`, and skills. We deliberately anchor on
 # `get_hermes_home()` (the active profile home), NOT `get_default_hermes_root()`
 # (the shared root). Anchoring at the root would funnel every profile's jobs
@@ -84,7 +84,7 @@ HERMES_DIR = get_hermes_home().resolve()
 CRON_DIR = HERMES_DIR / "cron"
 JOBS_FILE = CRON_DIR / "jobs.json"
 # Heartbeat file the in-process ticker touches on every loop iteration. The
-# gateway process and the (separate) ``hermes cron status`` process share it
+# gateway process and the (separate) ``auraforge cron status`` process share it
 # so status can tell whether the ticker THREAD is alive, not just whether the
 # gateway PROCESS exists — a ticker that dies silently inside a live gateway
 # would otherwise report healthy (#32612, #32895).
@@ -94,7 +94,7 @@ TICKER_HEARTBEAT_FILE = CRON_DIR / "ticker_heartbeat"
 TICKER_SUCCESS_FILE = CRON_DIR / "ticker_last_success"
 # Default ticker loop interval (seconds). The single source of truth shared by
 # the in-process ticker (cron/scheduler_provider.py) and the staleness
-# threshold in `hermes cron status` (hermes_cli/cron.py), so the two never
+# threshold in `auraforge cron status` (hermes_cli/cron.py), so the two never
 # drift apart.
 TICKER_INTERVAL_SECONDS = 60
 
@@ -276,7 +276,7 @@ def _jobs_lock():
     Combines the in-process threading lock (cheap mutual exclusion between
     the gateway's parallel tick threads) with a cross-process advisory file
     lock on ``<cron dir>/.jobs.lock`` (mutual exclusion between the gateway process
-    and standalone ``hermes`` CLI invocations, which previously shared no lock
+    and standalone ``auraforge`` CLI invocations, which previously shared no lock
     at all — a `cron pause` could be silently clobbered by a concurrent
     gateway write, leaving a "paused" job still firing).
 
@@ -693,7 +693,7 @@ def _preserve_file_ownership(path: Path, before: Optional[os.stat_result]) -> No
 
     The atomic-write pattern (mkstemp + replace) makes the rewritten file owned
     by the *writer's* euid. When a root shell runs a state-writing cron CLI
-    command (``docker exec hermes hermes cron create ...`` — ``docker exec``
+    command (``docker exec auraforge auraforge cron create ...`` — ``docker exec``
     defaults to root) against a store owned by the unprivileged gateway user,
     the replace flips ``jobs.json`` to ``root:root`` mode 600 and the gateway's
     ticker (uid 1000) is silently locked out of every subsequent tick (#68483).
@@ -731,7 +731,7 @@ def _is_named_profile_path(path: Path) -> bool:
 
     Named profiles live under ``<hermes_home>/profiles/<name>/``.  The
     default profile lives at ``<hermes_home>`` directly (no ``profiles``
-    parent), as do custom ``HERMES_HOME`` paths outside ``~/.hermes``.
+    parent), as do custom ``HERMES_HOME`` paths outside ``~/.auraforge``.
 
     Checks both the resolved path (handles symlinks in the parent chain)
     and the raw path (catches symlinked profile homes whose resolve()
@@ -1201,7 +1201,7 @@ def compute_next_run(schedule: Dict[str, Any], last_run_at: Optional[str] = None
             logger.warning(
                 "Cannot compute next run for cron schedule %r: 'croniter' is "
                 "not installed. croniter is a core dependency as of v0.9.x; "
-                "reinstall hermes-agent or run 'pip install croniter' in your "
+                "reinstall auraforge-agent or run 'pip install croniter' in your "
                 "runtime env.",
                 expr,
             )
@@ -1224,7 +1224,7 @@ def compute_next_run(schedule: Dict[str, Any], last_run_at: Optional[str] = None
 
 
 # =============================================================================
-# Ticker heartbeat (liveness signal for `hermes cron status`)
+# Ticker heartbeat (liveness signal for `auraforge cron status`)
 # =============================================================================
 
 def _atomic_write_epoch(path: Path) -> None:
@@ -1232,7 +1232,7 @@ def _atomic_write_epoch(path: Path) -> None:
 
     Delegates to :func:`utils.atomic_write_text` (tmpfile + fsync +
     ``atomic_replace``, same pattern as ``save_jobs``) so a concurrent reader
-    in another process (``hermes cron status``) never sees a torn/truncated
+    in another process (``auraforge cron status``) never sees a torn/truncated
     file. Best-effort: failures are swallowed by callers.
     """
     ensure_dirs()
@@ -1262,7 +1262,7 @@ def record_ticker_heartbeat(success: bool = False) -> None:
 
     The ticker calls this once per loop iteration. ``success=True`` additionally
     bumps the *last successful tick* marker. We track two distinct signals so
-    `hermes cron status` can tell a thread that is merely *alive and looping*
+    `auraforge cron status` can tell a thread that is merely *alive and looping*
     (heartbeat fresh, success stale) from one that is actually *firing jobs*
     (both fresh) — a ticker stuck failing every tick would otherwise keep the
     plain heartbeat fresh and falsely report healthy (#32612, #32895).
@@ -1301,7 +1301,7 @@ def get_ticker_heartbeat_age() -> Optional[float]:
 
     Resolution uses ``_current_cron_store()`` so the heartbeat is correctly
     scoped to the active profile — critical under multiplex_profiles where
-    ``hermes cron status`` must report per-profile liveness (#69377).
+    ``auraforge cron status`` must report per-profile liveness (#69377).
     """
     store = _current_cron_store()
     return _epoch_file_age(store.cron_dir / "ticker_heartbeat")
@@ -1312,7 +1312,7 @@ def get_ticker_success_age() -> Optional[float]:
 
     Resolution uses ``_current_cron_store()`` so the heartbeat is correctly
     scoped to the active profile — critical under multiplex_profiles where
-    ``hermes cron status`` must report per-profile liveness (#69377).
+    ``auraforge cron status`` must report per-profile liveness (#69377).
     """
     store = _current_cron_store()
     return _epoch_file_age(store.cron_dir / "ticker_last_success")
@@ -1334,7 +1334,7 @@ def record_catch_up_occurrence() -> None:
 def record_ticker_error(message: str) -> None:
     """Persist the most recent tick failure so other processes can surface it.
 
-    The ticker thread lives inside the gateway process; ``hermes cron
+    The ticker thread lives inside the gateway process; ``auraforge cron
     status``/``list`` run in a separate process and previously could only
     infer "ticks may be failing" from marker staleness, with no clue WHY.
     A root-owned ``jobs.json`` (#68483) failed every tick for ~14h with the
@@ -2021,7 +2021,7 @@ def create_job(
                 delivered verbatim. Without ``no_agent``, its stdout is
                 injected into the agent's prompt as context (data-collection /
                 change-detection pattern). Paths resolve under
-                ~/.hermes/scripts/; ``.sh`` / ``.bash`` files run via bash,
+                ~/.auraforge/scripts/; ``.sh`` / ``.bash`` files run via bash,
                 anything else via Python.
         context_from: Optional job ID (or list of job IDs) whose most recent output
                       is injected into the prompt as context before each run.
@@ -2045,7 +2045,7 @@ def create_job(
                 watchdogs and periodic alerts that don't need LLM reasoning.
         monitor_script: Optional path to a cheap monitor source script (same
                 resolution/containment rules as ``script``: relative to
-                ~/.hermes/scripts/, .sh/.bash via bash, else Python). Each
+                ~/.auraforge/scripts/, .sh/.bash via bash, else Python). Each
                 tick the script runs FIRST and its output is hashed as exact
                 bytes: unchanged output suppresses the agent run entirely
                 (recorded as a silent 'no_change' tick); changed output
@@ -2134,7 +2134,7 @@ def create_job(
     # agent-driven SIGTERM-respawn loops under launchd/systemd KeepAlive
     # (#30719). Enforced here (not only in the CLI layer) so the agent's
     # `cronjob` model tool — which calls create_job directly — is also
-    # covered, not just `hermes cron create`.
+    # covered, not just `auraforge cron create`.
     from cron.lifecycle_guard import check_gateway_lifecycle
     check_gateway_lifecycle(prompt_text, normalized_script)
 
@@ -2515,7 +2515,7 @@ def trigger_job(
         name = job.get("name", job_id)
         raise ValueError(
             f"Cannot run: job '{name}' is {state} (terminal). "
-            f"Create a new occurrence with 'hermes cron resume {name} "
+            f"Create a new occurrence with 'auraforge cron resume {name} "
             "--run-now' or '--at <ISO-8601>'."
         )
     manual_run_at = _hermes_now().isoformat()
@@ -3885,7 +3885,7 @@ def _get_due_jobs_locked() -> List[Dict[str, Any]]:
                                     "WITHOUT firing. This record was re-armed "
                                     "without a budget reset (pre-#93615 store "
                                     "or hand edit); re-run it with "
-                                    "'hermes cron resume <job> --run-now' "
+                                    "'auraforge cron resume <job> --run-now' "
                                     "(#93524).",
                                     job.get("name", job.get("id", "?")),
                                     completed,

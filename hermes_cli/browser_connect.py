@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 
 logger = logging.getLogger(__name__)
 
@@ -511,8 +511,8 @@ _AUTH_REFRESH_PROFILE_FILES = (
 )
 
 def real_profile_copy_dir(browser: str) -> str:
-    """Return the hermes-owned snapshot dir for ``browser``'s real profile."""
-    return str(get_hermes_home() / "browser-profile" / browser)
+    """Return the auraforge-owned snapshot dir for ``browser``'s real profile."""
+    return str(get_aura_forge_home() / "browser-profile" / browser)
 
 
 def _last_used_profile(src: str) -> str:
@@ -627,7 +627,7 @@ def _mirror_profile_auth(src: str, dst: str, source_profile: str) -> int:
     return failed_dbs
 
 
-_SNAPSHOT_DONE_MARKER = ".hermes-snapshot-complete"
+_SNAPSHOT_DONE_MARKER = ".auraforge-snapshot-complete"
 
 # Prefix stamped on the "profile is locked" error so the calling layer can
 # recognize it as the specific needs-the-browser-closed condition (vs a generic
@@ -780,7 +780,7 @@ def close_browser_holding_profile(src: str, timeout: float = 15.0) -> tuple[bool
 
 
 def snapshot_real_profile(browser: str, src: str | None = None) -> tuple[str | None, str | None]:
-    """Snapshot ``browser``'s real ACTIVE profile into the hermes copy dir.
+    """Snapshot ``browser``'s real ACTIVE profile into the auraforge copy dir.
 
     Copies only what the launched browser needs: the user-data-dir's
     ``Local State`` plus the auth-bearing files of the profile the user
@@ -789,7 +789,7 @@ def snapshot_real_profile(browser: str, src: str | None = None) -> tuple[str | N
     We deliberately do NOT copy every profile dir: non-active profiles are
     unused here and would just be stale credential copies sitting on disk.
 
-    A ``.hermes-snapshot-complete`` marker is written only after a copy fully
+    A ``.auraforge-snapshot-complete`` marker is written only after a copy fully
     succeeds; a torn/interrupted first copy (disk full, Ctrl+C) therefore never
     looks "already populated" on the next run — it is redone from scratch.
 
@@ -923,7 +923,7 @@ def cleanup_real_profile_snapshots() -> None:
     Called when consent is OFF: the copied Cookies / Login Data must not
     outlive the toggle. Best-effort and idempotent — missing dir is fine.
     """
-    root = str(get_hermes_home() / "browser-profile")
+    root = str(get_aura_forge_home() / "browser-profile")
     try:
         if os.path.isdir(root):
             shutil.rmtree(root, ignore_errors=True)
@@ -986,7 +986,7 @@ def get_chrome_debug_candidates(system: str) -> list[str]:
 
 
 def chrome_debug_data_dir() -> str:
-    return str(get_hermes_home() / "chrome-debug")
+    return str(get_aura_forge_home() / "chrome-debug")
 
 
 def _chrome_debug_args(port: int) -> list[str]:

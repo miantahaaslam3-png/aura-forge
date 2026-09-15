@@ -170,7 +170,7 @@ def test_load_pack_rejects_insecure_url_schemes(tmp_path):
 
 
 def test_load_pack_reads_local_file(tmp_path):
-    f = tmp_path / "hermes-pack.yaml"
+    f = tmp_path / "auraforge-pack.yaml"
     f.write_text(_pack_yaml(), encoding="utf-8")
     assert load_pack(str(f)).name == "voice-pack"
 

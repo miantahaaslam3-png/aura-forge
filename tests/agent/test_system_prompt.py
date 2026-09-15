@@ -214,7 +214,7 @@ class TestNamedProfileHintIntegration:
     def test_real_hermes_home_under_profiles_renders_correct_paths(
         self, tmp_path, monkeypatch
     ):
-        root = tmp_path / ".hermes"
+        root = tmp_path / ".auraforge"
         profile_home = root / "profiles" / "coder"
         profile_home.mkdir(parents=True)
 
@@ -244,7 +244,7 @@ class TestNamedProfileHintIntegration:
 
     def test_real_default_home_renders_default_branch(self, tmp_path, monkeypatch):
         """HERMES_HOME at the root resolves to the default profile, unchanged."""
-        root = tmp_path / ".hermes"
+        root = tmp_path / ".auraforge"
         root.mkdir(parents=True)
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -288,11 +288,11 @@ def test_coding_prompt_preserves_legacy_workspace_order(monkeypatch):
     monkeypatch.setattr(system_prompt, "HERMES_AGENT_HELP_GUIDANCE", "HELP")
     monkeypatch.setattr(system_prompt, "HERMES_AGENT_HELP_GUIDANCE_NO_SKILLS", "HELP")
     monkeypatch.setattr(system_prompt, "STEER_CHANNEL_NOTE", "STEER")
-    monkeypatch.setattr(system_prompt, "get_hermes_home", lambda: Path("/hermes"))
+    monkeypatch.setattr(system_prompt, "get_hermes_home", lambda: Path("/auraforge"))
 
     expected_profile = (
         "Active Aura Forge profile: default. Other profiles (if any) live "
-        "under /hermes/profiles/<name>/. Each profile has its own skills/, "
+        "under /auraforge/profiles/<name>/. Each profile has its own skills/, "
         "plugins/, cron/, and memories/ that affect a different session than "
         "this one. Do not modify another profile's skills/plugins/cron/memories "
         "unless the user explicitly directs you to."

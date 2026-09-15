@@ -2,12 +2,12 @@
 """
 SWE Runner with Aura Forge Trajectory Format
 
-A runner that uses Hermes-Agent's built-in execution environments
-(local, docker, modal) and outputs trajectories in the Hermes-Agent format
+A runner that uses Aura Forge-Agent's built-in execution environments
+(local, docker, modal) and outputs trajectories in the Aura Forge-Agent format
 compatible with batch_runner.py and trajectory_compressor.py.
 
 Features:
-- Uses Hermes-Agent's Docker, Modal, or Local environments for command execution
+- Uses Aura Forge-Agent's Docker, Modal, or Local environments for command execution
 - Outputs trajectories in Aura Forge format (from/value pairs with <tool_call>/<tool_response> XML)
 - Compatible with the trajectory compression pipeline
 - Supports batch processing from JSONL prompt files
@@ -62,7 +62,7 @@ def _effective_temperature_for_model(
 
 
 # ============================================================================
-# Terminal Tool Definition (matches Hermes-Agent format)
+# Terminal Tool Definition (matches Aura Forge-Agent format)
 # ============================================================================
 
 TERMINAL_TOOL_DEFINITION = {
@@ -122,7 +122,7 @@ def create_environment(
     **kwargs
 ):
     """
-    Create an execution environment using Hermes-Agent's built-in backends.
+    Create an execution environment using Aura Forge-Agent's built-in backends.
     
     Args:
         env_type: One of "local", "docker", "modal"
@@ -156,8 +156,8 @@ def create_environment(
 
 class MiniSWERunner:
     """
-    Agent runner that uses Hermes-Agent's built-in execution environments
-    and outputs trajectories in Hermes-Agent format.
+    Agent runner that uses Aura Forge-Agent's built-in execution environments
+    and outputs trajectories in Aura Forge-Agent format.
     """
     
     def __init__(

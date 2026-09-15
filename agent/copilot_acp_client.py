@@ -525,7 +525,7 @@ class CopilotACPClient:
                         "point Aura Forge at it explicitly:\n"
                         "  export HERMES_COPILOT_ACP_COMMAND=/path/to/new/copilot\n\n"
                         "Alternative: use the `copilot` provider (no ACP, hits the Copilot API\n"
-                        "directly with a Copilot subscription token) via `hermes setup`.\n\n"
+                        "directly with a Copilot subscription token) via `auraforge setup`.\n\n"
                         f"Original error:\n{stderr_text}"
                     )
                 raise RuntimeError(f"Copilot ACP process exited early: {stderr_text}")
@@ -543,7 +543,7 @@ class CopilotACPClient:
                         }
                     },
                     "clientInfo": {
-                        "name": "hermes-agent",
+                        "name": "auraforge-agent",
                         "title": "Aura Forge Agent",
                         "version": "0.0.0",
                     },

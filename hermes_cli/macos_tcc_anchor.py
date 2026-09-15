@@ -10,7 +10,7 @@ two holes that bricked real Macs:
 
 * Dynamically-linked builds look up ``libpython`` via
   ``@executable_path/../lib``.  That resolved into ``venv/lib/``, which had
-  no dylib — every hermes command, including update/doctor, died in dyld
+  no dylib — every auraforge command, including update/doctor, died in dyld
   (#95425).
 * Alias names (``python3``, ``python3.N``) were re-pointed at the copy as
   *symlinks*.  Invoking the copied interpreter through a symlink makes

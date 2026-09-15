@@ -3,7 +3,7 @@
 Provider profile for Meta Superintelligence Labs' Muse Spark family, served
 via the OpenAI-compatible Meta Model API at ``https://api.meta.ai/v1``.
 
-Bundled from https://github.com/albertodepaola/hermes-meta-provider. Aura Forge'
+Bundled from https://github.com/albertodepaola/auraforge-meta-provider. Aura Forge'
 provider discovery (``providers/__init__.py``) imports it on first
 ``get_provider_profile()`` / ``list_providers()`` call, and the module-level
 ``register_provider()`` below wires it into the registry.
@@ -11,7 +11,7 @@ provider discovery (``providers/__init__.py``) imports it on first
 Design notes
 ------------
 * **Zero core edits.** Everything rides on ``ProviderProfile`` hooks. No changes
-  to hermes' ``model_metadata.py`` / ``models.py`` / ``run_agent.py`` are needed:
+  to auraforge' ``model_metadata.py`` / ``models.py`` / ``run_agent.py`` are needed:
   - Context window (1M), reasoning and vision capabilities already resolve from
     models.dev for the muse-spark family, so no static ctx table entry is required.
   - The reasoning dial is emitted as a **top-level ``reasoning_effort``** kwarg

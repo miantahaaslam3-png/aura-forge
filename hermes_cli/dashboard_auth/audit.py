@@ -59,13 +59,13 @@ class AuditEvent(enum.Enum):
 def _resolve_log_path() -> Path:
     """``$AURA_FORGE_HOME/logs/dashboard-auth.log``.
 
-    Uses ``hermes_constants.get_hermes_home()`` (a leaf module — no import
+    Uses ``hermes_constants.get_aura_forge_home()`` (a leaf module — no import
     cycle) so profile overrides and the native-Windows ``%LOCALAPPDATA%``
     fallback are honored.
     """
-    from hermes_constants import get_hermes_home
+    from hermes_constants import get_aura_forge_home
 
-    return get_hermes_home() / "logs" / "dashboard-auth.log"
+    return get_aura_forge_home() / "logs" / "dashboard-auth.log"
 
 
 def audit_log(event: AuditEvent, **fields: Any) -> None:

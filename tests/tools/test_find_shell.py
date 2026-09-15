@@ -108,7 +108,7 @@ class TestFindBashSkipsBrokenCustomPath:
     @pytest.mark.windows_only
     def test_falls_through_to_portable_when_custom_fails_probe(self, tmp_path, monkeypatch):
         """Windows-only: the candidate ladder (HERMES_GIT_BASH_PATH →
-        %LOCALAPPDATA%\\hermes\\git → Program Files) only exists in
+        %LOCALAPPDATA%\\auraforge\\git → Program Files) only exists in
         ``_find_bash``'s Windows branch."""
         import tools.environments.local as local_mod
 
@@ -117,7 +117,7 @@ class TestFindBashSkipsBrokenCustomPath:
         broken = tmp_path / "broken" / "bash.exe"
         broken.parent.mkdir()
         broken.write_text("", encoding="utf-8")
-        portable = tmp_path / "hermes" / "git" / "bin" / "bash.exe"
+        portable = tmp_path / "auraforge" / "git" / "bin" / "bash.exe"
         portable.parent.mkdir(parents=True)
         portable.write_text("", encoding="utf-8")
 
@@ -165,7 +165,7 @@ class TestGitBashExternalProgramProbe:
 
         local_mod._bash_starts_cache.clear()
         local_mod._bash_probe_details_cache.clear()
-        portable = tmp_path / "hermes" / "git" / "bin" / "bash.exe"
+        portable = tmp_path / "auraforge" / "git" / "bin" / "bash.exe"
         portable.parent.mkdir(parents=True)
         portable.write_text("", encoding="utf-8")
 
@@ -190,7 +190,7 @@ class TestGitBashExternalProgramProbe:
         assert "Mandatory ASLR" in message
         assert "Reinstalling Git will not change" in message
         assert "Set-ProcessMitigation" in message
-        assert str(tmp_path / "hermes" / "git") in message
+        assert str(tmp_path / "auraforge" / "git") in message
 
 
 @pytest.mark.macos_only

@@ -18,6 +18,6 @@ try:
 except (ModuleNotFoundError, ImportError):
 
     def get_hermes_home() -> Path:
-        """Return the Aura Forge home directory (default: ``~/.hermes``)."""
+        """Return the Aura Forge home directory (default: ``~/.auraforge``)."""
         val = os.environ.get("HERMES_HOME", "").strip()
-        return Path(val) if val else Path.home() / ".hermes"
+        return Path(val) if val else Path.home() / ".auraforge"

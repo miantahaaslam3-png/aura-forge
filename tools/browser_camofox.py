@@ -17,7 +17,7 @@ Setup::
     # Option 2: Docker
     docker run -p 9377:9377 -e CAMOFOX_PORT=9377 jo-inc/camofox-browser
 
-Then set ``CAMOFOX_URL=http://localhost:9377`` in ``~/.hermes/.env``.
+Then set ``CAMOFOX_URL=http://localhost:9377`` in ``~/.auraforge/.env``.
 For Docker Camofox, optionally set ``CAMOFOX_REWRITE_LOOPBACK_URLS=true``
 so page URLs like ``http://127.0.0.1:3000`` are opened inside the
 container as ``http://host.docker.internal:3000``.
@@ -116,7 +116,7 @@ def is_camofox_mode() -> bool:
     """True when the Camofox backend is selected and no CDP override is active.
 
     Camofox is a selection: ``browser.cloud_provider: camofox`` (set via
-    ``hermes tools``). ``CAMOFOX_URL`` is the server ADDRESS only — its
+    ``auraforge tools``). ``CAMOFOX_URL`` is the server ADDRESS only — its
     presence no longer selects the backend when a different
     ``browser.cloud_provider`` is stored. Legacy read-time interpretation:
     when NO cloud provider selection was ever written, a set ``CAMOFOX_URL``
@@ -192,7 +192,7 @@ def _get_camofox_config() -> Dict[str, Any]:
 
 
 def _managed_persistence_enabled() -> bool:
-    """Return whether Hermes-managed persistence is enabled for Camofox.
+    """Return whether Aura Forge-managed persistence is enabled for Camofox.
 
     When enabled, sessions use a stable profile-scoped userId so the
     Camofox server can map it to a persistent browser profile directory.

@@ -21,7 +21,7 @@ Design notes / invariants:
   prompt and also pauses the goal loop for that turn (we still re-judge
   after, so if the user's message happens to complete the goal the judge
   will say ``done``).
-- This module has zero hard dependency on ``cli.HermesCLI`` or the gateway
+- This module has zero hard dependency on ``cli.Aura ForgeCLI`` or the gateway
   runner — both wire the same ``GoalManager`` in.
 
 Nothing in this module touches the agent's system prompt or toolset.
@@ -691,8 +691,8 @@ def _bootstrap_session_db(home: str, done: threading.Event) -> None:
     """Construct SessionDB off-loop and populate the cache (worker thread)."""
     try:
         from hermes_constants import (
-            reset_hermes_home_override,
-            set_hermes_home_override,
+            reset_aura_forge_home_override,
+            set_aura_forge_home_override,
         )
         from hermes_state import SessionDB
 
@@ -702,11 +702,11 @@ def _bootstrap_session_db(home: str, done: threading.Event) -> None:
         # worker thread resolves the process env (the default profile's
         # AURA_FORGE_HOME). It then caches the wrong profile's DB under this
         # profile's key.
-        token = set_hermes_home_override(home)
+        token = set_aura_forge_home_override(home)
         try:
             db = SessionDB()
         finally:
-            reset_hermes_home_override(token)
+            reset_aura_forge_home_override(token)
     except Exception as exc:  # pragma: no cover
         logger.debug("GoalManager: background SessionDB() raised (%s)", exc)
         db = None
@@ -722,7 +722,7 @@ def _get_session_db() -> Optional[Any]:
 
     SessionDB has no built-in singleton, but opening a new connection per
     /goal call would thrash the file. We cache one instance per
-    ``hermes_home`` path so profile switches still pick up the right DB.
+    ``aura_forge_home`` path so profile switches still pick up the right DB.
     Defensive against import/instantiation failures so tests and
     non-standard launchers can still use the GoalManager.
 
@@ -740,10 +740,10 @@ def _get_session_db() -> Optional[Any]:
     cached instance.
     """
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
         from hermes_state import SessionDB
 
-        home = str(get_hermes_home())
+        home = str(get_aura_forge_home())
     except Exception as exc:  # pragma: no cover
         logger.debug("GoalManager: SessionDB bootstrap failed (%s)", exc)
         return None

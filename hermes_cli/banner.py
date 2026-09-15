@@ -1,6 +1,6 @@
 """Welcome banner, ASCII art, skills summary, and update check for the CLI.
 
-Pure display functions with no HermesCLI state dependency.
+Pure display functions with no Aura ForgeCLI state dependency.
 """
 import json
 import logging
@@ -11,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 from urllib.parse import urlparse
-from hermes_constants import get_hermes_home
+from hermes_constants import get_aura_forge_home
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # rich and prompt_toolkit are imported lazily (inside the functions that use
@@ -135,7 +135,7 @@ def get_available_skills() -> Dict[str, List[str]]:
 _UPDATE_CHECK_CACHE_SECONDS = 6 * 3600
 
 # Sentinel returned when we know an update exists but can't count commits
-# (e.g. nix-built hermes — no local git history to count against).
+# (e.g. nix-built auraforge — no local git history to count against).
 UPDATE_AVAILABLE_NO_COUNT = -1
 
 _UPSTREAM_REPO_URL = "https://github.com/miantahaaslam3-png/aura-forge.git"
@@ -218,7 +218,7 @@ def _github_compare_behind(current_rev: str, target_rev: str) -> Optional[int]:
             headers={
                 "Accept": "application/vnd.github+json",
                 # api.github.com 403s requests without a User-Agent.
-                "User-Agent": "hermes-cli-update-check",
+                "User-Agent": "auraforge-cli-update-check",
             },
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
@@ -421,8 +421,8 @@ def check_for_updates() -> Optional[int]:
     if behind but the count is unknown, ``0`` if up-to-date, or ``None`` if
     the check failed or doesn't apply. Cached for 6 hours.
     """
-    hermes_home = get_hermes_home()
-    cache_file = hermes_home / ".update_check"
+    aura_forge_home = get_aura_forge_home()
+    cache_file = aura_forge_home / ".update_check"
     embedded_rev = os.environ.get("HERMES_REVISION") or None
 
     # Docker images have no working tree to count commits against — the
@@ -430,7 +430,7 @@ def check_for_updates() -> Optional[int]:
     # HERMES_REVISION (that's nix-only). Returning None makes both the Rich
     # banner (build_welcome_banner) and the Ink badge (branding.tsx, guarded
     # on `typeof === 'number' && > 0`) show nothing. The dashboard's REST
-    # `/api/hermes/update/check` endpoint short-circuits docker the same way
+    # `/api/auraforge/update/check` endpoint short-circuits docker the same way
     # (web_server.py); mirror that here so the banner/TUI surfaces agree.
     try:
         from hermes_cli.config import detect_install_method, get_project_root
@@ -462,7 +462,7 @@ def check_for_updates() -> Optional[int]:
         # Path(__file__) always resolves to the actual installed checkout.
         repo_dir = Path(__file__).parent.parent.resolve()
         if not (repo_dir / ".git").exists():
-            repo_dir = hermes_home / "aura-forge-agent"
+            repo_dir = aura_forge_home / "aura-forge-agent"
         if not (repo_dir / ".git").exists():
             # No git checkout and no embedded revision — can't determine
             # update status. This is the Docker path (already short-circuited
@@ -497,8 +497,8 @@ def _resolve_repo_dir() -> Optional[Path]:
     """
     repo_dir = Path(__file__).parent.parent.resolve()
     if not (repo_dir / ".git").exists():
-        hermes_home = get_hermes_home()
-        repo_dir = hermes_home / "aura-forge-agent"
+        aura_forge_home = get_aura_forge_home()
+        repo_dir = aura_forge_home / "aura-forge-agent"
     return repo_dir if (repo_dir / ".git").exists() else None
 
 
@@ -734,7 +734,7 @@ def _format_update_notice(behind: int) -> str:
             f"[bold yellow]⚠ {behind} {commits_word} behind[/]"
             f"[dim yellow] — run [bold]{recommended_update_command()}[/bold] to update[/]"
         )
-    # UPDATE_AVAILABLE_NO_COUNT: nix-built hermes; we know an update
+    # UPDATE_AVAILABLE_NO_COUNT: nix-built auraforge; we know an update
     # exists but not by how much, and we don't know how the user
     # installed it (nix run, profile, system flake, home-manager).
     managed_cmd = get_managed_update_command()
@@ -824,7 +824,7 @@ _BANNER_SNAPSHOT_VERSION = 1
 
 
 def _banner_snapshot_path() -> Path:
-    return get_hermes_home() / "cache" / "banner_snapshot.json"
+    return get_aura_forge_home() / "cache" / "banner_snapshot.json"
 
 
 def banner_snapshot_fingerprint() -> Optional[str]:
@@ -833,7 +833,7 @@ def banner_snapshot_fingerprint() -> Optional[str]:
     parts = [f"v{_BANNER_SNAPSHOT_VERSION}"]
     try:
         from hermes_cli.config import get_config_path
-        for p in (get_config_path(), get_hermes_home() / ".env"):
+        for p in (get_config_path(), get_aura_forge_home() / ".env"):
             try:
                 st = p.stat()
                 parts.append(f"{p.name}:{st.st_mtime_ns}:{st.st_size}")

@@ -1,6 +1,6 @@
 """Tests for the strict gateway command-line matcher.
 
-Regression guard for the Windows ``hermes gateway restart`` silent-outage bug:
+Regression guard for the Windows ``auraforge gateway restart`` silent-outage bug:
 the previous loose substring match (``"... gateway" in cmdline``) false-matched
 ``gateway status``/``dashboard`` siblings and unrelated processes such as
 ``python -m tui_gateway``, which let ``restart()`` race a still-draining old
@@ -19,25 +19,25 @@ from gateway.status import (
 
 ACCEPT = [
     "pythonw.exe -m hermes_cli.main gateway run",
-    r"C:\Users\me\hermes\venv\Scripts\pythonw.exe -m hermes_cli.main gateway run",
+    r"C:\Users\me\auraforge\venv\Scripts\pythonw.exe -m hermes_cli.main gateway run",
     "python -m hermes_cli.main --profile work gateway run",
     "python -m hermes_cli.main gateway run --replace",
     "python -m hermes_cli/main.py gateway run",
     "python gateway/run.py",
-    "hermes-gateway.exe",
-    "hermes gateway",          # bare `hermes gateway` defaults to run
-    "hermes gateway run",
+    "auraforge-gateway.exe",
+    "auraforge gateway",          # bare `auraforge gateway` defaults to run
+    "auraforge gateway run",
     # profile selector AFTER the `gateway` token (argv is profile-position
     # agnostic — _apply_profile_override strips --profile/-p anywhere)
-    "hermes gateway --profile work run",
+    "auraforge gateway --profile work run",
     "python -m hermes_cli.main gateway -p work run",
-    "hermes gateway --profile=work run",
+    "auraforge gateway --profile=work run",
     # a profile literally NAMED "gateway"
-    "hermes -p gateway gateway run",
+    "auraforge -p gateway gateway run",
     "python -m hermes_cli.main --profile gateway gateway run",
     # quoted Windows paths with spaces (shlex-aware tokenization)
-    r'"C:\Program Files\Hermes\hermes-gateway.exe"',
-    r'"C:\Program Files\Hermes\gateway\run.py" run',
+    r'"C:\Program Files\Aura Forge\auraforge-gateway.exe"',
+    r'"C:\Program Files\Aura Forge\gateway\run.py" run',
     r'"C:\Program Files\Py\pythonw.exe" -m hermes_cli.main gateway run',
 ]
 

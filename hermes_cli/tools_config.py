@@ -1130,7 +1130,7 @@ def install_cua_driver(
         if os.environ.get("HERMES_CUA_DRIVER_CMD", "").strip():
             _print_info(
                 "    Update the binary selected by HERMES_CUA_DRIVER_CMD, or unset "
-                "the override and run: hermes computer-use install --upgrade"
+                "the override and run: auraforge computer-use install --upgrade"
             )
             return False
         if is_windows and require_confirmed_update:
@@ -1140,7 +1140,7 @@ def install_cua_driver(
             )
             _print_info(
                 "    Repair it from an interactive terminal with: "
-                "hermes computer-use install --upgrade"
+                "auraforge computer-use install --upgrade"
             )
             return False
         _print_info("    Repairing it with the current upstream installer.")
@@ -1193,7 +1193,7 @@ def install_cua_driver(
                 "keeping the installed version."
             )
             _print_info(
-                "    Force a refresh with: hermes computer-use install --upgrade"
+                "    Force a refresh with: auraforge computer-use install --upgrade"
             )
             return True
         if _state is not None and _state.get("update_available"):
@@ -1231,7 +1231,7 @@ def install_cua_driver(
         )
         _print_info(
             "    Install it from an interactive terminal with: "
-            "hermes computer-use install --upgrade"
+            "auraforge computer-use install --upgrade"
         )
         return False
 
@@ -1266,7 +1266,7 @@ def install_cua_driver(
                 "    cua-driver was reinstalled, but its runtime contract is still "
                 f"unusable: {repaired.get('reason') or 'unknown error'}."
             )
-            _print_info("    Run: hermes computer-use doctor")
+            _print_info("    Run: auraforge computer-use doctor")
             return False
     if ok and before:
         try:
@@ -1751,7 +1751,7 @@ def _run_cua_driver_installer(
             )
             _print_info(
                 "    If no install is really running, retry with: "
-                "hermes computer-use install --upgrade"
+                "auraforge computer-use install --upgrade"
             )
             return False
         if not _cua_release_endpoint_reachable():
@@ -1999,7 +1999,7 @@ def _ensure_browser_use_cli(*, verbose_hints: bool = False) -> None:
     remain the final fallback.
 
     MANAGED-FIRST: a browser-use on the user's PATH does NOT satisfy this
-    check — only the Hermes-managed ``$AURA_FORGE_HOME/bin`` copy does.
+    check — only the Aura Forge-managed ``$AURA_FORGE_HOME/bin`` copy does.
     ``install_cli()`` short-circuits on the managed copy and otherwise
     provisions it, so resolution always lands on a binary Aura Forge installs
     and updates rather than a user-level side install.
@@ -2035,7 +2035,7 @@ def _run_post_setup(post_setup_key: str):
         # explicit "Browser Use" picker row.
         _ensure_browser_use_cli()
         # agent-browser is no longer a root package.json dependency (#43564)
-        # — it resolves lazily via npx (or a global/Hermes-managed install)
+        # — it resolves lazily via npx (or a global/Aura Forge-managed install)
         # instead of a local `npm install`, so there's no node_modules/
         # population step here anymore.
         try:
@@ -2054,8 +2054,8 @@ def _run_post_setup(post_setup_key: str):
             return
 
         # Reuse the same resolution cascade browser tools use at runtime
-        # (PATH -> Homebrew/Hermes-managed node -> npx) rather than a bare
-        # shutil.which — Hermes-managed-Node-only setups resolve agent-browser
+        # (PATH -> Homebrew/Aura Forge-managed node -> npx) rather than a bare
+        # shutil.which — Aura Forge-managed-Node-only setups resolve agent-browser
         # / npx only through the extended fallback path, which a bare
         # shutil.which("npx") lookup misses.
         try:
@@ -2094,12 +2094,12 @@ def _run_post_setup(post_setup_key: str):
             return
 
         # browser_cmd was already resolved above (same PATH -> Homebrew ->
-        # Hermes-managed-node -> npx cascade _find_agent_browser uses at
+        # Aura Forge-managed-node -> npx cascade _find_agent_browser uses at
         # runtime), so this can't diverge from what actually gets invoked.
         if _is_npx_agent_browser_sentinel(browser_cmd):
             # Re-resolve via the same PATH + extended-PATH cascade
             # _find_agent_browser used, rather than a bare shutil.which("npx")
-            # — Hermes-managed-Node-only setups resolve npx only through the
+            # — Aura Forge-managed-Node-only setups resolve npx only through the
             # extended fallback path, and a bare lookup here would silently
             # diverge and hand subprocess.run a None argument.
             npx_bin = _resolve_npx_bin()
@@ -2322,9 +2322,9 @@ def _run_post_setup(post_setup_key: str):
                 _print_success("    Plugin observability/langfuse enabled")
         except Exception as exc:
             _print_warning(f"    Could not enable plugin automatically: {exc}")
-            _print_info("    Run manually: hermes plugins enable observability/langfuse")
+            _print_info("    Run manually: auraforge plugins enable observability/langfuse")
         _print_info("    Restart Aura Forge for tracing to take effect.")
-        _print_info("    Verify: hermes plugins list")
+        _print_info("    Verify: auraforge plugins list")
 
     elif post_setup_key == "xai_grok":
         # Shared credential bootstrap for any picker entry that talks to xAI
@@ -2437,7 +2437,7 @@ def run_post_setup_command(args) -> int:
     """
     key = getattr(args, "post_setup_key", None)
     if not key:
-        _print_error("Usage: hermes tools post-setup <key>")
+        _print_error("Usage: auraforge tools post-setup <key>")
         return 2
     valid = valid_post_setup_keys()
     if key not in valid:
@@ -2554,7 +2554,7 @@ def _exempt_explicit_platform_native(
     ``discord``/``discord_admin`` on the discord platform) are the platform's
     own native tools. They are kept off for *unconfigured* platforms (security
     opt-in), but once a user explicitly saves a toolset list for the platform
-    the composite they chose (e.g. ``hermes-discord``, which contains those
+    the composite they chose (e.g. ``auraforge-discord``, which contains those
     tools) is an opt-in — stripping them silently defeats the explicit
     configuration (#35527). Mutates ``default_off`` in place.
     """
@@ -2572,7 +2572,7 @@ def _exempt_explicit_platform_native(
 #: Saving ``auraforge tools`` (or one toggle in the desktop Toolsets UI) replaces
 #: a platform's composite with a frozen explicit list, and nothing ever adds to
 #: that list — so a toolset shipped afterwards stays off forever for anyone who
-#: has touched the picker, while everyone still on ``[hermes-cli]`` inherits it
+#: has touched the picker, while everyone still on ``[auraforge-cli]`` inherits it
 #: on upgrade. Listing it here restores that parity.
 #:
 #: MUST ship in the same release as the toolset it names, and be emptied in the
@@ -2606,7 +2606,7 @@ def _enable_recently_shipped_toolsets(
     declined = {str(ts) for ts in offered} if isinstance(offered, list) else set()
 
     plat_info = PLATFORMS.get(platform)
-    default_ts = plat_info["default_toolset"] if plat_info else f"hermes-{platform}"
+    default_ts = plat_info["default_toolset"] if plat_info else f"auraforge-{platform}"
     composite_tools = None
 
     for ts_key in sorted(_RECENTLY_SHIPPED_TOOLSETS):
@@ -2616,7 +2616,7 @@ def _enable_recently_shipped_toolsets(
             continue
         # Parity is the whole justification, so only enable the toolset where
         # staying on the composite would have enabled it anyway. Deliberately
-        # narrow composites (hermes-acp, hermes-webhook) stay narrow.
+        # narrow composites (auraforge-acp, auraforge-webhook) stay narrow.
         ts_tools = set(resolve_toolset(ts_key, include_registry=False))
         if composite_tools is None:
             composite_tools = set(resolve_toolset(default_ts))
@@ -2638,7 +2638,7 @@ def _get_platform_tools(
     toolset_names = platform_toolsets.get(platform)
     # Track whether the user explicitly saved a toolset list for this platform
     # (vs. falling back to the platform default). An explicit composite (e.g.
-    # ``hermes-discord``) is an opt-in to the platform's native default-off
+    # ``auraforge-discord``) is an opt-in to the platform's native default-off
     # toolsets — see _exempt_explicit_platform_native (#35527).
     explicitly_configured = isinstance(toolset_names, list)
 
@@ -2648,7 +2648,7 @@ def _get_platform_tools(
             default_ts = plat_info["default_toolset"]
         else:
             # Plugin platform — derive toolset name from platform key
-            default_ts = f"hermes-{platform}"
+            default_ts = f"auraforge-{platform}"
         toolset_names = [default_ts]
 
     # YAML may parse bare numeric names (e.g. ``12306:``) as int.
@@ -2659,14 +2659,14 @@ def _get_platform_tools(
     plugin_ts_keys = _get_plugin_toolset_keys()
     platform_default_keys = {p["default_toolset"] for p in PLATFORMS.values()}
     # Plugin-provided toolsets are first-class on a platform-toolsets list —
-    # explicit config like ``[hermes-cli, a2a]`` must survive filtering just
+    # explicit config like ``[auraforge-cli, a2a]`` must survive filtering just
     # like a built-in configurable toolset would. See issue #81163.
     explicit_known_keys = configurable_keys | plugin_ts_keys
 
     # If the saved list contains any configurable keys directly, the user
     # has explicitly configured this platform — use direct membership.
     # This avoids the subset-inference bug where composite toolsets like
-    # "hermes-cli" (which include all _HERMES_CORE_TOOLS) cause disabled
+    # "auraforge-cli" (which include all _HERMES_CORE_TOOLS) cause disabled
     # toolsets to re-appear as enabled.
     has_explicit_config = any(ts in explicit_known_keys for ts in toolset_names)
 
@@ -2676,7 +2676,7 @@ def _get_platform_tools(
             if ts in explicit_known_keys and _toolset_allowed_for_platform(ts, platform)
         }
         # Mixed config: composite toolset alongside configurables (e.g.
-        # ``[hermes-cli, spotify]`` after enabling Spotify via ``hermes
+        # ``[auraforge-cli, spotify]`` after enabling Spotify via ``auraforge
         # tools``). Without expansion the composite name is silently dropped,
         # leaving sessions with only the configurable opt-ins and no native
         # tools. Mirror the else-branch's subset inference, but apply
@@ -2718,7 +2718,7 @@ def _get_platform_tools(
         _enable_recently_shipped_toolsets(enabled_toolsets, config, platform)
     else:
         # No explicit config — fall back to resolving composite toolset names
-        # (e.g. "hermes-cli") to individual tool names and reverse-mapping.
+        # (e.g. "auraforge-cli") to individual tool names and reverse-mapping.
         all_tool_names = set()
         for ts_name in toolset_names:
             all_tool_names.update(resolve_toolset(ts_name))
@@ -2787,7 +2787,7 @@ def _get_platform_tools(
     # otherwise saving via `auraforge tools` (which flips has_explicit_config
     # to True) silently drops them.
     _plat_info = PLATFORMS.get(platform)
-    _default_ts = _plat_info["default_toolset"] if _plat_info else f"hermes-{platform}"
+    _default_ts = _plat_info["default_toolset"] if _plat_info else f"auraforge-{platform}"
     platform_tool_universe = set(resolve_toolset(_default_ts))
     configurable_tool_universe = set()
     for ck in configurable_keys:
@@ -2796,7 +2796,7 @@ def _get_platform_tools(
     for ts_key in enabled_toolsets:
         claimed.update(resolve_toolset(ts_key))
     skip = configurable_keys | plugin_ts_keys | platform_default_keys
-    skip |= {k for k in TOOLSETS if k.startswith("hermes-")}
+    skip |= {k for k in TOOLSETS if k.startswith("auraforge-")}
     skip |= set(_DEFAULT_OFF_TOOLSETS) - {platform}
     for ts_key, ts_def in TOOLSETS.items():
         if ts_key in skip:
@@ -2837,7 +2837,7 @@ def _get_platform_tools(
                 # Opt-in plugin toolset — stay off until user picks it
                 continue
             elif pts not in known_for_platform:
-                # New plugin not yet seen by hermes tools — default enabled
+                # New plugin not yet seen by auraforge tools — default enabled
                 enabled_toolsets.add(pts)
             # else: known but not in config = user disabled it
 
@@ -2907,7 +2907,7 @@ def _get_platform_tools(
 
     # #38798: if this platform was explicitly configured but every toolset name
     # is invalid (e.g. a migration or hand-edit left `auraforge` instead of
-    # `hermes-cli`), resolve_toolset() returns [] for each and the platform ends
+    # `auraforge-cli`), resolve_toolset() returns [] for each and the platform ends
     # up with no native tools — silently, with no error. Surface it at the point
     # tools are resolved for a session so an already-corrupted config is caught
     # at runtime, not only during the next `auraforge update`/`auraforge doctor`.
@@ -2954,7 +2954,7 @@ def _save_platform_tools(config: dict, platform: str, enabled_toolset_keys: Set[
     plugin_keys = _get_plugin_toolset_keys()
     configurable_keys |= plugin_keys
 
-    # Also exclude platform default toolsets (hermes-cli, hermes-telegram, etc.)
+    # Also exclude platform default toolsets (auraforge-cli, auraforge-telegram, etc.)
     # These are "super" toolsets that resolve to ALL tools, so preserving them
     # would silently override the user's unchecked selections on the next read.
     platform_default_keys = {p["default_toolset"] for p in PLATFORMS.values()}
@@ -3107,9 +3107,9 @@ def _estimate_tool_tokens() -> Dict[str, int]:
     Returns an empty dict when tiktoken or the registry is unavailable.
     """
     global _tool_token_cache
-    from hermes_constants import hermes_home_key
+    from hermes_constants import aura_forge_home_key
 
-    scope = hermes_home_key()
+    scope = aura_forge_home_key()
 
     try:
         # Trigger full tool discovery (imports all tool modules).
@@ -5888,9 +5888,9 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
         platform_choices[idx] = f"Configure {pinfo['label']}  ({new_count}/{total} enabled)"
 
     print()
-    from hermes_constants import display_hermes_home
-    print(color(f"  Tool configuration saved to {display_hermes_home()}/config.yaml", Colors.DIM))
-    print(color("  Changes take effect on next 'hermes' or gateway restart.", Colors.DIM))
+    from hermes_constants import display_aura_forge_home
+    print(color(f"  Tool configuration saved to {display_aura_forge_home()}/config.yaml", Colors.DIM))
+    print(color("  Changes take effect on next 'auraforge' or gateway restart.", Colors.DIM))
     print()
 
 

@@ -27,7 +27,7 @@ Safety posture:
   proposed**, no matter how often they were approved.  ``rm -rf build/``
   approved 100 times still never yields an ``rm`` allowlist entry.  Only
   benign, recoverable classes (container lifecycle, git force push, service
-  restarts, hermes self-management, …) are eligible.
+  restarts, auraforge self-management, …) are eligible.
 * **Dangerous root binaries never become globs** (``rm *``, ``sudo *`` …).
 """
 
@@ -143,9 +143,9 @@ class Proposal:
 # ---------------------------------------------------------------------------
 
 def default_db_path() -> Path:
-    from hermes_constants import get_hermes_home
+    from hermes_constants import get_aura_forge_home
 
-    return get_hermes_home() / "state.db"
+    return get_aura_forge_home() / "state.db"
 
 
 def _connect_readonly(db_path: Path) -> sqlite3.Connection:
@@ -251,17 +251,17 @@ def scan_approval_history(
 # ---------------------------------------------------------------------------
 
 def normalize_command(command: str) -> str:
-    """Fold user/hermes home prefixes and collapse whitespace.
+    """Fold user/auraforge home prefixes and collapse whitespace.
 
     Reuses tools.approval's home-folding machinery so proposals are portable
     across machines/users (``/home/alice/x`` -> ``~/x``).
     """
     from tools.approval import (
-        _rewrite_resolved_hermes_home,
+        _rewrite_resolved_aura_forge_home,
         _rewrite_resolved_user_home,
     )
 
-    folded = _rewrite_resolved_user_home(_rewrite_resolved_hermes_home(command))
+    folded = _rewrite_resolved_user_home(_rewrite_resolved_aura_forge_home(command))
     return " ".join(folded.split())
 
 

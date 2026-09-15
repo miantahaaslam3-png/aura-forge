@@ -2,7 +2,7 @@
 
 The agent's system prompt is built once per session and reused across all
 turns — only context compression triggers a rebuild.  This keeps the
-upstream prefix cache warm.  See ``hermes-agent-dev``'s
+upstream prefix cache warm.  See ``auraforge-agent-dev``'s
 ``references/system-prompt-invariant.md`` for the invariants and
 ``references/self-improvement-loop.md`` for how the background-review
 fork inherits the cached prompt verbatim.
@@ -60,7 +60,7 @@ from utils import is_truthy_value
 logger = logging.getLogger(__name__)
 _PLUGIN_SECTION_FRAME_RE = re.compile(
     r"^## Plugin Context: (?P<id>[a-z0-9][a-z0-9._-]{0,127})\n"
-    r"<!-- hermes-plugin-section-chars:(?P<chars>[0-9]{1,4}) -->\n\n",
+    r"<!-- auraforge-plugin-section-chars:(?P<chars>[0-9]{1,4}) -->\n\n",
     re.MULTILINE,
 )
 
@@ -392,7 +392,7 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
         # Fallback to hardcoded identity
         stable_parts.append(DEFAULT_AGENT_IDENTITY)
 
-    # Pointer to the hermes-agent skill + docs for user questions about Aura Forge
+    # Pointer to the auraforge-agent skill + docs for user questions about Aura Forge
     # itself. When the session has no skill tools (Blank Slate with the skills
     # toolset off), skill_view() would be a dangling reference — inject the
     # docs-only variant instead. Toolset is fixed per-session, so cache-safe.
@@ -623,8 +623,8 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
 
     # Bot Mode teammate protocol — injected ONLY into a bot's canonical
     # "Bot Chat" session (the conversation teammate bots message into via
-    # `hermes -p <bot> chat --in ~ -c "Bot Chat"` and the desktop pins), on
-    # installs where Bot Mode manages profiles (ui_meta['hermes-bots']).
+    # `auraforge -p <bot> chat --in ~ -c "Bot Chat"` and the desktop pins), on
+    # installs where Bot Mode manages profiles (ui_meta['auraforge-bots']).
     # Regular sessions never carry it — the desktop's composer middleware
     # owns the @mention send path. Title is read once at first build and the
     # rendered prompt is cached + DB-restored, so this is cache-safe.
@@ -659,8 +659,8 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
             pass
 
     # Active-profile hint — names the Aura Forge profile the agent is running
-    # under so it doesn't conflate ~/.hermes/skills/ (default profile) with
-    # ~/.hermes/profiles/<active>/skills/ (this profile's). Deterministic
+    # under so it doesn't conflate ~/.auraforge/skills/ (default profile) with
+    # ~/.auraforge/profiles/<active>/skills/ (this profile's). Deterministic
     # for the lifetime of the agent — profile name doesn't change
     # mid-session, so this doesn't break the prompt cache.
     # See file_safety._resolve_active_profile_name + classify_cross_profile_target

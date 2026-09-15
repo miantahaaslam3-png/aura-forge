@@ -1,5 +1,5 @@
 """
-Doctor command for hermes CLI.
+Doctor command for auraforge CLI.
 
 Diagnoses issues with Aura Forge Agent setup.
 """
@@ -14,22 +14,22 @@ from pathlib import Path
 from hermes_cli.config import (
     detect_install_method,
     get_env_path,
-    get_hermes_home,
+    get_aura_forge_home,
     get_project_root,
     is_nix_install_method,
     recommended_update_command_for_method,
 )
 from hermes_cli.env_loader import load_hermes_dotenv
-from hermes_constants import display_hermes_home
+from hermes_constants import display_aura_forge_home
 from hermes_constants import agent_browser_runnable
 
 PROJECT_ROOT = get_project_root()
-AURA_FORGE_HOME = get_hermes_home()
-_DHH = display_hermes_home()  # user-facing display path (e.g. ~/.hermes or ~/.aura-forge/profiles/coder)
+AURA_FORGE_HOME = get_aura_forge_home()
+_DHH = display_aura_forge_home()  # user-facing display path (e.g. ~/.auraforge or ~/.aura-forge/profiles/coder)
 
 # Load environment variables from ~/.aura-forge/.env so API key checks work
 _env_path = get_env_path()
-load_hermes_dotenv(hermes_home=_env_path.parent, project_env=PROJECT_ROOT / ".env")
+load_hermes_dotenv(aura_forge_home=_env_path.parent, project_env=PROJECT_ROOT / ".env")
 
 from hermes_cli.colors import Colors, color
 from hermes_cli.models import _HERMES_USER_AGENT
@@ -104,19 +104,19 @@ def _sqlite_upgrade_hint(install_method: str | None = None) -> str:
     )
 
 
-def _hermes_database_paths(hermes_home: Path) -> list[tuple[str, Path]]:
-    """Return (display name, path) pairs for Hermes-managed SQLite databases."""
+def _hermes_database_paths(aura_forge_home: Path) -> list[tuple[str, Path]]:
+    """Return (display name, path) pairs for Aura Forge-managed SQLite databases."""
     # backup.py owns the canonical list of per-profile stores; reuse it.
     from hermes_cli.backup import _QUICK_STATE_FILES
 
     entries = [
-        (name, hermes_home / name)
+        (name, aura_forge_home / name)
         for name in _QUICK_STATE_FILES
         if name.endswith(".db")
     ]
     # Non-default kanban boards each keep their own kanban.db.
-    for board_db in sorted((hermes_home / "kanban" / "boards").glob("*/kanban.db")):
-        entries.append((str(board_db.relative_to(hermes_home)), board_db))
+    for board_db in sorted((aura_forge_home / "kanban" / "boards").glob("*/kanban.db")):
+        entries.append((str(board_db.relative_to(aura_forge_home)), board_db))
     return entries
 
 
@@ -189,14 +189,14 @@ def _format_db_size(db_path: Path) -> str:
 
 
 def _report_database_journal_modes(
-    hermes_home: Path | None = None,
+    aura_forge_home: Path | None = None,
     version_info: tuple[int, ...] | None = None,
 ) -> None:
     """List each database's journal mode; warn on WAL under a vulnerable SQLite."""
     from hermes_state import _wal_reset_repair_hint, is_sqlite_wal_reset_vulnerable
 
     vulnerable = is_sqlite_wal_reset_vulnerable(version_info)
-    home = hermes_home if hermes_home is not None else AURA_FORGE_HOME
+    home = aura_forge_home if aura_forge_home is not None else AURA_FORGE_HOME
     try:
         databases = _hermes_database_paths(home)
     except Exception as exc:
@@ -469,7 +469,7 @@ def _render_state_db_stats(stats: dict, holders=None) -> list:
             "warn",
             f"state.db FTS repair is blocked after {attempts or '?'} "
             f"deferral(s) by PID(s) {pids or 'unknown'}",
-            "(stop the listed processes, then run 'hermes sessions "
+            "(stop the listed processes, then run 'auraforge sessions "
             "optimize-storage' with the gateway stopped)",
         ))
 
@@ -489,7 +489,7 @@ def _render_state_db_stats(stats: dict, holders=None) -> list:
         )
         if stats.get("fts_rebuild_pending") or legacy_trigram:
             detail += (
-                "; run 'hermes sessions optimize-storage' offline "
+                "; run 'auraforge sessions optimize-storage' offline "
                 "(with the gateway stopped) to compact FTS storage"
             )
         lines.append((
@@ -744,7 +744,7 @@ def _check_version_consistency(issues: list[str]) -> None:
         _fail_and_issue(
             "Version mismatch between source files",
             f"(pyproject.toml {pyproject_version} != hermes_cli/__init__.py {init_version})",
-            "Re-sync version files (e.g. run 'hermes update', or set "
+            "Re-sync version files (e.g. run 'auraforge update', or set "
             "hermes_cli/__init__.py __version__ to match pyproject.toml)",
             issues,
         )
@@ -758,7 +758,7 @@ def _check_s6_supervision(issues: list[str]) -> None:
     container so host runs aren't cluttered with irrelevant output.
 
     Reports:
-      - Whether the main-hermes and dashboard static services are up
+      - Whether the main-auraforge and dashboard static services are up
       - How many per-profile gateway slots are registered (via
         ``S6ServiceManager.list_profile_gateways()``) and how many are
         currently supervised as ``up``
@@ -780,7 +780,7 @@ def _check_s6_supervision(issues: list[str]) -> None:
 
     # Static services. They live under /run/service/ via s6-rc symlinks,
     # so the same s6-svstat probe works.
-    for static in ("main-hermes", "dashboard"):
+    for static in ("main-auraforge", "dashboard"):
         if mgr.is_running(static):
             check_ok(f"{static}: up")
         else:
@@ -1093,7 +1093,7 @@ def check_macos_tcc_grants() -> None:
         )
         return
     if "certificate" in dr.lower():
-        # Certificate-anchored DR (hermes desktop --setup-tcc-identity, or a
+        # Certificate-anchored DR (auraforge desktop --setup-tcc-identity, or a
         # notarized release build): the strongest anchor TCC can key on.
         check_ok(
             "macOS TCC signing identity is stable",
@@ -1121,7 +1121,7 @@ def _desktop_app_bundle() -> Path | None:
     ad-hoc re-signed bundle can invalidate TCC grants. When multiple arch
     trees coexist (stale cross-build), the newest wins, matching
     ``_desktop_packaged_executable``'s selection. ``/Applications/AuraForge.app``
-    is deliberately not probed: it is the separately-signed Hermes-Setup
+    is deliberately not probed: it is the separately-signed Aura Forge-Setup
     launcher (``com.auraforge.desktop.setup``, certificate-anchored), whose
     grants are stable by construction and unaffected by rebuilds.
     """
@@ -1969,11 +1969,11 @@ def run_doctor(args):
         pass
 
     _section("Directory Structure")
-    hermes_home = AURA_FORGE_HOME
-    if hermes_home.exists():
+    aura_forge_home = AURA_FORGE_HOME
+    if aura_forge_home.exists():
         check_ok(f"{_DHH} directory exists")
     elif should_fix:
-        hermes_home.mkdir(parents=True, exist_ok=True)
+        aura_forge_home.mkdir(parents=True, exist_ok=True)
         check_ok(f"Created {_DHH} directory")
         fixed_count += 1
     else:
@@ -1982,7 +1982,7 @@ def run_doctor(args):
     # Check expected subdirectories
     expected_subdirs = ["cron", "sessions", "logs", "skills", "memories"]
     for subdir_name in expected_subdirs:
-        subdir_path = hermes_home / subdir_name
+        subdir_path = aura_forge_home / subdir_name
         if subdir_path.exists():
             check_ok(f"{_DHH}/{subdir_name}/ exists")
         elif should_fix:
@@ -1993,7 +1993,7 @@ def run_doctor(args):
             check_warn(f"{_DHH}/{subdir_name}/ not found", "(will be created on first use)")
     
     # Check for SOUL.md persona file
-    soul_path = hermes_home / "SOUL.md"
+    soul_path = aura_forge_home / "SOUL.md"
     if soul_path.exists():
         content = soul_path.read_text(encoding="utf-8").strip()
         # Check if it's just the template comments (no real content)
@@ -2016,7 +2016,7 @@ def run_doctor(args):
             fixed_count += 1
     
     # Check memory directory
-    memories_dir = hermes_home / "memories"
+    memories_dir = aura_forge_home / "memories"
     if memories_dir.exists():
         check_ok(f"{_DHH}/memories/ directory exists")
         memory_file = memories_dir / "MEMORY.md"
@@ -2039,7 +2039,7 @@ def run_doctor(args):
             fixed_count += 1
     
     # Check SQLite session store
-    state_db_path = hermes_home / "state.db"
+    state_db_path = aura_forge_home / "state.db"
     if state_db_path.exists():
         try:
             import sqlite3
@@ -2086,7 +2086,7 @@ def run_doctor(args):
                 else:
                     issues.append(
                         "state.db FTS write corruption — run 'auraforge doctor --fix' "
-                        "(or 'hermes sessions repair') to rebuild the FTS index"
+                        "(or 'auraforge sessions repair') to rebuild the FTS index"
                     )
         except Exception as e:
             from hermes_state import is_malformed_db_error, repair_state_db_schema
@@ -2132,7 +2132,7 @@ def run_doctor(args):
                 else:
                     issues.append(
                         "state.db schema malformed — run 'auraforge doctor --fix' "
-                        "(or 'hermes sessions repair') to recover hidden sessions"
+                        "(or 'auraforge sessions repair') to recover hidden sessions"
                     )
             else:
                 check_warn(f"{_DHH}/state.db exists but has issues: {e}")
@@ -2157,7 +2157,7 @@ def run_doctor(args):
                             "state.db is large — enable sessions.auto_prune "
                             "in config.yaml"
                             + (
-                                " and run 'hermes sessions optimize-storage' "
+                                " and run 'auraforge sessions optimize-storage' "
                                 "offline (gateway stopped)"
                                 if "optimize-storage" in _detail else ""
                             )
@@ -2170,7 +2170,7 @@ def run_doctor(args):
         check_info(f"{_DHH}/state.db not created yet (will be created on first session)")
 
     # Check WAL file size (unbounded growth indicates missed checkpoints)
-    wal_path = hermes_home / "state.db-wal"
+    wal_path = aura_forge_home / "state.db-wal"
     if wal_path.exists():
         try:
             wal_size = wal_path.stat().st_size
@@ -2202,7 +2202,7 @@ def run_doctor(args):
         # Determine the venv entry point location
         _venv_bin = None
         for _venv_name in ("venv", ".venv"):
-            _candidate = PROJECT_ROOT / _venv_name / "bin" / "hermes"
+            _candidate = PROJECT_ROOT / _venv_name / "bin" / "auraforge"
             if _candidate.exists():
                 _venv_bin = _candidate
                 break
@@ -2216,12 +2216,12 @@ def run_doctor(args):
         else:
             _cmd_link_dir = Path.home() / ".local" / "bin"
             _cmd_link_display = "~/.local/bin"
-        _cmd_link = _cmd_link_dir / "hermes"
+        _cmd_link = _cmd_link_dir / "auraforge"
 
         if _venv_bin is None:
             check_warn(
                 "Venv entry point not found",
-                "(hermes not in venv/bin/ or .venv/bin/ — reinstall with pip install -e '.[all]')"
+                "(auraforge not in venv/bin/ or .venv/bin/ — reinstall with pip install -e '.[all]')"
             )
             manual_issues.append(
                 f"Reinstall entry point: cd {PROJECT_ROOT} && source venv/bin/activate && pip install -e '.[all]'"
@@ -2234,31 +2234,31 @@ def run_doctor(args):
                 _target = _cmd_link.resolve()
                 _expected = _venv_bin.resolve()
                 if _target == _expected:
-                    check_ok(f"{_cmd_link_display}/hermes → correct target")
+                    check_ok(f"{_cmd_link_display}/auraforge → correct target")
                 else:
                     check_warn(
-                        f"{_cmd_link_display}/hermes points to wrong target",
+                        f"{_cmd_link_display}/auraforge points to wrong target",
                         f"(→ {_target}, expected → {_expected})"
                     )
                     if should_fix:
                         _cmd_link.unlink()
                         _cmd_link.symlink_to(_venv_bin)
-                        check_ok(f"Fixed symlink: {_cmd_link_display}/hermes → {_venv_bin}")
+                        check_ok(f"Fixed symlink: {_cmd_link_display}/auraforge → {_venv_bin}")
                         fixed_count += 1
                     else:
-                        issues.append(f"Broken symlink at {_cmd_link_display}/hermes — run 'auraforge doctor --fix'")
+                        issues.append(f"Broken symlink at {_cmd_link_display}/auraforge — run 'auraforge doctor --fix'")
             elif _cmd_link.exists():
                 # It's a regular file, not a symlink — possibly a wrapper script
-                check_ok(f"{_cmd_link_display}/hermes exists (non-symlink)")
+                check_ok(f"{_cmd_link_display}/auraforge exists (non-symlink)")
             else:
                 check_fail(
-                    f"{_cmd_link_display}/hermes not found",
-                    "(hermes command may not work outside the venv)"
+                    f"{_cmd_link_display}/auraforge not found",
+                    "(auraforge command may not work outside the venv)"
                 )
                 if should_fix:
                     _cmd_link_dir.mkdir(parents=True, exist_ok=True)
                     _cmd_link.symlink_to(_venv_bin)
-                    check_ok(f"Created symlink: {_cmd_link_display}/hermes → {_venv_bin}")
+                    check_ok(f"Created symlink: {_cmd_link_display}/auraforge → {_venv_bin}")
                     fixed_count += 1
 
                     # Check if the link dir is on PATH
@@ -2270,7 +2270,7 @@ def run_doctor(args):
                         )
                         manual_issues.append(f"Add {_cmd_link_display} to your PATH")
                 else:
-                    issues.append(f"Missing {_cmd_link_display}/hermes symlink — run 'auraforge doctor --fix'")
+                    issues.append(f"Missing {_cmd_link_display}/auraforge symlink — run 'auraforge doctor --fix'")
 
     _section("External Tools")
     # Git
@@ -2488,7 +2488,7 @@ def run_doctor(args):
     if _safe_which("node"):
         check_ok("Node.js")
         # agent-browser is no longer a root package.json dependency (#43564)
-        # — it resolves lazily via npx (or a global/Hermes-managed install)
+        # — it resolves lazily via npx (or a global/Aura Forge-managed install)
         # at first use. Mirror tools.browser_tool._find_agent_browser's own
         # resolution cascade here so doctor can't diverge from what browser
         # tools will actually find; validate=False keeps this a cheap
@@ -3188,7 +3188,7 @@ def run_doctor(args):
         if q_count > 0:
             check_warn(f"{q_count} skill(s) in quarantine", "(pending review)")
     else:
-        check_warn("Skills Hub directory not initialized", "(run: hermes skills list)")
+        check_warn("Skills Hub directory not initialized", "(run: auraforge skills list)")
 
     from hermes_cli.config import get_env_value
 
@@ -3245,14 +3245,14 @@ def run_doctor(args):
                         f"config file {_honcho_cfg_path} not found, using HONCHO_API_KEY env var",
                     )
                 else:
-                    check_warn("Honcho config not found", "run: hermes memory setup")
+                    check_warn("Honcho config not found", "run: auraforge memory setup")
             elif not hcfg.enabled:
                 check_info(f"Honcho disabled (set enabled: true in {_honcho_cfg_path} to activate)")
             elif not (hcfg.api_key or hcfg.base_url):
                 _fail_and_issue(
                     "Honcho API key or base URL not set",
-                    "run: hermes memory setup",
-                    "No Honcho API key — run 'hermes memory setup'",
+                    "run: auraforge memory setup",
+                    "No Honcho API key — run 'auraforge memory setup'",
                     issues,
                 )
             else:
@@ -3286,7 +3286,7 @@ def run_doctor(args):
             else:
                 _fail_and_issue(
                     "Mem0 API key not set",
-                    "(set MEM0_API_KEY in .env or run hermes memory setup)",
+                    "(set MEM0_API_KEY in .env or run auraforge memory setup)",
                     "Mem0 is set as memory provider but API key is missing",
                     issues,
                 )
@@ -3307,9 +3307,9 @@ def run_doctor(args):
             if _provider and _provider.is_available():
                 check_ok(f"{_active_memory_provider} provider active")
             elif _provider:
-                check_warn(f"{_active_memory_provider} configured but not available", "run: hermes memory status")
+                check_warn(f"{_active_memory_provider} configured but not available", "run: auraforge memory status")
             else:
-                check_warn(f"{_active_memory_provider} plugin not found", "run: hermes memory setup")
+                check_warn(f"{_active_memory_provider} plugin not found", "run: auraforge memory setup")
         except Exception as _e:
             check_warn(f"{_active_memory_provider} check failed", str(_e))
 
@@ -3345,8 +3345,8 @@ def run_doctor(args):
                         continue
                     try:
                         content = wrapper.read_text(encoding="utf-8")
-                        if "hermes -p" in content:
-                            _m = _re.search(r"hermes -p (\S+)", content)
+                        if "auraforge -p" in content:
+                            _m = _re.search(r"auraforge -p (\S+)", content)
                             if _m and not profile_exists(_m.group(1)):
                                 check_warn(f"Orphan alias: {wrapper.name} → profile '{_m.group(1)}' no longer exists")
                     except Exception:

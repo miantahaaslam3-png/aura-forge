@@ -82,7 +82,7 @@ def _get_scratch_dir() -> Path:
 
     scratch = Path("/scratch")
     if scratch.exists() and os.access(scratch, os.W_OK):
-        user_scratch = scratch / os.getenv("USER", "hermes") / "hermes-agent"
+        user_scratch = scratch / os.getenv("USER", "auraforge") / "auraforge-agent"
         user_scratch.mkdir(parents=True, exist_ok=True)
         logger.info("Using /scratch for sandboxes: %s", user_scratch)
         return user_scratch
@@ -190,7 +190,7 @@ class SingularityEnvironment(BaseEnvironment):
         self._memory = memory
 
         if self._persistent:
-            overlay_base = _get_scratch_dir() / "hermes-overlays"
+            overlay_base = _get_scratch_dir() / "auraforge-overlays"
             overlay_base.mkdir(parents=True, exist_ok=True)
             # A raw session-key task_id carries colons and other characters
             # that are unsafe in host path components (same class of bug as

@@ -74,7 +74,7 @@ _PY_SKIP = ("docs/", "website/") + _FRONTEND
 # every CIMD login on main.
 # website/docs/ and website/scripts/ are asserted about the same way. The docs
 # tree generates llms.txt — the index every LLM (Aura Forge included, via the
-# hermes-agent skill) reads to learn what Aura Forge can do — and
+# auraforge-agent skill) reads to learn what Aura Forge can do — and
 # tests/website/test_generate_llms_txt.py holds every page to appearing in it.
 # Skipping Python on a docs-only PR is how the index drifted to 53% coverage.
 _PY_RELEVANT_SITE = (
@@ -109,7 +109,7 @@ _MCP_CATALOG_FILES = {"hermes_cli/mcp_catalog.py"}
 _INSTALLER_PATHS = ("scripts/tests/",)
 _INSTALLER_FILES = {"scripts/install.ps1", "scripts/install.cmd"}
 
-# Rust crates — currently just the Tauri bootstrap installer (Hermes-Setup).
+# Rust crates — currently just the Tauri bootstrap installer (Aura Forge-Setup).
 # These live under ``apps/``, so before this lane existed a ``.rs`` edit matched
 # ``frontend`` and nothing more: the TypeScript matrix built, cargo never ran,
 # and the crate's unit tests had never executed in CI at all.
@@ -141,7 +141,7 @@ def _py_irrelevant(p: str) -> bool:
 def _py_test_only(p: str) -> bool:
     """Is ``p`` inside the test suite (never shipped / imported by the product)?
 
-    Product jobs (Desktop E2E's ``hermes serve`` backend, the Docker image)
+    Product jobs (Desktop E2E's ``auraforge serve`` backend, the Docker image)
     run installed code — nothing under ``tests/`` is packaged or importable
     there. scripts/run_tests.sh and run_tests_parallel.py are deliberately
     NOT test-only: they are runner infrastructure, and a bad edit there can

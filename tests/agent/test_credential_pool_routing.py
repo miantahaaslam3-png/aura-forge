@@ -290,7 +290,7 @@ class TestApiKeyHintRealPool:
     def _seed_pool(self, tmp_path, monkeypatch):
         import json
 
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir(parents=True, exist_ok=True)
         (hermes_home / "auth.json").write_text(
             json.dumps(
@@ -371,7 +371,7 @@ class TestFailureAttribution:
     """
 
     def _make_pool(self, tmp_path, monkeypatch, entries):
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir(parents=True, exist_ok=True)
         monkeypatch.setenv("HERMES_HOME", str(hermes_home))
         # Keep host Anthropic/Claude credentials out of this fixture. load_pool()

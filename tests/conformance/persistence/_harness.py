@@ -134,7 +134,7 @@ def make_hermes_home(base: Path, journal_mode: str) -> Path:
     whenever the configured mode (default ``wal``) says so — on healthy
     SQLite the DELETE leg would silently run in WAL.
     """
-    home = base / f"hermes-home-{journal_mode}"
+    home = base / f"auraforge-home-{journal_mode}"
     home.mkdir(parents=True, exist_ok=True)
     (home / "config.yaml").write_text(
         f"database:\n  journal_mode: {journal_mode}\n", encoding="utf-8"

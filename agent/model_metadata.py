@@ -2524,7 +2524,7 @@ _CODEX_OAUTH_CONTEXT_FALLBACK: Dict[str, int] = {
 # explicit ``-900k`` picker variants (e.g. ``gpt-5.6-sol-900k``) — the base
 # slugs keep the advertised 272K so the cheaper limit is the default. A
 # week of the 900K default burned through subscription usage for people
-# who never asked for it. The variant suffix is a Hermes-side alias: it is
+# who never asked for it. The variant suffix is a Aura Forge-side alias: it is
 # stripped before the model id hits the wire (see
 # ``strip_codex_context_variant_suffix`` callers in agent/transports/codex.py
 # and agent/auxiliary_client.py).
@@ -2549,7 +2549,7 @@ _CODEX_OAUTH_VERIFIED_ABOVE_ADVERTISED_EXACT: Dict[str, int] = {
 # The advertised value the verified-above table is allowed to override.
 _CODEX_OAUTH_STALE_ADVERTISED_CTX = 272_000
 
-# Hermes-side picker suffix that opts a Codex slug into the live-verified
+# Aura Forge-side picker suffix that opts a Codex slug into the live-verified
 # large window. Never sent on the wire.
 CODEX_CONTEXT_VARIANT_SUFFIX = "-900k"
 
@@ -3430,7 +3430,7 @@ def get_model_context_length(
                 return or_ctx
 
     # 7. Query local server before hardcoded defaults — model names like
-    # ``Hermes-3-Llama-3.1-70B`` substring-match ``llama`` (131072) even when
+    # ``Aura Forge-3-Llama-3.1-70B`` substring-match ``llama`` (131072) even when
     # vLLM is running at a lower ``--max-model-len`` (e.g. 32768 on limited VRAM).
     if base_url and is_local_endpoint(base_url):
         local_ctx = _query_local_context_length(model, base_url, api_key=api_key)

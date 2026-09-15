@@ -100,7 +100,7 @@ def boba_like(tmp_path, monkeypatch):
     """Install a synthetic 8-col × 9-row pet into a temp HERMES_HOME."""
     from PIL import Image
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
 

@@ -198,12 +198,12 @@ def test_relay_protocol_drives_operation_and_codec(
 
 
 def test_relay_metadata_preserves_provider_name():
-    metadata = {"api_mode": "chat_completions", "hermes.provider": "explicit"}
+    metadata = {"api_mode": "chat_completions", "auraforge.provider": "explicit"}
 
     assert relay_llm._relay_metadata("openrouter", metadata) == metadata
     assert relay_llm._relay_metadata("openrouter", {"api_mode": "chat_completions"}) == {
         "api_mode": "chat_completions",
-        "hermes.provider": "openrouter",
+        "auraforge.provider": "openrouter",
     }
 
 
@@ -313,13 +313,13 @@ def test_stream_uses_rewritten_request_and_post_intercept_chunks(relay_turn):
         ])
 
     relay.intercepts.register_llm_request(
-        "hermes-test-request",
+        "auraforge-test-request",
         1,
         False,
         rewrite_request,
     )
     relay.intercepts.register_llm_stream_execution(
-        "hermes-test-stream",
+        "auraforge-test-stream",
         1,
         rewrite_stream,
     )
@@ -351,8 +351,8 @@ def test_stream_uses_rewritten_request_and_post_intercept_chunks(relay_turn):
         )
         chunks = list(stream)
     finally:
-        relay.intercepts.deregister_llm_stream_execution("hermes-test-stream")
-        relay.intercepts.deregister_llm_request("hermes-test-request")
+        relay.intercepts.deregister_llm_stream_execution("auraforge-test-stream")
+        relay.intercepts.deregister_llm_request("auraforge-test-request")
 
     assert captured_requests[0]["temperature"] == 0.25
     assert captured_requests[0]["extra_headers"] == {
@@ -1084,7 +1084,7 @@ def test_stream_current_unwraps_completed_response_with_real_interceptor(relay_t
         return await next_call(request)
 
     relay.intercepts.register_llm_stream_execution(
-        "hermes-test-prime-completed",
+        "auraforge-test-prime-completed",
         1,
         identity_stream,
     )
@@ -1101,7 +1101,7 @@ def test_stream_current_unwraps_completed_response_with_real_interceptor(relay_t
         assert result is completed
     finally:
         relay.intercepts.deregister_llm_stream_execution(
-            "hermes-test-prime-completed"
+            "auraforge-test-prime-completed"
         )
 
 
@@ -1118,7 +1118,7 @@ def test_stream_current_preserves_real_relay_interceptor_chunks(relay_turn):
         return generate()
 
     relay.intercepts.register_llm_stream_execution(
-        "hermes-test-prime-stream",
+        "auraforge-test-prime-stream",
         1,
         rewrite_stream,
     )
@@ -1139,7 +1139,7 @@ def test_stream_current_preserves_real_relay_interceptor_chunks(relay_turn):
         assert result.output_modified is True
     finally:
         relay.intercepts.deregister_llm_stream_execution(
-            "hermes-test-prime-stream"
+            "auraforge-test-prime-stream"
         )
 
 

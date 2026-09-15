@@ -28,7 +28,7 @@ fireworks = ProviderProfile(
     # generic profile.default_headers path, so they survive switch_model and
     # credential rotation.
     default_headers={
-        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "HTTP-Referer": "https://auraforge-agent.nousresearch.com",
         "X-Title": "Aura Forge Agent",
         "User-Agent": f"HermesAgent/{_HERMES_VERSION}",
     },

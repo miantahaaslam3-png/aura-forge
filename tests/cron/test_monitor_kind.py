@@ -31,7 +31,7 @@ import pytest
 @pytest.fixture
 def hermes_env(tmp_path, monkeypatch):
     """Isolate HERMES_HOME for each test so jobs/scripts/snapshots don't leak."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     (home / "scripts").mkdir()
     (home / "cron").mkdir()

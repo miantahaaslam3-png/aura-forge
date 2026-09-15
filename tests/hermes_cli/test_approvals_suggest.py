@@ -1,4 +1,4 @@
-"""Tests for ``hermes approvals suggest`` (hermes_cli/approvals_suggest.py).
+"""Tests for ``auraforge approvals suggest`` (hermes_cli/approvals_suggest.py).
 
 Approval history in Aura Forge is implied, not ledgered: the session DB
 (state.db) stores every assistant ``terminal`` tool call plus its paired

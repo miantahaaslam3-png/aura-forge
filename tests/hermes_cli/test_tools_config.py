@@ -37,24 +37,24 @@ from hermes_cli.tools_config import (
 
 def test_all_invalid_platform_toolsets_logs_runtime_warning(caplog):
     """#38798: an explicit platform config whose toolset names are all invalid
-    (e.g. 'hermes' instead of 'hermes-cli') must warn at resolve time so an
+    (e.g. 'auraforge' instead of 'auraforge-cli') must warn at resolve time so an
     already-corrupted config is caught at runtime, not just during migration."""
     import hermes_cli.tools_config as _tc
     # The runtime warning fires once per platform per process; clear the guard
     # so this test is deterministic regardless of prior resolutions.
     _tc._warned_invalid_platform_toolsets.discard("cli")
-    config = {"platform_toolsets": {"cli": ["hermes"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge"]}}
 
     with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
         _get_platform_tools(config, "cli")
 
     warnings = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
-    assert any("#38798" in m and "hermes" in m for m in warnings), warnings
+    assert any("#38798" in m and "auraforge" in m for m in warnings), warnings
 
 
 def test_valid_platform_toolsets_no_runtime_warning(caplog):
     """A correctly-configured platform must not emit the #38798 warning."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge-cli"]}}
 
     with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
         _get_platform_tools(config, "cli")
@@ -66,7 +66,7 @@ def test_partially_valid_platform_toolsets_no_runtime_warning(caplog):
     """When at least one configured toolset is valid, tools still resolve, so
     the runtime zero-tools warning must not fire (the migration-time check still
     flags the individual bad name)."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "bogus"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge-cli", "bogus"]}}
 
     with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
         _get_platform_tools(config, "cli")
@@ -119,7 +119,7 @@ def test_get_platform_tools_homeassistant_uses_active_profile_token(monkeypatch)
 
 # ─── #35527: platform-restricted default-off toolsets (discord/discord_admin)
 # are stripped by _DEFAULT_OFF_TOOLSETS even when the user explicitly opts in
-# via the platform's native composite. The composite ``hermes-discord``
+# via the platform's native composite. The composite ``auraforge-discord``
 # contains both ``discord`` and ``discord_admin`` tools, so configuring it is
 # an explicit opt-in that should survive the default-off strip. ───────────────
 
@@ -128,7 +128,7 @@ def test_discord_toolsets_do_not_leak_to_other_platforms():
     """Layer 4 (guard): discord/discord_admin are platform-restricted — they
     must never appear on a non-discord platform even when that platform is
     explicitly configured."""
-    config = {"platform_toolsets": {"telegram": ["hermes-telegram", "discord"]}}
+    config = {"platform_toolsets": {"telegram": ["auraforge-telegram", "discord"]}}
     enabled = _get_platform_tools(config, "telegram")
     assert "discord" not in enabled
     assert "discord_admin" not in enabled
@@ -280,11 +280,11 @@ class TestPlatformToolsetConsistency:
             )
 
     def test_gateway_toolset_includes_all_messaging_platforms(self):
-        """hermes-gateway includes list should cover all messaging platforms."""
+        """auraforge-gateway includes list should cover all messaging platforms."""
         from hermes_cli.tools_config import PLATFORMS
         from toolsets import TOOLSETS
 
-        gateway_includes = set(TOOLSETS["hermes-gateway"]["includes"])
+        gateway_includes = set(TOOLSETS["auraforge-gateway"]["includes"])
         # Exclude non-messaging platforms from the check
         non_messaging = {"cli", "api_server", "cron"}
         for platform, meta in PLATFORMS.items():
@@ -293,7 +293,7 @@ class TestPlatformToolsetConsistency:
             ts_name = meta["default_toolset"]
             assert ts_name in gateway_includes, (
                 f"Platform {platform!r} toolset {ts_name!r} missing from "
-                f"hermes-gateway includes"
+                f"auraforge-gateway includes"
             )
 
     def test_skills_config_covers_tools_config_platforms(self):
@@ -352,7 +352,7 @@ class TestAgentBrowserPostSetup:
 
     agent-browser is no longer a root package.json dependency (there's no
     local `npm install` step anymore); it resolves at runtime via
-    tools.browser_tool._find_agent_browser (PATH -> Homebrew/Hermes-managed
+    tools.browser_tool._find_agent_browser (PATH -> Homebrew/Aura Forge-managed
     node -> local .bin -> npx). This class exercises the Chromium-install
     branch of _run_post_setup, which now delegates to that same resolution
     cascade instead of hand-rolling its own node_modules/.bin/agent-browser
@@ -477,12 +477,12 @@ class TestAgentBrowserPostSetup:
         ]
 
     def test_installs_chromium_via_npx_resolved_only_through_extended_path(self):
-        """Hermes-managed-Node-only setups: npx resolves via
+        """Aura Forge-managed-Node-only setups: npx resolves via
         _find_agent_browser's extended-PATH fallback, not a bare PATH lookup.
         The install command must use that same resolved npx, not silently
         hand subprocess.run a None argument from a bare shutil.which('npx')
         re-derivation (#43564 regression — Copilot review, task #9)."""
-        hermes_npx = "/home/user/.hermes/node/bin/npx"
+        hermes_npx = "/home/user/.auraforge/node/bin/npx"
         with patch("shutil.which", return_value=None), patch(
             "subprocess.run"
         ) as run, patch(
@@ -788,7 +788,7 @@ class TestImagegenModelPicker:
 def test_get_effective_configurable_toolsets_dedupes_bundled_plugins():
     """Bundled plugins (plugins/spotify) share their toolset key with the
     built-in CONFIGURABLE_TOOLSETS entry. The effective list must not list
-    them twice — otherwise `hermes tools` → "reconfigure existing" shows
+    them twice — otherwise `auraforge tools` → "reconfigure existing" shows
     the same toolset two rows in a row.
     """
     from hermes_cli.tools_config import _get_effective_configurable_toolsets
@@ -824,13 +824,13 @@ def test_get_effective_configurable_toolsets_dedupes_bundled_plugins():
 
 
 # ── Checklist diff scope: non-configurable toolsets (kanban) must not be
-#    reported as added/removed by `hermes tools` ──────────────────────────
+#    reported as added/removed by `auraforge tools` ──────────────────────────
 
 
 
 
 def test_kanban_not_reported_as_removed_in_diff():
-    """Reproduces the false-signal bug: `hermes tools` printed ``- kanban``
+    """Reproduces the false-signal bug: `auraforge tools` printed ``- kanban``
     when saving a platform that resolves kanban as enabled, even though the
     checklist never offered kanban as a toggle.
 
@@ -974,7 +974,7 @@ def test_visible_providers_reuses_pool_video_feature_snapshot(monkeypatch):
 # ── Windows console-flash guard for post-setup subprocess spawns ──────────────
 #
 # The desktop GUI runs post-setup hooks through a detached, console-less
-# `hermes tools post-setup <key>` child. On Windows each console child (npm,
+# `auraforge tools post-setup <key>` child. On Windows each console child (npm,
 # npx, pip, powershell) spawned without CREATE_NO_WINDOW materializes a brand
 # new console window — the "terminal flash" reported on the Capabilities
 # browser-setup journey. `_post_setup_no_window_flags` is the single wrapper
@@ -993,10 +993,10 @@ def test_visible_providers_reuses_pool_video_feature_snapshot(monkeypatch):
 # ("browserbase") only the CLI, and camofox its npm package.
 
 
-# ── Toolsets that shipped after a platform's last `hermes tools` save ────────
+# ── Toolsets that shipped after a platform's last `auraforge tools` save ────────
 #
 # Saving the picker (or one toggle in the desktop Toolsets UI) replaces a
-# platform's composite (``[hermes-cli]``) with a frozen explicit list, and
+# platform's composite (``[auraforge-cli]``) with a frozen explicit list, and
 # nothing ever adds to that list — so a toolset shipped later stays off
 # forever, while everyone still on the composite inherits it on upgrade.
 # ``_RECENTLY_SHIPPED_TOOLSETS`` closes that gap for toolsets new enough that
@@ -1037,7 +1037,7 @@ def test_saved_list_gains_toolsets_that_shipped_after_it_was_written():
     """The bug: a frozen list never gained a newly shipped toolset, so
     composite users got it on upgrade and picker users silently did not."""
     on_composite = _get_platform_tools(
-        {"platform_toolsets": {"cli": ["hermes-cli"]}},
+        {"platform_toolsets": {"cli": ["auraforge-cli"]}},
         "cli",
         include_default_mcp_servers=False,
     )
@@ -1052,7 +1052,7 @@ def test_saved_list_gains_toolsets_that_shipped_after_it_was_written():
 def test_unchecking_the_new_toolset_sticks():
     """Saving records it as offered, so the next read reads absence as a
     decline instead of turning it back on."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge-cli"]}}
     enabled = _get_platform_tools(config, "cli", include_default_mcp_servers=False)
     with patch("hermes_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", enabled - _RECENTLY_SHIPPED_TOOLSETS)
@@ -1076,7 +1076,7 @@ def test_agent_disabled_toolsets_still_wins():
 @_requires_recently_shipped
 def test_agent_disabled_toolsets_json_array_string_form_still_wins():
     """#86661: the suppression list may arrive as a JSON-array string (e.g.
-    `hermes config set agent.disabled_toolsets '["memory"]'`). It must be
+    `auraforge config set agent.disabled_toolsets '["memory"]'`). It must be
     parsed, not treated as one dead toolset name that filters nothing."""
     config = _saved_list_from_before()
     import json as _json
@@ -1106,16 +1106,16 @@ def test_agent_disabled_toolsets_python_literal_string_form_still_wins():
 @_requires_recently_shipped
 def test_platforms_whose_composite_excludes_it_are_left_narrow():
     """Parity is the justification, so don't widen a deliberately small
-    composite (hermes-acp, hermes-webhook) that never carried the toolset."""
+    composite (auraforge-acp, auraforge-webhook) that never carried the toolset."""
     from toolsets import TOOLSETS, resolve_toolset
 
     narrow = [
         platform
         for platform in ("acp", "webhook")
-        if f"hermes-{platform}" in TOOLSETS
+        if f"auraforge-{platform}" in TOOLSETS
         and not any(
             set(resolve_toolset(ts, include_registry=False))
-            <= set(resolve_toolset(f"hermes-{platform}"))
+            <= set(resolve_toolset(f"auraforge-{platform}"))
             for ts in _RECENTLY_SHIPPED_TOOLSETS
         )
     ]
@@ -1138,7 +1138,7 @@ def test_platforms_whose_composite_excludes_it_are_left_narrow():
 def test_explicit_plugin_toolset_admitted_in_platform_toolsets(monkeypatch):
     """When a plugin toolset key is explicitly listed under
     ``platform_toolsets.<platform>`` (alongside a composite like
-    ``hermes-cli``), it MUST be admitted as a configurable key instead of
+    ``auraforge-cli``), it MUST be admitted as a configurable key instead of
     being silently dropped by the has_explicit_config filter.
 
     Reproduces the second half of #81163: even after the eager register_tools
@@ -1187,9 +1187,9 @@ def test_explicit_plugin_toolset_admitted_in_platform_toolsets(monkeypatch):
     )
 
     # An explicit platform_toolsets list with a plugin key alongside the
-    # standard composite — exactly the "I want hermes-cli AND a2a in my CLI
+    # standard composite — exactly the "I want auraforge-cli AND a2a in my CLI
     # session" config the issue's user was trying to write.
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "dplat_client"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge-cli", "dplat_client"]}}
 
     enabled = _get_platform_tools(config, "cli")
 
@@ -1201,7 +1201,7 @@ def test_explicit_plugin_toolset_admitted_in_platform_toolsets(monkeypatch):
 
 def test_explicit_plugin_toolset_admitted_against_real_a2a_plugin(monkeypatch):
     """End-to-end Layer 2 regression: with the bundled a2a plugin enabled and
-    a real config like ``platform_toolsets.cli: [hermes-cli, a2a]``, ``a2a``
+    a real config like ``platform_toolsets.cli: [auraforge-cli, a2a]``, ``a2a``
     must appear in the resolved enabled toolset set. Before the fix, the
     filter dropped all non-CONFIGURABLE keys (a2a included)."""
     # Discover real plugins so _get_plugin_toolset_keys() sees the a2a key.
@@ -1213,7 +1213,7 @@ def test_explicit_plugin_toolset_admitted_against_real_a2a_plugin(monkeypatch):
     if "a2a" not in plugin_ts_keys:
         pytest.skip("bundled a2a plugin not discoverable in this worktree")
 
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "a2a"]}}
+    config = {"platform_toolsets": {"cli": ["auraforge-cli", "a2a"]}}
     enabled = _get_platform_tools(config, "cli")
     assert "a2a" in enabled, (
         f"plugin-provided 'a2a' toolset dropped by _get_platform_tools "

@@ -169,10 +169,10 @@ def persist_personality(value: Any) -> bool:
     """
     name = normalize_personality_name(value)
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
         from utils import atomic_roundtrip_yaml_update
 
-        config_path = get_hermes_home() / "config.yaml"
+        config_path = get_aura_forge_home() / "config.yaml"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_roundtrip_yaml_update(config_path, "display.personality", name)
         try:

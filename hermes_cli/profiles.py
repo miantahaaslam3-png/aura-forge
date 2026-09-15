@@ -5,18 +5,18 @@ Each profile is a fully independent AURA_FORGE_HOME directory with its own
 config.yaml, .env, memory, sessions, skills, gateway, cron, and logs.
 Profiles live under ``~/.aura-forge/profiles/<name>/`` by default.
 
-The "default" profile is ``~/.hermes`` itself — backward compatible,
+The "default" profile is ``~/.auraforge`` itself — backward compatible,
 zero migration needed.
 
 Usage::
 
-    hermes profile create coder          # fresh profile + bundled skills
-    hermes profile create coder --clone  # also copy config, .env, SOUL.md, skills
-    hermes profile create coder --clone-all  # full copy of source profile
+    auraforge profile create coder          # fresh profile + bundled skills
+    auraforge profile create coder --clone  # also copy config, .env, SOUL.md, skills
+    auraforge profile create coder --clone-all  # full copy of source profile
     coder chat                           # use via wrapper alias
-    hermes -p coder chat                 # or via flag
-    hermes profile use coder             # set as sticky default
-    hermes profile delete coder          # remove profile + alias + service
+    auraforge -p coder chat                 # or via flag
+    auraforge profile use coder             # set as sticky default
+    auraforge profile delete coder          # remove profile + alias + service
 """
 
 import json
@@ -93,7 +93,7 @@ _CLONE_ALL_STRIP: list[str] = [
 ]
 
 # Infrastructure artifacts excluded from --clone-all when the source is the
-# default profile (``~/.hermes``).  Named profiles never contain these
+# default profile (``~/.auraforge``).  Named profiles never contain these
 # directories at root, so the exclusion is gated to avoid silently dropping
 # user data from a named-profile source.
 #
@@ -141,7 +141,7 @@ _CLONE_ALL_HISTORY_EXCLUDE_ROOT: frozenset[str] = frozenset({
 })
 
 # Marker file written by `auraforge profile create --no-skills`.  When present in
-# a profile's root, callers of seed_profile_skills() (fresh-create, `hermes
+# a profile's root, callers of seed_profile_skills() (fresh-create, `auraforge
 # update`'s all-profile sync, the web dashboard) skip bundled-skill seeding
 # for that profile.  The user can still install skills manually via
 # `auraforge skills install` or drop SKILL.md files into the profile's skills/.
@@ -166,7 +166,7 @@ def _clone_all_copytree_ignore(source_dir: Path):
          and should never carry into a fresh clone.  Applies to any source.
       2. Root-level entries in ``_CLONE_ALL_DEFAULT_EXCLUDE_ROOT`` — known
          Aura Forge infrastructure directories that only the default profile
-         (``~/.hermes``) ever contains.  Gated on ``source_dir`` actually
+         (``~/.auraforge``) ever contains.  Gated on ``source_dir`` actually
          being the default profile so a named-profile source never has its
          own data silently dropped.
       3. Universal exclusions at any depth — Python bytecode caches that
@@ -179,7 +179,7 @@ def _clone_all_copytree_ignore(source_dir: Path):
     clone.
     """
     source_resolved = source_dir.resolve()
-    is_default_source = source_resolved == _get_default_hermes_home().resolve()
+    is_default_source = source_resolved == _get_default_aura_forge_home().resolve()
 
     def _ignore(directory: str, names: List[str]) -> List[str]:
         ignored: list[str] = []
@@ -211,7 +211,7 @@ def _clone_all_copytree_ignore(source_dir: Path):
     return _ignore
 
 
-# Directories/files to exclude when exporting the default (~/.hermes) profile.
+# Directories/files to exclude when exporting the default (~/.auraforge) profile.
 # The default profile contains infrastructure (repo checkout, worktrees, DBs,
 # caches, binaries) that named profiles don't have.  We exclude those so the
 # export is a portable, reasonable-size archive of actual profile data.
@@ -263,7 +263,7 @@ _DEFAULT_EXPORT_INCLUDE_ROOT = frozenset({
 
 # Names that cannot be used as profile aliases
 _RESERVED_NAMES = frozenset({
-    "hermes", "default", "test", "tmp", "root", "sudo",
+    "auraforge", "default", "test", "tmp", "root", "sudo",
 })
 
 # Aura Forge subcommands that cannot be used as profile names/aliases
@@ -282,22 +282,22 @@ _HERMES_SUBCOMMANDS = frozenset({
 def _get_profiles_root() -> Path:
     """Return the directory where named profiles are stored.
 
-    Anchored to the hermes root, NOT to the current AURA_FORGE_HOME
+    Anchored to the Aura Forge root, NOT to the current AURA_FORGE_HOME
     (which may itself be a profile).  This ensures ``coder profile list``
     can see all profiles.
 
     In Docker/custom deployments where AURA_FORGE_HOME points outside
-    ``~/.hermes``, profiles live under ``AURA_FORGE_HOME/profiles/`` so
+    ``~/.auraforge``, profiles live under ``AURA_FORGE_HOME/profiles/`` so
     they persist on the mounted volume.
     """
-    return _get_default_hermes_home() / "profiles"
+    return _get_default_aura_forge_home() / "profiles"
 
 
-def _get_default_hermes_home() -> Path:
+def _get_default_aura_forge_home() -> Path:
     """Return the default (pre-profile) AURA_FORGE_HOME path.
 
-    In standard deployments this is ``~/.hermes``.
-    In Docker/custom deployments where AURA_FORGE_HOME is outside ``~/.hermes``
+    In standard deployments this is ``~/.auraforge``.
+    In Docker/custom deployments where AURA_FORGE_HOME is outside ``~/.auraforge``
     (e.g. ``/opt/data``), returns AURA_FORGE_HOME directly.
     """
     from hermes_constants import get_default_hermes_root
@@ -306,7 +306,7 @@ def _get_default_hermes_home() -> Path:
 
 def _get_active_profile_path() -> Path:
     """Return the path to the sticky active_profile file."""
-    return _get_default_hermes_home() / "active_profile"
+    return _get_default_aura_forge_home() / "active_profile"
 
 
 def _get_wrapper_dir() -> Path:
@@ -352,7 +352,7 @@ def validate_profile_name(name: str) -> None:
     it's a valid alias for the built-in root profile.
     """
     if name == "default":
-        return  # special alias for ~/.hermes
+        return  # special alias for ~/.auraforge
     if not _PROFILE_ID_RE.match(name):
         raise ValueError(
             f"Invalid profile name {name!r}. Must match "
@@ -386,7 +386,7 @@ def get_profile_dir(name: str) -> Path:
     """Resolve a profile name to its AURA_FORGE_HOME directory."""
     canon = normalize_profile_name(name)
     if canon == "default":
-        return _get_default_hermes_home()
+        return _get_default_aura_forge_home()
     return _get_profiles_root() / canon
 
 
@@ -403,7 +403,7 @@ def profile_matches_home(name: str, home: "Path | None" = None) -> bool:
     """Return True when *name* refers to the profile served from *home*.
 
     ``home`` defaults to the process's current Aura Forge home
-    (:func:`hermes_constants.get_hermes_home`).  Used by single-profile
+    (:func:`hermes_constants.get_aura_forge_home`).  Used by single-profile
     gateways to decide whether a ``/p/<profile>/`` URL prefix is
     self-referential (safe to serve on the bare route) or names a *different*
     profile — in which case the request must fail closed rather than silently
@@ -417,9 +417,9 @@ def profile_matches_home(name: str, home: "Path | None" = None) -> bool:
         return False
     if home is None:
         try:
-            from hermes_constants import get_hermes_home
+            from hermes_constants import get_aura_forge_home
 
-            home = get_hermes_home()
+            home = get_aura_forge_home()
         except Exception:
             return False
     try:
@@ -457,7 +457,7 @@ def list_profile_names() -> List[str]:
 def check_alias_collision(name: str) -> Optional[str]:
     """Return a human-readable collision message, or None if the name is safe.
 
-    Checks: alias-name validity, reserved names, hermes subcommands, existing
+    Checks: alias-name validity, reserved names, auraforge subcommands, existing
     binaries in PATH.
     """
     canon = normalize_profile_name(name)
@@ -468,7 +468,7 @@ def check_alias_collision(name: str) -> Optional[str]:
     if canon in _RESERVED_NAMES:
         return f"'{canon}' is a reserved name"
     if canon in _HERMES_SUBCOMMANDS:
-        return f"'{canon}' conflicts with a hermes subcommand"
+        return f"'{canon}' conflicts with a auraforge subcommand"
 
     # Check existing commands in PATH
     wrapper_dir = _get_wrapper_dir()
@@ -485,7 +485,7 @@ def check_alias_collision(name: str) -> Optional[str]:
             if existing_path == str(expected):
                 try:
                     content = expected.read_text(encoding="utf-8")
-                    if "hermes -p" in content:
+                    if "auraforge -p" in content:
                         return None  # it's our wrapper, safe to overwrite
                 except Exception:
                     pass
@@ -528,7 +528,7 @@ def create_wrapper_script(name: str, target: Optional[str] = None) -> Optional[P
     if is_windows:
         wrapper_path = wrapper_dir / f"{canon}.bat"
         try:
-            wrapper_path.write_text(f"@echo off\r\nhermes -p {profile} %*\r\n", encoding="utf-8")
+            wrapper_path.write_text(f"@echo off\r\nauraforge -p {profile} %*\r\n", encoding="utf-8")
             return wrapper_path
         except OSError as e:
             print(f"⚠ Could not create wrapper at {wrapper_path}: {e}")
@@ -536,7 +536,7 @@ def create_wrapper_script(name: str, target: Optional[str] = None) -> Optional[P
     else:
         wrapper_path = wrapper_dir / canon
         try:
-            hermes_exe = shutil.which("hermes") or "hermes"
+            hermes_exe = shutil.which("auraforge") or "auraforge"
             wrapper_path.write_text(f'#!/bin/sh\nexec {shlex.quote(hermes_exe)} -p {profile} "$@"\n', encoding="utf-8")
             wrapper_path.chmod(wrapper_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
             return wrapper_path
@@ -567,7 +567,7 @@ def remove_wrapper_script(name: str) -> bool:
             try:
                 # Verify it's our wrapper before removing
                 content = wrapper_path.read_text(encoding="utf-8")
-                if "hermes -p" in content:
+                if "auraforge -p" in content:
                     wrapper_path.unlink()
                     return True
             except Exception:
@@ -589,16 +589,16 @@ def _migrate_profile_config_if_outdated(profile_dir: Path) -> None:
         return
 
     try:
-        from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+        from hermes_constants import reset_aura_forge_home_override, set_aura_forge_home_override
         from hermes_cli.config import check_config_version, migrate_config
 
-        token = set_hermes_home_override(str(profile_dir))
+        token = set_aura_forge_home_override(str(profile_dir))
         try:
             current_ver, latest_ver = check_config_version()
             if current_ver < latest_ver:
                 migrate_config(interactive=False, quiet=True)
         finally:
-            reset_hermes_home_override(token)
+            reset_aura_forge_home_override(token)
     except Exception:
         # Profile creation should not fail because an old copied config could
         # not be migrated. The next `auraforge doctor --fix` can still surface the
@@ -650,7 +650,7 @@ def build_alias_map() -> dict[str, str]:
     if not wrapper_dir.is_dir():
         return result
     is_windows = sys.platform == "win32"
-    prefix = "hermes -p "
+    prefix = "auraforge -p "
 
     for entry in sorted(wrapper_dir.iterdir()):
         if not entry.is_file():
@@ -787,10 +787,10 @@ def _seed_model_config(profile_dir: Path) -> None:
         return
     try:
         import yaml
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
         from hermes_cli.config import read_user_config_raw
 
-        source = get_hermes_home() / "config.yaml"
+        source = get_aura_forge_home() / "config.yaml"
         if not source.is_file():
             return
         model_cfg = read_user_config_raw(source).get("model")
@@ -1032,7 +1032,7 @@ def list_profiles() -> List[ProfileInfo]:
     wrapper_dir = _get_wrapper_dir()
 
     # Default profile
-    default_home = _get_default_hermes_home()
+    default_home = _get_default_aura_forge_home()
     if default_home.is_dir():
         model, provider = _read_config_model(default_home)
         dist_name, dist_version, dist_source = _read_distribution_meta(default_home)
@@ -1106,7 +1106,7 @@ def profiles_to_serve(
     multiplex: bool,
     profile_allowlist: Optional[List[str]] = None,
 ) -> List[Tuple[str, Path]]:
-    """Return the ``(profile_name, hermes_home)`` pairs a gateway should serve.
+    """Return the ``(profile_name, aura_forge_home)`` pairs a gateway should serve.
 
     This is the single chokepoint for "which profiles does the inbound gateway
     handle" so later multiplexing phases never re-derive the set.
@@ -1124,14 +1124,14 @@ def profiles_to_serve(
     per-profile config reads, gateway-running probes, or skill counts like
     :func:`list_profiles`. It runs on gateway startup and must stay cheap.
 
-    The returned ``hermes_home`` is the path to pass to
-    ``set_hermes_home_override`` when scoping a turn to that profile.
+    The returned ``aura_forge_home`` is the path to pass to
+    ``set_aura_forge_home_override`` when scoping a turn to that profile.
     """
     active = get_active_profile_name() or "default"
     if not multiplex:
         return [(active, get_profile_dir(active))]
 
-    serve: List[Tuple[str, Path]] = [("default", _get_default_hermes_home())]
+    serve: List[Tuple[str, Path]] = [("default", _get_default_aura_forge_home())]
     allowed: Optional[set[str]] = None
     if profile_allowlist is not None:
         allowed = set()
@@ -1220,7 +1220,7 @@ def create_profile(
 
     if canon == "default":
         raise ValueError(
-            "Cannot create a profile named 'default' — it is the built-in profile (~/.hermes)."
+            "Cannot create a profile named 'default' — it is the built-in profile (~/.auraforge)."
         )
 
     profile_dir = get_profile_dir(canon)
@@ -1239,8 +1239,8 @@ def create_profile(
     if clone_from is not None or clone_all or clone_config:
         if clone_from is None:
             # Default: clone from active profile
-            from hermes_constants import get_hermes_home
-            source_dir = get_hermes_home()
+            from hermes_constants import get_aura_forge_home
+            source_dir = get_aura_forge_home()
         else:
             clone_from = normalize_profile_name(clone_from)
             validate_profile_name(clone_from)
@@ -1439,7 +1439,7 @@ def backfill_profile_envs(quiet: bool = False) -> List[str]:
     if not profiles_root.is_dir():
         return backfilled
 
-    default_env = _get_default_hermes_home() / ".env"
+    default_env = _get_default_aura_forge_home() / ".env"
 
     for entry in sorted(profiles_root.iterdir()):
         if not entry.is_dir() or not _PROFILE_ID_RE.match(entry.name):
@@ -1515,20 +1515,20 @@ def _profile_bound_backend_pids(canon: str, profile_dir: Path) -> list[int]:
         current_user = None
 
     backend_tokens = {"serve", "dashboard", "gateway"}
-    hermes_markers = ("hermes_cli.main", "hermes-gateway", "tui_gateway")
+    hermes_markers = ("hermes_cli.main", "auraforge-gateway", "tui_gateway")
     # Matches python / python3 / python3.12 / pythonw(.exe) — the interpreter
     # basenames a `#!/…/python3` console-script shim gets exec'd through when
-    # something (e.g. Electron's `findOnPath('hermes')` resolution) spawns the
+    # something (e.g. Electron's `findOnPath('auraforge')` resolution) spawns the
     # shim by handing the interpreter its path explicitly instead of running
     # the shim directly. In that shape the OS-reported argv[0] is the
-    # interpreter, not "hermes", so the checks below would otherwise miss it.
+    # interpreter, not "auraforge", so the checks below would otherwise miss it.
     _python_interpreter_re = re.compile(r"^python[\d.]*w?(\.exe)?$")
     # The actual console-script entry points this project ships (see
     # pyproject.toml [project.scripts]) -- used to validate argv[1] against
     # a known shim identity rather than a loose prefix match, since argv[1]
     # can be ANY user-invoked python script path when argv[0] is a bare
     # interpreter.
-    _HERMES_CONSOLE_SCRIPT_NAMES = frozenset({"hermes", "aura-forge-agent", "hermes-acp"})
+    _HERMES_CONSOLE_SCRIPT_NAMES = frozenset({"auraforge", "aura-forge-agent", "auraforge-acp"})
     pids: list[int] = []
 
     for proc in psutil.process_iter(["pid", "name", "username", "cmdline"]):
@@ -1552,19 +1552,19 @@ def _profile_bound_backend_pids(canon: str, profile_dir: Path) -> list[int]:
             exe_name = os.path.basename(argv[0]).lower()
             is_hermes = (
                 any(marker in joined for marker in hermes_markers)
-                or exe_name == "hermes"
-                or exe_name.startswith("hermes")
+                or exe_name == "auraforge"
+                or exe_name.startswith("auraforge")
             )
             if not is_hermes and len(argv) >= 2 and _python_interpreter_re.match(exe_name):
                 # Match against the actual known console-script entry points
-                # (pyproject.toml [project.scripts]: hermes, aura-forge-agent,
-                # hermes-acp) rather than a bare `startswith("hermes")` --
+                # (pyproject.toml [project.scripts]: auraforge, aura-forge-agent,
+                # auraforge-acp) rather than a bare `startswith("auraforge")` --
                 # that looser check is fine for a directly-resolved executable
                 # name (argv[0] IS the interpreter there, so a false match is
                 # rare), but here argv[1] can be ANY user-invoked python
                 # script path, and a bare prefix match would misidentify an
                 # unrelated script the user happens to name e.g.
-                # "hermes-notes.py" or "hermes-unrelated-tool" as the shim,
+                # "auraforge-notes.py" or "auraforge-unrelated-tool" as the shim,
                 # making it killable by profile delete.
                 script_name = os.path.basename(str(argv[1])).lower()
                 script_stem = script_name.rsplit(".", 1)[0] if "." in script_name else script_name
@@ -1695,8 +1695,8 @@ def delete_profile(name: str, yes: bool = False) -> Path:
 
     if canon == "default":
         raise ValueError(
-            "Cannot delete the default profile (~/.hermes).\n"
-            "To remove everything, use: hermes uninstall"
+            "Cannot delete the default profile (~/.auraforge).\n"
+            "To remove everything, use: auraforge uninstall"
         )
 
     profile_dir = get_profile_dir(canon)
@@ -1762,7 +1762,7 @@ def delete_profile(name: str, yes: bool = False) -> Path:
     # 2b. Stop any other backends bound to this profile (Desktop-spawned
     # serve/dashboard processes the gateway.pid file never names). They hold
     # the profile's SQLite connection open and keep writing files, which makes
-    # the rmtree below fail with ENOTEMPTY and — before the ensure_hermes_home
+    # the rmtree below fail with ENOTEMPTY and — before the ensure_aura_forge_home
     # guard — resurrected the deleted tree.
     _stop_profile_backends(canon, profile_dir)
 
@@ -2056,7 +2056,7 @@ def set_active_profile(name: str) -> None:
     if canon != "default" and not profile_exists(canon):
         raise FileNotFoundError(
             f"Profile '{canon}' does not exist. "
-            f"Create it with: hermes profile create {canon}"
+            f"Create it with: auraforge profile create {canon}"
         )
 
     path = _get_active_profile_path()
@@ -2074,15 +2074,15 @@ def set_active_profile(name: str) -> None:
 def get_active_profile_name() -> str:
     """Infer the current profile name from AURA_FORGE_HOME.
 
-    Returns ``"default"`` if AURA_FORGE_HOME is not set or points to ``~/.hermes``.
+    Returns ``"default"`` if AURA_FORGE_HOME is not set or points to ``~/.auraforge``.
     Returns the profile name if AURA_FORGE_HOME points into ``~/.aura-forge/profiles/<name>``.
     Returns ``"custom"`` if AURA_FORGE_HOME is set to an unrecognized path.
     """
-    from hermes_constants import get_hermes_home
-    hermes_home = get_hermes_home()
-    resolved = hermes_home.resolve()
+    from hermes_constants import get_aura_forge_home
+    aura_forge_home = get_aura_forge_home()
+    resolved = aura_forge_home.resolve()
 
-    default_resolved = _get_default_hermes_home().resolve()
+    default_resolved = _get_default_aura_forge_home().resolve()
     if resolved == default_resolved:
         return "default"
 
@@ -2244,8 +2244,8 @@ def export_profile(name: str, output_path: str, extra_files: Optional[Dict[str, 
             target.write_text(content, encoding="utf-8")
 
     if canon == "default":
-        # The default profile IS ~/.hermes itself — its parent is ~/ and its
-        # directory name is ".hermes", not "default".  We stage a clean copy
+        # The default profile IS ~/.auraforge itself — its parent is ~/ and its
+        # directory name is ".aura-forge", not "default".  We stage a clean copy
         # under a temp dir so the archive contains ``default/...``.
         with tempfile.TemporaryDirectory() as tmpdir:
             staged = Path(tmpdir) / "default"
@@ -2294,7 +2294,7 @@ def import_profile(archive_path: str, name: Optional[str] = None) -> Path:
     if not inferred_name:
         raise ValueError(
             "Cannot determine profile name from archive. "
-            "Specify it explicitly: hermes profile import <archive> --name <name>"
+            "Specify it explicitly: auraforge profile import <archive> --name <name>"
         )
     if archive_root is None:
         raise ValueError(
@@ -2302,14 +2302,14 @@ def import_profile(archive_path: str, name: Optional[str] = None) -> Path:
         )
 
     # Archives exported from the default profile have "default/" as top-level
-    # dir.  Importing as "default" would target ~/.hermes itself — disallow
+    # dir.  Importing as "default" would target ~/.auraforge itself — disallow
     # that and guide the user toward a named profile.
     canon = normalize_profile_name(inferred_name)
     validate_profile_name(canon)
     if canon == "default":
         raise ValueError(
-            "Cannot import as 'default' — that is the built-in root profile (~/.hermes). "
-            "Specify a different name: hermes profile import <archive> --name <name>"
+            "Cannot import as 'default' — that is the built-in root profile (~/.auraforge). "
+            "Specify a different name: auraforge profile import <archive> --name <name>"
         )
 
     profile_dir = get_profile_dir(canon)
@@ -2346,12 +2346,12 @@ def import_profile(archive_path: str, name: Optional[str] = None) -> Path:
 def _migrate_honcho_profile_host(old_name: str, new_name: str, new_dir: Path) -> None:
     """Rename Honcho host blocks for a renamed profile without changing peers."""
     old_host = f"hermes_{old_name}"
-    legacy_old_host = f"hermes.{old_name}"
+    legacy_old_host = f"auraforge.{old_name}"
     new_host = f"hermes_{new_name}"
 
     candidates = [
         new_dir / "honcho.json",
-        _get_default_hermes_home() / "honcho.json",
+        _get_default_aura_forge_home() / "honcho.json",
         Path.home() / ".honcho" / "config.json",
     ]
 
@@ -2421,7 +2421,7 @@ def rename_profile(old_name: str, new_name: str) -> Path:
             raise ValueError("Display name cannot be empty.")
         cleaned = set_profile_display_name("default", new_name)
         print(f"✓ Display name set: {cleaned} (canonical id remains 'default')")
-        return _get_default_hermes_home()
+        return _get_default_aura_forge_home()
 
     new_canon = normalize_profile_name(new_name)
     validate_profile_name(new_canon)
@@ -2476,14 +2476,14 @@ def rename_profile(old_name: str, new_name: str) -> Path:
 def resolve_profile_env(profile_name: str) -> str:
     """Resolve a profile name to a AURA_FORGE_HOME path string.
 
-    Called early in the CLI entry point, before any hermes modules
+    Called early in the CLI entry point, before any auraforge modules
     are imported, to set the AURA_FORGE_HOME environment variable.
 
     When AURA_FORGE_HOME is already set, the configured spelling IS the
     launch root (it may be a junction/symlink alias of the platform
     default).  Keep that spelling so profile re-home does not destroy
     the launcher's lexical provenance -- the subprocess sanitizer needs
-    it to match Hermes-owned PYTHONPATH entries written in the same
+    it to match Aura Forge-owned PYTHONPATH entries written in the same
     spelling (#82581 junction follow-up).  Physically the paths are
     identical (junction-transparent); only the spelling is preserved.
     """
@@ -2496,7 +2496,7 @@ def resolve_profile_env(profile_name: str) -> str:
         # (mirrors get_default_hermes_root()).
         root = env_path.parent.parent if env_path.parent.name == "profiles" else env_path
     else:
-        root = _get_default_hermes_home()
+        root = _get_default_aura_forge_home()
     if canon == "default":
         return str(root)
     profile_dir = root / "profiles" / canon
@@ -2504,7 +2504,7 @@ def resolve_profile_env(profile_name: str) -> str:
     if not profile_dir.is_dir() or named_profile_is_deleted(profile_dir):
         raise FileNotFoundError(
             f"Profile '{canon}' does not exist. "
-            f"Create it with: hermes profile create {canon}"
+            f"Create it with: auraforge profile create {canon}"
         )
 
     return str(profile_dir)

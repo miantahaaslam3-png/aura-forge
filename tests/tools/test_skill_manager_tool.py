@@ -31,7 +31,7 @@ from agent.skill_utils import (
 @contextmanager
 def _skill_dir(tmp_path):
     """Patch both SKILLS_DIR and get_all_skills_dirs so _find_skill searches
-    only the temp directory — not the real ~/.hermes/skills/."""
+    only the temp directory — not the real ~/.auraforge/skills/."""
     with patch("tools.skill_manager_tool.SKILLS_DIR", tmp_path), \
          patch("agent.skill_utils.get_all_skills_dirs", return_value=[tmp_path]):
         yield
@@ -707,7 +707,7 @@ class TestExternalSkillMutations:
 
     Regression for issues #4759 and #4381: the read-only gate used to refuse
     with 'Skill X is in an external directory and cannot be modified', which
-    caused agents to create duplicate copies in ~/.hermes/skills/ as a
+    caused agents to create duplicate copies in ~/.auraforge/skills/ as a
     workaround.
     """
 
@@ -821,8 +821,8 @@ class TestBackgroundOwnershipPolicyConsistency:
     def test_repeated_identical_write_gets_the_same_answer(self, tmp_path, monkeypatch):
         """The real #67140 shape: no stubbing of load_usage, so the first write's
         telemetry side effect is live. Both attempts must agree."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
-        (tmp_path / ".hermes" / "skills").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
+        (tmp_path / ".auraforge" / "skills").mkdir(parents=True, exist_ok=True)
         with _skill_dir(tmp_path):
             _create_skill("flip-skill", VALID_SKILL_CONTENT)
             first = self._bg_patch(
@@ -841,7 +841,7 @@ class TestBackgroundOwnershipPolicyConsistency:
     def test_foreground_write_to_unmanaged_skill_still_allowed(self, tmp_path, monkeypatch):
         """Fail-closed applies to AUTONOMOUS writes only. A user-directed
         foreground edit to their own skill must keep working."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
         with _skill_dir(tmp_path):
             _create_skill("no-record", VALID_SKILL_CONTENT)
             with patch("tools.skill_usage.load_usage", return_value={}):
@@ -853,7 +853,7 @@ class TestBackgroundOwnershipPolicyConsistency:
 
     def test_adopted_skill_becomes_writable_by_autonomous_curation(self, tmp_path, monkeypatch):
         """Adoption is the documented path from refused to allowed."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
         with _skill_dir(tmp_path):
             _create_skill("adopt-me", VALID_SKILL_CONTENT)
             with patch("tools.skill_usage.load_usage", return_value={}):
@@ -878,7 +878,7 @@ class TestBackgroundOwnershipPolicyConsistency:
 # ---------------------------------------------------------------------------
 # Pinned-skill guard — skill_manage refuses only `delete` on pinned skills.
 # Patches and edits go through so pinned skills can still evolve as pitfalls
-# come up. The user unpins via `hermes curator unpin <name>` to delete.
+# come up. The user unpins via `auraforge curator unpin <name>` to delete.
 # ---------------------------------------------------------------------------
 
 class TestPinnedGuard:
@@ -911,7 +911,7 @@ class TestPinnedGuard:
         assert result["success"] is False
         assert "pinned" in result["error"].lower()
         assert "cannot be deleted" in result["error"]
-        assert "hermes curator unpin my-skill" in result["error"]
+        assert "auraforge curator unpin my-skill" in result["error"]
         # Skill still exists
         assert (tmp_path / "my-skill" / "SKILL.md").exists()
 
@@ -998,7 +998,7 @@ class TestDeleteSkillRmtreeGuard:
 def _curator_pass(tmp_path, *, monkeypatch):
     """Run the body as the curator/background-review fork.
 
-    Points HERMES_HOME at ``tmp_path/.hermes`` so skill_usage's archive path
+    Points HERMES_HOME at ``tmp_path/.auraforge`` so skill_usage's archive path
     (``get_hermes_home()``) resolves into the same tree the skill manager
     searches, and flips ``is_background_review()`` → True so the consolidation
     guard fires.
@@ -1012,7 +1012,7 @@ def _curator_pass(tmp_path, *, monkeypatch):
     here; tests that specifically exercise the ownership guard set their own
     records instead.
     """
-    hermes_home = tmp_path / ".hermes"
+    hermes_home = tmp_path / ".auraforge"
     skills_root = hermes_home / "skills"
     skills_root.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("HERMES_HOME", str(hermes_home))
@@ -1133,7 +1133,7 @@ class TestCuratorConsolidationDeleteGuard:
         _reset_background_review_read_marks()
         with _curator_pass(tmp_path, monkeypatch=monkeypatch):
             _create_curator_skill("reviewed", _skill_content("reviewed"))
-            ref = tmp_path / ".hermes" / "skills" / "reviewed" / "references"
+            ref = tmp_path / ".auraforge" / "skills" / "reviewed" / "references"
             ref.mkdir()
             (ref / "workflow.md").write_text("old workflow\n", encoding="utf-8")
 

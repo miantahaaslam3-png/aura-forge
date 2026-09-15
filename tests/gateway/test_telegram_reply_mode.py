@@ -116,7 +116,7 @@ class TestTelegramYamlConfigLoading:
     """Tests for reply_to_mode loaded from config.yaml telegram section."""
 
     def _write_config(self, tmp_path, content: str):
-        hermes_home = tmp_path / ".hermes"
+        hermes_home = tmp_path / ".auraforge"
         hermes_home.mkdir()
         (hermes_home / "config.yaml").write_text(content, encoding="utf-8")
         return hermes_home
@@ -153,7 +153,7 @@ class TestDMTopicFallbackReplyToMode:
     """Tests for reply_to_mode enforcement on DM topic fallback paths.
 
     Regression tests for https://github.com/miantahaaslam3-png/aura-forge/issues/23994:
-    reply_to_mode 'off' was ignored when sending via Hermes-created DM topic
+    reply_to_mode 'off' was ignored when sending via Aura Forge-created DM topic
     lanes (telegram_dm_topic_reply_fallback metadata), causing quote bubbles
     despite the user setting reply_to_mode: 'off'.
     """

@@ -26,7 +26,7 @@ try:
     import hermes_bootstrap  # noqa: F401
 except ModuleNotFoundError:
     # Graceful fallback when hermes_bootstrap isn't registered in the venv
-    # yet — happens during partial ``hermes update`` where git-reset landed
+    # yet — happens during partial ``auraforge update`` where git-reset landed
     # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
     # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.
     pass
@@ -70,7 +70,7 @@ def _launch_cwd_for_session(source: str) -> Optional[str]:
     """Working directory to stamp on a new session row, or None.
 
     Only local CLI sessions get a recorded cwd: the directory the process was
-    launched from is meaningful for ``hermes -c`` / ``--resume`` (relaunch
+    launched from is meaningful for ``auraforge -c`` / ``--resume`` (relaunch
     where you left off). Gateway/cron/remote-backend sessions have no stable
     host cwd to restore, so they record nothing.
 
@@ -359,8 +359,8 @@ def _safe_session_filename_component(session_id: str) -> str:
     """Return a stable, path-safe filename component for a session ID.
 
     Session IDs can originate from untrusted input (e.g. the
-    ``X-Hermes-Session-Id`` API header) and are otherwise interpolated raw
-    into on-disk artifact filenames under ``~/.hermes/sessions/``.  Without
+    ``X-Aura Forge-Session-Id`` API header) and are otherwise interpolated raw
+    into on-disk artifact filenames under ``~/.auraforge/sessions/``.  Without
     sanitization, a traversal-shaped ID such as ``../../../../etc/pwned``
     would let a caller write the session snapshot / request dump outside the
     sessions directory.  This collapses every non ``[A-Za-z0-9_-]`` character
@@ -428,7 +428,7 @@ class AIAgent:
     """
 
     _TOOL_CALL_ARGUMENTS_CORRUPTION_MARKER = (
-        "[hermes-agent: tool call arguments were corrupted in this session and "
+        "[auraforge-agent: tool call arguments were corrupted in this session and "
         "have been dropped to keep the conversation alive. See issue #15236.]"
     )
 
@@ -661,7 +661,7 @@ class AIAgent:
             # Carry the live YOLO bypass into the creation-time model_config so
             # a session whose /yolo was toggled BEFORE the row existed (the row
             # is created lazily on the first turn) still persists the flag for
-            # `hermes --resume`. set_session_yolo() no-ops on a missing row, so
+            # `auraforge --resume`. set_session_yolo() no-ops on a missing row, so
             # this is the only chance to record a pre-first-turn toggle.
             _init_model_config = self._session_init_model_config
             try:
@@ -937,7 +937,7 @@ class AIAgent:
         all non-forced output is suppressed.
 
         ``suppress_status_output`` is a stricter CLI automation mode used by
-        parseable single-query flows such as ``hermes chat -q``. In that mode,
+        parseable single-query flows such as ``auraforge chat -q``. In that mode,
         all status/diagnostic prints routed through ``_vprint`` are suppressed
         so stdout stays machine-readable.
         """
@@ -977,7 +977,7 @@ class AIAgent:
         quiet mode to be truly silent.
 
         ``suppress_status_output`` (the strict machine-readable mode used by
-        ``hermes chat -Q``) always wins: those flows neutralize the rendering
+        ``auraforge chat -Q``) always wins: those flows neutralize the rendering
         callbacks, and without this gate the "no callback owns rendering"
         fallback would print ``[tool]``/``[done]`` spinner lines into the
         captured stdout it exists to keep clean (#93220).
@@ -1554,7 +1554,7 @@ class AIAgent:
         This helper substitutes an actionable hint into the stale-timeout
         warning when the request matches a known silent-reject pattern.
         Currently flagged: ``gpt-5.5`` family on the Codex backend.  See
-        hermes-agent #21444 for the symptom history.  The upstream backend
+        auraforge-agent #21444 for the symptom history.  The upstream backend
         behavior has historically come and gone with ChatGPT entitlement
         changes — the heuristic stays in place as future-proofing even when
         the symptom is dormant.
@@ -1585,7 +1585,7 @@ class AIAgent:
             "Workaround: try `gpt-5.4` on the same OAuth profile, or `gpt-5.3-codex`, "
             "or switch to a different model/provider in your fallback chain. "
             "Some ChatGPT Codex accounts do not support `gpt-5.4-codex`. "
-            "See hermes-agent#21444 for symptom history."
+            "See auraforge-agent#21444 for symptom history."
         )
 
     def _is_openrouter_url(self) -> bool:
@@ -3189,7 +3189,7 @@ class AIAgent:
 
         Gated by ``sessions.write_json_snapshots`` (default False).  state.db
         is the canonical message store; this writer exists only for users
-        whose external tooling consumes ``~/.hermes/sessions/session_{sid}.json``
+        whose external tooling consumes ``~/.auraforge/sessions/session_{sid}.json``
         directly.  When the flag is off this is a fast no-op.
 
         When enabled, rewrites the snapshot after every persistence point with
@@ -3209,7 +3209,7 @@ class AIAgent:
         # session-id changes land in the right file without any re-point
         # bookkeeping at the call sites.  Sanitize the session ID into a
         # single traversal-free path segment — session IDs can come from
-        # untrusted input (X-Hermes-Session-Id header) and must not escape
+        # untrusted input (X-Aura Forge-Session-Id header) and must not escape
         # the sessions directory.
         try:
             safe_sid = _safe_session_filename_component(self.session_id)
@@ -3712,7 +3712,7 @@ class AIAgent:
             if changed is not None:
                 changed.update(landed_paths)
             # Feed the checkpoint agent-write ledger so /rollback's safe mode
-            # can tell Hermes-authored content from later user hand-edits.
+            # can tell Aura Forge-authored content from later user hand-edits.
             mgr = getattr(self, "_checkpoint_mgr", None)
             if mgr is not None and getattr(mgr, "enabled", False):
                 for _p in landed_paths:
@@ -3816,7 +3816,7 @@ class AIAgent:
         path and any path echoed inside the tool's error preview — is
         backtick-wrapped via ``_neutralize_footer_paths`` so the gateway's
         bare-path media extractor can never auto-attach a protected file
-        (e.g. ``~/.hermes/config.yaml``) to a messaging channel (#35584).
+        (e.g. ``~/.auraforge/config.yaml``) to a messaging channel (#35584).
         """
         if not failed:
             return ""
@@ -4031,10 +4031,10 @@ class AIAgent:
                     "reported structural corruption (the transcript would "
                     "have been lost on restart). Freeing disk space will "
                     "not help. Recovery options:\n"
-                    "1. Run `hermes doctor --fix`\n"
-                    "2. Salvage with: sqlite3 ~/.hermes/state.db \".recover\" "
+                    "1. Run `auraforge doctor --fix`\n"
+                    "2. Salvage with: sqlite3 ~/.auraforge/state.db \".recover\" "
                     "(then replace state.db)\n"
-                    "3. Restore from a backup in ~/.hermes/backups/\n"
+                    "3. Restore from a backup in ~/.auraforge/backups/\n"
                     "Then send your message again."
                 )
             if cause == "disk":
@@ -4050,7 +4050,7 @@ class AIAgent:
                 prefix
                 + "the turn was stopped because session storage could not be "
                 "written (the transcript would have been lost on restart). "
-                "Check the state database health (`hermes doctor`), then "
+                "Check the state database health (`auraforge doctor`), then "
                 "send your message again."
             )
         # Unknown/diagnostic-only reasons (e.g. "unknown", guardrail_halt
@@ -4286,7 +4286,7 @@ class AIAgent:
             self._credits_session_start_micros = state.remaining_micros
         if _dev:
             # HERMES_DEV_CREDITS: stream each capture to agent.log — watch live with
-            # `hermes logs -f` (grep 'credits ▸'). Dev-only; silent for normal users.
+            # `auraforge logs -f` (grep 'credits ▸'). Dev-only; silent for normal users.
             spent = self.get_credits_spent_micros()
             used = state.used_fraction
             logger.info(
@@ -5796,7 +5796,7 @@ class AIAgent:
         # Guard against silent account swap.
         #
         # When an agent is using a non-singleton credential — e.g. a manual
-        # pool entry (``hermes auth add xai-oauth``) whose tokens belong to
+        # pool entry (``auraforge auth add xai-oauth``) whose tokens belong to
         # a different account than the device_code singleton, or an agent
         # constructed with an explicit ``api_key=`` arg — force-refreshing
         # the singleton here and adopting its tokens silently re-routes the
@@ -5929,9 +5929,9 @@ class AIAgent:
         return True
 
     def _try_refresh_env_client_credentials(self) -> bool:
-        """Adopt ~/.hermes/.env credential/base-url edits at the turn boundary.
+        """Adopt ~/.auraforge/.env credential/base-url edits at the turn boundary.
 
-        A Settings save (desktop ``PUT /api/env``, ``hermes setup``) updates
+        A Settings save (desktop ``PUT /api/env``, ``auraforge setup``) updates
         ``.env`` and the *saving* process's os.environ, but a live session
         worker keeps the base_url/api_key captured at agent init until it
         restarts — so an open chat silently keeps calling the old endpoint

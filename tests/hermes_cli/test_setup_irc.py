@@ -1,4 +1,4 @@
-"""Tests for IRC gateway configuration via `hermes setup gateway` UI.
+"""Tests for IRC gateway configuration via `auraforge setup gateway` UI.
 
 Covers the full plugin-platform discovery → status → configure flow so that
 a fresh Aura Forge install (no state, no env vars) can set up IRC through the
@@ -86,8 +86,8 @@ class TestIRCFreshInstallDiscovery:
         plat = _register_irc_platform()
         try:
             monkeypatch.setenv("IRC_SERVER", "irc.libera.chat")
-            monkeypatch.setenv("IRC_CHANNEL", "#hermes")
-            monkeypatch.setenv("IRC_NICKNAME", "hermes-bot")
+            monkeypatch.setenv("IRC_CHANNEL", "#auraforge")
+            monkeypatch.setenv("IRC_NICKNAME", "auraforge-bot")
 
             status = gateway_mod._platform_status(plat)
             assert status == "configured"
@@ -141,7 +141,7 @@ class TestIRCInteractiveSetup:
 
 
 class TestIRCGatewaySetupFreshInstall:
-    """Simulate the full `hermes setup gateway` experience with IRC present."""
+    """Simulate the full `auraforge setup gateway` experience with IRC present."""
 
     def test_setup_gateway_shows_irc_in_platform_menu(self, monkeypatch, capsys, tmp_path):
         """The gateway setup menu lists IRC among the available platforms."""
@@ -198,8 +198,8 @@ class TestIRCGatewaySetupFreshInstall:
         _register_irc_platform()
         try:
             monkeypatch.setenv("IRC_SERVER", "irc.libera.chat")
-            monkeypatch.setenv("IRC_CHANNEL", "#hermes")
-            monkeypatch.setenv("IRC_NICKNAME", "hermes-bot")
+            monkeypatch.setenv("IRC_CHANNEL", "#auraforge")
+            monkeypatch.setenv("IRC_NICKNAME", "auraforge-bot")
 
             monkeypatch.setattr(setup_mod, "prompt_yes_no", lambda *a, **kw: False)
             monkeypatch.setattr(setup_mod, "prompt_choice", lambda *a, **kw: 0)

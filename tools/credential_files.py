@@ -61,7 +61,7 @@ def _resolve_hermes_home() -> Path:
 
 def register_credential_file(
     relative_path: str,
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> bool:
     """Register a credential file for mounting into remote sandboxes.
 
@@ -150,7 +150,7 @@ def register_credential_file(
 
 def register_credential_files(
     entries: list,
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> List[str]:
     """Register multiple credential files from skill frontmatter entries.
 
@@ -206,7 +206,7 @@ def _load_config_files() -> List[Dict[str, str]]:
                         continue
                     resolved_path = host_path.resolve()
                     if resolved_path.is_file():
-                        container_path = f"/root/.hermes/{rel}"
+                        container_path = f"/root/.auraforge/{rel}"
                         result.append({
                             "host_path": str(resolved_path),
                             "container_path": container_path,
@@ -245,7 +245,7 @@ def get_credential_file_mounts() -> List[Dict[str, str]]:
 
 
 def get_skills_directory_mount(
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> list[Dict[str, str]]:
     """Return mount info for all skill directories (local + external).
 
@@ -321,7 +321,7 @@ def _safe_skills_path(skills_dir: Path) -> str:
     if _safe_skills_tempdir and _safe_skills_tempdir.is_dir():
         shutil.rmtree(_safe_skills_tempdir, ignore_errors=True)
 
-    safe_dir = Path(tempfile.mkdtemp(prefix="hermes-skills-safe-"))
+    safe_dir = Path(tempfile.mkdtemp(prefix="auraforge-skills-safe-"))
     _safe_skills_tempdir = safe_dir
 
     for item in skills_dir.rglob("*"):
@@ -345,7 +345,7 @@ def _safe_skills_path(skills_dir: Path) -> str:
 
 
 def iter_skills_files(
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> List[Dict[str, str]]:
     """Yield individual (host_path, container_path) entries for skills files.
 
@@ -435,7 +435,7 @@ _CACHE_DIRS: list[tuple[str, str]] = [
 
 
 def get_cache_directory_mounts(
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> List[Dict[str, str]]:
     """Return mount entries for each cache directory that exists on disk.
 
@@ -472,14 +472,14 @@ def get_cache_directory_mounts(
 
 def map_cache_path_to_container(
     host_path: str,
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> Optional[str]:
     """Map a host cache path to its mounted path under *container_base*.
 
     Returns the POSIX container path when *host_path* lives under one of the
     auto-mounted cache directories, otherwise ``None``.  Backend-agnostic: the
-    caller decides which ``container_base`` applies (Docker ``/root/.hermes``,
-    SSH ``<remote_home>/.hermes``, etc.) and whether translation is wanted.
+    caller decides which ``container_base`` applies (Docker ``/root/.auraforge``,
+    SSH ``<remote_home>/.auraforge``, etc.) and whether translation is wanted.
     Always joins with ``posixpath`` because container/remote paths are POSIX
     regardless of the host OS.
     """
@@ -496,7 +496,7 @@ def map_cache_path_to_container(
 
 def from_agent_visible_cache_path(
     container_path: str,
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> str:
     """Translate a sandbox/container cache path back to its host path.
 
@@ -520,7 +520,7 @@ def from_agent_visible_cache_path(
 
 def to_agent_visible_cache_path(
     host_path: str,
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> str:
     """Translate a host cache path to its mounted path inside the sandbox.
 
@@ -533,9 +533,9 @@ def to_agent_visible_cache_path(
     backend's Aura Forge cache lands):
 
     * docker / modal — bind-mounted (docker) or per-file-synced (modal) at
-      ``/root/.hermes`` (the *container_base* default).
+      ``/root/.auraforge`` (the *container_base* default).
     * ssh / daytona / vercel_sandbox — file-synced under the remote user's
-      home; ``~/.hermes`` is shell-expanded by the remote shell, so tool
+      home; ``~/.auraforge`` is shell-expanded by the remote shell, so tool
       commands resolve it regardless of the actual remote home. Previously
       these backends synced the bytes but still rendered the dangling host
       path (#76577 gap).
@@ -548,9 +548,9 @@ def to_agent_visible_cache_path(
     """
     backend = (os.environ.get("TERMINAL_ENV") or "local").strip().lower()
     if backend in ("docker", "modal"):
-        pass  # /root/.hermes default
+        pass  # /root/.auraforge default
     elif backend in ("ssh", "daytona", "vercel_sandbox"):
-        container_base = "~/.hermes"
+        container_base = "~/.auraforge"
     else:
         # Plugin-registered backends declare where synced cache files land
         # via ``cache_path_base``; None means host paths remain correct.
@@ -570,7 +570,7 @@ def to_agent_visible_cache_path(
 
 
 def iter_cache_files(
-    container_base: str = "/root/.hermes",
+    container_base: str = "/root/.auraforge",
 ) -> List[Dict[str, str]]:
     """Return individual (host_path, container_path) entries for cache files.
 

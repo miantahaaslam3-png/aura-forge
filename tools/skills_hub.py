@@ -734,7 +734,7 @@ class GitHubSource(SkillSource):
         tags = []
         metadata = fm.get("metadata", {})
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("hermes", {})
+            hermes_meta = metadata.get("auraforge", {})
             if isinstance(hermes_meta, dict):
                 tags = hermes_meta.get("tags", [])
         if not tags:
@@ -1487,7 +1487,7 @@ class UrlSource(SkillSource):
         tags: List[str] = []
         metadata = fm.get("metadata", {})
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("hermes", {})
+            hermes_meta = metadata.get("auraforge", {})
             if isinstance(hermes_meta, dict):
                 raw_tags = hermes_meta.get("tags", [])
                 if isinstance(raw_tags, list):
@@ -3123,7 +3123,7 @@ class LobeHubSource(SkillSource):
             f"name: {identifier}",
             f"description: {description[:500]}",
             "metadata:",
-            "  hermes:",
+            "  auraforge:",
             f"    tags: [{', '.join(str(t) for t in tag_list)}]",
             "  lobehub:",
             "    source: lobehub",
@@ -3329,7 +3329,7 @@ class OptionalSkillSource(SkillSource):
 
     These skills are official (maintained by Nous Research) but not activated
     by default — they don't appear in the system prompt and aren't copied to
-    ~/.hermes/skills/ during setup.  They are discoverable via the Skills Hub
+    ~/.auraforge/skills/ during setup.  They are discoverable via the Skills Hub
     (search / install / inspect) and labelled "official" with "builtin" trust.
     """
 
@@ -3490,7 +3490,7 @@ class OptionalSkillSource(SkillSource):
 
         Local installs lag `main` — a freshly merged optional skill isn't in
         the user's `optional-skills/` checkout until they run
-        ``hermes update``. Rather than telling them to update first, resolve
+        ``auraforge update``. Rather than telling them to update first, resolve
         the skill against the live default branch.
 
         ``rel`` is the identifier without the ``official/`` prefix — either
@@ -3635,7 +3635,7 @@ class OptionalSkillSource(SkillSource):
             tags = []
             meta_block = fm.get("metadata", {})
             if isinstance(meta_block, dict):
-                hermes_meta = meta_block.get("hermes", {})
+                hermes_meta = meta_block.get("auraforge", {})
                 if isinstance(hermes_meta, dict):
                     tags = hermes_meta.get("tags", [])
 
@@ -4220,12 +4220,12 @@ def check_for_skill_updates(
 # Aura Forge centralized index source
 # ---------------------------------------------------------------------------
 
-HERMES_INDEX_URL = "https://hermes-agent.nousresearch.com/docs/api/skills-index.json"
+HERMES_INDEX_URL = "https://auraforge-agent.nousresearch.com/docs/api/skills-index.json"
 HERMES_INDEX_TTL = 6 * 3600  # 6 hours
 
 
 def _hermes_index_cache_file() -> Path:
-    return _index_cache_dir() / "hermes-index.json"
+    return _index_cache_dir() / "auraforge-index.json"
 
 
 def _load_hermes_index() -> Optional[dict]:
@@ -4345,7 +4345,7 @@ class HermesIndexSource(SkillSource):
         return self._github
 
     def source_id(self) -> str:
-        return "hermes-index"
+        return "auraforge-index"
 
     @property
     def is_available(self) -> bool:
@@ -4432,7 +4432,7 @@ class HermesIndexSource(SkillSource):
         if resolved:
             bundle = self._get_github().fetch(resolved)
             if bundle:
-                bundle.source = entry.get("source", "hermes-index")
+                bundle.source = entry.get("source", "auraforge-index")
                 bundle.identifier = identifier
                 return bundle
 
@@ -4443,7 +4443,7 @@ class HermesIndexSource(SkillSource):
             github_id = f"{repo}/{path}"
             bundle = self._get_github().fetch(github_id)
             if bundle:
-                bundle.source = entry.get("source", "hermes-index")
+                bundle.source = entry.get("source", "auraforge-index")
                 bundle.identifier = identifier
                 return bundle
 
@@ -4492,7 +4492,7 @@ class HermesIndexSource(SkillSource):
         return SkillMeta(
             name=entry.get("name", ""),
             description=entry.get("description", ""),
-            source=entry.get("source", "hermes-index"),
+            source=entry.get("source", "auraforge-index"),
             identifier=entry.get("identifier", ""),
             trust_level=entry.get("trust_level", "community"),
             repo=entry.get("repo"),
@@ -4577,7 +4577,7 @@ def parallel_search_sources(
                                   "lobehub", "well-known"})
     if _effective_filter == "all":
         for src in sources:
-            if (src.source_id() == "hermes-index"
+            if (src.source_id() == "auraforge-index"
                     and getattr(src, "is_available", False)):
                 _index_available = True
                 break

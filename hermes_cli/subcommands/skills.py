@@ -20,7 +20,7 @@ def build_skills_parser(subparsers, *, cmd_skills: Callable) -> None:
 
     skills_trust = skills_subparsers.add_parser(
         "trust",
-        help="Trust a project so its repo-local skills (./.hermes/skills, ./.agents/skills) load",
+        help="Trust a project so its repo-local skills (./.auraforge/skills, ./.agents/skills) load",
     )
     skills_trust.add_argument(
         "path",
@@ -194,7 +194,7 @@ def build_skills_parser(subparsers, *, cmd_skills: Callable) -> None:
         help="Reset a bundled skill — clears 'user-modified' tracking so updates work again",
         description=(
             "Clear a bundled skill's entry from the sync manifest (~/.aura-forge/skills/.bundled_manifest) "
-            "so future 'hermes update' runs stop marking it as user-modified. Pass --restore to also "
+            "so future 'auraforge update' runs stop marking it as user-modified. Pass --restore to also "
             "replace the current copy with the bundled version."
         ),
     )

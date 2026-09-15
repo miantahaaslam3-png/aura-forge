@@ -2,7 +2,7 @@
 """
 apply_aura_branding.py — Aura Forge rebrand engine.
 
-Replaces all user-visible "Hermes" references with "Aura Forge" in the
+Replaces all user-visible "Aura Forge" references with "Aura Forge" in the
 codebase while preserving internal identifiers (hermes_cli, HERMES_HOME,
 HermesGateway, etc.). Safe to run multiple times (idempotent).
 
@@ -25,24 +25,24 @@ REPO = Path(__file__).resolve().parent.parent
 # (search_regex, replacement, file_globs, description)
 RULES = [
     # 1. Repo URLs (all files)
-    (r"NousResearch/hermes-agent", "miantahaaslam3-png/aura-forge", None,
+    (r"NousResearch/auraforge-agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL"),
      "repo URL"),
     (r"NousResearch/hermes_agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL (underscore variant)"),
-    (r"NousResearch/hermes\.agent", "miantahaaslam3-png/aura-forge", None,
+    (r"NousResearch/auraforge\.agent", "miantahaaslam3-png/aura-forge", None,
      "repo URL (dot variant)"),
-    (r"github\.com/NousResearch/hermes-agent", "github.com/miantahaaslam3-png/aura-forge", None,
+    (r"github\.com/NousResearch/auraforge-agent", "github.com/miantahaaslam3-png/aura-forge", None,
      "full GitHub URL"),
 
     # 2. App identity (electron main.cjs)
-    (r"APP_NAME\s*=\s*(process\.env\.[A-Z_]+\s*\|\|\s*)?'Hermes'", "APP_NAME = \\1'Aura Forge'", ["*.cjs", "*.ts"],
+    (r"APP_NAME\s*=\s*(process\.env\.[A-Z_]+\s*\|\|\s*)?'Aura Forge'", "APP_NAME = \\1'Aura Forge'", ["*.cjs", "*.ts"],
      "APP_NAME"),
-    (r"setAppUserModelId\('com\.nousresearch\.hermes'\)",
+    (r"setAppUserModelId\('com\.nousresearch\.auraforge'\)",
      "setAppUserModelId('com.auraforge.desktop')", ["*.cjs"],
      "AppUserModelId"),
 
-    (r"WORDMARK\s*=\s*'HERMES AGENT'", "WORDMARK = 'AURA FORGE'", ["*.ts", "*.tsx"],
+    (r"WORDMARK\s*=\s*'AURA_FORGE AGENT'", "WORDMARK = 'AURA FORGE'", ["*.ts", "*.tsx"],
      "wordmark"),
     (r'''(?s)HERMES_AGENT_LOGO = """.*?"""''', '''HERMES_AGENT_LOGO = """[bold #C084FC] █████╗ ██╗   ██╗██████╗  █████╗    ███████╗ ██████╗ ██████╗  ██████╗ ███████╗[/]
 [bold #B47CFF]██╔══██╗██║   ██║██╔══██╗██╔══██╗   ██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝[/]
@@ -69,68 +69,68 @@ RULES = [
 [#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀[/]"""''',
      ["banner.py", "cli.py"],
      "cli hero art"),
-    (r"const APP_NAME = 'Hermes'", "const APP_NAME = 'Aura Forge'", ["*.cjs", "*.ts"],
+    (r"const APP_NAME = 'Aura Forge'", "const APP_NAME = 'Aura Forge'", ["*.cjs", "*.ts"],
      "APP_NAME (simple)"),
 
     # 3. Log prefix
-    (r"\[hermes\]\s", "[aura-forge] ", ["*.ts", "*.tsx", "*.cjs", "*.rs", "*.ps1", "*.sh"],
-     # Aura Forge: restricted to non-Python files to prevent breaking Python list literals like `cmd = [hermes]`
+    (r"\[auraforge\]\s", "[aura-forge] ", ["*.ts", "*.tsx", "*.cjs", "*.rs", "*.ps1", "*.sh"],
+     # Aura Forge: restricted to non-Python files to prevent breaking Python list literals like `cmd = [auraforge]`
      "log prefix"),
 
     # 4. AppUserModelId (all forms)
-    (r"com\.nousresearch\.hermes", "com.auraforge.desktop", None,
+    (r"com\.nousresearch\.auraforge", "com.auraforge.desktop", None,
      "appId"),
 
     # 5. User-visible phrases in Electron main.cjs
-    (r"Waiting to start Hermes backend", "Waiting to start Aura Forge backend", ["*.cjs"],
+    (r"Waiting to start Aura Forge backend", "Waiting to start Aura Forge backend", ["*.cjs"],
      "startup string"),
-    (r"Hermes will start automatically when it completes", "Aura Forge will start automatically when it completes", ["*.cjs"],
+    (r"Aura Forge will start automatically when it completes", "Aura Forge will start automatically when it completes", ["*.cjs"],
      "update string"),
-    (r"existing Hermes Python at", "existing Aura Forge Python at", ["*.cjs"],
+    (r"existing Aura Forge Python at", "existing Aura Forge Python at", ["*.cjs"],
      "python label"),
-    (r"Updating Hermes — this window will close and the updater will open\. Don't reopen Hermes yourself",
+    (r"Updating Aura Forge — this window will close and the updater will open\. Don't reopen Aura Forge yourself",
      "Updating Aura Forge — this window will close and the updater will open. Don't reopen Aura Forge yourself", ["*.cjs"],
      "update dialog"),
-    (r"another process is holding the Hermes install open",
+    (r"another process is holding the Aura Forge install open",
      "another process is holding the Aura Forge install open", ["*.cjs"],
      "lock error"),
-    (r"\(a second Hermes window or a terminal running hermes\?\)",
+    (r"\(a second Aura Forge window or a terminal running auraforge\?\)",
      "(a second Aura Forge window or a terminal running auraforge?)", ["*.cjs"],
      "lock error hint"),
-    (r"Updating Hermes \(git \+ dependencies\)",
+    (r"Updating Aura Forge \(git \+ dependencies\)",
      "Updating Aura Forge (git + dependencies)", ["*.cjs"],
      "update stage"),
-    (r"'An update is finishing — Hermes will start automatically",
+    (r"'An update is finishing — Aura Forge will start automatically",
      "'An update is finishing — Aura Forge will start automatically", ["*.cjs"],
      "update finishing"),
 
     # 6. Desktop frontend user-visible strings
-    (r"Starting Hermes\.\.\.", "Starting Aura Forge...", ["*.tsx", "*.ts"],
+    (r"Starting Aura Forge\.\.\.", "Starting Aura Forge...", ["*.tsx", "*.ts"],
      "frontend placeholder"),
-    (r"Hermes Agent", "Aura Forge Agent", None,
+    (r"Aura Forge Agent", "Aura Forge Agent", None,
      "product name"),
 
-    # 7. PowerShell identifiers (before prose "Hermes" rule)
-    (r"\$Hermes([A-Z]\w+)", r"$AuraForge\1", ["*.ps1"],
+    # 7. PowerShell identifiers (before prose "Aura Forge" rule)
+    (r"\$Aura Forge([A-Z]\w+)", r"$AuraForge\1", ["*.ps1"],
      "PS identifier"),
     (r"HERMES_HOME", "HERMES_HOME", ["*.ps1", "*.sh"],
      "env var name in scripts"),
 
     # 8. Bootstrap exe/app names
-    (r"\"Hermes\.exe\"", '"AuraForge.exe"', ["*.rs", "*.cjs"],
+    (r"\"Aura Forge\.exe\"", '"AuraForge.exe"', ["*.rs", "*.cjs"],
      "Windows exe name"),
-    (r"Hermes\.app", "AuraForge.app", ["*.rs", "*.cjs"],
+    (r"Aura Forge\.app", "AuraForge.app", ["*.rs", "*.cjs"],
      "macOS app name"),
-    (r"Hermes-Setup\.exe", "AuraForge-Setup.exe", ["*.rs", "*.cjs"],
+    (r"Aura Forge-Setup\.exe", "AuraForge-Setup.exe", ["*.rs", "*.cjs"],
      "setup exe name"),
-    (r"Contents/MacOS\",\s*\"Hermes\"\)", 'Contents/MacOS", "AuraForge")', ["*.rs"],
+    (r"Contents/MacOS\",\s*\"Aura Forge\"\)", 'Contents/MacOS", "AuraForge")', ["*.rs"],
      "macOS binary name"),
 
-    # 9. Display name — standalone "Hermes" word (after all specific rules)
-    #    Protects: HERMES_HOME, hermes_cli, HermesGateway, hermes-. prefix
-    #    Only matches "Hermes" as a standalone word (not part of identifier)
-    (r"(?<![A-Za-z0-9_/\\])Hermes(?![A-Za-z0-9_-])", "Aura Forge", None,
-     "standalone 'Hermes'"),
+    # 9. Display name — standalone "Aura Forge" word (after all specific rules)
+    #    Protects: HERMES_HOME, hermes_cli, HermesGateway, auraforge-. prefix
+    #    Only matches "Aura Forge" as a standalone word (not part of identifier)
+    (r"(?<![A-Za-z0-9_/\\])Aura Forge(?![A-Za-z0-9_-])", "Aura Forge", None,
+     "standalone 'Aura Forge'"),
 ]
 
 # ── Files/dirs to skip ─────────────────────────────────────────────────────
@@ -154,8 +154,8 @@ SKIP_FILES = {
 # ── Protected tokens (must survive rebranding) ─────────────────────────────
 PROTECTED = [
     "hermes_cli", "HERMES_HOME", "HERMES_WEB_DIST",
-    "HERMES_DESKTOP", "hermes-bootstrap", "hermes_constants",
-    "hermes-version", "hermes_version", "/api/hermes/",
+    "HERMES_DESKTOP", "auraforge-bootstrap", "hermes_constants",
+    "auraforge-version", "hermes_version", "/api/auraforge/",
     "_skills_tool.HERMES_HOME",
     "HermesGateway", "HermesGitBranch",
 ]
@@ -205,15 +205,15 @@ def apply_rules(content: str, fname: str = "") -> tuple[str, list[str]]:
 
 
 def check_hermes_leaks(content: str, relpath: str) -> list[str]:
-    """Find remaining standalone 'Hermes' references that should be rebranded."""
+    """Find remaining standalone 'Aura Forge' references that should be rebranded."""
     leaks = []
     for i, line in enumerate(content.splitlines(), 1):
         # Skip comments that are internal (heuristic: lines starting with # or //)
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//") or stripped.startswith("*"):
             continue
-        # Find standalone "Hermes" (not HERMES_, hermes_cli, etc.)
-        for m in re.finditer(r"(?<![A-Za-z0-9_/\\])Hermes(?![A-Za-z0-9_-])", line):
+        # Find standalone "Aura Forge" (not HERMES_, hermes_cli, etc.)
+        for m in re.finditer(r"(?<![A-Za-z0-9_/\\])Aura Forge(?![A-Za-z0-9_-])", line):
             leaks.append(f"  {relpath}:{i}: {stripped[:120]}")
     return leaks
 
@@ -252,7 +252,7 @@ def main():
     parser = argparse.ArgumentParser(description="Aura Forge rebrand engine")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--apply", action="store_true", help="Apply rebrand rules")
-    group.add_argument("--check", action="store_true", help="Check for Hermes leaks")
+    group.add_argument("--check", action="store_true", help="Check for Aura Forge leaks")
     args = parser.parse_args()
 
     applied_all = []
@@ -286,14 +286,14 @@ def main():
 
     if args.check:
         if leaks_all:
-            print(f"\n⚠ Found {len(leaks_all)} remaining Hermes references:")
+            print(f"\n⚠ Found {len(leaks_all)} remaining Aura Forge references:")
             for line in leaks_all[:50]:
                 print(line)
             if len(leaks_all) > 50:
                 print(f"  ... and {len(leaks_all) - 50} more")
             sys.exit(1)
         else:
-            print("✓ No Hermes leaks found in user-facing strings")
+            print("✓ No Aura Forge leaks found in user-facing strings")
 
     return 0
 

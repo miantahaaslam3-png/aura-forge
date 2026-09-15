@@ -2,7 +2,7 @@
 
 Provides a single ``setup_logging()`` entry point that both the CLI and
 gateway call early in their startup path.  All log files live under
-``~/.hermes/logs/`` (profile-aware via ``get_hermes_home()``).
+``~/.auraforge/logs/`` (profile-aware via ``get_hermes_home()``).
 
 Log files produced:
     agent.log   — INFO+, all agent/tool/session activity (the main log)
@@ -232,12 +232,12 @@ class _ComponentFilter(logging.Filter):
 
 
 # Logger name prefixes that belong to each component.
-# Used by _ComponentFilter and exposed for ``hermes logs --component``.
+# Used by _ComponentFilter and exposed for ``auraforge logs --component``.
 COMPONENT_PREFIXES = {
     # ``plugins.platforms`` covers messaging-platform adapters that migrated
     # out of ``gateway/platforms/`` into bundled plugins (#41112) — they are
     # still gateway components and their logs belong in gateway.log / match
-    # ``hermes logs --component gateway``.
+    # ``auraforge logs --component gateway``.
     "gateway": ("gateway", "hermes_plugins", "plugins.platforms"),
     "agent": ("agent", "run_agent", "model_tools", "batch_runner"),
     "tools": ("tools",),
@@ -419,7 +419,7 @@ class _ManagedRotatingFileHandler(RotatingFileHandler):
     Two responsibilities:
 
     1.  In managed mode (NixOS), the stateDir uses setgid (2770) so new files
-        inherit the hermes group. However, both ``_open()`` (initial creation)
+        inherit the auraforge group. However, both ``_open()`` (initial creation)
         and ``doRollover()`` create files via ``open()``, which uses the
         process umask — typically 0022, producing 0644. This subclass applies
         ``chmod 0660`` after both operations so the gateway and interactive
@@ -686,7 +686,7 @@ def drain_log_queue(timeout: float = 1.0) -> None:
         except Exception:
             pass
 
-    t = threading.Thread(target=_drain, name="hermes-log-drain", daemon=True)
+    t = threading.Thread(target=_drain, name="auraforge-log-drain", daemon=True)
     t.start()
     t.join(timeout)
 

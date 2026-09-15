@@ -23,7 +23,7 @@ Config keys this provider responds to::
 Auth env vars (one of)::
 
     BROWSER_USE_API_KEY=...           # https://browser-use.com
-    # OR a managed Nous gateway entry (configured via 'hermes setup')
+    # OR a managed Nous gateway entry (configured via 'auraforge setup')
 """
 
 from __future__ import annotations
@@ -344,7 +344,7 @@ class BrowserUseBrowserProvider(BrowserProvider):
             )
 
     def get_setup_schema(self) -> Optional[Dict[str, Any]]:
-        # Hidden from the hermes tools picker: the "Browser Use" row now
+        # Hidden from the auraforge tools picker: the "Browser Use" row now
         # activates the CLI-based backend (tools/browser_use_cli.py). This
         # provider stays registered for the Nous gateway path and un-migrated
         # legacy cloud_provider configs.

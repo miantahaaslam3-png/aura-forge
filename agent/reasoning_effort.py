@@ -51,7 +51,7 @@ EFFORT_LADDER: tuple[str, ...] = (
     "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra",
 )
 
-# ``ultra`` is Hermes-internal ladder vocabulary (the Codex product tier); no
+# ``ultra`` is Aura Forge-internal ladder vocabulary (the Codex product tier); no
 # provider wire accepts it verbatim anywhere. Every declared wire set below
 # therefore stops at ``max`` — ``ultra`` always clamps down.
 

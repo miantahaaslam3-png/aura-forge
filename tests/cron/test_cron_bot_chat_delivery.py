@@ -128,12 +128,12 @@ def test_deliver_runs_canonical_bot_chat_lane():
         return _completed()
 
     with mock.patch.object(sched.subprocess, "run", side_effect=fake_run), \
-         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/hermes"):
+         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/auraforge"):
         err = _deliver_to_bot_chat({"id": "j1", "name": "Daily digest"}, "the output", "")
 
     assert err is None
     argv = calls["argv"]
-    assert argv[0] == "/usr/bin/hermes"
+    assert argv[0] == "/usr/bin/auraforge"
     assert "-p" not in argv  # own profile: subprocess inherits HERMES_HOME
     assert "chat" in argv
     assert "Bot Chat" in argv
@@ -153,7 +153,7 @@ def test_deliver_named_profile_uses_p_flag_and_clears_home():
         return _completed()
 
     with mock.patch.object(sched.subprocess, "run", side_effect=fake_run), \
-         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/hermes"), \
+         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/auraforge"), \
          mock.patch.dict(sched.os.environ, {"HERMES_HOME": "/tmp/other-profile"}):
         err = _deliver_to_bot_chat({"id": "j1", "name": "n"}, "out", "research")
 
@@ -167,7 +167,7 @@ def test_deliver_named_profile_uses_p_flag_and_clears_home():
 def test_deliver_failure_returns_error_string():
     with mock.patch.object(
         sched.subprocess, "run", return_value=_completed(returncode=1, stderr="boom")
-    ), mock.patch.object(sched.shutil, "which", return_value="/usr/bin/hermes"):
+    ), mock.patch.object(sched.shutil, "which", return_value="/usr/bin/auraforge"):
         err = _deliver_to_bot_chat({"id": "j1", "name": "n"}, "out", "")
     assert err is not None
     assert "boom" in err
@@ -176,8 +176,8 @@ def test_deliver_failure_returns_error_string():
 def test_deliver_timeout_returns_error_string():
     with mock.patch.object(
         sched.subprocess, "run",
-        side_effect=subprocess.TimeoutExpired(cmd="hermes", timeout=600),
-    ), mock.patch.object(sched.shutil, "which", return_value="/usr/bin/hermes"):
+        side_effect=subprocess.TimeoutExpired(cmd="auraforge", timeout=600),
+    ), mock.patch.object(sched.shutil, "which", return_value="/usr/bin/auraforge"):
         err = _deliver_to_bot_chat({"id": "j1", "name": "n"}, "out", "")
     assert err is not None
     assert "timed out" in err
@@ -194,7 +194,7 @@ def test_deliver_message_carries_cron_attribution(tmp_path):
         return _completed()
 
     with mock.patch.object(sched.subprocess, "run", side_effect=fake_run), \
-         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/hermes"):
+         mock.patch.object(sched.shutil, "which", return_value="/usr/bin/auraforge"):
         _deliver_to_bot_chat({"id": "j1", "name": "Daily digest"}, "the payload", "")
 
     assert 'Cronjob "Daily digest" output' in captured["message"]

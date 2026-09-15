@@ -677,7 +677,7 @@ class TestTranscribeAudioMistralDispatch:
 def mock_xai_http_module():
     """Inject a fake tools.xai_http module for testing."""
     fake_module = MagicMock()
-    fake_module.hermes_xai_user_agent = MagicMock(return_value="hermes-xai/test")
+    fake_module.hermes_xai_user_agent = MagicMock(return_value="auraforge-xai/test")
     with patch.dict("sys.modules", {"tools.xai_http": fake_module}):
         yield fake_module
 
@@ -1255,7 +1255,7 @@ class TestExplicitOpenaiSelectionError:
 
     When ``_resolve_openai_audio_client_config()`` raises its
     selection-specific ValueError (managed openai-audio gateway unavailable,
-    with the ``hermes tools`` remediation for managed-Nous users), the old
+    with the ``auraforge tools`` remediation for managed-Nous users), the old
     boolean probe flattened it into False — the log said "no API key" and
     the transcription result returned the all-provider install hint,
     pointing operators at unrelated setup instead of their managed route.
@@ -1299,7 +1299,7 @@ class TestExplicitOpenaiSelectionError:
 
     def test_dispatch_returns_selection_specific_error(self, monkeypatch):
         """The final transcription result carries the managed-route error and
-        its hermes tools remediation instead of the all-provider install
+        its auraforge tools remediation instead of the all-provider install
         hint."""
         self._no_openai_credentials(monkeypatch)
         monkeypatch.setattr(
@@ -1312,7 +1312,7 @@ class TestExplicitOpenaiSelectionError:
              patch("tools.transcription_tools._HAS_FASTER_WHISPER", False), \
              patch(
                  "tools.transcription_tools.nous_tool_gateway_unavailable_message",
-                 lambda what: f"managed route down for {what}; run `hermes tools`",
+                 lambda what: f"managed route down for {what}; run `auraforge tools`",
              ):
             from tools.transcription_tools import _dispatch_stt_provider
 
@@ -1322,7 +1322,7 @@ class TestExplicitOpenaiSelectionError:
 
         assert result["success"] is False
         assert "managed route down" in result["error"]
-        assert "hermes tools" in result["error"]
+        assert "auraforge tools" in result["error"]
         assert "No STT provider available" not in result["error"]
 
     def test_auto_detect_none_keeps_generic_hint(self, monkeypatch):

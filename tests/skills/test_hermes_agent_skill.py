@@ -1,4 +1,4 @@
-"""The `hermes-agent` skill is what a running Aura Forge knows about itself.
+"""The `auraforge-agent` skill is what a running Aura Forge knows about itself.
 
 `website/` is never packaged, so an installed Aura Forge has no local copy of the
 user guide; skills ARE synced into `$HERMES_HOME/skills/`. The skill therefore
@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]
-SKILL_DIR = REPO / "skills" / "autonomous-ai-agents" / "hermes-agent"
+SKILL_DIR = REPO / "skills" / "autonomous-ai-agents" / "auraforge-agent"
 SKILL_MD = SKILL_DIR / "SKILL.md"
 GENERATOR = REPO / "website" / "scripts" / "generate-llms-txt.py"
 

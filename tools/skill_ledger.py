@@ -1,9 +1,9 @@
 """Per-mutation skill audit ledger + single-edit rollback (tracker #79686 P3).
 
 Every skill mutation — regardless of actor — appends one JSONL entry to
-``~/.hermes/skills/.curator_ledger.jsonl`` describing who changed what, with
+``~/.auraforge/skills/.curator_ledger.jsonl`` describing who changed what, with
 before/after file manifests whose contents are stored content-addressed
-(sha256-deduped) under ``~/.hermes/.curator_backups/blobs/``.
+(sha256-deduped) under ``~/.auraforge/.curator_backups/blobs/``.
 
 Design decisions (Teknium-approved):
   - JSONL, not the state DB: the ledger is a durable, human-greppable audit
@@ -12,7 +12,7 @@ Design decisions (Teknium-approved):
     The curator *invariant* (never hard-delete autonomously) is unchanged and
     applies only to autonomous actors; foreground user deletes stay
     hard-delete — but they are still ledgered so they're recoverable via
-    ``hermes curator rollback <entry-id>``.
+    ``auraforge curator rollback <entry-id>``.
   - Per-file content-addressed blobs (not tarballs): a mutation typically
     touches one file, so a whole-tree tarball per mutation would be wasteful,
     and identical content across entries dedupes to a single blob.

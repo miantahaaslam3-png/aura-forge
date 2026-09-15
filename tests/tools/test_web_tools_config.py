@@ -196,7 +196,7 @@ class TestBackendSelection:
     """Test suite for _get_backend() backend selection logic.
 
     The backend is configured via config.yaml (web.backend), set by
-    ``hermes tools``.  Falls back to key-based detection for legacy/manual
+    ``auraforge tools``.  Falls back to key-based detection for legacy/manual
     setups.
     """
 
@@ -715,7 +715,7 @@ class TestNonBuiltinProviderAvailability:
 class TestFirecrawlEnvResolution:
     """Verify Firecrawl reads env values from hermes_cli.config.get_env_value,
     not just os.getenv.  This catches the regression reported in #40190 where
-    values stored in ~/.hermes/.env were invisible to the provider."""
+    values stored in ~/.auraforge/.env were invisible to the provider."""
 
     def test_direct_config_reads_via_get_env_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """_get_direct_firecrawl_config() must use get_env_value, not os.getenv."""
@@ -758,7 +758,7 @@ class TestFirecrawlEnvResolution:
 class TestSiblingProvidersEnvResolution:
     """The same #40190 bug class widened: every keyed web provider must
     resolve its credential through the config-aware lookup (os.environ OR
-    ~/.hermes/.env), not bare os.getenv. Parametrized over the four
+    ~/.auraforge/.env), not bare os.getenv. Parametrized over the four
     providers that previously read only the process environment."""
 
     _CASES = [
@@ -809,7 +809,7 @@ class TestSiblingProvidersEnvResolution:
             _tavily_request("search", {"query": "q"})
             headers = mock_post.call_args.kwargs["headers"]
             assert headers["Authorization"] == "Bearer tvly-from-dotenv"
-            assert headers["X-Client-Name"] == "hermes-agent"
+            assert headers["X-Client-Name"] == "auraforge-agent"
             assert "X-Tavily-Access-Mode" not in headers
 
 

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Identify ourselves so endpoints fronted by Cloudflare's Browser Integrity
 # Check (error 1010) don't reject the default ``Python-urllib/*`` signature.
-_HERMES_USER_AGENT = f"hermes-cli/{_HERMES_VERSION}"
+_HERMES_USER_AGENT = f"auraforge-cli/{_HERMES_VERSION}"
 
 COPILOT_BASE_URL = "https://api.githubcopilot.com"
 COPILOT_MODELS_URL = f"{COPILOT_BASE_URL}/models"
@@ -225,7 +225,7 @@ def _xai_promote_top(ids: list[str]) -> list[str]:
 
 
 def _xai_merge_curated_extras(ids: list[str]) -> list[str]:
-    """Append Hermes-curated xAI models that are missing from models.dev."""
+    """Append Aura Forge-curated xAI models that are missing from models.dev."""
     out = list(ids)
     for extra in _XAI_CURATED_EXTRAS:
         if extra in out:
@@ -999,8 +999,8 @@ _nous_recommended_cache: dict[str, tuple[dict[str, Any], float]] = {}
 
 def _nous_recommended_disk_path() -> "Path":
     """Disk path for the persisted recommended-models cache."""
-    from hermes_constants import get_hermes_home
-    return get_hermes_home() / "cache" / "nous_recommended_cache.json"
+    from hermes_constants import get_aura_forge_home
+    return get_aura_forge_home() / "cache" / "nous_recommended_cache.json"
 
 
 def _read_nous_recommended_disk(base: str) -> dict[str, Any] | None:
@@ -1681,8 +1681,8 @@ _REASONING_CAPS_DISK_TTL_SECONDS = 24 * 3600
 
 
 def _reasoning_caps_disk_path() -> Path:
-    from hermes_constants import get_hermes_home
-    return get_hermes_home() / "cache" / "reasoning_caps.json"
+    from hermes_constants import get_aura_forge_home
+    return get_aura_forge_home() / "cache" / "reasoning_caps.json"
 
 
 def _read_reasoning_caps_disk() -> dict[str, Any]:
@@ -2471,9 +2471,9 @@ def fetch_ai_gateway_pricing(
     *,
     force_refresh: bool = False,
 ) -> dict[str, dict[str, str]]:
-    """Fetch Vercel AI Gateway /v1/models and return hermes-shaped pricing.
+    """Fetch Vercel AI Gateway /v1/models and return auraforge-shaped pricing.
 
-    Vercel uses ``input`` / ``output`` field names; hermes's picker expects
+    Vercel uses ``input`` / ``output`` field names; auraforge's picker expects
     ``prompt`` / ``completion``. This translates. Cache read/write field names
     already match.
     """
@@ -2792,7 +2792,7 @@ def parse_model_input(raw: str, current_provider: str) -> tuple[str, str]:
     Supports ``provider:model`` syntax to switch providers at runtime::
 
         openrouter:anthropic/claude-sonnet-4.5  →  ("openrouter", "anthropic/claude-sonnet-4.5")
-        nous:hermes-3                           →  ("nous", "hermes-3")
+        nous:auraforge-3                           →  ("nous", "auraforge-3")
         anthropic/claude-sonnet-4.5             →  (current_provider, "anthropic/claude-sonnet-4.5")
         gpt-5.4                                 →  (current_provider, "gpt-5.4")
 
@@ -4274,8 +4274,8 @@ def _spawn_swr_refresh(cache_key: str, refresh_fn=None) -> None:
 
 
 def _provider_models_cache_path() -> Path:
-    from hermes_constants import get_hermes_home
-    return get_hermes_home() / "provider_models_cache.json"
+    from hermes_constants import get_aura_forge_home
+    return get_aura_forge_home() / "provider_models_cache.json"
 
 
 def _credential_fingerprint(provider: str) -> str:
@@ -4344,9 +4344,9 @@ def _credential_fingerprint(provider: str) -> str:
 
     # OAuth / external-file mtimes that change on re-auth
     try:
-        from hermes_constants import get_hermes_home
+        from hermes_constants import get_aura_forge_home
         for rel in ("auth.json", "credentials.json"):
-            p = get_hermes_home() / rel
+            p = get_aura_forge_home() / rel
             try:
                 parts.append(f"{rel}@{p.stat().st_mtime_ns}")
             except FileNotFoundError:
@@ -4684,7 +4684,7 @@ def copilot_default_headers(*, is_agent_turn: bool = True) -> dict[str, str]:
     except ImportError:
         return {
             "Editor-Version": COPILOT_EDITOR_VERSION,
-            "User-Agent": "HermesAgent/1.0",
+            "User-Agent": "Aura ForgeAgent/1.0",
             "Openai-Intent": "conversation-edits",
             "x-initiator": "agent" if is_agent_turn else "user",
         }
@@ -5479,7 +5479,7 @@ def opencode_zen_free_headers() -> dict:
         "Authorization": "",
         "HTTP-Referer": "https://aura-forge-agent.nousresearch.com",
         "X-Title": "Aura Forge Agent",
-        "User-Agent": f"HermesAgent/{_v}",
+        "User-Agent": f"Aura ForgeAgent/{_v}",
     }
 
 
@@ -5791,7 +5791,7 @@ _DEEPINFRA_SURFACE_TAGS: frozenset[str] = frozenset({
 })
 
 _DEEPINFRA_DEFAULT_BASE_URL = "https://api.deepinfra.com/v1/openai"
-_DEEPINFRA_MODELS_QUERY = "filter=true&sort_by=hermes"
+_DEEPINFRA_MODELS_QUERY = "filter=true&sort_by=auraforge"
 
 # Module-level cache for the full tagged catalog response, keyed by base URL.
 # Each value is the parsed ``data`` list. Surface-specific filters read from
@@ -6210,8 +6210,8 @@ def _strip_ollama_cloud_suffix(model_id: str) -> str:
 
 def _ollama_cloud_cache_path() -> Path:
     """Return the path for the Ollama Cloud model cache."""
-    from hermes_constants import get_hermes_home
-    return get_hermes_home() / "ollama_cloud_models_cache.json"
+    from hermes_constants import get_aura_forge_home
+    return get_aura_forge_home() / "ollama_cloud_models_cache.json"
 
 
 def _load_ollama_cloud_cache(*, ignore_ttl: bool = False) -> Optional[dict]:

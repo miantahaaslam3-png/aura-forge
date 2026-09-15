@@ -640,7 +640,7 @@ def get_profiles_projects_tree(preview_limit: int = 3, session_limit: int = 2000
     profile the user is not driving.
     """
     from hermes_cli import profiles as profiles_mod
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from hermes_constants import reset_aura_forge_home_override, set_aura_forge_home_override
     from tui_gateway import server as gateway_server
 
     try:
@@ -668,7 +668,7 @@ def get_profiles_projects_tree(preview_limit: int = 3, session_limit: int = 2000
             errors.append({"profile": name, "error": str(exc)})
             continue
 
-        token = set_hermes_home_override(str(home))
+        token = set_aura_forge_home_override(str(home))
         try:
             tree, _active_id = gateway_server._build_project_tree(
                 db,
@@ -683,7 +683,7 @@ def get_profiles_projects_tree(preview_limit: int = 3, session_limit: int = 2000
             _warn_profile_read_error(name, exc)
             errors.append({"profile": name, "error": str(exc)})
         finally:
-            reset_hermes_home_override(token)
+            reset_aura_forge_home_override(token)
             db.close()
 
     projects = sorted(merged.values(), key=lambda p: p.get("lastActive") or 0, reverse=True)
@@ -1173,8 +1173,8 @@ async def export_profile_endpoint(name: str, body: ProfileExport):
 
     output = (body.output or "").strip()
     if not output:
-        from hermes_constants import get_hermes_home
-        staging = get_hermes_home() / "profile-exports"
+        from hermes_constants import get_aura_forge_home
+        staging = get_aura_forge_home() / "profile-exports"
         try:
             staging.mkdir(parents=True, exist_ok=True)
         except OSError as exc:

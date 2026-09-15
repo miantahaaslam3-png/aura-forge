@@ -389,7 +389,7 @@ class TestFileDedup(unittest.TestCase):
 
     def setUp(self):
         _read_tracker.clear()
-        self._tmpdir = _make_safe_tempdir("hermes-dedup-")
+        self._tmpdir = _make_safe_tempdir("auraforge-dedup-")
         self._tmpfile = os.path.join(self._tmpdir, "dedup_test.txt")
         with open(self._tmpfile, "w") as f:
             f.write("line one\nline two\n")
@@ -758,7 +758,7 @@ class TestWriteInvalidatesDedup(unittest.TestCase):
 
     def setUp(self):
         _read_tracker.clear()
-        self._tmpdir = _make_safe_tempdir("hermes-write-dedup-")
+        self._tmpdir = _make_safe_tempdir("auraforge-write-dedup-")
         self._tmpfile = os.path.join(self._tmpdir, "write_dedup.txt")
         with open(self._tmpfile, "w") as f:
             f.write("original content\n")

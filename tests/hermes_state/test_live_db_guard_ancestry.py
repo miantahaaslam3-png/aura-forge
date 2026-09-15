@@ -33,7 +33,7 @@ import hermes_state
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Probe run in the child: resolve the REAL platform state root (not a
-# hardcoded ~/.hermes — that root is %LOCALAPPDATA%\hermes on Windows) and
+# hardcoded ~/.auraforge — that root is %LOCALAPPDATA%\auraforge on Windows) and
 # report whether the guard refuses it.
 _CHILD_PROBE = """
 import sys
@@ -142,11 +142,11 @@ class TestPytestProcessRecognition:
     @pytest.mark.parametrize(
         "cmdline",
         [
-            ["hermes", "gateway", "start"],
+            ["auraforge", "gateway", "start"],
             ["/usr/bin/python", "-m", "hermes_cli.main", "sessions", "list"],
             # A path that merely *contains* "pytest" is not a pytest process:
             # tmp paths like /tmp/pytest-of-dev/... show up in real argv.
-            ["hermes", "run", "--file", "/tmp/pytest-of-dev/test0/input.txt"],
+            ["auraforge", "run", "--file", "/tmp/pytest-of-dev/test0/input.txt"],
         ],
     )
     def test_ignores_non_pytest_invocations(self, cmdline):

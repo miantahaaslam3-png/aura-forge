@@ -147,9 +147,9 @@ class UpdateReceipt:
 
 
 def _receipt_dir() -> Path:
-    from hermes_cli.config import get_hermes_home
+    from hermes_cli.config import get_aura_forge_home
 
-    return get_hermes_home() / "logs" / _RECEIPT_DIR_NAME
+    return get_aura_forge_home() / "logs" / _RECEIPT_DIR_NAME
 
 
 def begin_update_receipt() -> None:
@@ -345,13 +345,13 @@ def collect_fleet_versions(
     try:
         from gateway.status import read_runtime_status, runtime_status_pid_is_live
         from hermes_cli.profiles import (
-            _get_default_hermes_home,
+            _get_default_aura_forge_home,
             _get_profiles_root,
             _PROFILE_ID_RE,
         )
 
         homes: list[tuple[str, Path]] = []
-        default_home = _get_default_hermes_home()
+        default_home = _get_default_aura_forge_home()
         if default_home.is_dir():
             homes.append(("default", default_home))
         profiles_root = _get_profiles_root()
@@ -503,6 +503,6 @@ def print_fleet_version_matrix(fleet: list[dict[str, Any]]) -> bool:
             print("  ⚠ Stale gateways keep serving pre-update code until restarted:")
         if any_down:
             print("  ⚠ Down gateways stopped serving messaging entirely — restart them:")
-        print("      hermes gateway restart                # active profile")
-        print("      hermes -p <profile> gateway restart   # named profile")
+        print("      auraforge gateway restart                # active profile")
+        print("      auraforge -p <profile> gateway restart   # named profile")
     return any_stale or any_down

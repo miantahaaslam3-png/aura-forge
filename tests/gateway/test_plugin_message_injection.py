@@ -79,7 +79,7 @@ async def test_plugin_context_routes_through_live_gateway_to_existing_session(
     tmp_path,
     monkeypatch,
 ):
-    hermes_home = tmp_path / "hermes"
+    hermes_home = tmp_path / "auraforge"
     hermes_home.mkdir()
     (hermes_home / "config.yaml").write_text(
         yaml.safe_dump({

@@ -307,7 +307,7 @@ def _format_privileged_intents_guidance(*, needs_members: bool) -> str:
             "Fix: https://discord.com/developers/applications → your application "
             "→ Bot → Privileged Gateway Intents → enable the intent(s) listed "
             "above → Save Changes, then restart the gateway.",
-            "Docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord",
+            "Docs: https://auraforge-agent.nousresearch.com/docs/user-guide/messaging/discord",
         ]
     )
     return "\n".join(lines)
@@ -959,7 +959,7 @@ def _read_dm_role_auth_guild() -> Optional[int]:
 
     Reads ``discord.dm_role_auth_guild`` from config.yaml. This is
     deliberately a config.yaml-only setting (not an env var): per repo
-    policy, ``~/.hermes/.env`` is for secrets only, and this is a
+    policy, ``~/.auraforge/.env`` is for secrets only, and this is a
     behavioral setting. Guild IDs aren't secrets.
 
     Accepts ints or numeric strings in the config. Anything else
@@ -2862,7 +2862,7 @@ class DiscordAdapter(BasePlatformAdapter):
     def _is_down_notice_content(self, content: str) -> bool:
         """Recognize only explicit Aura Forge/gateway outage notices."""
         text = (content or "").lower()
-        subject = r"(?:hermes|the agent|agent|the gateway|gateway|bmo)"
+        subject = r"(?:auraforge|the agent|agent|the gateway|gateway|bmo)"
         state = r"(?:is|was|appears to be|is currently|was currently)"
         condition = r"(?:down|offline|unavailable|not running)"
         return re.search(rf"\b{subject}\s+{state}\s+{condition}\b", text) is not None
@@ -5946,7 +5946,7 @@ class DiscordAdapter(BasePlatformAdapter):
         async def slash_reload_mcp(interaction: discord.Interaction):
             await self._run_simple_slash(interaction, "/reload-mcp")
 
-        @tree.command(name="reload-skills", description="Re-scan ~/.hermes/skills/ for new or removed skills")
+        @tree.command(name="reload-skills", description="Re-scan ~/.auraforge/skills/ for new or removed skills")
         async def slash_reload_skills(interaction: discord.Interaction):
             await self._run_simple_slash(interaction, "/reload-skills")
 
@@ -7736,7 +7736,7 @@ class DiscordAdapter(BasePlatformAdapter):
     ) -> SendResult:
         """Send an interactive button-based update prompt (Yes / No).
 
-        Used by the gateway ``/update`` watcher when ``hermes update --gateway``
+        Used by the gateway ``/update`` watcher when ``auraforge update --gateway``
         needs user input (stash restore, config migration).
         """
         if not self._client or not DISCORD_AVAILABLE:
@@ -8660,7 +8660,7 @@ def _component_check_auth(
     Mirrors the gateway's external-surface authorization model: component
     button clicks must be explicitly authorized by a Discord user/role
     allowlist, a global user allowlist, an explicit allow-all flag, or
-    the pairing store (``hermes pairing approve``).
+    the pairing store (``auraforge pairing approve``).
 
     Behavior:
 
@@ -8724,7 +8724,7 @@ def _component_check_auth(
             return True
 
     # Check pairing store — mirrors ``authz_mixin._check_authorization``
-    # so users approved via ``hermes pairing approve`` can interact with
+    # so users approved via ``auraforge pairing approve`` can interact with
     # component buttons even without DISCORD_ALLOWED_USERS set.
     if uid:
         try:
@@ -9065,7 +9065,7 @@ def _define_discord_view_classes() -> None:
                     pass
 
     class UpdatePromptView(discord.ui.View):
-        """Interactive Yes/No buttons for ``hermes update`` prompts.
+        """Interactive Yes/No buttons for ``auraforge update`` prompts.
 
         Clicking a button writes the answer to ``.update_response`` so the
         detached update process can pick it up.  Only authorized users can
@@ -9854,7 +9854,7 @@ if DISCORD_AVAILABLE:
 
 # ── Standalone (out-of-process) sender ────────────────────────────────────────
 # Used by ``tools/send_message_tool._send_via_adapter`` when the gateway runner
-# is not in this process (e.g. ``hermes cron`` running standalone) and no live
+# is not in this process (e.g. ``auraforge cron`` running standalone) and no live
 # DiscordAdapter instance is available.  Implements the same forum/thread/
 # multipart logic the live adapter would use, via Discord's REST API directly.
 #
@@ -10309,7 +10309,7 @@ def interactive_setup() -> None:
     print_info("  - Server Members Intent (required if you use usernames or role allowlists)")
     print_info("Save Changes in the Developer Portal before starting the gateway.")
     print_info(
-        "Docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord"
+        "Docs: https://auraforge-agent.nousresearch.com/docs/user-guide/messaging/discord"
     )
     token = prompt("Discord bot token", password=True)
     if not token:
@@ -10570,7 +10570,7 @@ def register(ctx) -> None:
         ensure_deps_fn=check_discord_requirements,
         is_connected=_is_connected,
         required_env=["DISCORD_BOT_TOKEN"],
-        install_hint="Run `hermes setup` to install Discord support.",
+        install_hint="Run `auraforge setup` to install Discord support.",
         # Interactive setup wizard — replaces the central
         # hermes_cli/setup.py::_setup_discord function.  Same shape as Teams.
         setup_fn=interactive_setup,

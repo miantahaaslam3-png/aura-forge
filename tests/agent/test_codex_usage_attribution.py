@@ -108,7 +108,7 @@ def wire(profile, monkeypatch):
 
 
 def _assert_identity(request, account_id="acct-attribution-test"):
-    assert request.headers["originator"] == "hermes-agent"
+    assert request.headers["originator"] == "auraforge-agent"
     assert request.headers["user-agent"] == f"HermesAgent/{__version__}"
     assert request.headers["chatgpt-account-id"] == account_id
     assert "extra_headers" not in json.loads(request.content)
@@ -121,7 +121,7 @@ def test_required_identity_preserves_account_id(profile, legacy_enabled):
     _set_legacy_attribution(profile, legacy_enabled)
     headers = _codex_cloudflare_headers(_jwt())
 
-    assert headers["originator"] == "hermes-agent"
+    assert headers["originator"] == "auraforge-agent"
     assert headers["User-Agent"] == f"HermesAgent/{__version__}"
     assert headers["ChatGPT-Account-ID"] == "acct-attribution-test"
     assert "ChatGPT-Account-ID" not in _codex_cloudflare_headers("not-a-jwt")
@@ -150,7 +150,7 @@ def test_new_identity_is_limited_to_the_official_endpoint(base_url, attributed):
 
     headers = _codex_cloudflare_headers(_jwt(), base_url=base_url)
 
-    assert headers["originator"] == ("hermes-agent" if attributed else "codex_cli_rs")
+    assert headers["originator"] == ("auraforge-agent" if attributed else "codex_cli_rs")
     assert headers["User-Agent"] == (
         f"HermesAgent/{__version__}"
         if attributed else "codex_cli_rs/0.0.0 (Aura Forge Agent)"

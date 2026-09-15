@@ -731,7 +731,7 @@ class HermesACPAgent(acp.Agent):
     def _build_model_state(self, state: SessionState) -> SessionModelState | None:
         """Return authenticated providers and their models for ACP clients.
 
-        The shared Aura Forge inventory is also used by ``hermes model``, the TUI,
+        The shared Aura Forge inventory is also used by ``auraforge model``, the TUI,
         and the dashboard. Keeping ACP on that substrate prevents its selector
         from silently collapsing to the current provider's curated list.
         """
@@ -1054,7 +1054,7 @@ class HermesACPAgent(acp.Agent):
         current_hermes_session_id: str,
         previous_hermes_session_id: Optional[str] = None,
     ) -> Optional[dict]:
-        """Best-effort ``_meta.hermes.sessionProvenance`` for an ACP session."""
+        """Best-effort ``_meta.auraforge.sessionProvenance`` for an ACP session."""
         try:
             return session_provenance_meta(
                 self.session_manager._get_db(),
@@ -1079,7 +1079,7 @@ class HermesACPAgent(acp.Agent):
 
         When the internal Aura Forge head rotated (e.g. compression-driven session
         split during a turn), pass ``previous_hermes_session_id`` so the
-        attached ``_meta.hermes.sessionProvenance`` flags the rotation reason.
+        attached ``_meta.auraforge.sessionProvenance`` flags the rotation reason.
         """
         if not self._conn:
             return
@@ -1165,7 +1165,7 @@ class HermesACPAgent(acp.Agent):
             from agent.memory_manager import inject_memory_provider_tools
 
             enabled_toolsets = _expand_acp_enabled_toolsets(
-                getattr(state.agent, "enabled_toolsets", None) or ["hermes-acp"],
+                getattr(state.agent, "enabled_toolsets", None) or ["auraforge-acp"],
                 mcp_server_names=[server.name for server in mcp_servers],
             )
             state.agent.enabled_toolsets = enabled_toolsets
@@ -1313,7 +1313,7 @@ class HermesACPAgent(acp.Agent):
 
         return InitializeResponse(
             protocol_version=acp.PROTOCOL_VERSION,
-            agent_info=Implementation(name="hermes-agent", version=HERMES_VERSION),
+            agent_info=Implementation(name="auraforge-agent", version=HERMES_VERSION),
             agent_capabilities=AgentCapabilities(
                 load_session=True,
                 prompt_capabilities=PromptCapabilities(image=True),
@@ -1410,7 +1410,7 @@ class HermesACPAgent(acp.Agent):
         first preserved tail message's real content. Without a wire flag,
         ACP frontends render all of these as ordinary turns.
 
-        Two distinct keys under ``_meta.hermes`` (ACP's extensibility
+        Two distinct keys under ``_meta.auraforge`` (ACP's extensibility
         channel), so clients cannot accidentally hide real content:
 
         * ``compactionSummary: true`` — the entire chunk is the handoff
@@ -1431,9 +1431,9 @@ class HermesACPAgent(acp.Agent):
             # ever set on summary-bearing messages.
             kind = "standalone"
         if kind == "standalone":
-            return {"hermes": {"compactionSummary": True}}
+            return {"auraforge": {"compactionSummary": True}}
         if kind == "merged":
-            return {"hermes": {"containsCompactionSummary": True}}
+            return {"auraforge": {"containsCompactionSummary": True}}
         return None
 
     @staticmethod
@@ -2022,7 +2022,7 @@ class HermesACPAgent(acp.Agent):
                 # line reports (agent/prompt_builder.py -> resolve_agent_cwd).
                 # Without it the prompt advertises the global Aura Forge workspace
                 # while the tools are rooted at the client's project, so the
-                # model emits absolute paths under ~/.hermes/workspace and the
+                # model emits absolute paths under ~/.auraforge/workspace and the
                 # edit silently lands outside the editor's workspace.
                 # cron_session="" explicitly marks this as a non-cron context,
                 # masking any leaked process-global HERMES_CRON_SESSION (#37968).
@@ -2136,7 +2136,7 @@ class HermesACPAgent(acp.Agent):
 
         # Detect a compression-driven internal session rotation. If the agent's
         # DB head moved during the turn, emit a session_info_update carrying
-        # _meta.hermes.sessionProvenance so ACP clients can render the boundary
+        # _meta.auraforge.sessionProvenance so ACP clients can render the boundary
         # and keep old/new ids in lineage. The ACP session_id is unchanged.
         post_turn_hermes_id = getattr(state.agent, "session_id", None)
         if (
@@ -2350,7 +2350,7 @@ class HermesACPAgent(acp.Agent):
             from agent.memory_manager import inject_memory_provider_tools
 
             toolsets = _expand_acp_enabled_toolsets(
-                getattr(state.agent, "enabled_toolsets", None) or ["hermes-acp"]
+                getattr(state.agent, "enabled_toolsets", None) or ["auraforge-acp"]
             )
             tools = get_tool_definitions(enabled_toolsets=toolsets, quiet_mode=True)
             tool_view = SimpleNamespace(

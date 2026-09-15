@@ -220,7 +220,7 @@ def test_standard_existing_profile_grant_owns_private_macos_runtime():
         ["mcp"],
         grant_existing_profile=True,
         platform="darwin",
-        socket_path="/tmp/hermes-cua-test.sock",
+        socket_path="/tmp/auraforge-cua-test.sock",
     )
 
     assert args == [
@@ -228,9 +228,9 @@ def test_standard_existing_profile_grant_owns_private_macos_runtime():
         "--grant",
         "existing-profile",
         "--socket",
-        "/tmp/hermes-cua-test.sock",
+        "/tmp/auraforge-cua-test.sock",
     ]
-    assert socket_path == "/tmp/hermes-cua-test.sock"
+    assert socket_path == "/tmp/auraforge-cua-test.sock"
 
 
 def test_standard_existing_profile_grant_stays_in_process_off_macos():

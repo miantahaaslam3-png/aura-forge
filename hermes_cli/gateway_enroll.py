@@ -53,7 +53,7 @@ def _default_gateway_id() -> str:
         host = socket.gethostname().strip()
     except Exception:
         host = ""
-    return f"gw-{host or 'hermes'}"
+    return f"gw-{host or 'auraforge'}"
 
 
 def _resolve_connector_url(override: Optional[str]) -> Optional[str]:
@@ -306,10 +306,10 @@ def _warn_if_secondary_multiplex_profile() -> bool:
     """
     try:
         from hermes_constants import get_default_hermes_root
-        from hermes_cli.config import get_hermes_home
+        from hermes_cli.config import get_aura_forge_home
 
         default_root = Path(get_default_hermes_root()).resolve()
-        home = Path(get_hermes_home()).resolve()
+        home = Path(get_aura_forge_home()).resolve()
         try:
             home.relative_to(default_root / "profiles")
         except ValueError:

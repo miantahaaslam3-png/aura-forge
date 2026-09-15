@@ -18,7 +18,7 @@ from plugins.memory.openviking import (
     _VikingClient,
 )
 
-_EXPECTED_USER_AGENT = f"openviking-memory-hermes/{_HERMES_VERSION}"
+_EXPECTED_USER_AGENT = f"openviking-memory-auraforge/{_HERMES_VERSION}"
 
 
 def _clear_openviking_tenant_env(monkeypatch):
@@ -122,7 +122,7 @@ def test_openviking_provider_config_loader_uses_readonly_config(monkeypatch):
 
 def test_connection_settings_read_dashboard_config_file(tmp_path, monkeypatch):
     _clear_openviking_env(monkeypatch)
-    hermes_home = tmp_path / "hermes"
+    hermes_home = tmp_path / "auraforge"
     hermes_home.mkdir()
     (hermes_home / "config.yaml").write_text(
         """\
@@ -276,7 +276,7 @@ def test_link_ovcli_profile_removes_stale_inline_config(tmp_path):
 
 def test_post_setup_existing_profile_picker_validates_and_links_saved_profile(tmp_path, monkeypatch):
     _clear_openviking_env(monkeypatch)
-    hermes_home = tmp_path / "hermes"
+    hermes_home = tmp_path / "auraforge"
     hermes_home.mkdir()
     env_path = hermes_home / ".env"
     env_path.write_text("OPENVIKING_ENDPOINT=http://old.test\nOTHER_KEY=keep\n", encoding="utf-8")
@@ -400,7 +400,7 @@ def test_start_local_openviking_server_strips_pythonpath_from_child_env(monkeypa
 
     Inheriting it makes openviking-server import packages from the Aura Forge
     venv instead of its own, and on Windows locks Aura Forge venv DLLs so the
-    venv cannot be rebuilt during `hermes update`.
+    venv cannot be rebuilt during `auraforge update`.
     """
     popen_calls = []
 
@@ -411,7 +411,7 @@ def test_start_local_openviking_server_strips_pythonpath_from_child_env(monkeypa
     monkeypatch.setattr(openviking_module, "_local_openviking_port_is_open", lambda host, port: False)
     monkeypatch.setattr(openviking_module.shutil, "which", lambda name: "/usr/local/bin/openviking-server")
     monkeypatch.setattr(openviking_module.subprocess, "Popen", fake_popen)
-    monkeypatch.setenv("PYTHONPATH", "/opt/hermes/.venv/Lib/site-packages")
+    monkeypatch.setenv("PYTHONPATH", "/opt/auraforge/.venv/Lib/site-packages")
     monkeypatch.setenv("HERMES_PROFILE", "test-profile")
 
     state, _message = openviking_module._start_local_openviking_server("http://127.0.0.1:1934")
@@ -746,7 +746,7 @@ def test_viking_client_delete_uses_identity_headers(monkeypatch):
         api_key="test-key",
         account="acct",
         user="alice",
-        agent="hermes",
+        agent="auraforge",
     )
     captured = {}
 
@@ -769,7 +769,7 @@ def test_viking_client_delete_uses_identity_headers(monkeypatch):
     assert captured["url"] == "https://example.com/api/v1/fs"
     assert captured["kwargs"]["params"] == {"uri": "viking://~/memories/x.md"}
     assert captured["kwargs"]["headers"]["Authorization"] == "Bearer test-key"
-    assert captured["kwargs"]["headers"]["X-OpenViking-Actor-Peer"] == "hermes"
+    assert captured["kwargs"]["headers"]["X-OpenViking-Actor-Peer"] == "auraforge"
     assert captured["kwargs"]["headers"]["User-Agent"] == _EXPECTED_USER_AGENT
 
 
@@ -782,7 +782,7 @@ def test_viking_client_upload_uses_user_agent_without_json_content_type(
         api_key="test-key",
         account="acct",
         user="alice",
-        agent="hermes",
+        agent="auraforge",
     )
     upload = tmp_path / "notes.txt"
     upload.write_text("notes", encoding="utf-8")
@@ -835,7 +835,7 @@ def test_openviking_identity_probes_are_anonymous_before_authenticated_requests(
         "api_key": "secret-key",
         "account": "acct",
         "user": "alice",
-        "agent": "hermes",
+        "agent": "auraforge",
     })
 
     assert (valid, message, role) == (True, "", "root")
@@ -864,7 +864,7 @@ def test_repeated_openviking_health_probes_never_send_credentials_or_tenant_head
         api_key="secret-key",
         account="acct",
         user="alice",
-        agent="hermes",
+        agent="auraforge",
     )
 
     def fake_get(_url, **kwargs):
@@ -891,7 +891,7 @@ def test_cloud_health_retries_with_api_key_after_anonymous_auth_error(monkeypatc
     client = _VikingClient(
         "https://api.vikingdb.cn-beijing.volces.com/openviking",
         api_key="account.user.0123456789abcdef0123456789abcdef",
-        agent="hermes",
+        agent="auraforge",
     )
     modern = {"status": "ok", "healthy": True, "version": "0.3.0"}
 
@@ -931,7 +931,7 @@ def test_cloud_health_does_not_send_key_without_api_key(monkeypatch):
     client = _VikingClient(
         "https://api.vikingdb.cn-beijing.volces.com/openviking",
         api_key="",
-        agent="hermes",
+        agent="auraforge",
     )
     calls = []
 
@@ -959,7 +959,7 @@ def test_health_non_auth_errors_do_not_retry_with_credentials(monkeypatch):
     client = _VikingClient(
         "https://openviking.example",
         api_key="secret-key",
-        agent="hermes",
+        agent="auraforge",
     )
     calls = []
 
@@ -1079,7 +1079,7 @@ def test_validate_openviking_reachability_uses_health_only(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# on_session_switch — flush + commit + rotate behavior (hermes-agent#28296)
+# on_session_switch — flush + commit + rotate behavior (auraforge-agent#28296)
 # ---------------------------------------------------------------------------
 
 def _make_provider_with_session(session_id: str, turn_count: int):
@@ -1115,7 +1115,7 @@ def test_sync_turn_captures_session_id_before_worker_runs():
     provider._api_key = ""
     provider._account = "acct"
     provider._user = "usr"
-    provider._agent = "hermes"
+    provider._agent = "auraforge"
     provider._session_id = "old-sid"
 
     started = threading.Event()
@@ -1160,7 +1160,7 @@ def test_sync_turn_captures_session_id_before_worker_runs():
     assert captured_payloads == [{
         "messages": [
             {"role": "user", "parts": [{"type": "text", "text": "u"}]},
-            {"role": "assistant", "parts": [{"type": "text", "text": "a"}], "peer_id": "hermes"},
+            {"role": "assistant", "parts": [{"type": "text", "text": "a"}], "peer_id": "auraforge"},
         ]
     }]
 
@@ -1194,7 +1194,7 @@ def test_end_then_switch_does_not_double_commit():
 
 
 def test_session_needs_commit_guard_wins_over_stale_turn_count():
-    """Regression for hermes-agent#28296 review (M3): once a session is marked
+    """Regression for auraforge-agent#28296 review (M3): once a session is marked
     committed, _session_needs_commit must return False even if turn_count is
     still positive. A racing sync_turn can re-increment _turn_count after the
     commit+reset; without the guard ordering, a follow-up finalizer would
@@ -1318,7 +1318,7 @@ def test_shutdown_waits_for_memory_write_worker(monkeypatch):
     provider._api_key = ""
     provider._account = "acct"
     provider._user = "usr"
-    provider._agent = "hermes"
+    provider._agent = "auraforge"
 
     worker_started = threading.Event()
     release_worker = threading.Event()
@@ -1418,7 +1418,7 @@ def _make_prefetch_provider() -> OpenVikingMemoryProvider:
     provider._api_key = ""
     provider._account = "acct"
     provider._user = "usr"
-    provider._agent = "hermes"
+    provider._agent = "auraforge"
     return provider
 
 

@@ -46,7 +46,7 @@ def _break_git_index(wt: Path) -> None:
 
 class SubagentWorktreeTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="hermes-sw-test-"))
+        self.tmp = Path(tempfile.mkdtemp(prefix="auraforge-sw-test-"))
         self.addCleanup(shutil.rmtree, self.tmp, True)
 
     # ── resolve_repo_root ──────────────────────────────────────────────
@@ -82,7 +82,7 @@ class SubagentWorktreeTests(unittest.TestCase):
         assert info is not None
         self.assertTrue(os.path.isdir(info["path"]))
         self.assertIn(".worktrees", info["path"])
-        self.assertEqual(info["branch"], "hermes-subagent/subagent-abc123")
+        self.assertEqual(info["branch"], "auraforge-subagent/subagent-abc123")
         self.assertTrue(info["base_commit"])
         # Worktree carries the committed file
         self.assertTrue((Path(info["path"]) / "README.md").exists())
@@ -317,10 +317,10 @@ class SubagentWorktreeTests(unittest.TestCase):
 
     def test_context_note_names_path_and_branch(self):
         note = sw.build_worktree_context_note(
-            {"path": "/x/wt", "branch": "hermes-subagent/subagent-1"}
+            {"path": "/x/wt", "branch": "auraforge-subagent/subagent-1"}
         )
         self.assertIn("/x/wt", note)
-        self.assertIn("hermes-subagent/subagent-1", note)
+        self.assertIn("auraforge-subagent/subagent-1", note)
         self.assertIn("WORKTREE ISOLATION", note)
 
 
@@ -334,7 +334,7 @@ class WorktreePayloadSchemaTests(unittest.TestCase):
     """
 
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="hermes-sw-schema-"))
+        self.tmp = Path(tempfile.mkdtemp(prefix="auraforge-sw-schema-"))
         self.addCleanup(shutil.rmtree, self.tmp, True)
 
     def test_unproven_payload_matches_finalize_schema(self):

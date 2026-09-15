@@ -28,7 +28,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO))
 
-os.environ.setdefault("HERMES_HOME", tempfile.mkdtemp(prefix="hermes-bench-home-"))
+os.environ.setdefault("HERMES_HOME", tempfile.mkdtemp(prefix="auraforge-bench-home-"))
 
 
 class CollectTransport:

@@ -1745,7 +1745,7 @@ class FeishuAdapter(BasePlatformAdapter):
             if executor is None or getattr(executor, "_shutdown", False):
                 executor = concurrent.futures.ThreadPoolExecutor(
                     max_workers=10,
-                    thread_name_prefix="hermes-feishu-sdk",
+                    thread_name_prefix="auraforge-feishu-sdk",
                 )
                 self._sdk_executor = executor
             return executor
@@ -5261,7 +5261,7 @@ class FeishuAdapter(BasePlatformAdapter):
 #
 # Device-code flow: user scans a QR code with Feishu/Lark mobile app and the
 # platform creates a fully configured bot application automatically.
-# Called by `hermes gateway setup` via _setup_feishu() in hermes_cli/gateway.py.
+# Called by `auraforge gateway setup` via _setup_feishu() in hermes_cli/gateway.py.
 # =============================================================================
 
 
@@ -5325,9 +5325,9 @@ def _begin_registration(domain: str = "feishu") -> dict:
         raise RuntimeError("Feishu / Lark registration did not return a device_code")
     qr_url = res.get("verification_uri_complete", "")
     if "?" in qr_url:
-        qr_url += "&from=hermes&tp=hermes"
+        qr_url += "&from=auraforge&tp=auraforge"
     else:
-        qr_url += "?from=hermes&tp=hermes"
+        qr_url += "?from=auraforge&tp=auraforge"
     return {
         "device_code": device_code,
         "qr_url": qr_url,
@@ -5629,7 +5629,7 @@ async def _standalone_send(
     (images, video, voice, documents). Replaces the legacy _send_feishu helper.
     """
     if not await asyncio.to_thread(_load_lark_oapi):
-        return {"error": "Feishu dependencies not installed. Run `hermes setup` to install Feishu support."}
+        return {"error": "Feishu dependencies not installed. Run `auraforge setup` to install Feishu support."}
 
     media_files = media_files or []
     try:
@@ -5802,7 +5802,7 @@ def interactive_setup() -> None:
         save_env_value("FEISHU_ALLOW_ALL_USERS", "false")
         save_env_value("FEISHU_ALLOWED_USERS", "")
         print_success("DM pairing enabled.")
-        print_info("Unknown users can request access; approve with `hermes pairing approve`.")
+        print_info("Unknown users can request access; approve with `auraforge pairing approve`.")
     elif access_idx == 1:
         save_env_value("FEISHU_ALLOW_ALL_USERS", "true")
         save_env_value("FEISHU_ALLOWED_USERS", "")
@@ -5885,7 +5885,7 @@ def register(ctx) -> None:
         is_connected=_is_connected,
         validate_config=_is_connected,
         required_env=["FEISHU_APP_ID", "FEISHU_APP_SECRET"],
-        install_hint="Run `hermes setup` to install Feishu support.",
+        install_hint="Run `auraforge setup` to install Feishu support.",
         setup_fn=interactive_setup,
         apply_yaml_config_fn=_apply_yaml_config,
         allowed_users_env="FEISHU_ALLOWED_USERS",

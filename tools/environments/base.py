@@ -689,8 +689,8 @@ class BaseEnvironment(ABC):
 
         self._session_id = uuid.uuid4().hex[:12]
         temp_dir = self.get_temp_dir().rstrip("/") or "/"
-        self._snapshot_path = f"{temp_dir}/hermes-snap-{self._session_id}.sh"
-        self._cwd_file = f"{temp_dir}/hermes-cwd-{self._session_id}.txt"
+        self._snapshot_path = f"{temp_dir}/auraforge-snap-{self._session_id}.sh"
+        self._cwd_file = f"{temp_dir}/auraforge-cwd-{self._session_id}.txt"
         self._cwd_marker = _cwd_marker(self._session_id)
         self._snapshot_ready = False
         self._snapshot_passthrough_names: set[str] = set()
@@ -964,9 +964,9 @@ class BaseEnvironment(ABC):
 
         # Harness attribution: every tool subprocess advertises that it runs
         # under Aura Forge via the cross-agent ``AI_AGENT`` standard (read by e.g.
-        # huggingface_hub's agent detection) plus the Hermes-specific
+        # huggingface_hub's agent detection) plus the Aura Forge-specific
         # ``HERMES_AGENT`` marker.  The value MUST equal our id in the public
-        # agent-harness registry (``hermes-agent`` — see huggingface.js
+        # agent-harness registry (``auraforge-agent`` — see huggingface.js
         # ``agent-harnesses.ts``); standard-var matching is exact, so any other
         # value is reported as "unknown".  Setting it here (rather than only in
         # the host process env) is what carries the marker into REMOTE backends
@@ -975,7 +975,7 @@ class BaseEnvironment(ABC):
         # never clobber an outer harness value that arrived via the inherited
         # process env (Aura Forge running inside another agent's terminal).
         parts.append(
-            'export AI_AGENT="${AI_AGENT:-hermes-agent}" '
+            'export AI_AGENT="${AI_AGENT:-auraforge-agent}" '
             'HERMES_AGENT="${HERMES_AGENT:-true}"'
         )
 

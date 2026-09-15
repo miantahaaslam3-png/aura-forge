@@ -1,7 +1,7 @@
 """SQLite-backed Kanban board for multi-profile, multi-project collaboration.
 
 In a fresh install the board lives at ``<root>/kanban.db`` where
-``<root>`` is the **shared Hermes root** (the parent of any active
+``<root>`` is the **shared Aura Forge root** (the parent of any active
 profile). Profiles intentionally collapse onto a shared board: it IS
 the cross-profile coordination primitive. A worker spawned with
 ``auraforge -p <profile>`` joins the same board as the dispatcher that
@@ -12,7 +12,7 @@ claimed the task. The same applies to ``<root>/kanban/workspaces/`` and
 separate unrelated streams of work (e.g. one per project / repo / domain).
 Each board is a directory under ``<root>/kanban/boards/<slug>/`` with
 its own ``kanban.db``, ``workspaces/``, and ``logs/``. All boards share
-the profile's Hermes home but are otherwise isolated: a worker spawned
+the profile's Aura Forge home but are otherwise isolated: a worker spawned
 for a task on board ``atm10-server`` sees only that board's tasks,
 cannot enumerate other boards, and its dispatcher ticks don't touch
 other boards' DBs.
@@ -36,9 +36,9 @@ Board resolution order (highest precedence first, all optional):
   the "currently selected" board. Written by ``auraforge kanban boards
   switch <slug>``. When absent, the active board is ``default``.
 
-In standard installs ``<root>`` is ``~/.hermes``. In Docker / custom
-deployments where ``AURA_FORGE_HOME`` points outside ``~/.hermes`` (e.g.
-``/opt/hermes``), ``<root>`` is ``AURA_FORGE_HOME``. Legacy env-var
+In standard installs ``<root>`` is ``~/.auraforge``. In Docker / custom
+deployments where ``AURA_FORGE_HOME`` points outside ``~/.auraforge`` (e.g.
+``/opt/auraforge``), ``<root>`` is ``AURA_FORGE_HOME``. Legacy env-var
 overrides still work:
 
 * ``HERMES_KANBAN_DB`` — pin the database file path directly.
@@ -55,7 +55,7 @@ Docker layouts.
 Schema is intentionally small: tasks, task_links, task_comments,
 task_events.  The ``workspace_kind`` field decouples coordination from git
 worktrees so that research / ops / digital-twin workloads work alongside
-coding workloads.  See ``docs/hermes-kanban-v1-spec.pdf`` for the full
+coding workloads.  See ``docs/auraforge-kanban-v1-spec.pdf`` for the full
 design specification.
 
 Concurrency strategy: WAL mode + ``BEGIN IMMEDIATE`` for write
@@ -564,7 +564,7 @@ def _normalize_board_slug(slug: Optional[str]) -> Optional[str]:
 
 
 def kanban_home() -> Path:
-    """Return the shared Hermes root that anchors the kanban board.
+    """Return the shared Aura Forge root that anchors the kanban board.
 
     Resolution order:
 
@@ -2144,7 +2144,7 @@ def _guard_existing_db_is_healthy(path: Path) -> None:
     Path-trust note: ``path`` arrives via :func:`connect`, which itself
     resolves it from an explicit ``db_path`` argument, the
     :func:`kanban_db_path` env-var chain, or the kanban-home default —
-    all sources Hermes treats as user-controlled-but-trusted on the
+    all sources Aura Forge treats as user-controlled-but-trusted on the
     user's own machine. We additionally resolve the path here and
     confine all filesystem writes to its parent directory so any
     accidental ``..`` segments are collapsed before any I/O happens.
@@ -5875,10 +5875,10 @@ def _is_managed_scratch_path(p: Path) -> bool:
     task's scratch dir at once), and a path that resolves to ``<kanban_home>
     /kanban`` itself, ``<kanban_home>/kanban/logs``, or
     ``<kanban_home>/kanban/boards/<slug>`` is rejected because those
-    subtrees hold Hermes' own DB, metadata, and logs, not task workspaces.
+    subtrees hold Aura Forge' own DB, metadata, and logs, not task workspaces.
 
     Used by :func:`_cleanup_workspace` to refuse to ``shutil.rmtree`` paths
-    outside Hermes-managed storage. A board ``default_workdir`` pointing at a
+    outside Aura Forge-managed storage. A board ``default_workdir`` pointing at a
     real source tree can otherwise pair with ``workspace_kind='scratch'`` and
     cause task completion to delete user data (#28818).
     """
@@ -7761,7 +7761,7 @@ def _resolve_worktree_workspace(
     worktree task under a meaningful, board-owned repo — ``<repo>/.worktrees/
     <task-id>`` — instead of silently landing under the dispatcher's current
     working directory (which is whatever directory the gateway happened to be
-    launched from, e.g. the Hermes checkout). If no anchor is configured
+    launched from, e.g. the Aura Forge checkout). If no anchor is configured
     anywhere, we fail loudly rather than guess.
     """
     branch_name = (task.branch_name or "").strip() or f"wt/{task.id}"
@@ -7854,13 +7854,13 @@ def resolve_workspace(task: Task, *, board: Optional[str] = None) -> Path:
       root.  Users who want a kanban-root-relative workspace should
       compute the absolute path themselves.
     - ``worktree``: a real linked git worktree. If ``workspace_path`` names
-      a repo root, Hermes treats it as an anchor and materializes a linked
+      a repo root, Aura Forge treats it as an anchor and materializes a linked
       worktree at ``<repo>/.worktrees/<task-id>``. If ``workspace_path`` names
-      a concrete target path, Hermes creates/reuses that linked worktree. With
-      no ``workspace_path``, Hermes anchors on the board's ``default_workdir``
+      a concrete target path, Aura Forge creates/reuses that linked worktree. With
+      no ``workspace_path``, Aura Forge anchors on the board's ``default_workdir``
       and materializes ``<repo>/.worktrees/<task-id>`` per task; if no
       ``default_workdir`` is configured it raises rather than guessing from the
-      dispatcher's CWD. When ``branch_name`` is empty, Hermes uses
+      dispatcher's CWD. When ``branch_name`` is empty, Aura Forge uses
       ``wt/<task-id>``.
 
     Persist the resolved path back to the task row via ``set_workspace_path``
@@ -8047,7 +8047,7 @@ class DispatchResult:
     rather than on explicit per-task assignments."""
     skipped_nonspawnable: list[str] = field(default_factory=list)
     """Ready task ids skipped because their assignee names a control-plane
-    lane (a Claude Code terminal like ``orion-cc``) rather than a Hermes
+    lane (a Claude Code terminal like ``orion-cc``) rather than a Aura Forge
     profile. Expected steady-state on multi-lane setups; NOT an
     operator-actionable failure. Tracked separately so health telemetry
     can distinguish "real stuck" (nothing spawned but spawnable work
@@ -9550,7 +9550,7 @@ def check_respawn_guard(
 
 def has_spawnable_ready(conn: sqlite3.Connection) -> bool:
     """Return True iff there is at least one ready+assigned+unclaimed task
-    whose assignee maps to a real Hermes profile.
+    whose assignee maps to a real Aura Forge profile.
 
     Used by the gateway- and CLI-embedded dispatchers' health telemetry to
     decide whether ``0 spawned`` is a "stuck" condition (real spawnable
@@ -9582,7 +9582,7 @@ def has_spawnable_ready(conn: sqlite3.Connection) -> bool:
 
 def has_spawnable_review(conn: sqlite3.Connection) -> bool:
     """Return True iff there is at least one review+assigned+unclaimed task
-    whose assignee maps to a real Hermes profile.
+    whose assignee maps to a real Aura Forge profile.
 
     Mirror of :func:`has_spawnable_ready` for the review column —
     used by the health telemetry to decide whether the dispatcher
@@ -9608,7 +9608,7 @@ def has_spawnable_review(conn: sqlite3.Connection) -> bool:
 def review_dispatch_enabled() -> bool:
     """Return whether first-class review tasks should dispatch automatically.
 
-    The default is true because Hermes ships the ``sdlc-review`` skill and the
+    The default is true because Aura Forge ships the ``sdlc-review`` skill and the
     review lifecycle includes a supported reviewer-owned changes-requested
     transition. Operators can disable it for human-only review boards.
     """
@@ -9643,7 +9643,7 @@ def review_dispatch_enabled() -> bool:
 # pressure level is "unknown" (no spawn restriction).
 # ---------------------------------------------------------------------------
 
-# Assumed per-worker memory footprint for the derived default cap. Hermes
+# Assumed per-worker memory footprint for the derived default cap. Aura Forge
 # workers are full agent processes (Python + model client + tool subprocesses);
 # ~512 MiB is a deliberately conservative planning number so the derived cap
 # errs toward fewer workers on small VMs.
@@ -10169,11 +10169,11 @@ def _dispatch_once_locked(
             else:
                 result.skipped_unassigned.append(row["id"])
                 continue
-        # Skip ready tasks whose assignee is not a real Hermes profile.
+        # Skip ready tasks whose assignee is not a real Aura Forge profile.
         # `_default_spawn` invokes ``auraforge -p <assignee>`` which fails
         # with "Profile 'X' does not exist" when the assignee names a
         # control-plane lane (e.g. an interactive Claude Code terminal
-        # like ``orion-cc`` / ``orion-research``) rather than a Hermes
+        # like ``orion-cc`` / ``orion-research``) rather than a Aura Forge
         # profile. Those task lanes are pulled by terminals via
         # ``claim_task`` directly and should NEVER auto-spawn — the
         # subprocess would crash on startup, get reaped as a zombie,
@@ -10316,7 +10316,7 @@ def _dispatch_once_locked(
     # Same concurrency model as ready dispatch: review spawns count
     # against max_spawn alongside ready tasks, so the total number of
     # running workers stays bounded.
-    # Auto-dispatch is enabled by default because Hermes bundles the
+    # Auto-dispatch is enabled by default because Aura Forge bundles the
     # ``sdlc-review`` skill and reviewer workers can now approve, request
     # changes without block-loop accounting, or escalate a genuine blocker.
     # Human-only boards can disable it with ``kanban.review_dispatch``.
@@ -10520,7 +10520,7 @@ def _module_hermes_argv() -> list[str]:
 
 
 def _absolute_hermes_path(path: str) -> str:
-    """Return an absolute filesystem path for a resolved Hermes shim."""
+    """Return an absolute filesystem path for a resolved Aura Forge shim."""
     expanded = os.path.expanduser(path)
     return expanded if os.path.isabs(expanded) else os.path.abspath(expanded)
 
@@ -10574,7 +10574,7 @@ def _safe_which_no_cwd(command: str) -> Optional[str]:
 
 
 def _hermes_path_argv(path: str) -> list[str]:
-    """Return argv for a resolved Hermes executable path.
+    """Return argv for a resolved Aura Forge executable path.
 
     Windows batch shims (`.cmd` / `.bat`) are not safe as argv[0] for
     worker launches because the argument vector includes task-derived
@@ -10594,14 +10594,14 @@ def _resolve_hermes_argv() -> list[str]:
     1. ``$HERMES_BIN`` — explicit operator override. Path-like values are
        normalized to absolute paths; bare command names keep normal PATH
        semantics and never prefer a same-directory file before ``PATH``.
-    2. ``shutil.which("hermes")`` — the console-script shim, normalized to
+    2. ``shutil.which("auraforge")`` — the console-script shim, normalized to
        an absolute path. On Windows, ``which`` can return a relative
-       ``.\\hermes.CMD`` when the current directory is on ``PATH``; directly
+       ``.\\auraforge.CMD`` when the current directory is on ``PATH``; directly
        launching batch shims is also unsafe with task-derived argv. The
        dispatcher therefore falls back to the interpreter-bound module form
        for implicit ``.cmd`` / ``.bat`` shims.
     3. ``sys.executable -m hermes_cli.main`` — fallback for setups where
-       Hermes is launched from a venv and the ``auraforge`` shim is not on
+       Aura Forge is launched from a venv and the ``auraforge`` shim is not on
        the dispatcher's ``$PATH`` (cron, systemd ``User=`` services,
        launchd jobs, detached processes, etc.). Goes through the running
        interpreter so the result is independent of ``$PATH``.
@@ -10621,7 +10621,7 @@ def _resolve_hermes_argv() -> list[str]:
             return _hermes_path_argv(resolved_env_bin)
         return _module_hermes_argv()
 
-    hermes_bin = _safe_which_no_cwd("hermes") if _IS_WINDOWS else shutil.which("hermes")
+    hermes_bin = _safe_which_no_cwd("auraforge") if _IS_WINDOWS else shutil.which("auraforge")
     if hermes_bin:
         return _hermes_path_argv(hermes_bin)
     return _module_hermes_argv()
@@ -10657,7 +10657,7 @@ def _worker_terminal_timeout_env(
     return str(desired)
 
 
-def _resolve_worker_cli_toolsets(hermes_home: Optional[str]) -> Optional[list[str]]:
+def _resolve_worker_cli_toolsets(aura_forge_home: Optional[str]) -> Optional[list[str]]:
     """Return the assigned profile's effective CLI toolsets for a worker.
 
     Dispatcher-spawned workers are launched from a long-lived gateway process,
@@ -10668,24 +10668,24 @@ def _resolve_worker_cli_toolsets(hermes_home: Optional[str]) -> Optional[list[st
     is only the kanban orchestrator surface. ``model_tools`` still appends the
     task-scoped kanban lifecycle tools when ``HERMES_KANBAN_TASK`` is set.
     """
-    if not hermes_home:
+    if not aura_forge_home:
         return None
     try:
-        from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+        from hermes_constants import reset_aura_forge_home_override, set_aura_forge_home_override
         from hermes_cli.config import load_config
         from hermes_cli.tools_config import _get_platform_tools
 
-        token = set_hermes_home_override(hermes_home)
+        token = set_aura_forge_home_override(aura_forge_home)
         try:
             cfg = load_config()
             toolsets = sorted(_get_platform_tools(cfg, "cli"))
         finally:
-            reset_hermes_home_override(token)
+            reset_aura_forge_home_override(token)
         return toolsets or None
     except Exception as exc:
         _log.debug(
             "kanban worker: could not resolve CLI toolsets for AURA_FORGE_HOME=%r (%s)",
-            hermes_home,
+            aura_forge_home,
             exc,
         )
         return None
@@ -10757,8 +10757,8 @@ def _default_spawn(
     # config.  Without this, `env = dict(os.environ)` copies only the parent's
     # env, and when the child process starts `auraforge -p <name>` the
     # _apply_profile_override() runs *before* hermes_constants is imported.
-    # If AURA_FORGE_HOME is absent from the child's env, get_hermes_home() falls
-    # back to Path.home() / ".hermes" (the DEFAULT profile root), ignoring the
+    # If AURA_FORGE_HOME is absent from the child's env, get_aura_forge_home() falls
+    # back to Path.home() / ".aura-forge" (the DEFAULT profile root), ignoring the
     # profile-specific config entirely.  Fixes profile-scoped fallback_providers
     # being invisible to kanban workers.
     from hermes_cli.profiles import resolve_profile_env
@@ -10846,7 +10846,7 @@ def _default_spawn(
     # quiet chat run into the Ink TUI, whose no-TTY bail-out exits 0 without
     # doing the task → "protocol violation" on every attempt. `--cli` is the
     # highest-precedence interface override; dropping the env var covers
-    # older hermes builds on PATH that predate the flag's precedence.
+    # older auraforge builds on PATH that predate the flag's precedence.
     env.pop("HERMES_TUI", None)
 
     cmd = [
@@ -11247,7 +11247,7 @@ def build_worker_context(conn: sqlite3.Connection, task_id: str) -> str:
             age = _relative_age(c.created_at, _now)
             ts_disp = f"{ts}, {age}" if age else ts
             # Render author with explicit "comment from worker" framing so
-            # operator-controlled HERMES_PROFILE values like "hermes-system"
+            # operator-controlled HERMES_PROFILE values like "auraforge-system"
             # or "operator" can't be misread by the next worker as a system
             # directive above the (attacker-influenceable) comment body.
             # Defense-in-depth — the LLM-controlled author-forgery surface
@@ -11971,7 +11971,7 @@ def list_profiles_on_disk() -> list[str]:
 
     Includes:
     - named profiles under ``<default-root>/profiles/<name>/config.yaml``
-    - the implicit ``default`` profile when the default Hermes root exists
+    - the implicit ``default`` profile when the default Aura Forge root exists
 
     Reads profile paths directly so this module has no import dependency on
     ``hermes_cli.profiles`` (which pulls in a large chunk of the CLI startup

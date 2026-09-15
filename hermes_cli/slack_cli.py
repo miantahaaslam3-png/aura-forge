@@ -7,9 +7,9 @@ first-class slash UX Discord and Telegram already have.
 
 Typical workflow::
 
-    $ hermes slack manifest > slack-manifest.json
+    $ auraforge slack manifest > slack-manifest.json
     # or:
-    $ hermes slack manifest --write
+    $ auraforge slack manifest --write
 
 Then paste the printed JSON into the Slack app config (Features → App
 Manifest → Edit) and click Save. Slack diffs the manifest and prompts
@@ -191,7 +191,7 @@ def slack_manifest_command(args) -> int:
         long_description is not None or long_description_file is not None
     ):
         print(
-            "hermes slack manifest: long description options cannot be used "
+            "auraforge slack manifest: long description options cannot be used "
             "with --slashes-only",
             file=sys.stderr,
         )
@@ -204,7 +204,7 @@ def slack_manifest_command(args) -> int:
                 long_description = handle.read()
         except (OSError, UnicodeError, RuntimeError) as exc:
             print(
-                f"hermes slack manifest: cannot read long description from "
+                f"auraforge slack manifest: cannot read long description from "
                 f"{source_arg}: {exc}",
                 file=sys.stderr,
             )
@@ -214,7 +214,7 @@ def slack_manifest_command(args) -> int:
         and len(long_description) < SLACK_LONG_DESCRIPTION_MIN_CHARACTERS
     ):
         print(
-            "hermes slack manifest: long description must be at least "
+            "auraforge slack manifest: long description must be at least "
             f"{SLACK_LONG_DESCRIPTION_MIN_CHARACTERS} characters "
             f"(got {len(long_description)})",
             file=sys.stderr,
@@ -225,7 +225,7 @@ def slack_manifest_command(args) -> int:
         and len(long_description) > SLACK_LONG_DESCRIPTION_MAX_CHARACTERS
     ):
         print(
-            "hermes slack manifest: long description must be at most "
+            "auraforge slack manifest: long description must be at most "
             f"{SLACK_LONG_DESCRIPTION_MAX_CHARACTERS} characters "
             f"(got {len(long_description)})",
             file=sys.stderr,
@@ -256,9 +256,9 @@ def slack_manifest_command(args) -> int:
     if write_target is not None:
         if isinstance(write_target, bool) and write_target:
             # --write with no value → default location
-            from hermes_constants import get_hermes_home
+            from hermes_constants import get_aura_forge_home
 
-            target = Path(get_hermes_home()) / "slack-manifest.json"
+            target = Path(get_aura_forge_home()) / "slack-manifest.json"
         else:
             target = Path(write_target).expanduser()
         target.parent.mkdir(parents=True, exist_ok=True)

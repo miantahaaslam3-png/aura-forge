@@ -122,7 +122,7 @@ def _venv_scripts_dir(root: Path) -> Path | None:
 #: managed binary dir (the default Aura Forge root's ``bin``, next to uv.exe)
 #: on the user PATH. Keep in lockstep with the launcher list in
 #: scripts/install.ps1.
-_WINDOWS_BIN_LAUNCHERS = ("hermes", "hermes-acp")
+_WINDOWS_BIN_LAUNCHERS = ("auraforge", "auraforge-acp")
 
 
 def _venv_is_relocatable(venv_dir: Path) -> bool:
@@ -191,9 +191,9 @@ def ensure_windows_bin_launchers(
     console scripts — never ``venv\\Scripts`` itself on PATH, which would
     shadow the user's ``python`` (#83797). The canonical launcher home is
     the managed binary dir — the default Aura Forge root's ``bin``
-    (``%LOCALAPPDATA%\\hermes\\bin``, next to the managed uv) — which lives
+    (``%LOCALAPPDATA%\\auraforge\\bin``, next to the managed uv) — which lives
     OUTSIDE the git checkout so no git operation can ever touch it. It is
-    a per-machine dir shared by every profile: ``get_hermes_home()`` would
+    a per-machine dir shared by every profile: ``get_aura_forge_home()`` would
     point inside ``profiles\\<name>`` under ``auraforge -p``, so the anchor
     here is :func:`hermes_constants.get_default_hermes_root`.
 
@@ -237,7 +237,7 @@ def ensure_windows_bin_launchers(
 
     root = Path(root)
 
-    # Per-machine anchor: the DEFAULT Aura Forge root, not get_hermes_home() —
+    # Per-machine anchor: the DEFAULT Aura Forge root, not get_aura_forge_home() —
     # under ``auraforge -p <name>`` that returns ``profiles\\<name>``, which
     # would fail the managed-clone gate below and silently skip the heal
     # for profile users. The launcher dir serves the whole machine.
@@ -321,7 +321,7 @@ def ensure_windows_bin_launchers(
         # closed/broken stderr must not turn a successful heal into a crash.
         with contextlib.suppress(OSError, ValueError):
             print(
-                "  ✓ Restored hermes launcher(s): " + ", ".join(restored),
+                "  ✓ Restored auraforge launcher(s): " + ", ".join(restored),
                 file=sys.stderr,
             )
     return restored
@@ -448,7 +448,7 @@ def migrate_windows_bin_path(
             return False
         with contextlib.suppress(OSError, ValueError):
             print(
-                f"  ✓ hermes launchers now resolve from {home_bin} "
+                f"  ✓ auraforge launchers now resolve from {home_bin} "
                 "(legacy PATH entries removed)",
                 file=sys.stderr,
             )
@@ -492,7 +492,7 @@ class ShimQuarantineError(RuntimeError):
 def _quarantine_running_hermes_exe(
     scripts_dir: Path, *, failed_out: list[str] | None = None
 ) -> list[tuple[Path, Path]]:
-    """Rename live hermes*.exe shims aside so the installer can rewrite them.
+    """Rename live auraforge*.exe shims aside so the installer can rewrite them.
 
     Windows blocks REPLACE on a running .exe but allows RENAME. Best-effort:
     silently skips anything that cannot be renamed. Returns (original,
@@ -506,11 +506,11 @@ def _quarantine_running_hermes_exe(
     if not _is_windows():
         return []
     names = set(_load_console_script_names(scripts_dir.parent.parent)) or {
-        "hermes",
+        "auraforge",
         "aura-forge-agent",
-        "hermes-acp",
+        "auraforge-acp",
     }
-    names.add("hermes-gateway")
+    names.add("auraforge-gateway")
     moved: list[tuple[Path, Path]] = []
     for name in sorted(names):
         shim = scripts_dir / f"{name}.exe"
@@ -606,7 +606,7 @@ def run_core_install(root: Path) -> None:
       to ``python -m pip`` when no uv binary is available
     - target ``.[all]`` (or ``.[termux-all]`` on Termux) with the per-extra
       fallback ladder when the combined extras resolve fails
-    - quarantine live ``hermes*.exe`` shims on Windows so they can be replaced
+    - quarantine live ``auraforge*.exe`` shims on Windows so they can be replaced
     - route ALL install output to stderr (acp/JSON-RPC safety)
     - Termux strips leaked PYTHONPATH/PYTHONHOME from the uv env
 

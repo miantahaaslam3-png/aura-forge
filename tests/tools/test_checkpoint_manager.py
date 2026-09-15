@@ -45,7 +45,7 @@ def work_dir(tmp_path):
 
 @pytest.fixture()
 def checkpoint_base(tmp_path):
-    """Isolated checkpoint base — never writes to ~/.hermes/."""
+    """Isolated checkpoint base — never writes to ~/.auraforge/."""
     return tmp_path / "checkpoints"
 
 
@@ -307,7 +307,7 @@ class TestRestore:
 
 
 class TestSafeRestore:
-    """Safe restore: preserve user hand-edits, revert only Hermes-authored changes.
+    """Safe restore: preserve user hand-edits, revert only Aura Forge-authored changes.
 
     Inspired by Copilot CLI's /rewind, which "restores only the files Copilot
     changed, skipping any file whose contents no longer match what Copilot
@@ -333,7 +333,7 @@ class TestSafeRestore:
 
         result = mgr.restore(str(work_dir), base, safe=True)
         assert result["success"] is True
-        # Hermes-authored change reverted...
+        # Aura Forge-authored change reverted...
         assert (work_dir / "main.py").read_text() == "print('hello')\n"
         # ...user's hand edit preserved.
         assert (work_dir / "README.md").read_text() == "user hand edit\n"
@@ -387,7 +387,7 @@ class TestSafeRestore:
 
         result = mgr.restore(str(work_dir), base, safe=True)
         assert result["success"] is True
-        # User edit preserved; Hermes-created file removed (not in checkpoint).
+        # User edit preserved; Aura Forge-created file removed (not in checkpoint).
         assert (work_dir / "README.md").read_text() == "user edit\n"
         assert not (work_dir / "agent.txt").exists()
         assert "README.md" in result["skipped_user_edits"]
@@ -1016,7 +1016,7 @@ class TestPruneCheckpointsOrphanAllowlist:
 
     def test_end_to_end_timing_change_during_confirmation_prompt(self, tmp_path, monkeypatch):
         """Reproduces the exact PR #69141 review scenario end-to-end through
-        `hermes checkpoints prune`: the preview shows one pre-v2 orphan; a
+        `auraforge checkpoints prune`: the preview shows one pre-v2 orphan; a
         second project's workdir is removed by the input() callback while
         the human is "answering" the prompt. Only the previewed orphan may
         be deleted.

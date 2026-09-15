@@ -26,8 +26,8 @@ from plugins.memory.honcho.client import (
 class TestHonchoClientConfigDefaults:
     def test_default_values(self):
         config = HonchoClientConfig()
-        assert config.host == "hermes"
-        assert config.workspace_id == "hermes"
+        assert config.host == "auraforge"
+        assert config.workspace_id == "auraforge"
         assert config.api_key is None
         assert config.environment == "production"
         assert config.timeout is None
@@ -162,7 +162,7 @@ class TestFromGlobalConfig:
             "workspace": "root-ws",
             "aiPeer": "root-ai",
             "hosts": {
-                "hermes": {
+                "auraforge": {
                     "workspace": "host-ws",
                     "aiPeer": "host-ai",
                 }
@@ -188,7 +188,7 @@ class TestFromGlobalConfig:
         config_file.write_text(json.dumps({
             "apiKey": "key",
             "recallMode": "tools",
-            "hosts": {"hermes": {"recallMode": "context"}},
+            "hosts": {"auraforge": {"recallMode": "context"}},
         }))
         config = HonchoClientConfig.from_global_config(config_path=config_file)
         assert config.recall_mode == "context"
@@ -207,7 +207,7 @@ class TestFromGlobalConfig:
         config_file = tmp_path / "config.json"
         config_file.write_text(json.dumps({
             "baseUrl": "http://root:9000",
-            "hosts": {"hermes": {"baseUrl": "http://host-block:9001"}},
+            "hosts": {"auraforge": {"baseUrl": "http://host-block:9001"}},
         }))
 
         with patch.dict(os.environ, {"HONCHO_BASE_URL": "http://env:8000"}, clear=False):
@@ -220,7 +220,7 @@ class TestFromGlobalConfig:
         (host block) and #43803 (endpoint block + HONCHO_URL)."""
         config_file = tmp_path / "config.json"
         layers = {
-            "hosts": {"hermes": {"baseUrl": "http://host:1"}},
+            "hosts": {"auraforge": {"baseUrl": "http://host:1"}},
             "endpoint": {"baseUrl": "http://endpoint:2"},
             "baseUrl": "http://flat:3",
         }
@@ -264,15 +264,15 @@ class TestResolveSessionName:
     def test_per_repo_uses_git_root(self):
         config = HonchoClientConfig(session_strategy="per-repo")
         with patch.object(
-            HonchoClientConfig, "_git_repo_name", return_value="hermes-agent"
+            HonchoClientConfig, "_git_repo_name", return_value="auraforge-agent"
         ):
-            result = config.resolve_session_name("/home/user/hermes-agent/subdir")
-        assert result == "hermes-agent"
+            result = config.resolve_session_name("/home/user/auraforge-agent/subdir")
+        assert result == "auraforge-agent"
 
 
 class TestResolveConfigPath:
     def test_prefers_hermes_home_when_exists(self, tmp_path):
-        hermes_home = tmp_path / "hermes"
+        hermes_home = tmp_path / "auraforge"
         hermes_home.mkdir()
         local_cfg = hermes_home / "honcho.json"
         local_cfg.write_text('{"apiKey": "local"}')
@@ -282,12 +282,12 @@ class TestResolveConfigPath:
         assert result == local_cfg
 
     def test_falls_back_to_default_profile_when_no_local(self, tmp_path, monkeypatch):
-        # Profile mode: HERMES_HOME points at ~/.hermes/profiles/<name>, so
-        # _get_default_hermes_home() must resolve back to ~/.hermes — that's
+        # Profile mode: HERMES_HOME points at ~/.auraforge/profiles/<name>, so
+        # _get_default_hermes_home() must resolve back to ~/.auraforge — that's
         # the bug the HOME-anchored helper fixes (vs. blindly using Path.home()).
         fake_home = tmp_path / "fakehome"
         fake_home.mkdir()
-        default_home = fake_home / ".hermes"
+        default_home = fake_home / ".auraforge"
         profile_home = default_home / "profiles" / "work"
         profile_home.mkdir(parents=True)
         default_cfg = default_home / "honcho.json"
@@ -305,12 +305,12 @@ class TestResolveConfigPath:
 class TestResolveActiveHost:
     def test_profile_host_key_uses_honcho_safe_separator(self):
         assert profile_host_key("coder") == "hermes_coder"
-        assert profile_host_key("default") == "hermes"
+        assert profile_host_key("default") == "auraforge"
 
 
     def test_explicit_env_var_wins(self):
-        with patch.dict(os.environ, {"HERMES_HONCHO_HOST": "hermes.coder"}):
-            assert resolve_active_host() == "hermes.coder"
+        with patch.dict(os.environ, {"HERMES_HONCHO_HOST": "auraforge.coder"}):
+            assert resolve_active_host() == "auraforge.coder"
 
 
     def test_profiles_import_failure_falls_back(self):
@@ -324,7 +324,7 @@ class TestResolveActiveHost:
             saved = sys.modules.get("hermes_cli.profiles")
             sys.modules["hermes_cli.profiles"] = None  # type: ignore
             try:
-                assert resolve_active_host() == "hermes"
+                assert resolve_active_host() == "auraforge"
             finally:
                 if saved is not None:
                     sys.modules["hermes_cli.profiles"] = saved
@@ -337,7 +337,7 @@ class TestProfileScopedConfig:
         with patch.dict(os.environ, {"HONCHO_API_KEY": "key"}):
             config = HonchoClientConfig.from_env(host="hermes_coder")
         assert config.host == "hermes_coder"
-        assert config.workspace_id == "hermes"  # shared workspace
+        assert config.workspace_id == "auraforge"  # shared workspace
         assert config.ai_peer == "hermes_coder"
 
 
@@ -349,7 +349,7 @@ class TestObservationModeMigration:
         cfg_file = tmp_path / "config.json"
         cfg_file.write_text(json.dumps({
             "apiKey": "k",
-            "hosts": {"hermes": {"enabled": True, "aiPeer": "hermes"}},
+            "hosts": {"auraforge": {"enabled": True, "aiPeer": "auraforge"}},
         }))
         cfg = HonchoClientConfig.from_global_config(config_path=cfg_file)
         assert cfg.observation_mode == "unified"
@@ -367,7 +367,7 @@ class TestObservationModeMigration:
         cfg_file = tmp_path / "config.json"
         cfg_file.write_text(json.dumps({
             "apiKey": "k",
-            "hosts": {"hermes": {
+            "hosts": {"auraforge": {
                 "enabled": True,
                 "observation": {
                     "user": {"observeMe": True, "observeOthers": False},
@@ -393,7 +393,7 @@ class TestGetHonchoClient:
         reason="honcho SDK not installed"
     )
     def test_dot_form_legacy_host_key_keeps_local_api_key(self):
-        """Regression for #37436: a legacy dot-form host block (hermes.work)
+        """Regression for #37436: a legacy dot-form host block (auraforge.work)
         must be found by the local-auth check. Before the _host_block fallback,
         the direct dict lookup missed it, the stored apiKey was dropped for the
         'local' placeholder, and every write 401'd silently."""
@@ -402,8 +402,8 @@ class TestGetHonchoClient:
             api_key="explicit-local-key",
             base_url="http://localhost:8000",
             host="hermes_work",
-            workspace_id="hermes",
-            raw={"hosts": {"hermes.work": {"apiKey": "explicit-local-key"}}},
+            workspace_id="auraforge",
+            raw={"hosts": {"auraforge.work": {"apiKey": "explicit-local-key"}}},
         )
 
         with patch("honcho.Honcho", return_value=fake_honcho) as mock_honcho:
@@ -423,8 +423,8 @@ class TestGetHonchoClient:
         cfg = HonchoClientConfig(
             api_key="cloud-root-key",
             base_url="http://localhost:8000",
-            host="hermes",
-            workspace_id="hermes",
+            host="auraforge",
+            workspace_id="auraforge",
             raw={},
         )
 
@@ -446,8 +446,8 @@ class TestGetHonchoClient:
         cfg = HonchoClientConfig(
             api_key="explicit-top-level-key",
             base_url="http://localhost:8000",
-            host="hermes",
-            workspace_id="hermes",
+            host="auraforge",
+            workspace_id="auraforge",
             raw={"apiKey": "explicit-top-level-key"},
         )
 
@@ -465,7 +465,7 @@ class TestGetHonchoClient:
         cfg = HonchoClientConfig(
             api_key="test-key",
             timeout=91.0,
-            workspace_id="hermes",
+            workspace_id="auraforge",
             environment="production",
         )
 
@@ -492,7 +492,7 @@ class TestGetHonchoClient:
         fake_honcho_2 = MagicMock(name="Honcho_v2")
         cfg = HonchoClientConfig(
             api_key="test-key",
-            workspace_id="hermes",
+            workspace_id="auraforge",
             environment="production",
         )
 
@@ -539,7 +539,7 @@ class TestGetHonchoClient:
         fake_honcho_2 = MagicMock(name="Honcho_v2")
         cfg = HonchoClientConfig(
             api_key="test-key",
-            workspace_id="hermes",
+            workspace_id="auraforge",
             environment="production",
         )
 
@@ -680,7 +680,7 @@ class TestGetHonchoClientBaseUrlDoublePrefixFix:
         cfg = HonchoClientConfig(
             api_key=None,
             base_url="http://localhost:38000/v3",
-            workspace_id="hermes",
+            workspace_id="auraforge",
             environment="production",
         )
 
@@ -763,7 +763,7 @@ class TestGetHonchoClientBaseUrlDoublePrefixFix:
         cfg = HonchoClientConfig(
             api_key="self-host-key",
             base_url=raw_url,
-            workspace_id="hermes",
+            workspace_id="auraforge",
             environment="production",
         )
 

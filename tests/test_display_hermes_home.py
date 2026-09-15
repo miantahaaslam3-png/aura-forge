@@ -1,11 +1,11 @@
 """display_hermes_home() renders POSIX separators on every platform.
 
 Maintainer catch (#95681 arc): on Windows with a custom HERMES_HOME under
-the user profile (e.g. AppData/Local/hermes), ``"~/" +
+the user profile (e.g. AppData/Local/auraforge), ``"~/" +
 str(home.relative_to(Path.home()))`` produced the mixed-separator chimera
-``~/AppData\\Local\\hermes`` — which then leaked into every consumer that
+``~/AppData\\Local\\auraforge`` — which then leaked into every consumer that
 appends sub-paths (the skill_manage schema showed the agent
-``~/AppData\\Local\\hermes/skills/``). The ``~/`` shorthand implies POSIX
+``~/AppData\\Local\\auraforge/skills/``). The ``~/`` shorthand implies POSIX
 rendering; the whole string must be consistent.
 """
 import os
@@ -24,24 +24,24 @@ class TestDisplayHermesHomePosix(unittest.TestCase):
         import hermes_constants as hc
 
         fake_userhome = Path.home()
-        nested = fake_userhome / "AppData" / "Local" / "hermes"
+        nested = fake_userhome / "AppData" / "Local" / "auraforge"
         with patch.object(hc, "get_hermes_home", return_value=nested):
             out = hc.display_hermes_home()
-        self.assertEqual(out, "~/AppData/Local/hermes")
+        self.assertEqual(out, "~/AppData/Local/auraforge")
         self.assertNotIn("\\", out)
 
     def test_default_home_unchanged(self):
         import hermes_constants as hc
 
         with patch.object(hc, "get_hermes_home",
-                          return_value=Path.home() / ".hermes"):
+                          return_value=Path.home() / ".auraforge"):
             out = hc.display_hermes_home()
-        self.assertEqual(out, "~/.hermes")
+        self.assertEqual(out, "~/.auraforge")
 
     def test_outside_home_falls_back_to_absolute(self):
         import hermes_constants as hc
 
-        outside = Path("/opt/hermes-custom") if os.name != "nt" else Path("C:/opt/hermes-custom")
+        outside = Path("/opt/auraforge-custom") if os.name != "nt" else Path("C:/opt/auraforge-custom")
         with patch.object(hc, "get_hermes_home", return_value=outside):
             out = hc.display_hermes_home()
         self.assertEqual(out, str(outside))

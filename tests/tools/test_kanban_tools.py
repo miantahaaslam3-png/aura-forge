@@ -20,10 +20,10 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
-    """Normal `hermes chat` sessions (no HERMES_KANBAN_TASK) must have
+    """Normal `auraforge chat` sessions (no HERMES_KANBAN_TASK) must have
     zero kanban_* tools in their schema."""
     monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
 
@@ -32,7 +32,7 @@ def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
     from toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
-    schema = registry.get_definitions(set(resolve_toolset("hermes-cli")), quiet=True)
+    schema = registry.get_definitions(set(resolve_toolset("auraforge-cli")), quiet=True)
     names = {s["function"].get("name") for s in schema if "function" in s}
     kanban = {n for n in names if n and n.startswith("kanban_")}
     assert kanban == set(), (
@@ -48,7 +48,7 @@ def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
 def worker_env(monkeypatch, tmp_path):
     """Simulate being a worker: HERMES_HOME isolated, HERMES_KANBAN_TASK set
     after we've created the task."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setenv("HERMES_PROFILE", "test-worker")
@@ -168,7 +168,7 @@ def test_complete_goal_mode_rejected_by_judge(monkeypatch, tmp_path):
     from tools import kanban_tools as kt
 
     # Set up isolated HERMES_HOME
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setenv("HERMES_PROFILE", "test-worker")
@@ -234,7 +234,7 @@ def _make_goal_mode_worker_env(monkeypatch, tmp_path):
     from pathlib import Path as _Path
     from hermes_cli import kanban_db as kb
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setenv("HERMES_PROFILE", "test-worker")
@@ -374,14 +374,14 @@ def test_comment_happy_path(worker_env):
 def test_comment_ignores_caller_supplied_author(worker_env):
     """``args["author"]`` is no longer honored — the author is always
     derived from ``HERMES_PROFILE`` so a worker can't forge a comment
-    under an authoritative-looking name like ``hermes-system`` and
+    under an authoritative-looking name like ``auraforge-system`` and
     poison the next worker's prompt context. Cross-task commenting
     itself remains unrestricted (see #19713); only the author override
     is removed.
     """
     from tools import kanban_tools as kt
     out = kt._handle_comment({
-        "task_id": worker_env, "body": "hi", "author": "hermes-system",
+        "task_id": worker_env, "body": "hi", "author": "auraforge-system",
     })
     assert json.loads(out)["ok"]
     from hermes_cli import kanban_db as kb
@@ -389,7 +389,7 @@ def test_comment_ignores_caller_supplied_author(worker_env):
     try:
         comments = kb.list_comments(conn, worker_env)
         # Author comes from HERMES_PROFILE in the fixture, not the
-        # caller-supplied "hermes-system" override.
+        # caller-supplied "auraforge-system" override.
         assert comments[0].author == "test-worker"
     finally:
         conn.close()
@@ -455,7 +455,7 @@ def test_unblock_happy_path(monkeypatch, worker_env):
 
 def test_unblock_with_pending_parents_returns_todo(monkeypatch, tmp_path):
     monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.setenv("HERMES_PROFILE", "orchestrator")
@@ -692,7 +692,7 @@ def test_orchestrator_complete_any_task_allowed(monkeypatch, tmp_path):
     """Orchestrator profiles (no HERMES_KANBAN_TASK) can still complete
     any task via explicit task_id. The check only applies to workers."""
     monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     from pathlib import Path as _P
@@ -736,7 +736,7 @@ def multi_board_env(monkeypatch, tmp_path):
     HERMES_KANBAN_TASK is pinned (orchestrator context) — workers test
     the env-task case via the existing ``worker_env`` fixture.
     """
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".auraforge"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     # Make sure neither HERMES_KANBAN_DB nor HERMES_KANBAN_BOARD pin a
@@ -927,9 +927,9 @@ def test_create_respects_auto_subscribe_on_create_false(monkeypatch, worker_env,
     channel. This is the knob that addresses the upstream design
     concern from PR #19718 (reverted in #19721) — users who want
     explicit kanban_notify-subscribe calls per task get that."""
-    # worker_env already created <tmp>/.hermes; use a fresh sibling
+    # worker_env already created <tmp>/.auraforge; use a fresh sibling
     # home to avoid mkdir() colliding with the worker's directory.
-    home = tmp_path / "gate-home" / ".hermes"
+    home = tmp_path / "gate-home" / ".auraforge"
     home.mkdir(parents=True)
     (home / "config.yaml").write_text(
         "kanban:\n  auto_subscribe_on_create: false\n"

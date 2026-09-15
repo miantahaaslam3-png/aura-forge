@@ -40,7 +40,7 @@ class TestCodexTransportBasic:
 class TestCodexBuildKwargs:
 
     def test_900k_context_variant_suffix_stripped_on_wire(self, transport):
-        """``-900k`` large-context picker variants are Hermes-side aliases —
+        """``-900k`` large-context picker variants are Aura Forge-side aliases —
         the Codex backend only knows the base slug, so build_kwargs must
         strip the suffix from the wire model id."""
         messages = [{"role": "user", "content": "Hi"}]
@@ -736,7 +736,7 @@ class TestCodexBuildKwargs:
                     response_item_id="fc_1",
                     function=SimpleNamespace(
                         name=codex_mod._XAI_CLIENT_WEB_SEARCH_ALIAS,
-                        arguments='{"query":"hermes"}',
+                        arguments='{"query":"auraforge"}',
                     ),
                 )
             ],
@@ -919,7 +919,7 @@ class TestOpencodeReservedToolAliases:
                     id="call_2", call_id="call_2", response_item_id="fc_2",
                     function=SimpleNamespace(
                         name="hermes_web_search",
-                        arguments='{"query":"hermes"}',
+                        arguments='{"query":"auraforge"}',
                     ),
                 ),
             ],

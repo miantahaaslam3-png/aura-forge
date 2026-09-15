@@ -42,7 +42,7 @@ def multiplex_homes(tmp_path, monkeypatch):
     """
     import hermes_state
 
-    root = tmp_path / "hermes"
+    root = tmp_path / "auraforge"
     profile = root / "profiles" / "fitness"
     root.mkdir(parents=True)
     profile.mkdir(parents=True)

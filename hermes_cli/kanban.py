@@ -1,7 +1,7 @@
 """CLI for the Aura Forge Kanban board — ``auraforge kanban …`` subcommand.
 
 Exposes the full Kanban command surface documented in the design spec
-(``docs/hermes-kanban-v1-spec.pdf``).  All DB work is delegated to
+(``docs/auraforge-kanban-v1-spec.pdf``).  All DB work is delegated to
 ``kanban_db``.  This module adds:
 
   * Argparse subcommand construction (``build_parser``).
@@ -134,7 +134,7 @@ def _parse_branch_flag(value: Optional[str]) -> Optional[str]:
 
 
 def _check_dispatcher_presence(
-    hermes_home: Optional[Path] = None,
+    aura_forge_home: Optional[Path] = None,
 ) -> tuple[bool, str]:
     """Return ``(running, message)``.
 
@@ -151,7 +151,7 @@ def _check_dispatcher_presence(
     probe itself errors, we return ``(True, "")`` so we don't spam
     false warnings (better to miss a warning than to cry wolf).
 
-    ``hermes_home`` scopes the probe to a named profile's directory. The
+    ``aura_forge_home`` scopes the probe to a named profile's directory. The
     dashboard plugin API passes it because the dashboard backend process can
     be running under a different AURA_FORGE_HOME than the profile the request
     targets, which otherwise produced a "no gateway is running" warning
@@ -169,7 +169,7 @@ def _check_dispatcher_presence(
         # CLI/create-time probe, not a polling loop, and it must observe the
         # gateway's state right now rather than a cached snapshot.
         liveness = resolve_gateway_liveness(
-            profile_dir=hermes_home, use_cache=False
+            profile_dir=aura_forge_home, use_cache=False
         )
     except Exception:
         return (True, "")  # probe errored — silent
@@ -202,7 +202,7 @@ def _check_dispatcher_presence(
         False,
         "No gateway is running — the task will sit in 'ready' until you "
         "start it. Run:\n"
-        "    hermes gateway start\n"
+        "    auraforge gateway start\n"
         "The gateway hosts an embedded dispatcher (tick interval 60s by "
         "default); your task will be picked up on the next tick after "
         "the gateway comes up."
@@ -226,7 +226,7 @@ def build_parser(parent_subparsers: argparse._SubParsersAction) -> argparse.Argu
             "Tasks are claimed atomically, can depend on other tasks, and "
             "are executed by a named profile in an isolated workspace. "
             "See https://aura-forge-agent.nousresearch.com/docs/user-guide/features/kanban "
-            "or docs/hermes-kanban-v1-spec.pdf for the full design."
+            "or docs/auraforge-kanban-v1-spec.pdf for the full design."
         ),
     )
     # --- global --board flag ---
@@ -1073,8 +1073,8 @@ def kanban_command(args: argparse.Namespace) -> int:
             parser.print_help()
         else:
             print(
-                "usage: hermes kanban <action> [options]\n"
-                "Run 'hermes kanban --help' for the full list of actions.",
+                "usage: auraforge kanban <action> [options]\n"
+                "Run 'auraforge kanban --help' for the full list of actions.",
                 file=sys.stderr,
             )
         return 0
@@ -1279,7 +1279,7 @@ def _is_delegated_child_cli_mutation(args: argparse.Namespace) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Boards management (hermes kanban boards …)
+# Boards management (auraforge kanban boards …)
 # ---------------------------------------------------------------------------
 
 def _dispatch_boards(args: argparse.Namespace) -> int:
@@ -1595,7 +1595,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
         print("Create one with `auraforge -p <name> setup` before assigning tasks.")
     print()
     print("Next step: start the gateway so ready tasks actually get picked up.")
-    print("  hermes gateway start")
+    print("  auraforge gateway start")
     print()
     print(
         "The gateway hosts an embedded dispatcher that ticks every 60 seconds\n"
@@ -2844,10 +2844,10 @@ def _cmd_daemon(args: argparse.Namespace) -> int:
     # casually — intentional.
     if not getattr(args, "force", False):
         print(
-            "hermes kanban daemon: DEPRECATED — the dispatcher now runs\n"
+            "auraforge kanban daemon: DEPRECATED — the dispatcher now runs\n"
             "inside the gateway. To use kanban:\n"
             "\n"
-            "    hermes gateway start       # starts the gateway + embedded dispatcher\n"
+            "    auraforge gateway start       # starts the gateway + embedded dispatcher\n"
             "\n"
             "Ready tasks will be picked up on the next dispatcher tick\n"
             "(default: every 60 seconds). Configure via config.yaml:\n"

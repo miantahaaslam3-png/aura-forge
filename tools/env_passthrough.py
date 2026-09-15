@@ -48,7 +48,7 @@ _config_passthrough: frozenset[str] | None = None
 
 
 def _is_hermes_provider_credential(name: str) -> bool:
-    """True if ``name`` is a Hermes-managed provider credential (API key,
+    """True if ``name`` is a Aura Forge-managed provider credential (API key,
     token, or similar) per ``_HERMES_PROVIDER_ENV_BLOCKLIST``.
 
     Skill-declared ``required_environment_variables`` frontmatter must
@@ -80,7 +80,7 @@ def _is_hermes_provider_credential(name: str) -> bool:
             e,
         )
         return True
-    # Dynamically-generated Hermes-internal secrets (AUXILIARY_*_API_KEY /
+    # Dynamically-generated Aura Forge-internal secrets (AUXILIARY_*_API_KEY /
     # _BASE_URL side-LLM credentials, GATEWAY_RELAY_* relay-auth) are provider
     # credentials the static blocklist can't enumerate — they're injected per
     # task/relay at gateway startup. A skill must not be able to register them
@@ -95,10 +95,10 @@ def register_env_passthrough(var_names: Iterable[str]) -> None:
 
     Typically called when a skill declares ``required_environment_variables``.
 
-    Variables that are Hermes-managed provider credentials (from
+    Variables that are Aura Forge-managed provider credentials (from
     ``_HERMES_PROVIDER_ENV_BLOCKLIST``) are rejected here to preserve
     the ``execute_code`` sandbox's credential-scrubbing guarantee per
-    GHSA-rhgp-j443-p4rf. A skill that needs to talk to a Hermes-managed
+    GHSA-rhgp-j443-p4rf. A skill that needs to talk to a Aura Forge-managed
     provider should do so via the agent's main-process tools (web_search,
     web_extract, etc.) where the credential remains safely in the main
     process.
@@ -140,7 +140,7 @@ def _load_config_passthrough() -> frozenset[str]:
                     continue
                 name = item.strip()
                 # Mirror the skill-path filter in register_env_passthrough:
-                # Hermes-managed provider credentials must not be passed
+                # Aura Forge-managed provider credentials must not be passed
                 # through to execute_code / terminal children, regardless of
                 # whether the request came from a skill or from config.yaml.
                 # See GHSA-rhgp-j443-p4rf.

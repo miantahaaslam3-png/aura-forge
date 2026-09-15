@@ -1,7 +1,7 @@
 """Regression for #88848 - a launchd restart the update never verified.
 
-``hermes update`` on macOS printed ``Update complete!`` and exited 0 while the
-``ai.hermes.gateway`` LaunchAgent sat deregistered for 36 minutes.  The restart
+``auraforge update`` on macOS printed ``Update complete!`` and exited 0 while the
+``ai.auraforge.gateway`` LaunchAgent sat deregistered for 36 minutes.  The restart
 phase treated "``launchd_restart()`` returned without raising" as success and
 appended the label to ``restarted_services``.  Both of launchd_restart's normal
 outcomes are asynchronous - the ``_request_gateway_self_restart`` branch returns
@@ -28,7 +28,7 @@ import hermes_cli.gateway as gateway_cli
 import hermes_cli.update_cmd as update_cmd
 from hermes_cli.update_cmd import _warn_incomplete_gateway_fleet_restart
 
-LABEL = "ai.hermes.gateway"
+LABEL = "ai.auraforge.gateway"
 
 
 class _FakeClock:
@@ -317,7 +317,7 @@ class TestIncompleteFleetWarningIsPlatformCorrect:
     def test_linux_recovery_instructions_are_unchanged(self, monkeypatch, capsys):
         monkeypatch.setattr(gateway_cli, "is_macos", lambda: False)
 
-        _warn_incomplete_gateway_fleet_restart(["hermes-gateway.service"])
+        _warn_incomplete_gateway_fleet_restart(["auraforge-gateway.service"])
 
         out = capsys.readouterr().out
         assert "systemctl --user restart <unit>" in out

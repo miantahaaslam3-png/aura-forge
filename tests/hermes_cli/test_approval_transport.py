@@ -444,7 +444,7 @@ def test_live_temp_home_fixture_plugin_routes_and_hardline_stays_core_owned(
     import hermes_cli.plugins as plugins_module
     from tools import approval
 
-    home = tmp_path / "hermes-home"
+    home = tmp_path / "auraforge-home"
     plugin_dir = home / "plugins" / "fixture-approval"
     bundled = tmp_path / "empty-bundled"
     plugin_dir.mkdir(parents=True)
@@ -505,17 +505,17 @@ def register(ctx):
     approval._permanent_approved.clear()
     try:
         routed = approval.check_all_command_guards(
-            "rm -rf /tmp/hermes-approval-transport-fixture", "local"
+            "rm -rf /tmp/auraforge-approval-transport-fixture", "local"
         )
         manager.discover_and_load(force=True)
         reloaded = approval.check_all_command_guards(
-            "rm -rf /tmp/hermes-approval-transport-fixture-reloaded", "local"
+            "rm -rf /tmp/auraforge-approval-transport-fixture-reloaded", "local"
         )
         gateway_token = approval.set_hermes_interactive_context(False)
         monkeypatch.setenv("HERMES_GATEWAY_SESSION", "1")
         try:
             gateway_routed = approval.check_all_command_guards(
-                "rm -rf /tmp/hermes-approval-transport-fixture-gateway", "local"
+                "rm -rf /tmp/auraforge-approval-transport-fixture-gateway", "local"
             )
         finally:
             approval.reset_hermes_interactive_context(gateway_token)

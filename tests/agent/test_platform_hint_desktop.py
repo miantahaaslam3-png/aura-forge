@@ -129,7 +129,7 @@ class TestPlatformHintResolutionInStablePrompt:
 
 
 class TestEmbeddedTuiPaneClarifier:
-    """When ``HERMES_DESKTOP_TERMINAL=1``, a standalone ``hermes --tui`` is
+    """When ``HERMES_DESKTOP_TERMINAL=1``, a standalone ``auraforge --tui`` is
     running inside the desktop's embedded terminal pane. The user can
     ⌥-drag-select its output and ⌘/Ctrl+L to send it to the chat composer.
     That clarifier must be appended to the ``tui`` platform hint at the

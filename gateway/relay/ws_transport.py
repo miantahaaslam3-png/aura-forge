@@ -177,10 +177,10 @@ def _normalize_slack_parent_command(
     text: str,
     message_type: MessageType,
 ) -> tuple[str, MessageType]:
-    """Mirror native Slack ``/hermes`` routing for authenticated relay text."""
+    """Mirror native Slack ``/auraforge`` routing for authenticated relay text."""
     stripped = text.strip()
     parent_parts = stripped.split(maxsplit=1)
-    if not parent_parts or parent_parts[0] != "/hermes":
+    if not parent_parts or parent_parts[0] != "/auraforge":
         return text, message_type
 
     from hermes_cli.commands import slack_subcommand_map
@@ -289,7 +289,7 @@ def _event_from_wire(raw: Dict[str, Any]) -> MessageEvent:
         scope_id=src.get("scope_id"),
         parent_chat_id=src.get("parent_chat_id"),
         message_id=src.get("message_id"),
-        # The HERMES profile this event is routed to (multiplex mode). The
+        # The AURA_FORGE profile this event is routed to (multiplex mode). The
         # connector stamps it on the wire source when NAS resolves the target
         # profile for a Team-Gateway message; absent for a single-profile
         # gateway, where it stays None and session keys keep the legacy
@@ -329,7 +329,7 @@ def _event_from_wire(raw: Dict[str, Any]) -> MessageEvent:
         # Team Gateway carries Slack slash text over the authenticated message
         # relay, bypassing Aura Forge' native Slack command callback. Normalize at
         # the wire boundary so adapter-level active-session gates see the real
-        # gateway command rather than the legacy `hermes` parent name.
+        # gateway command rather than the legacy `auraforge` parent name.
         text, msg_type = _normalize_slack_parent_command(text, msg_type)
 
     return MessageEvent(
