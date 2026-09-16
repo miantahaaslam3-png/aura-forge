@@ -420,7 +420,7 @@ def parse_systemd_duration_to_us(raw: str) -> Optional[int]:
     systemd accepts a wide grammar; we cover the common cases (s, ms, min,
     h) and return None on anything unexpected.  Never raises.
 
-    Public: also consumed by hermes_cli.gateway's restart-wait sizing.
+    Public: also consumed by auraforge_cli.gateway's restart-wait sizing.
     """
     if not raw:
         return None

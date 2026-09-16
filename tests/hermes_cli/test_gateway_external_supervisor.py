@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import hermes_cli.gateway as gateway
+import auraforge_cli.gateway as gateway
 
 
 def _clear_native_supervisor_markers(monkeypatch):
@@ -48,7 +48,7 @@ def test_update_hands_external_supervisor_gateway_back_without_watcher(monkeypat
         lambda _pid: [
             "python",
             "-m",
-            "hermes_cli.main",
+            "auraforge_cli.main",
             "gateway",
             "run",
             "--external-supervisor",
@@ -73,7 +73,7 @@ def test_update_hands_generated_launchd_inner_argv_back_without_watcher(monkeypa
         lambda _pid: [
             "/usr/bin/python3",
             "-m",
-            "hermes_cli.main",
+            "auraforge_cli.main",
             "--profile",
             "work",
             "gateway",
@@ -95,12 +95,12 @@ def test_update_hands_generated_launchd_inner_argv_back_without_watcher(monkeypa
 
 def test_update_follows_wrapper_upgrade_of_stale_plist_argv(monkeypatch):
     """stderr_timestamp upgrades stale inner argv so update sees the flag."""
-    from hermes_cli.stderr_timestamp import _prepare_child_command
+    from auraforge_cli.stderr_timestamp import _prepare_child_command
 
     stale = [
         "/usr/bin/python3",
         "-m",
-        "hermes_cli.main",
+        "auraforge_cli.main",
         "gateway",
         "run",
         "--replace",
@@ -129,7 +129,7 @@ def test_update_still_uses_detached_watcher_without_supervisor_flag(monkeypatch)
         lambda _pid: [
             "python",
             "-m",
-            "hermes_cli.main",
+            "auraforge_cli.main",
             "gateway",
             "run",
             "--replace",

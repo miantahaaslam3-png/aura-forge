@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from hermes_cli.plugin_capabilities import (
+from auraforge_cli.plugin_capabilities import (
     CAPABILITY_REGISTRY,
     VALID_CAPABILITY_IDS,
     capability_set_hash,
@@ -83,7 +83,7 @@ class TestDeclarationParsing:
 
     def test_manifest_field_lands_on_parsed_manifest(self, tmp_path):
         """PluginManifest picks up ``capabilities:`` from plugin.yaml."""
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         plugin_dir = tmp_path / "capplug"
         plugin_dir.mkdir()
@@ -100,7 +100,7 @@ class TestDeclarationParsing:
         assert manifest.capabilities == ["tools.override"]
 
     def test_manifest_without_capabilities_field(self, tmp_path):
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         plugin_dir = tmp_path / "plainplug"
         plugin_dir.mkdir()
@@ -118,8 +118,8 @@ class TestDeclarationParsing:
         self, monkeypatch
     ):
         """Installed plugins can declare consent metadata in dist entry points."""
-        from hermes_cli import plugins as plugins_mod
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli import plugins as plugins_mod
+        from auraforge_cli.plugins import PluginManager
 
         load = MagicMock(side_effect=AssertionError("plugin code must not be imported"))
         plugin_ep = SimpleNamespace(
@@ -321,7 +321,7 @@ class TestLegacyGateCompat:
 
     def test_tool_override_gate_uses_canonical_path(self, hermes_home):
         """PluginContext._tool_override_allowed honors capability grant."""
-        from hermes_cli.plugins import PluginContext, PluginManifest, PluginManager
+        from auraforge_cli.plugins import PluginContext, PluginManifest, PluginManager
 
         record_consent("capplug", ["tools.override"], ["tools.override"])
         manifest = PluginManifest(name="capplug", source="user", key="capplug")
@@ -329,14 +329,14 @@ class TestLegacyGateCompat:
         assert ctx._tool_override_allowed("write_file") is True
 
     def test_tool_override_gate_denies_without_grant(self, hermes_home):
-        from hermes_cli.plugins import PluginContext, PluginManifest, PluginManager
+        from auraforge_cli.plugins import PluginContext, PluginManifest, PluginManager
 
         manifest = PluginManifest(name="capplug", source="user", key="capplug")
         ctx = PluginContext(manifest, PluginManager())
         assert ctx._tool_override_allowed("write_file") is False
 
     def test_tool_override_gate_legacy_key(self, hermes_home):
-        from hermes_cli.plugins import PluginContext, PluginManifest, PluginManager
+        from auraforge_cli.plugins import PluginContext, PluginManifest, PluginManager
 
         (hermes_home / "config.yaml").write_text(
             "plugins:\n  entries:\n    oldplug:\n"
@@ -348,7 +348,7 @@ class TestLegacyGateCompat:
         assert ctx._tool_override_allowed("write_file") is True
 
     def test_bundled_plugin_trusted(self, hermes_home):
-        from hermes_cli.plugins import PluginContext, PluginManifest, PluginManager
+        from auraforge_cli.plugins import PluginContext, PluginManifest, PluginManager
 
         manifest = PluginManifest(name="bplug", source="bundled", key="bplug")
         ctx = PluginContext(manifest, PluginManager())
@@ -361,7 +361,7 @@ class TestLegacyGateCompat:
 
 class TestHasCapability:
     def test_probe_granted(self, hermes_home):
-        from hermes_cli.plugins import PluginContext, PluginManifest, PluginManager
+        from auraforge_cli.plugins import PluginContext, PluginManifest, PluginManager
 
         record_consent("capplug", ["llm.model_override"], ["llm.model_override"])
         manifest = PluginManifest(name="capplug", source="user", key="capplug")
@@ -382,7 +382,7 @@ class TestConsentFlow:
         return console
 
     def test_consent_yes_records_grant(self, hermes_home, monkeypatch):
-        from hermes_cli.plugins_cmd import _run_capability_consent
+        from auraforge_cli.plugins_cmd import _run_capability_consent
 
         console = self._console(["y"])
         with patch("sys.stdin") as stdin, patch("sys.stdout") as stdout:
@@ -395,7 +395,7 @@ class TestConsentFlow:
         assert plugin_capability_granted("capplug", "tools.override") is True
 
     def test_consent_decline_leaves_ungranted(self, hermes_home):
-        from hermes_cli.plugins_cmd import _run_capability_consent
+        from auraforge_cli.plugins_cmd import _run_capability_consent
 
         console = self._console(["n"])
         with patch("sys.stdin") as stdin, patch("sys.stdout") as stdout:
@@ -408,7 +408,7 @@ class TestConsentFlow:
         assert plugin_capability_granted("capplug", "tools.override") is False
 
     def test_non_interactive_fails_closed(self, hermes_home):
-        from hermes_cli.plugins_cmd import _run_capability_consent
+        from auraforge_cli.plugins_cmd import _run_capability_consent
 
         console = self._console()
         with patch("sys.stdin") as stdin, patch("sys.stdout") as stdout:
@@ -423,7 +423,7 @@ class TestConsentFlow:
         console.input.assert_not_called()
 
     def test_already_granted_skips_prompt(self, hermes_home):
-        from hermes_cli.plugins_cmd import _run_capability_consent
+        from auraforge_cli.plugins_cmd import _run_capability_consent
 
         record_consent("capplug", ["tools.override"], ["tools.override"])
         console = self._console()

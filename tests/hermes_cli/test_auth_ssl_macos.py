@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.auth._default_verify platform-aware fallback.
+"""Tests for auraforge_cli.auth._default_verify platform-aware fallback.
 
 On macOS with Homebrew Python, the system OpenSSL cannot locate the
 system trust store, so we explicitly load certifi's bundle. On other
@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 
-from hermes_cli.auth import _default_verify, _resolve_verify
+from auraforge_cli.auth import _default_verify, _resolve_verify
 
 
 @pytest.fixture

@@ -56,7 +56,7 @@ def sleeper():
 
 
 def _write_ledger(entries: list[dict]) -> None:
-    from hermes_cli import process_identity as pid_mod
+    from auraforge_cli import process_identity as pid_mod
 
     path = pid_mod._ledger_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -66,7 +66,7 @@ def _write_ledger(entries: list[dict]) -> None:
 def _entry(proc: subprocess.Popen, purpose: str = "serve") -> dict:
     import psutil
 
-    from hermes_cli import process_identity as pid_mod
+    from auraforge_cli import process_identity as pid_mod
 
     return {
         "install": pid_mod.install_id(None),
@@ -79,9 +79,9 @@ def _entry(proc: subprocess.Popen, purpose: str = "serve") -> dict:
 
 
 def test_live_supervised_serve_suppresses_cold_start(sleeper, monkeypatch, tmp_path):
-    from hermes_cli import gateway as hermes_gateway
-    from hermes_cli import gateway_windows
-    from hermes_cli import update_cmd
+    from auraforge_cli import gateway as hermes_gateway
+    from auraforge_cli import gateway_windows
+    from auraforge_cli import update_cmd
 
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     (tmp_path / ".auraforge").mkdir()
@@ -107,16 +107,16 @@ def test_live_supervised_serve_suppresses_cold_start(sleeper, monkeypatch, tmp_p
 
 
 def test_holder_scan_fallback_respects_token_classifier(sleeper, monkeypatch, tmp_path):
-    from hermes_cli import update_cmd
+    from auraforge_cli import update_cmd
 
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".auraforge"))
     (tmp_path / ".auraforge").mkdir()
     _write_ledger([])  # force the fallback rung
 
     # Real process whose argv carries genuine serve shape, visible to psutil.
-    serve_like = sleeper("-m", "hermes_cli.main", "serve")
+    serve_like = sleeper("-m", "auraforge_cli.main", "serve")
     # Lookalike from the #90778 class — must NOT confer ownership.
-    kanban_like = sleeper("-m", "hermes_cli.main", "kanban", "--preserve-cache")
+    kanban_like = sleeper("-m", "auraforge_cli.main", "kanban", "--preserve-cache")
 
     def fake_holders():
         import psutil
@@ -128,7 +128,7 @@ def test_holder_scan_fallback_respects_token_classifier(sleeper, monkeypatch, tm
         return out
 
     monkeypatch.setattr(
-        "hermes_cli.main._detect_venv_python_processes", fake_holders
+        "auraforge_cli.main._detect_venv_python_processes", fake_holders
     )
 
     # serve-shaped holder with a live parent (us) → owns
@@ -138,7 +138,7 @@ def test_holder_scan_fallback_respects_token_classifier(sleeper, monkeypatch, tm
     serve_like.kill()
     serve_like.wait()
     monkeypatch.setattr(
-        "hermes_cli.main._detect_venv_python_processes",
+        "auraforge_cli.main._detect_venv_python_processes",
         lambda: [fake_holders()[1]],
     )
     assert update_cmd._desktop_owns_gateway_lifecycle() is False

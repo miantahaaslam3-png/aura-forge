@@ -22,14 +22,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from gateway.config import Platform
-from hermes_cli.platform_actions import CAPABILITY_ID, PlatformActions
-from hermes_cli.plugin_capabilities import CAPABILITY_REGISTRY
+from auraforge_cli.platform_actions import CAPABILITY_ID, PlatformActions
+from auraforge_cli.plugin_capabilities import CAPABILITY_REGISTRY
 
 
 def _grant(granted: bool):
     """Patch the capability check the facade performs."""
     return patch(
-        "hermes_cli.plugin_capabilities.plugin_capability_granted",
+        "auraforge_cli.plugin_capabilities.plugin_capability_granted",
         return_value=granted,
     )
 
@@ -85,7 +85,7 @@ class TestGateDefaultOff:
         """No patching of the check itself: an empty config entry denies."""
         actions = PlatformActions("some-plugin")
         with patch(
-            "hermes_cli.plugin_capabilities._plugin_entry", return_value={}
+            "auraforge_cli.plugin_capabilities._plugin_entry", return_value={}
         ):
             result = asyncio.run(
                 actions.set_thread_title("telegram", "1", "2", "t")
@@ -100,7 +100,7 @@ class TestGateDefaultOff:
         actions = PlatformActions("some-plugin")
         adapter = _telegram_adapter()
         with patch(
-            "hermes_cli.plugin_capabilities._plugin_entry",
+            "auraforge_cli.plugin_capabilities._plugin_entry",
             return_value={"allow_platform_actions": True},
         ), _runner_with({Platform.TELEGRAM: adapter}):
             result = asyncio.run(
@@ -112,7 +112,7 @@ class TestGateDefaultOff:
         actions = PlatformActions("some-plugin")
         adapter = _telegram_adapter()
         with patch(
-            "hermes_cli.plugin_capabilities._plugin_entry",
+            "auraforge_cli.plugin_capabilities._plugin_entry",
             return_value={"granted_capabilities": ["gateway.platform_actions"]},
         ), _runner_with({Platform.TELEGRAM: adapter}):
             result = asyncio.run(
@@ -123,7 +123,7 @@ class TestGateDefaultOff:
     def test_capability_check_failure_fails_closed(self):
         actions = PlatformActions("some-plugin")
         with patch(
-            "hermes_cli.plugin_capabilities.plugin_capability_granted",
+            "auraforge_cli.plugin_capabilities.plugin_capability_granted",
             side_effect=RuntimeError("corrupt config"),
         ):
             result = asyncio.run(
@@ -266,7 +266,7 @@ class TestVerbRouting:
 
 class TestPluginContextWiring:
     def test_ctx_platform_actions_bound_to_plugin_id(self):
-        from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+        from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
         manager = PluginManager()
         ctx = PluginContext(

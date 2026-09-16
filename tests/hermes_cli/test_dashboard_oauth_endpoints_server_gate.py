@@ -1,6 +1,6 @@
 """Regression guard for PR #61281 (mobile/hosted dashboard OAuth).
 
-The PR removed the *client-side* ``X-Aura Forge-Session-Token`` requirement from
+The PR removed the *client-side* ``X-AuraForge-Session-Token`` requirement from
 the dashboard OAuth mutation calls (``web/src/lib/api.ts``) so that
 cookie-authenticated hosted/mobile sessions can start provider logins. The
 safety of that change rests entirely on the *server* still gating those
@@ -17,9 +17,9 @@ those tests only mock ``fetch`` and never touch the server.
 import pytest
 from fastapi.testclient import TestClient
 
-from hermes_cli import web_server
-from hermes_cli.dashboard_auth import clear_providers, register_provider
-from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+from auraforge_cli import web_server
+from auraforge_cli.dashboard_auth import clear_providers, register_provider
+from tests.auraforge_cli.conftest_dashboard_auth import StubAuthProvider
 
 
 @pytest.fixture

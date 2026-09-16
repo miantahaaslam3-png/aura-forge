@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import kanban_db as kb
-from hermes_cli import kanban_diagnostics as kd
+from auraforge_cli import kanban_db as kb
+from auraforge_cli import kanban_diagnostics as kd
 
 
 @pytest.fixture

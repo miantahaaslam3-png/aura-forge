@@ -10,12 +10,12 @@ failures pointing at provider/key. The reader mirrors `_goal_judge_max_tokens`
 
 import pytest
 
-import hermes_cli.goals as goals
-from hermes_cli.goals import DEFAULT_JUDGE_TIMEOUT, _goal_judge_timeout
+import auraforge_cli.goals as goals
+from auraforge_cli.goals import DEFAULT_JUDGE_TIMEOUT, _goal_judge_timeout
 
 
 def _patch_config(monkeypatch, cfg):
-    import hermes_cli.config as config_mod
+    import auraforge_cli.config as config_mod
 
     monkeypatch.setattr(config_mod, "load_config", lambda: cfg)
 

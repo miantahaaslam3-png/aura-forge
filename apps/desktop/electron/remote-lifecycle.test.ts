@@ -94,7 +94,7 @@ function fakeSsh(rules: any[] = []) {
       // Existing lifecycle fixtures predate the install-wide relaunch gate.
       // Their default remote has no update marker; focused marker tests below
       // use explicit SSH doubles to exercise live/uncertain transitions.
-      if (cmd.includes('.hermes-update-in-progress') && !cmd.includes('marker_clear()') && !/setsid|nohup/.test(cmd)) {
+      if (cmd.includes('.auraforge-update-in-progress') && !cmd.includes('marker_clear()') && !/setsid|nohup/.test(cmd)) {
         return 'CLEAR'
       }
 
@@ -147,7 +147,7 @@ test('POSIX relaunch gate refuses live and uncertain install markers without exe
           return '/home/alice/.hermes\n'
         }
 
-        if (command.includes('.hermes-update-in-progress')) {
+        if (command.includes('.auraforge-update-in-progress')) {
           return observation
         }
 
@@ -180,7 +180,7 @@ test('POSIX relaunch gate permits absent/dead markers and normalizes named-profi
   await assertRemoteInstallUpdateClear(ssh, '/home/alice/.hermes/profiles/research')
   assert.match(commands[0], /home\.parent\.name/)
   assert.match(commands[0], /profiles/)
-  assert.match(commands[0], /\.hermes-update-in-progress/)
+  assert.match(commands[0], /\.auraforge-update-in-progress/)
 })
 
 test('POSIX relaunch gate rechecks after token upload immediately before process creation', async () => {
@@ -199,7 +199,7 @@ test('POSIX relaunch gate rechecks after token upload immediately before process
         return '/home/alice/.hermes\n'
       }
 
-      if (command.includes('.hermes-update-in-progress')) {
+      if (command.includes('.auraforge-update-in-progress')) {
         markerChecks += 1
 
         return markerChecks >= 3 ? 'LIVE:4242' : 'CLEAR'
@@ -811,7 +811,7 @@ test('buildSpawnCommand atomically reserves the ownership slot through spawn and
   })
 
   assert.ok(cmd.includes('.connect.lock'))
-  assert.ok(cmd.includes('.hermes-update-in-progress.mutex'))
+  assert.ok(cmd.includes('.auraforge-update-in-progress.mutex'))
   assert.match(cmd, /fcntl\.flock\(fd,fcntl\.LOCK_EX\)/)
   assert.match(cmd, /os\.O_CLOEXEC/)
   assert.match(

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from hermes_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
+from auraforge_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
 
 
 MODEL = "qwen3.8-max-preview"
@@ -59,8 +59,8 @@ agent:
 
 
 def _resolve_cli_route():
-    from hermes_cli._parser import build_top_level_parser
-    from hermes_constants import get_hermes_home
+    from auraforge_cli._parser import build_top_level_parser
+    from auraforge_constants import get_hermes_home
 
     _write_profile_config(get_hermes_home())
     parser, _subparsers, _chat = build_top_level_parser()
@@ -74,7 +74,7 @@ def _resolve_cli_route():
 
 def test_real_cli_args_keep_transport_and_capability_identities_separate():
     from agent.image_routing import decide_image_input_mode
-    from hermes_cli.config import load_config
+    from auraforge_cli.config import load_config
 
     cli, route = _resolve_cli_route()
     runtime = route["runtime"]

@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-import hermes_state
+import auraforge_state
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -38,14 +38,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 _CHILD_PROBE = """
 import sys
 sys.path.insert(0, {repo!r})
-import hermes_state
+import auraforge_state
 
-root = hermes_state._real_platform_state_root()
+root = auraforge_state._real_platform_state_root()
 if root is None:
     print("NO-ROOT")
 else:
     try:
-        hermes_state._ensure_test_isolation(root / "state.db")
+        auraforge_state._ensure_test_isolation(root / "state.db")
     except RuntimeError:
         print("REFUSED")
     else:
@@ -113,7 +113,7 @@ class TestScrubbedChildEnvironment:
         process boundary, so ancestry-armed children need an env-carried
         escape hatch or they would have no way to opt out at all.
         """
-        env = _scrubbed_env(**{hermes_state._STATE_DB_GUARD_BYPASS_ENV: "1"})
+        env = _scrubbed_env(**{auraforge_state._STATE_DB_GUARD_BYPASS_ENV: "1"})
         assert _run_probe(env) == "ALLOWED"
 
 
@@ -137,24 +137,24 @@ class TestPytestProcessRecognition:
         ],
     )
     def test_recognises_pytest_invocations(self, cmdline):
-        assert hermes_state._process_looks_like_pytest(self._FakeProc(cmdline))
+        assert auraforge_state._process_looks_like_pytest(self._FakeProc(cmdline))
 
     @pytest.mark.parametrize(
         "cmdline",
         [
             ["auraforge", "gateway", "start"],
-            ["/usr/bin/python", "-m", "hermes_cli.main", "sessions", "list"],
+            ["/usr/bin/python", "-m", "auraforge_cli.main", "sessions", "list"],
             # A path that merely *contains* "pytest" is not a pytest process:
             # tmp paths like /tmp/pytest-of-dev/... show up in real argv.
             ["auraforge", "run", "--file", "/tmp/pytest-of-dev/test0/input.txt"],
         ],
     )
     def test_ignores_non_pytest_invocations(self, cmdline):
-        assert not hermes_state._process_looks_like_pytest(self._FakeProc(cmdline))
+        assert not auraforge_state._process_looks_like_pytest(self._FakeProc(cmdline))
 
     def test_unreadable_process_is_not_pytest(self):
         class _Denied:
             def cmdline(self):
                 raise PermissionError("access denied")
 
-        assert not hermes_state._process_looks_like_pytest(_Denied())
+        assert not auraforge_state._process_looks_like_pytest(_Denied())

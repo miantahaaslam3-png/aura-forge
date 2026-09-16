@@ -37,7 +37,7 @@ import threading
 from typing import Dict, List, Optional
 
 from agent.web_search_provider import WebSearchProvider
-from hermes_constants import hermes_home_key
+from auraforge_constants import hermes_home_key
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def restore_registration(
 def _read_config_key(*path: str) -> Optional[str]:
     """Resolve a dotted config key from ``config.yaml``. Returns None on miss."""
     try:
-        from hermes_cli.config import load_config_readonly
+        from auraforge_cli.config import load_config_readonly
 
         cfg = load_config_readonly()
         cur = cfg
@@ -316,7 +316,7 @@ def _resolve(configured: Optional[str], *, capability: str) -> Optional[WebSearc
 def _keyless_tier_enabled() -> bool:
     """Read ``web.keyless_fallback`` from config.yaml (default: enabled)."""
     try:
-        from hermes_cli.config import load_config
+        from auraforge_cli.config import load_config
 
         web_cfg = load_config().get("web") or {}
         return bool(web_cfg.get("keyless_fallback", True))
@@ -366,7 +366,7 @@ def _disabled_web_plugin_for(configured: Optional[str] = None, *, capability: Op
 
     want = _norm(configured)
     try:
-        from hermes_cli.plugins import get_plugin_manager
+        from auraforge_cli.plugins import get_plugin_manager
 
         pm = get_plugin_manager()
         for key, loaded in pm._plugins.items():

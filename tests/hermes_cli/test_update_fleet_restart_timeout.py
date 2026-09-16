@@ -13,7 +13,7 @@ import subprocess
 
 import pytest
 
-from hermes_cli.main import (
+from auraforge_cli.main import (
     _for_each_systemd_gateway_unit,
     _service_unit_supports_graceful_sigusr1_restart,
     _warn_incomplete_gateway_fleet_restart,

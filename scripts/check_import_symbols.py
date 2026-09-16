@@ -25,7 +25,7 @@ def is_local_module(mod: str) -> bool:
     candidate = ROOT / (mod.replace(".", "/"))
     if candidate.with_suffix(".py").exists() or candidate.is_dir():
         return True
-    # also bare top-level modules like hermes_constants
+    # also bare top-level modules like auraforge_constants
     return (ROOT / (top + ".py")).exists() or (ROOT / top).is_dir()
 
 

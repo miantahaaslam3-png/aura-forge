@@ -57,8 +57,8 @@ def pin_env(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setenv("HERMES_HOME", str(home))
 
-    import hermes_constants
-    importlib.reload(hermes_constants)
+    import auraforge_constants
+    importlib.reload(auraforge_constants)
     from tools import skill_usage
     importlib.reload(skill_usage)
     # curator module reads config through its own loader; keep defaults.
@@ -66,7 +66,7 @@ def pin_env(tmp_path, monkeypatch):
     importlib.reload(curator)
     monkeypatch.setattr(curator, "_load_config", lambda: {})
     monkeypatch.setattr(skill_usage, "_prune_builtins_enabled", lambda: False)
-    from hermes_cli import curator as curator_cli
+    from auraforge_cli import curator as curator_cli
     importlib.reload(curator_cli)
 
     yield {

@@ -10,11 +10,11 @@ NOT mislabelled custom.
 
 from fastapi.testclient import TestClient
 
-import hermes_cli.web_server as web_server
-from hermes_cli.web_server import _SESSION_TOKEN, app
+import auraforge_cli.web_server as web_server
+from auraforge_cli.web_server import _SESSION_TOKEN, app
 
 client = TestClient(app)
-HEADERS = {"X-Aura Forge-Session-Token": _SESSION_TOKEN}
+HEADERS = {"X-AuraForge-Session-Token": _SESSION_TOKEN}
 
 
 def _env_rows(monkeypatch, env_on_disk):

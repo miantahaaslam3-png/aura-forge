@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import uninstall
-from hermes_cli._install_repair import _WINDOWS_BIN_LAUNCHERS
+from auraforge_cli import uninstall
+from auraforge_cli._install_repair import _WINDOWS_BIN_LAUNCHERS
 
 
 @pytest.fixture

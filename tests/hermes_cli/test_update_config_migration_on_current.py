@@ -20,7 +20,7 @@ import contextlib
 import io
 from unittest.mock import patch
 
-import hermes_cli.update_cmd as update_cmd
+import auraforge_cli.update_cmd as update_cmd
 
 
 def _run(current: int, latest: int):
@@ -35,9 +35,9 @@ def _run(current: int, latest: int):
         return {"env_added": [], "config_added": [], "warnings": []}
 
     with patch.object(update_cmd, "_reload_config_modules"), patch(
-        "hermes_cli.config.get_missing_env_vars", return_value=[]
+        "auraforge_cli.config.get_missing_env_vars", return_value=[]
     ), patch(
-        "hermes_cli.config.get_missing_config_fields", return_value=[]
+        "auraforge_cli.config.get_missing_config_fields", return_value=[]
     ), patch.object(
         update_cmd, "_run_config_check_fresh", return_value=(current, latest)
     ), patch.object(
@@ -84,9 +84,9 @@ def test_surfaces_migration_warnings():
         }
 
     with patch.object(update_cmd, "_reload_config_modules"), patch(
-        "hermes_cli.config.get_missing_env_vars", return_value=[]
+        "auraforge_cli.config.get_missing_env_vars", return_value=[]
     ), patch(
-        "hermes_cli.config.get_missing_config_fields", return_value=[]
+        "auraforge_cli.config.get_missing_config_fields", return_value=[]
     ), patch.object(
         update_cmd, "_run_config_check_fresh", return_value=(37, 38)
     ), patch.object(
@@ -105,9 +105,9 @@ def test_surfaces_migration_warnings():
 def test_check_failure_does_not_break_repair_path():
     """A config-check failure must not break the repair path."""
     with patch.object(update_cmd, "_reload_config_modules"), patch(
-        "hermes_cli.config.get_missing_env_vars", return_value=[]
+        "auraforge_cli.config.get_missing_env_vars", return_value=[]
     ), patch(
-        "hermes_cli.config.get_missing_config_fields", return_value=[]
+        "auraforge_cli.config.get_missing_config_fields", return_value=[]
     ), patch.object(
         update_cmd, "_run_config_check_fresh", side_effect=RuntimeError("boom")
     ), patch.object(

@@ -317,7 +317,7 @@ All storage paths **must** use the `hermes_home` kwarg from `initialize()`, not 
 
 ```python
 # CORRECT — profile-scoped
-from hermes_constants import get_hermes_home
+from auraforge_constants import get_hermes_home
 data_dir = get_hermes_home() / "my-provider"
 
 # WRONG — shared across all profiles

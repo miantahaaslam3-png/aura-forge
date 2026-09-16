@@ -19,7 +19,7 @@ HOSTILE = 'hi "there" $(touch /tmp/pwned_by_dm_test) `id` \\ and a\nsecond line'
 def _parse(argv):
     sys.path.insert(0, str(REPO))
     try:
-        from hermes_cli._parser import build_top_level_parser
+        from auraforge_cli._parser import build_top_level_parser
 
         built = build_top_level_parser()
         parser = built[0] if isinstance(built, tuple) else built
@@ -39,7 +39,7 @@ def test_query_file_reads_hostile_text_verbatim(tmp_path, monkeypatch):
     f = tmp_path / "dm.txt"
     f.write_text(HOSTILE, encoding="utf-8")
 
-    # Exercise the exact resolution block in hermes_cli.main by simulating it:
+    # Exercise the exact resolution block in auraforge_cli.main by simulating it:
     # the block reads the file into args.query before dispatch.
     args = _parse(["chat", "--query-file", str(f)])
     assert args.query_file is not None

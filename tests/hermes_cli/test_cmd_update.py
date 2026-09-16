@@ -7,7 +7,7 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from hermes_cli.main import cmd_update, PROJECT_ROOT
+from auraforge_cli.main import cmd_update, PROJECT_ROOT
 
 
 def _make_run_side_effect(branch="main", verify_ok=True, commit_count="0"):
@@ -65,9 +65,9 @@ def _patch_managed_uv(request):
     def _fake_update_managed_uv(**_kwargs):
         return None  # never actually self-update in tests
 
-    with patch("hermes_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
-         patch("hermes_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
-         patch("hermes_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
+    with patch("auraforge_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
+         patch("auraforge_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
+         patch("auraforge_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
         yield
 
 
@@ -83,9 +83,9 @@ def _patch_gateway_discovery():
     Discovery returning nothing makes the phase a clean no-op for every test
     in this module (none of them assert on gateway restarts).
     """
-    with patch("hermes_cli.gateway.find_gateway_pids", return_value=[]), \
-         patch("hermes_cli.gateway.supports_systemd_services", return_value=False), \
-         patch("hermes_cli.gateway.find_profile_gateway_processes", return_value=[]):
+    with patch("auraforge_cli.gateway.find_gateway_pids", return_value=[]), \
+         patch("auraforge_cli.gateway.supports_systemd_services", return_value=False), \
+         patch("auraforge_cli.gateway.find_profile_gateway_processes", return_value=[]):
         yield
 
 
@@ -98,7 +98,7 @@ class TestCmdUpdateNpmLockfileCache:
 
 
     def test_record_npm_lockfile_hash(self, tmp_path, monkeypatch):
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         monkeypatch.setattr(hm, "PROJECT_ROOT", tmp_path)
         (tmp_path / "package-lock.json").write_text('{"lockfileVersion": 3}')
@@ -114,7 +114,7 @@ class TestCmdUpdateNpmLockfileCache:
         """Reviewer scenario (#61580): dev edits package.json WITHOUT running
         npm — lockfile unchanged. `auraforge update` must still install (the
         npm-install fallback is what syncs node_modules in that state)."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         monkeypatch.setattr(hm, "PROJECT_ROOT", tmp_path)
         (tmp_path / "package-lock.json").write_text('{"lockfileVersion": 3}')
@@ -138,8 +138,8 @@ class TestCmdUpdateNpmLockfileCache:
         self, tmp_path, monkeypatch
     ):
         """The npm cache describes checkout-global node_modules, not a profile."""
-        from hermes_cli import main as hm
-        import hermes_constants
+        from auraforge_cli import main as hm
+        import auraforge_constants
 
         checkout = tmp_path / "checkout"
         checkout.mkdir()
@@ -149,9 +149,9 @@ class TestCmdUpdateNpmLockfileCache:
         named_profile.mkdir(parents=True)
 
         monkeypatch.setattr(hm, "PROJECT_ROOT", checkout)
-        monkeypatch.setattr(hermes_constants.Path, "home", lambda: tmp_path)
+        monkeypatch.setattr(auraforge_constants.Path, "home", lambda: tmp_path)
         monkeypatch.setattr(
-            hermes_constants, "find_node_executable", lambda _name: "/usr/bin/npm"
+            auraforge_constants, "find_node_executable", lambda _name: "/usr/bin/npm"
         )
 
         cache_roots = []
@@ -177,7 +177,7 @@ class TestCmdUpdateTermuxUvBootstrap:
     def test_termux_uv_bootstrap_uses_binary_only_install(
         self, mock_run, _mock_which, monkeypatch
     ):
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         mock_run.return_value = subprocess.CompletedProcess([], 1, stdout="", stderr="")
         monkeypatch.setattr(hm, "_is_termux_env", lambda env=None: True)
@@ -201,13 +201,13 @@ class TestCmdUpdateTermuxUvBootstrap:
     @patch("subprocess.run")
     def test_termux_reuses_existing_path_uv_without_pip(self, mock_run, monkeypatch):
         """A uv already on PATH (e.g. ``pkg install uv``) is reused before pip runs."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         pkg_uv = "/data/data/com.termux/files/usr/bin/uv"
         monkeypatch.setattr(hm, "_is_termux_env", lambda env=None: True)
         # Production resolve_uv only checks $HERMES_HOME/bin/uv; model an empty
         # managed dir so the PATH probe is what surfaces the packaged uv.
-        monkeypatch.setattr("hermes_cli.managed_uv.resolve_uv", lambda: None)
+        monkeypatch.setattr("auraforge_cli.managed_uv.resolve_uv", lambda: None)
         monkeypatch.setattr("shutil.which", lambda name: pkg_uv if name == "uv" else None)
 
         uv_bin = hm._ensure_uv_for_termux(["/termux/python", "-m", "pip"])
@@ -227,7 +227,7 @@ class TestUpdateManagedPythonEnvIsolation:
     """
 
     def test_managed_env_drops_third_party_uv_install_dir(self):
-        from hermes_cli.managed_uv import managed_python_env
+        from auraforge_cli.managed_uv import managed_python_env
 
         poisoned = {
             "UV_PYTHON_INSTALL_DIR": r"C:\WorkBuddy\python",
@@ -256,8 +256,8 @@ class TestUpdateManagedPythonEnvIsolation:
     def test_update_uv_env_points_venv_and_runtime_store(self):
         """The update's final uv_env must carry VIRTUAL_ENV=this venv while the
         managed store path is still the UV_PYTHON_INSTALL_DIR."""
-        from hermes_cli import main as hm
-        from hermes_cli.managed_uv import managed_python_env
+        from auraforge_cli import main as hm
+        from auraforge_cli.managed_uv import managed_python_env
 
         uv_env = managed_python_env()
         uv_env["VIRTUAL_ENV"] = str(PROJECT_ROOT / "venv")
@@ -285,7 +285,7 @@ class TestCmdUpdateBranchFallback:
         "Already up to date!" — otherwise a fork that's caught up to its own
         origin but behind miantahaaslam3-png/aura-forge silently misses updates.
         """
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         mock_run.side_effect = _make_run_side_effect(
             branch="main", verify_ok=True, commit_count="0"
@@ -319,8 +319,8 @@ class TestCmdUpdateBranchFallback:
         --yes. The prompt is skipped without mutating remotes, and because the
         official repo was never consulted the completion line must not claim
         plain "Already up to date!"."""
-        from hermes_cli import main as hm
-        from hermes_cli import update_cmd
+        from auraforge_cli import main as hm
+        from auraforge_cli import update_cmd
 
         mock_run.side_effect = _make_run_side_effect(
             branch="main", verify_ok=True, commit_count="0"
@@ -355,8 +355,8 @@ class TestCmdUpdateBranchFallback:
         self, mock_run, _mock_which, mock_args, capsys
     ):
         """A fork sync that pulls code must continue through post-update work."""
-        from hermes_cli import main as hm
-        from hermes_cli import update_cmd
+        from auraforge_cli import main as hm
+        from auraforge_cli import update_cmd
 
         mock_run.side_effect = _make_run_side_effect(
             branch="main", verify_ok=True, commit_count="0"
@@ -383,7 +383,7 @@ class TestCmdUpdateBranchFallback:
             # live gateways on a dev box read as STALE vs this checkout and
             # exit 1. Pin an empty fleet: this test asserts the post-update
             # path RUNS, not the fleet's health.
-            "hermes_cli.update_receipt.collect_fleet_versions",
+            "auraforge_cli.update_receipt.collect_fleet_versions",
             return_value=[],
         ), patch(
             # Same isolation for the restart phase: without these, the real
@@ -391,13 +391,13 @@ class TestCmdUpdateBranchFallback:
             # mocked-subprocess restart phase can't verify replacements, and
             # the fail-closed contract (#78574) exits 1 (locally the
             # live-system guard blocks the os.kill outright).
-            "hermes_cli.gateway.find_gateway_pids",
+            "auraforge_cli.gateway.find_gateway_pids",
             return_value=[],
         ), patch(
-            "hermes_cli.gateway.find_profile_gateway_processes",
+            "auraforge_cli.gateway.find_profile_gateway_processes",
             return_value=[],
         ), patch(
-            "hermes_cli.gateway._get_service_pids",
+            "auraforge_cli.gateway._get_service_pids",
             return_value=set(),
         ), patch.object(
             hm, "_sync_with_upstream_if_needed"
@@ -424,18 +424,18 @@ class TestCmdUpdateBranchFallback:
         with patch("shutil.which", return_value=None), patch(
             "subprocess.run"
         ) as mock_run, patch("builtins.input") as mock_input, patch(
-            "hermes_cli.config.get_missing_env_vars", return_value=["MISSING_KEY"]
+            "auraforge_cli.config.get_missing_env_vars", return_value=["MISSING_KEY"]
         ), patch(
-            "hermes_cli.config.get_missing_config_fields",
+            "auraforge_cli.config.get_missing_config_fields",
             return_value=[{"key": "new.option", "default": True}],
         ), patch(
-            "hermes_cli.update_cmd._reload_config_modules"
+            "auraforge_cli.update_cmd._reload_config_modules"
         ), patch(
-            "hermes_cli.update_cmd._run_config_check_fresh", return_value=(1, 2)
+            "auraforge_cli.update_cmd._run_config_check_fresh", return_value=(1, 2)
         ), patch(
-            "hermes_cli.update_cmd._run_migrate_config_fresh",
+            "auraforge_cli.update_cmd._run_migrate_config_fresh",
             return_value={"env_added": [], "config_added": ["new.option"]},
-        ) as migrate_config, patch("hermes_cli.main.sys") as mock_sys:
+        ) as migrate_config, patch("auraforge_cli.main.sys") as mock_sys:
             mock_sys.stdin.isatty.return_value = False
             mock_sys.stdout.isatty.return_value = False
             mock_run.side_effect = _make_run_side_effect(
@@ -468,15 +468,15 @@ class TestCmdUpdateMigrationPrompt:
         with patch("shutil.which", return_value=None), patch(
             "subprocess.run"
         ) as mock_run, patch("builtins.input") as mock_input, patch(
-            "hermes_cli.config.get_missing_env_vars", return_value=[]
+            "auraforge_cli.config.get_missing_env_vars", return_value=[]
         ), patch(
-            "hermes_cli.config.get_missing_config_fields", return_value=[]
+            "auraforge_cli.config.get_missing_config_fields", return_value=[]
         ), patch(
-            "hermes_cli.update_cmd._reload_config_modules"
+            "auraforge_cli.update_cmd._reload_config_modules"
         ), patch(
-            "hermes_cli.update_cmd._run_config_check_fresh", return_value=(5, 24)
+            "auraforge_cli.update_cmd._run_config_check_fresh", return_value=(5, 24)
         ), patch(
-            "hermes_cli.update_cmd._run_migrate_config_fresh",
+            "auraforge_cli.update_cmd._run_migrate_config_fresh",
             return_value={"env_added": [], "config_added": [], "warnings": []},
         ) as mock_migrate:
             mock_run.side_effect = _make_run_side_effect(
@@ -507,15 +507,15 @@ class TestCmdUpdateMigrationPrompt:
         with patch("shutil.which", return_value=None), patch(
             "subprocess.run"
         ) as mock_run, patch("builtins.input") as mock_input, patch(
-            "hermes_cli.config.get_missing_env_vars", return_value=[]
+            "auraforge_cli.config.get_missing_env_vars", return_value=[]
         ), patch(
-            "hermes_cli.config.get_missing_config_fields", return_value=[]
+            "auraforge_cli.config.get_missing_config_fields", return_value=[]
         ), patch(
-            "hermes_cli.update_cmd._reload_config_modules"
+            "auraforge_cli.update_cmd._reload_config_modules"
         ), patch(
-            "hermes_cli.update_cmd._run_config_check_fresh", return_value=(33, 34)
+            "auraforge_cli.update_cmd._run_config_check_fresh", return_value=(33, 34)
         ), patch(
-            "hermes_cli.update_cmd._run_migrate_config_fresh",
+            "auraforge_cli.update_cmd._run_migrate_config_fresh",
             return_value={
                 "env_added": [],
                 "config_added": ["display.personality=none (one-time reset)"],
@@ -549,17 +549,17 @@ class TestCmdUpdateMigrationPrompt:
         with patch("shutil.which", return_value=None), patch(
             "subprocess.run"
         ) as mock_run, patch("builtins.input", return_value="n"), patch(
-            "hermes_cli.config.get_missing_env_vars", return_value=env_items
+            "auraforge_cli.config.get_missing_env_vars", return_value=env_items
         ), patch(
-            "hermes_cli.config.get_missing_config_fields", return_value=cfg_items
+            "auraforge_cli.config.get_missing_config_fields", return_value=cfg_items
         ), patch(
-            "hermes_cli.update_cmd._reload_config_modules"
+            "auraforge_cli.update_cmd._reload_config_modules"
         ), patch(
-            "hermes_cli.update_cmd._run_config_check_fresh", return_value=(1, 24)
+            "auraforge_cli.update_cmd._run_config_check_fresh", return_value=(1, 24)
         ), patch(
-            "hermes_cli.update_cmd._run_migrate_config_fresh",
+            "auraforge_cli.update_cmd._run_migrate_config_fresh",
             return_value={"env_added": [], "config_added": [], "warnings": []},
-        ), patch("hermes_cli.main.sys") as mock_sys:
+        ), patch("auraforge_cli.main.sys") as mock_sys:
             mock_sys.stdin.isatty.return_value = True
             mock_sys.stdout.isatty.return_value = True
             mock_run.side_effect = _make_run_side_effect(
@@ -581,7 +581,7 @@ class TestConfigVersionCheckUsesFreshModules:
 
     Before the fix, ``auraforge update`` ran in the PRE-pull Python process.
     After ``git pull`` updated the source on disk, function-level imports
-    returned the OLD cached ``hermes_cli.config`` module — so
+    returned the OLD cached ``auraforge_cli.config`` module — so
     ``DEFAULT_CONFIG["_config_version"]`` was stale and
     ``check_config_version()`` reported ``(33, 33)`` "up to date" even though
     the freshly-pulled code had v34 with a migration to run. The personality
@@ -593,12 +593,12 @@ class TestConfigVersionCheckUsesFreshModules:
         force-reloads the config modules from disk.
 
         Regression: config migration was silently skipped because
-        sys.modules held the OLD hermes_cli.config with the OLD
+        sys.modules held the OLD auraforge_cli.config with the OLD
         DEFAULT_CONFIG["_config_version"] after git pull.
         """
         from unittest.mock import patch
 
-        import hermes_cli.update_cmd as update_cmd
+        import auraforge_cli.update_cmd as update_cmd
 
         with patch.object(update_cmd, "_reload_config_modules") as mock_reload:
             update_cmd._run_config_check_fresh()
@@ -638,8 +638,8 @@ class TestCmdUpdateProfileSkillSync:
         empty_sync = {"copied": [], "updated": [], "user_modified": [], "cleaned": []}
 
         with (
-            patch("hermes_cli.profiles.list_profiles", return_value=all_profiles),
-            patch("hermes_cli.profiles.seed_profile_skills", side_effect=fake_seed),
+            patch("auraforge_cli.profiles.list_profiles", return_value=all_profiles),
+            patch("auraforge_cli.profiles.seed_profile_skills", side_effect=fake_seed),
             patch("tools.skills_sync.sync_skills", return_value=empty_sync),
         ):
             cmd_update(mock_args)
@@ -672,8 +672,8 @@ class TestCmdUpdateProfileSkillSync:
         empty_sync = {"copied": [], "updated": [], "user_modified": [], "cleaned": []}
 
         with (
-            patch("hermes_cli.profiles.list_profiles", return_value=[default_p]),
-            patch("hermes_cli.profiles.seed_profile_skills", side_effect=fake_seed),
+            patch("auraforge_cli.profiles.list_profiles", return_value=[default_p]),
+            patch("auraforge_cli.profiles.seed_profile_skills", side_effect=fake_seed),
             patch("tools.skills_sync.sync_skills", return_value=empty_sync),
         ):
             cmd_update(mock_args)
@@ -820,7 +820,7 @@ class TestCmdUpdateCheckBranchFlag:
 
         return side_effect
 
-    @patch("hermes_cli.config.detect_install_method", return_value="git")
+    @patch("auraforge_cli.config.detect_install_method", return_value="git")
     @patch("subprocess.run")
     def test_check_branch_compares_against_named_origin_branch(
         self, mock_run, _mock_method, capsys
@@ -843,7 +843,7 @@ class TestCmdUpdateCheckBranchFlag:
         assert any("origin/bb/gui" in c for c in rev_list_cmds), rev_list_cmds
         assert not any("origin/main" in c for c in rev_list_cmds), rev_list_cmds
 
-    @patch("hermes_cli.config.detect_install_method", return_value="git")
+    @patch("auraforge_cli.config.detect_install_method", return_value="git")
     @patch("subprocess.run")
     def test_check_branch_missing_on_origin_exits_cleanly(
         self, mock_run, _mock_method, capsys
@@ -874,7 +874,7 @@ class TestCmdUpdateCheckBranchFlag:
         commands = [" ".join(str(a) for a in c.args[0]) for c in mock_run.call_args_list]
         assert not any("rev-list" in c for c in commands), commands
 
-    @patch("hermes_cli.config.detect_install_method", return_value="git")
+    @patch("auraforge_cli.config.detect_install_method", return_value="git")
     @patch("subprocess.run")
     def test_check_default_main_still_prefers_upstream(
         self, mock_run, _mock_method, capsys
@@ -905,7 +905,7 @@ class TestCmdUpdateZipBranchRefusal:
     """
 
     def test_zip_fallback_refuses_non_main_branch(self, capsys):
-        from hermes_cli.main import _update_via_zip
+        from auraforge_cli.main import _update_via_zip
 
         args = SimpleNamespace(branch="bb/gui")
         with pytest.raises(SystemExit) as exc_info:
@@ -920,13 +920,13 @@ class TestCmdUpdateZipBranchRefusal:
 
 
 def test_is_termux_env_true_for_termux_prefix():
-    from hermes_cli import main as hm
+    from auraforge_cli import main as hm
 
     assert hm._is_termux_env({"PREFIX": "/data/data/com.termux/files/usr"}) is True
 
 
 def test_load_installable_optional_extras_supports_termux_group(tmp_path, monkeypatch):
-    from hermes_cli import main as hm
+    from auraforge_cli import main as hm
 
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(
@@ -960,7 +960,7 @@ class TestNodeRuntimeNpmResolution:
     def test_node_failure_returns_failed_labels_and_warns(
         self, tmp_path, monkeypatch, capsys
     ):
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         monkeypatch.setattr(hm, "PROJECT_ROOT", tmp_path)
@@ -981,14 +981,14 @@ class TestNodeRuntimeNpmResolution:
 
     def test_wsl_update_skips_windows_npm_build_paths(self, mock_args, monkeypatch):
         """A Windows-only npm on WSL must not reach web or desktop builds."""
-        from hermes_cli import main as hm
-        import hermes_constants
+        from auraforge_cli import main as hm
+        import auraforge_constants
 
         windows_npm = "/mnt/c/Program Files/nodejs/npm"
         monkeypatch.setattr(hm, "_is_windows", lambda: False)
-        monkeypatch.setattr(hermes_constants, "is_wsl", lambda: True)
+        monkeypatch.setattr(auraforge_constants, "is_wsl", lambda: True)
         monkeypatch.setattr(
-            hermes_constants,
+            auraforge_constants,
             "find_node_executable",
             lambda command: windows_npm if command == "npm" else None,
         )
@@ -1021,8 +1021,8 @@ class TestNodeRuntimeNpmResolution:
 
     def test_update_rebuilds_desktop_that_disappears_mid_update(self):
         """A previously packaged Desktop must be rebuilt when its release tree vanishes."""
-        from hermes_cli import main as hm
-        from hermes_cli import update_cmd
+        from auraforge_cli import main as hm
+        from auraforge_cli import update_cmd
 
         desktop_dir = PROJECT_ROOT / "apps" / "desktop"
         packaged_exe = desktop_dir / "release" / "win-unpacked" / "AuraForge.exe"
@@ -1046,7 +1046,7 @@ class TestNodeRuntimeNpmResolution:
 
         assert packaged.call_count == 2
         desktop_build.assert_called_once_with(
-            [hm.sys.executable, "-m", "hermes_cli.main", "desktop", "--build-only"],
+            [hm.sys.executable, "-m", "auraforge_cli.main", "desktop", "--build-only"],
             cwd=PROJECT_ROOT,
             env=ANY,
         )
@@ -1063,8 +1063,8 @@ class TestNodeRuntimeNpmResolution:
         """
         import zipfile
 
-        from hermes_cli import main as hm
-        from hermes_cli import update_cmd
+        from auraforge_cli import main as hm
+        from auraforge_cli import update_cmd
 
         project_root = tmp_path / "auraforge-agent"
         (project_root / ".git").mkdir(parents=True)
@@ -1124,11 +1124,11 @@ class TestNodeRuntimeNpmResolution:
         monkeypatch.setattr(update_cmd, "get_hermes_home", lambda: tmp_path / "auraforge-home")
 
         with (
-            patch("hermes_cli.config.load_config", return_value={}),
+            patch("auraforge_cli.config.load_config", return_value={}),
             patch("subprocess.run", side_effect=fail_git_fetch),
             patch("urllib.request.urlretrieve", side_effect=write_source_zip),
-            patch("hermes_cli.managed_uv.ensure_uv", return_value="uv"),
-            patch("hermes_cli.managed_uv.update_managed_uv"),
+            patch("auraforge_cli.managed_uv.ensure_uv", return_value="uv"),
+            patch("auraforge_cli.managed_uv.update_managed_uv"),
             patch(
                 "tools.skills_sync.sync_skills",
                 return_value={
@@ -1139,7 +1139,7 @@ class TestNodeRuntimeNpmResolution:
                     "relocated": [],
                 },
             ),
-            patch("hermes_cli.model_catalog.seed_cache_from_checkout", return_value=False),
+            patch("auraforge_cli.model_catalog.seed_cache_from_checkout", return_value=False),
         ):
             update_cmd._cmd_update_impl(
                 SimpleNamespace(yes=True, force=True, force_venv=True, branch=None),
@@ -1217,7 +1217,7 @@ class TestUpdateNodeDependencies:
         """Regression for #43564: install ui-tui + web directly. apps/desktop
         must never appear, so its Electron postinstall is never triggered.
         """
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1254,7 +1254,7 @@ class TestUpdateNodeDependencies:
         --workspace web still excludes the unnamed apps/desktop workspace
         (confirmed empirically against npm 10.9.8 and 11.9.0 in PR #44772
         review)."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1275,7 +1275,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value="/usr/bin/npm")
     def test_install_preserves_standard_flags(self, _which, mock_popen, tmp_path, monkeypatch):
         """--no-fund, --no-audit, --progress=false must survive."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1296,7 +1296,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value="/usr/bin/npm")
     def test_skips_install_when_deps_up_to_date(self, _which, mock_run, tmp_path, monkeypatch):
         """When _npm_lockfile_changed reports no change, npm must not be called."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1313,7 +1313,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value="/usr/bin/npm")
     def test_runs_install_when_lockfile_changed(self, _which, mock_popen, tmp_path, monkeypatch):
         """When _npm_lockfile_changed reports a change, npm must run."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1332,7 +1332,7 @@ class TestUpdateNodeDependencies:
     def test_records_lockfile_hash_only_on_success(self, _which, mock_popen, tmp_path, monkeypatch):
         """A failed install must not record the lockfile hash (so the next
         run retries instead of wrongly believing deps are up to date)."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1353,7 +1353,7 @@ class TestUpdateNodeDependencies:
     ):
         """The npx warm-up must fire even when the workspace install fails —
         it's independent of ui-tui/web dependency state (#43564)."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")
@@ -1372,7 +1372,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value=None)
     def test_returns_silently_when_npm_not_found(self, _which, mock_run, tmp_path, monkeypatch):
         """No npm on PATH → return without calling subprocess."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         monkeypatch.setattr(hm, "PROJECT_ROOT", tmp_path)
@@ -1385,7 +1385,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value="/usr/bin/npm")
     def test_returns_silently_when_package_json_absent(self, _which, mock_run, tmp_path, monkeypatch):
         """No package.json → return without calling npm."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         monkeypatch.setattr(hm, "PROJECT_ROOT", tmp_path)
 
@@ -1397,7 +1397,7 @@ class TestUpdateNodeDependencies:
     @patch("shutil.which", return_value="/usr/bin/npm")
     def test_install_runs_from_project_root(self, _which, mock_popen, tmp_path, monkeypatch):
         """npm install must execute from PROJECT_ROOT, not a workspace subdir."""
-        from hermes_cli import main as hm
+        from auraforge_cli import main as hm
 
         (tmp_path / "package.json").write_text("{}")
         (tmp_path / "package-lock.json").write_text("{}")

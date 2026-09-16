@@ -24,19 +24,19 @@
 #     -DesktopPid <pid>     the Electron main process to wait out
 #     [-RelaunchExe <path>] Aura Forge.exe to start when done (omit = no relaunch)
 #     [-NoUi]               headless (tests); default shows a progress window
-#     [-NoMarkerCleanup]    leave .hermes-update-in-progress in place (tests)
+#     [-NoMarkerCleanup]    leave .auraforge-update-in-progress in place (tests)
 #
 # SAFETY POSTURE: both preflight gates FAIL CLOSED. A Desktop that never
 # exits, or a venv shim that never unlocks, aborts the hand-off without
 # mutating the install -- a skipped update is recoverable, a half-updated
 # venv is not. Every exit path (success, abort, crash) writes
-# .hermes-update-result.json for the relaunched Desktop to surface, and
+# .auraforge-update-result.json for the relaunched Desktop to surface, and
 # relaunches the Desktop so the user is never left stranded.
 #
-# Marker: we claim HERMES_HOME\.hermes-update-in-progress with OUR pid as
+# Marker: we claim HERMES_HOME\.auraforge-update-in-progress with OUR pid as
 # step 0 (the wrapper cmd.exe pid the Desktop saw is useless -- it exits
 # immediately), retaining HERMES_UPDATE_STARTED_AT from the Desktop hand-off.
-# hermes_cli/update_lock.py's ancestry rule lets our
+# auraforge_cli/update_lock.py's ancestry rule lets our
 # `hermes update` child adopt the claim; electron/update-marker.ts parks a
 # relaunched Desktop on it. Cleanup only removes the marker while WE still
 # own it (a handoff partner that rewrote it keeps its claim).
@@ -81,10 +81,10 @@ try {
 } catch {}
 $TempDir = if ($env:TEMP) { $env:TEMP } else { [System.IO.Path]::GetTempPath() }
 $AuraForgeHome = if ($InstallRoot) { Split-Path -Parent $InstallRoot } else { $TempDir }
-$MarkerPath = Join-Path $AuraForgeHome ".hermes-update-in-progress"
+$MarkerPath = Join-Path $AuraForgeHome ".auraforge-update-in-progress"
 $LogDir = Join-Path $AuraForgeHome "logs"
 $LogPath = Join-Path $LogDir "desktop-update-handoff.log"
-$ResultPath = Join-Path $AuraForgeHome ".hermes-update-result.json"
+$ResultPath = Join-Path $AuraForgeHome ".auraforge-update-result.json"
 $script:Ui = $null
 $script:UiStage = "Aura Forge will open once done."   # until the first gate; matches ui.html
 $script:UiStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -238,7 +238,7 @@ function Stop-UiServer([switch]$LeaveWindow) {
     # profile plus any stale hermes-update-ui-* leftovers from interrupted
     # past runs. A browser that is still shutting down may hold the lock, in
     # which case the delete silently no-ops. Safe to sweep by prefix: the
-    # update marker (.hermes-update-in-progress) serialises hand-offs, so no
+    # update marker (.auraforge-update-in-progress) serialises hand-offs, so no
     # other run's profile can be in active use here.
     try {
         $profileDirs = @()
@@ -692,7 +692,7 @@ function Start-DesktopRelaunch {
 # every descendant that is spawned without its own redirection gets a
 # duplicate -- and the read side does not see EOF until the last of them
 # closes it. `hermes update` deliberately runs its build steps with stdout
-# inherited (hermes_cli/main.py, the tee-stderr runner), so the tree under a
+# inherited (auraforge_cli/main.py, the tee-stderr runner), so the tree under a
 # step is arbitrarily deep and not something this script can enumerate. When
 # one of those descendants is a resident gateway, the pipe stays open for the
 # life of the gateway, i.e. forever.
@@ -723,7 +723,7 @@ if ($env:HERMES_UPDATE_STEP_IDLE_SECONDS) {
 
 # Silence on the pipes is NOT silence in the update. `hermes update` captures
 # the (very loud) Electron/vite build into logs/update.log instead of its own
-# stdout (hermes_cli/update_cmd.py, the update-log tee), so a real update is
+# stdout (auraforge_cli/update_cmd.py, the update-log tee), so a real update is
 # routinely stdout-silent for 40+ minutes while demonstrably progressing. An
 # idle ceiling that watched only stdout/stderr would cancel every healthy
 # large update at StepIdleTimeoutSeconds. The drain therefore also counts
@@ -982,7 +982,7 @@ function Invoke-HermesStep([string]$Exe, [string[]]$AuraForgeArgs, [string]$Tag)
     # The drain is bounded once the step exits (#90455). Waiting for pipe EOF
     # is waiting on the step's whole surviving descendant tree, and this
     # function sits upstream of every terminal obligation the hand-off has --
-    # .hermes-update-result.json, clearing .hermes-update-in-progress,
+    # .auraforge-update-result.json, clearing .auraforge-update-in-progress,
     # relaunching the Desktop. One resident grandchild holding an inherited
     # handle used to strand all three and leave the Desktop on "Updating
     # Aura Forge" until the user killed something by hand. Losing the tail of a
@@ -1466,7 +1466,7 @@ try {
     # elevation a Desktop-driven update does not have, and freed nothing for the
     # install already in flight.)
     #
-    # Running the same code as `python.exe -m hermes_cli.main update` puts the
+    # Running the same code as `python.exe -m auraforge_cli.main update` puts the
     # inherited handles on python.exe, which uv never has to replace.
     #
     # posix.sh is deliberately left alone: unlinking a running executable is
@@ -1478,13 +1478,13 @@ try {
         Write-HandoffLog $finalMsg
         exit $finalCode
     }
-    $updateArgs = @("-m", "hermes_cli.main", "update", "--yes", "--gateway", "--force", "--branch", $Branch)
+    $updateArgs = @("-m", "auraforge_cli.main", "update", "--yes", "--gateway", "--force", "--branch", $Branch)
     # --keep-stash: never re-apply local source edits after the update (they
     # stay parked in git stash). Probe --help first: the flag ships with newer
     # backends and an unknown flag would abort argparse with exit 2, which
     # collides with the "close all Aura Forge windows" sentinel.
     try {
-        $updateHelp = & $pythonExe -m hermes_cli.main update --help 2>$null | Out-String
+        $updateHelp = & $pythonExe -m auraforge_cli.main update --help 2>$null | Out-String
         if ($updateHelp -match "--keep-stash") {
             $updateArgs += "--keep-stash"
         } else {
@@ -1516,7 +1516,7 @@ try {
     if ($res.Code -eq 0 -and $res.Output -match "Desktop build failed") {
         Write-HandoffLog "hermes update reported a desktop build failure (non-fatal there, fatal here); retrying build"
         Publish-UiProgress "Rebuilding Desktop"
-        $rebuild = Invoke-HermesStep $pythonExe @("-m", "hermes_cli.main", "desktop", "--force-build", "--build-only") "rebuild"
+        $rebuild = Invoke-HermesStep $pythonExe @("-m", "auraforge_cli.main", "desktop", "--force-build", "--build-only") "rebuild"
         Write-HandoffLog "desktop rebuild exit code: $($rebuild.Code)"
         if ($rebuild.Code -ne 0) { $desktopBuildFailed = $true }
     }

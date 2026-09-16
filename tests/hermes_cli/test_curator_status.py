@@ -30,13 +30,13 @@ def curator_status_env(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     import importlib
-    import hermes_constants
-    importlib.reload(hermes_constants)
+    import auraforge_constants
+    importlib.reload(auraforge_constants)
     from tools import skill_usage
     importlib.reload(skill_usage)
     from agent import curator
     importlib.reload(curator)
-    from hermes_cli import curator as curator_cli
+    from auraforge_cli import curator as curator_cli
     importlib.reload(curator_cli)
 
     def _write_skill(name: str) -> None:
@@ -88,7 +88,7 @@ def test_adopt_subcommand_is_registered():
     callable — a handler nobody can dispatch to is dead code."""
     import argparse
 
-    import hermes_cli.curator as curator_cli
+    import auraforge_cli.curator as curator_cli
 
     parser = argparse.ArgumentParser()
     curator_cli.register_cli(parser)

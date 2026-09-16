@@ -63,7 +63,7 @@ def _process_hermes_home() -> Path:
     val = os.environ.get("HERMES_HOME", "").strip()
     if val:
         return Path(val)
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     return get_hermes_home()
 
@@ -314,7 +314,7 @@ def read_prior_exit_label(profile_home: Path) -> str:
     """Container-boot helper: one-word summary of how the profile's last
     gateway life ended.  ``clean`` / ``unclean`` / ``unknown`` (no sentinel
     or never ran).  Read-only and exception-free — used by
-    ``hermes_cli.container_boot`` to annotate ``container-boot.log``.
+    ``auraforge_cli.container_boot`` to annotate ``container-boot.log``.
     """
     try:
         sentinel = _read_json(get_lifecycle_sentinel_path(profile_home))

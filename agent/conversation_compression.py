@@ -876,7 +876,7 @@ class CompressionCommitFence:
 
 
 # Defaults for the in-agent (non-hygiene) progress-aware compress_context wrap.
-# Mirror hermes_cli.config.DEFAULT_CONFIG["compression"] keys of the same name.
+# Mirror auraforge_cli.config.DEFAULT_CONFIG["compression"] keys of the same name.
 DEFAULT_CONTEXT_TIMEOUT_SECONDS = 120.0
 DEFAULT_CONTEXT_TOTAL_CEILING_SECONDS = 600.0
 
@@ -972,7 +972,7 @@ def resolve_context_compression_timeouts(
     cfg = compression_cfg
     if cfg is None:
         try:
-            from hermes_cli.config import load_config
+            from auraforge_cli.config import load_config
 
             raw = load_config()
             maybe = raw.get("compression", {}) if isinstance(raw, dict) else {}
@@ -1494,13 +1494,13 @@ def _lock_api_is_absent_on_session_db(lock_db: Any) -> bool:
     """Whether the live in-memory SessionDB class structurally predates locks.
 
     In the supported hot-reload skew, this module is new while the already
-    imported ``hermes_state.SessionDB`` class (and its live instances) is old.
+    imported ``auraforge_state.SessionDB`` class (and its live instances) is old.
     Only that exact class identity may fail open. Proxies, nominal lookalikes,
     non-callables, and descriptor failures must fail closed. Static lookup
     avoids invoking a present-but-broken descriptor.
     """
     try:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         missing = object()
         return (
@@ -1659,7 +1659,7 @@ def _adopt_live_compression_child(
     except Exception:
         os.environ["HERMES_SESSION_ID"] = child_session_id
     try:
-        from hermes_logging import set_session_context
+        from auraforge_logging import set_session_context
 
         set_session_context(child_session_id)
     except Exception:
@@ -4198,7 +4198,7 @@ def compress_context(
                     # from the parent row, covering app-global remote sessions
                     # whose thread lacks the HERMES_HOME context.
                     try:
-                        from hermes_cli.profiles import get_active_profile_name
+                        from auraforge_cli.profiles import get_active_profile_name
 
                         _profile_for_child = get_active_profile_name()
                         if _profile_for_child == "default":
@@ -4359,7 +4359,7 @@ def compress_context(
                     except Exception:
                         os.environ["HERMES_SESSION_ID"] = agent.session_id
                     try:
-                        from hermes_logging import set_session_context
+                        from auraforge_logging import set_session_context
 
                         set_session_context(agent.session_id)
                     except Exception:
@@ -4371,13 +4371,13 @@ def compress_context(
                     # per-session lookup with no parent walk, so without this an
                     # active goal silently dies at the boundary (#33618).
                     try:
-                        from hermes_cli.goals import migrate_goal_to_session
+                        from auraforge_cli.goals import migrate_goal_to_session
                         migrate_goal_to_session(old_session_id, agent.session_id, reason="compression")
                     except Exception as _goal_err:
                         logger.debug("Could not migrate goal on compression: %s", _goal_err)
                     # Same boundary hazard for /heartbeat state — carry it too.
                     try:
-                        from hermes_cli.heartbeat import migrate_heartbeat_to_session
+                        from auraforge_cli.heartbeat import migrate_heartbeat_to_session
                         migrate_heartbeat_to_session(old_session_id, agent.session_id)
                     except Exception as _hb_err:
                         logger.debug("Could not migrate heartbeat on compression: %s", _hb_err)
@@ -4385,7 +4385,7 @@ def compress_context(
                     # onto the continuation session so the recurring wakeups
                     # survive compression.
                     try:
-                        from hermes_cli.loops import migrate_loop_to_session
+                        from auraforge_cli.loops import migrate_loop_to_session
                         migrate_loop_to_session(old_session_id, agent.session_id, reason="compression")
                     except Exception as _loop_err:
                         logger.debug("Could not migrate loop on compression: %s", _loop_err)

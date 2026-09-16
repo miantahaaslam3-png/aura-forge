@@ -101,7 +101,7 @@ public static class HermesMarkerNoFollow {
     '$installRoot=$home',
     '$parent=Split-Path -Parent $home',
     'if((Split-Path -Leaf $parent) -ieq "profiles"){$installRoot=Split-Path -Parent $parent}',
-    '$marker=Join-Path $installRoot ".hermes-update-in-progress"',
+    '$marker=Join-Path $installRoot ".auraforge-update-in-progress"',
     '$result="UNCERTAIN"',
     '$stream=$null;$memory=$null',
     'try{',
@@ -217,7 +217,7 @@ async function detectRemotePlatform(ssh, explicitHermesPath = '') {
 }
 
 function helperCommand(runtime, operation, args = []) {
-  const argv = [runtime.python, '-m', 'hermes_cli.windows_ssh_runtime', operation, ...args]
+  const argv = [runtime.python, '-m', 'auraforge_cli.windows_ssh_runtime', operation, ...args]
 
   const script = [
     '$ErrorActionPreference="Stop"',
@@ -247,8 +247,8 @@ async function helper(ssh, runtime, operation, args = [], stdinData?) {
 }
 
 function atomicWindowsSpawnCommand(runtime, reservation: any = {}) {
-  const argv = [runtime.python, '-m', 'hermes_cli.windows_ssh_runtime', 'spawn']
-  const helper = operation => [runtime.python, '-m', 'hermes_cli.windows_ssh_runtime', operation]
+  const argv = [runtime.python, '-m', 'auraforge_cli.windows_ssh_runtime', 'spawn']
+  const helper = operation => [runtime.python, '-m', 'auraforge_cli.windows_ssh_runtime', operation]
 
   const script = [
     '$ErrorActionPreference="Stop"',
@@ -256,7 +256,7 @@ function atomicWindowsSpawnCommand(runtime, reservation: any = {}) {
     '$installRoot=$home',
     '$parent=Split-Path -Parent $home',
     'if((Split-Path -Leaf $parent) -ieq "profiles"){$installRoot=Split-Path -Parent $parent}',
-    '$marker=Join-Path $installRoot ".hermes-update-in-progress"',
+    '$marker=Join-Path $installRoot ".auraforge-update-in-progress"',
     '$mutexPath=$marker+".mutex"',
     '$mutex=[IO.File]::Open($mutexPath,[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::ReadWrite)',
     'try{',

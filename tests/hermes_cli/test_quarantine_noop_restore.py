@@ -22,8 +22,8 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import _install_repair as ir
-from hermes_cli import main as cli_main
+from auraforge_cli import _install_repair as ir
+from auraforge_cli import main as cli_main
 
 
 def _make_scripts_dir(tmp_path: Path) -> Path:
@@ -39,7 +39,7 @@ def _shim_names(scripts: Path) -> set[str]:
 
 
 # ---------------------------------------------------------------------------
-# hermes_cli.main._run_quarantined_install
+# auraforge_cli.main._run_quarantined_install
 # ---------------------------------------------------------------------------
 
 
@@ -91,7 +91,7 @@ def test_main_failure_restores_shims_and_reraises(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# hermes_cli._install_repair._run_install_cmd (the deferred-recovery path)
+# auraforge_cli._install_repair._run_install_cmd (the deferred-recovery path)
 # ---------------------------------------------------------------------------
 
 

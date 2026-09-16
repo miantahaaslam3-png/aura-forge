@@ -33,7 +33,7 @@ The CLI command runs the same migration script described below. Use this skill (
 
 ## What this skill does
 
-It uses `scripts/openclaw_to_hermes.py` to:
+It uses `scripts/openclaw_to_auraforge.py` to:
 
 - import `SOUL.md` into the Aura Forge home directory as `SOUL.md`
 - transform OpenClaw `MEMORY.md` and `USER.md` into Aura Forge memory entries
@@ -49,11 +49,11 @@ It uses `scripts/openclaw_to_hermes.py` to:
 
 The helper script lives in this skill directory at:
 
-- `scripts/openclaw_to_hermes.py`
+- `scripts/openclaw_to_auraforge.py`
 
 When this skill is installed from the Skills Hub, the normal location is:
 
-- `~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py`
+- `~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py`
 
 Do not guess a shorter path like `~/.hermes/skills/openclaw-migration/...`.
 
@@ -229,37 +229,37 @@ The helper script still supports category-level `--include` / `--exclude`, but t
 Dry run with full discovery:
 
 ```bash
-python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py
 ```
 
 When using the terminal tool, prefer an absolute invocation pattern such as:
 
 ```json
-{"command":"python /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py","workdir":"/home/USER"}
+{"command":"python /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py","workdir":"/home/USER"}
 ```
 
 Dry run with the user-data preset:
 
 ```bash
-python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --preset user-data
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --preset user-data
 ```
 
 Execute a user-data migration:
 
 ```bash
-python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict skip
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset user-data --skill-conflict skip
 ```
 
 Execute a full compatible migration:
 
 ```bash
-python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset full --migrate-secrets --skill-conflict skip
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset full --migrate-secrets --skill-conflict skip
 ```
 
 Execute with workspace instructions included:
 
 ```bash
-python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
+python ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
 ```
 
 Do not use `$PWD` or the home directory as the workspace target by default. Ask for an explicit workspace path first.

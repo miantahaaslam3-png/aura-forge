@@ -1,11 +1,11 @@
-"""Tests for hermes_cli.update_inventory — the plan phase (#91277 Phase 2)."""
+"""Tests for auraforge_cli.update_inventory — the plan phase (#91277 Phase 2)."""
 
 import json
 from pathlib import Path
 
 import pytest
 
-import hermes_cli.update_inventory as ui
+import auraforge_cli.update_inventory as ui
 
 
 def _write_state(home: Path, pid: int, sha: str | None = None, version: str | None = None):
@@ -27,19 +27,19 @@ def fleet(monkeypatch, tmp_path):
     _write_state(work_home, 200)  # pre-stamp gateway: no code identity
 
     import re
-    monkeypatch.setattr("hermes_cli.profiles._get_default_hermes_home", lambda: default_home)
-    monkeypatch.setattr("hermes_cli.profiles._get_profiles_root", lambda: default_home / "profiles")
-    monkeypatch.setattr("hermes_cli.profiles._PROFILE_ID_RE", re.compile(r"^[a-z0-9][a-z0-9_-]*$"), raising=False)
+    monkeypatch.setattr("auraforge_cli.profiles._get_default_hermes_home", lambda: default_home)
+    monkeypatch.setattr("auraforge_cli.profiles._get_profiles_root", lambda: default_home / "profiles")
+    monkeypatch.setattr("auraforge_cli.profiles._PROFILE_ID_RE", re.compile(r"^[a-z0-9][a-z0-9_-]*$"), raising=False)
     monkeypatch.setattr("gateway.status._pid_exists", lambda pid: pid in (100, 200))
-    monkeypatch.setattr("hermes_cli.gateway._get_service_pids", lambda all_profiles=False: {100})
-    monkeypatch.setattr("hermes_cli.gateway.supports_systemd_services", lambda: True)
-    monkeypatch.setattr("hermes_cli.gateway.find_profile_gateway_processes", lambda exclude_pids=None: [])
+    monkeypatch.setattr("auraforge_cli.gateway._get_service_pids", lambda all_profiles=False: {100})
+    monkeypatch.setattr("auraforge_cli.gateway.supports_systemd_services", lambda: True)
+    monkeypatch.setattr("auraforge_cli.gateway.find_profile_gateway_processes", lambda exclude_pids=None: [])
     monkeypatch.setattr(
-        "hermes_cli.build_info.get_code_identity",
+        "auraforge_cli.build_info.get_code_identity",
         lambda refresh=False: {"sha": "a" * 40, "short_sha": "a" * 8, "version": "1.0", "source": "git"},
     )
-    monkeypatch.setattr("hermes_cli.config.detect_install_method", lambda *a, **k: "git")
-    monkeypatch.setattr("hermes_cli.config.get_managed_system", lambda: None)
+    monkeypatch.setattr("auraforge_cli.config.detect_install_method", lambda *a, **k: "git")
+    monkeypatch.setattr("auraforge_cli.config.get_managed_system", lambda: None)
     return tmp_path
 
 
@@ -59,16 +59,16 @@ class TestCollectInventory:
         assert by_profile["work"].supervisor == "manual"
         assert by_profile["work"].code_sha is None  # pre-stamp gateway
         assert by_profile["work"].restart_via == "manual"
-        from hermes_cli.update_inventory import describe_restart_mechanism
+        from auraforge_cli.update_inventory import describe_restart_mechanism
 
         assert "auraforge -p work gateway restart" in describe_restart_mechanism(
             by_profile["work"].restart_via, "work"
         )
 
     def test_docker_install_not_updatable_in_place(self, fleet, monkeypatch):
-        monkeypatch.setattr("hermes_cli.config.detect_install_method", lambda *a, **k: "docker")
+        monkeypatch.setattr("auraforge_cli.config.detect_install_method", lambda *a, **k: "docker")
         monkeypatch.setattr(
-            "hermes_cli.config.recommended_update_command_for_method",
+            "auraforge_cli.config.recommended_update_command_for_method",
             lambda m: "docker pull nousresearch/auraforge-agent:latest",
         )
         plan = ui.collect_runtime_inventory()
@@ -83,10 +83,10 @@ class TestCollectInventory:
 
     def test_pid_file_fallback_covers_unstamped_profiles(self, fleet, monkeypatch):
         """Gateways with a PID file but no runtime-status record still appear."""
-        from hermes_cli.gateway import ProfileGatewayProcess
+        from auraforge_cli.gateway import ProfileGatewayProcess
 
         monkeypatch.setattr(
-            "hermes_cli.gateway.find_profile_gateway_processes",
+            "auraforge_cli.gateway.find_profile_gateway_processes",
             lambda exclude_pids=None: [
                 ProfileGatewayProcess(profile="legacy", path=Path("/x"), pid=300),
                 # duplicate of an already-seen pid — must be deduped
@@ -104,11 +104,11 @@ class TestCollectInventory:
             raise RuntimeError("probe down")
 
         for target in (
-            "hermes_cli.config.detect_install_method",
-            "hermes_cli.build_info.get_code_identity",
-            "hermes_cli.profiles._get_default_hermes_home",
-            "hermes_cli.gateway._get_service_pids",
-            "hermes_cli.gateway.find_profile_gateway_processes",
+            "auraforge_cli.config.detect_install_method",
+            "auraforge_cli.build_info.get_code_identity",
+            "auraforge_cli.profiles._get_default_hermes_home",
+            "auraforge_cli.gateway._get_service_pids",
+            "auraforge_cli.gateway.find_profile_gateway_processes",
         ):
             monkeypatch.setattr(target, _boom)
         plan = ui.collect_runtime_inventory()
@@ -137,9 +137,9 @@ class TestPrintPlan:
         assert "pid 200" in out and "manual" in out
 
     def test_docker_warns_not_in_place(self, fleet, monkeypatch, capsys):
-        monkeypatch.setattr("hermes_cli.config.detect_install_method", lambda *a, **k: "docker")
+        monkeypatch.setattr("auraforge_cli.config.detect_install_method", lambda *a, **k: "docker")
         monkeypatch.setattr(
-            "hermes_cli.config.recommended_update_command_for_method",
+            "auraforge_cli.config.recommended_update_command_for_method",
             lambda m: "docker pull nousresearch/auraforge-agent:latest",
         )
         ui.print_update_plan(ui.collect_runtime_inventory())
@@ -155,11 +155,11 @@ class TestPrintPlan:
 
 class TestReceiptIntegration:
     def test_plan_recorded_into_active_receipt(self, fleet, monkeypatch, tmp_path):
-        import hermes_cli.update_receipt as ur
+        import auraforge_cli.update_receipt as ur
 
         home = tmp_path / "receipt_home"
         home.mkdir()
-        monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: home, raising=False)
+        monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: home, raising=False)
         ur._current = None
         ur.begin_update_receipt()
         plan = ui.collect_runtime_inventory()
@@ -170,7 +170,7 @@ class TestReceiptIntegration:
         assert len(payload["plan"]["runtimes"]) == 2
 
     def test_noop_without_active_receipt(self, fleet):
-        import hermes_cli.update_receipt as ur
+        import auraforge_cli.update_receipt as ur
 
         ur._current = None
         ui.record_plan_in_receipt(ui.collect_runtime_inventory())  # must not raise

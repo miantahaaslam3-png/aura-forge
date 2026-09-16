@@ -54,7 +54,7 @@ def _write_platform_plugin(
     triggers pre-registration. Defaults to following ``with_tools_module``,
     which is the shape a real plugin ships.
     """
-    from hermes_cli.plugins import PluginManifest
+    from auraforge_cli.plugins import PluginManifest
 
     if declares_provides_tools is None:
         declares_provides_tools = with_tools_module
@@ -182,7 +182,7 @@ class TestA2AClientToolsInCliProcess:
         assert set(manifest.get("provides_tools") or []) == A2A_CLIENT_TOOLS
 
     def test_a2a_toolset_resolves_without_materializing_the_platform(self):
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
         from toolsets import resolve_toolset
 
         mgr = PluginManager()
@@ -206,7 +206,7 @@ class TestA2AClientToolsInCliProcess:
         x_search, ...) renders a checkbox; a2a rendered nothing, so the
         documented opt-in path had nothing to tick.
         """
-        from hermes_cli.plugins import discover_plugins, get_plugin_toolsets
+        from auraforge_cli.plugins import discover_plugins, get_plugin_toolsets
 
         # get_plugin_toolsets() reads the process-wide manager, which is what
         # the `auraforge tools` checklist does.
@@ -221,7 +221,7 @@ class TestA2AClientToolsInCliProcess:
         ``is_registered()`` check, so a deferred platform's own tools were
         dropped from its bundle as well.
         """
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
         from toolsets import resolve_toolset
 
         mgr = PluginManager()
@@ -237,7 +237,7 @@ class TestDeferredPlatformToolPreregistration:
     def test_tools_module_registers_without_importing_the_adapter(
         self, tmp_path, probe, clean_registry
     ):
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
         from toolsets import resolve_toolset
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
@@ -255,7 +255,7 @@ class TestDeferredPlatformToolPreregistration:
         self, tmp_path, probe, clean_registry
     ):
         """No ``tools.py`` means no behaviour change at all — nothing imported."""
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(tmp_path, "barefoot", with_tools_module=False)
 
@@ -277,7 +277,7 @@ class TestDeferredPlatformToolPreregistration:
         naming a file, and the contract is invisible to anyone reading the
         manifest.
         """
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(
             tmp_path,
@@ -305,7 +305,7 @@ class TestDeferredPlatformToolPreregistration:
         that module instead of re-running its body.
         """
         from gateway.platform_registry import platform_registry
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
 
@@ -329,7 +329,7 @@ class TestDeferredPlatformToolPreregistration:
         "before" snapshot, so the diff alone would report zero.
         """
         from gateway.platform_registry import platform_registry
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
 
@@ -352,7 +352,7 @@ class TestDeferredPlatformToolPreregistration:
         symptom (declared tools absent from the session), so it has to be
         visible without enabling debug logging to find it.
         """
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
         (Path(manifest.path) / "tools.py").write_text(
@@ -360,7 +360,7 @@ class TestDeferredPlatformToolPreregistration:
         )
 
         mgr = PluginManager()
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins"):
             mgr._register_deferred_platform(manifest)  # must not raise
 
         assert mgr._plugins["probeplat-platform"].deferred is True
@@ -381,7 +381,7 @@ class TestDeferredPlatformToolPreregistration:
         `_load_plugin`'s own diff cannot recover them later because they are
         already inside its "before" snapshot.
         """
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
         tools_py = (Path(manifest.path) / "tools.py").read_text(encoding="utf-8")
@@ -391,7 +391,7 @@ class TestDeferredPlatformToolPreregistration:
         )
 
         mgr = PluginManager()
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins"):
             mgr._register_deferred_platform(manifest)  # must not raise
 
         # Attribution without a live tool would be a lie, so check the registry
@@ -422,7 +422,7 @@ class TestDeferredPlatformToolPreregistration:
         ``enabled`` stays False on purpose: the adapter genuinely did not load.
         """
         from gateway.platform_registry import platform_registry
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
         from toolsets import resolve_toolset
 
         manifest = _write_platform_plugin(tmp_path, "probeplat", with_tools_module=True)
@@ -433,7 +433,7 @@ class TestDeferredPlatformToolPreregistration:
         )
 
         mgr = PluginManager()
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins"):
             mgr._register_deferred_platform(manifest)
             platform_registry.get("probeplat")  # gateway startup; register() raises
 
@@ -453,7 +453,7 @@ class TestDeferredPlatformToolPreregistration:
         Returning silently here leaves the operator with exactly the bug this
         path fixes and no thread to pull on.
         """
-        from hermes_cli.plugins import PluginManager
+        from auraforge_cli.plugins import PluginManager
 
         manifest = _write_platform_plugin(
             tmp_path,
@@ -463,7 +463,7 @@ class TestDeferredPlatformToolPreregistration:
         )
 
         mgr = PluginManager()
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins"):
             mgr._register_deferred_platform(manifest)
 
         assert probe.package_execs == 0

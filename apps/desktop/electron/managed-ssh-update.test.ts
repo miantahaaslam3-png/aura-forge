@@ -407,7 +407,7 @@ test('managed observer unwraps a named profile home for the install-wide marker'
 
   try {
     await mkdir(profileHome, { recursive: true })
-    await writeFile(path.join(root, '.hermes-update-in-progress'), `${process.pid}\n1\n`)
+    await writeFile(path.join(root, '.auraforge-update-in-progress'), `${process.pid}\n1\n`)
 
     const command = buildRemoteUpdateObservationCommand(
       {

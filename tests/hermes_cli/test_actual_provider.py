@@ -6,8 +6,8 @@ import json
 from unittest.mock import patch
 
 from agent.auxiliary_client import _normalize_aux_provider
-from hermes_cli import runtime_provider as rp
-from hermes_cli.auth import (
+from auraforge_cli import runtime_provider as rp
+from auraforge_cli.auth import (
     ACTUAL_LOCAL_NOAUTH_PLACEHOLDER,
     DEFAULT_ACTUAL_BASE_URL,
     DEFAULT_ACTUAL_LOCAL_BASE_URL,
@@ -16,11 +16,11 @@ from hermes_cli.auth import (
     resolve_api_key_provider_credentials,
     resolve_provider,
 )
-from hermes_cli.models import normalize_provider as normalize_model_provider
-from hermes_cli.models import provider_model_ids
-from hermes_cli.providers import determine_api_mode
-from hermes_cli.providers import get_label
-from hermes_cli.providers import normalize_provider as normalize_overlay_provider
+from auraforge_cli.models import normalize_provider as normalize_model_provider
+from auraforge_cli.models import provider_model_ids
+from auraforge_cli.providers import determine_api_mode
+from auraforge_cli.providers import get_label
+from auraforge_cli.providers import normalize_provider as normalize_overlay_provider
 from providers import get_provider_profile
 
 
@@ -193,7 +193,7 @@ def test_actual_profile_fetch_models_normalizes_env_base_url(monkeypatch):
         seen["timeout"] = timeout
         return _Response()
 
-    monkeypatch.setattr("hermes_cli.urllib_security.open_credentialed_url", _open)
+    monkeypatch.setattr("auraforge_cli.urllib_security.open_credentialed_url", _open)
 
     assert profile.fetch_models(api_key=None, timeout=1.5) == ["actual/local-model"]
     assert seen["url"] == DEFAULT_ACTUAL_LOCAL_BASE_URL + "/models"

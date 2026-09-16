@@ -2,8 +2,8 @@
 
 import pytest
 
-from hermes_cli.providers import determine_api_mode, host_mandated_api_mode
-from hermes_cli import runtime_provider as rp
+from auraforge_cli.providers import determine_api_mode, host_mandated_api_mode
+from auraforge_cli import runtime_provider as rp
 
 
 class TestHostMandatedMetaResponses:
@@ -78,7 +78,7 @@ class TestHostMandatedMetaResponses:
 
 class TestMetaConfigRoundtrip:
     def test_providers_meta_api_mode_roundtrip(self):
-        from hermes_cli.config import _normalize_custom_provider_entry
+        from auraforge_cli.config import _normalize_custom_provider_entry
 
         entry = {"name": "Meta", "base_url": "https://api.meta.ai/v1", "api_mode": "codex_responses"}
         normalized = _normalize_custom_provider_entry(entry)
@@ -92,11 +92,11 @@ class TestMetaConfigRoundtrip:
     def test_providers_dict_to_custom_providers_preserves_meta_without_explicit_mode(self):
         # Without explicit api_mode, host mandate resolves via providers.determine_api_mode
         # This test ensures the providers entry survives normalization and the host still mandates
-        from hermes_cli.providers import host_mandated_api_mode
+        from auraforge_cli.providers import host_mandated_api_mode
 
         assert host_mandated_api_mode("https://api.meta.ai/v1") == "codex_responses"
         # Simulate providers dict path: providers.meta.base_url stored, no api_mode field
         # The resolution layer (determine_api_mode / runtime_provider) must mandate.
-        from hermes_cli.providers import determine_api_mode
+        from auraforge_cli.providers import determine_api_mode
 
         assert determine_api_mode("meta", "https://api.meta.ai/v1", "muse-spark-1.2") == "codex_responses"

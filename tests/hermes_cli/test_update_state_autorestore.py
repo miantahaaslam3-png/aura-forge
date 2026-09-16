@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli.update_cmd import (
+from auraforge_cli.update_cmd import (
     _clear_stale_sqlite_sidecars,
     _restore_state_db_from_snapshot,
 )
@@ -136,7 +136,7 @@ def test_torn_restore_is_what_the_guard_prevents(live_db_with_hot_wal, snapshot_
     that reports ``integrity_check`` clean — so the CLI's ``_restored_ok`` test
     passes and it prints success — while serving the OLD row set.
     """
-    from hermes_cli.backup import verify_sqlite_integrity
+    from auraforge_cli.backup import verify_sqlite_integrity
 
     shutil.copy2(snapshot_db, live_db_with_hot_wal)  # no sidecar clearing
 

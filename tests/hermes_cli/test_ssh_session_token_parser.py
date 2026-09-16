@@ -2,10 +2,10 @@ import argparse
 import os
 
 import pytest
-from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+from auraforge_constants import set_hermes_home_override, reset_hermes_home_override
 
-from hermes_cli.main import _read_ssh_session_token_file, cmd_dashboard
-from hermes_cli.subcommands.dashboard import build_dashboard_parser
+from auraforge_cli.main import _read_ssh_session_token_file, cmd_dashboard
+from auraforge_cli.subcommands.dashboard import build_dashboard_parser
 
 
 def dashboard_parser():
@@ -141,7 +141,7 @@ def test_token_file_rejects_parent_escape(tmp_path, monkeypatch):
 
 
 def test_windows_runtime_root_stays_at_machine_root_for_named_profile(tmp_path, monkeypatch):
-    from hermes_cli import windows_ssh_runtime
+    from auraforge_cli import windows_ssh_runtime
 
     machine_root = tmp_path / "custom-auraforge-root"
     monkeypatch.setenv("HERMES_HOME", str(machine_root / "profiles" / "writer_2"))

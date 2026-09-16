@@ -42,7 +42,7 @@ def _stub(monkeypatch, *, managed: bool):
 
 
 def test_pin_unmanaged_records_flag_and_prints_adopt_hint(monkeypatch, capsys):
-    import hermes_cli.curator as curator_cli
+    import auraforge_cli.curator as curator_cli
 
     calls = _stub(monkeypatch, managed=False)
 
@@ -59,7 +59,7 @@ def test_pin_unmanaged_records_flag_and_prints_adopt_hint(monkeypatch, capsys):
 
 
 def test_pin_managed_keeps_bypass_message(monkeypatch, capsys):
-    import hermes_cli.curator as curator_cli
+    import auraforge_cli.curator as curator_cli
 
     calls = _stub(monkeypatch, managed=True)
 
@@ -73,7 +73,7 @@ def test_pin_managed_keeps_bypass_message(monkeypatch, capsys):
 
 
 def test_unpin_unmanaged_says_it_was_never_managed(monkeypatch, capsys):
-    import hermes_cli.curator as curator_cli
+    import auraforge_cli.curator as curator_cli
 
     calls = _stub(monkeypatch, managed=False)
 
@@ -87,7 +87,7 @@ def test_unpin_unmanaged_says_it_was_never_managed(monkeypatch, capsys):
 
 
 def test_pin_still_refuses_bundled_skills(monkeypatch, capsys):
-    import hermes_cli.curator as curator_cli
+    import auraforge_cli.curator as curator_cli
     import tools.skill_usage as skill_usage
 
     calls = _stub(monkeypatch, managed=True)

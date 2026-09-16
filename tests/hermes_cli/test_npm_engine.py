@@ -1,4 +1,4 @@
-"""Tests for npm ``EBADENGINE`` recovery (``hermes_cli/npm_engine.py``).
+"""Tests for npm ``EBADENGINE`` recovery (``auraforge_cli/npm_engine.py``).
 
 The behaviour under test is a contract about *reacting* to npm's own engine
 check: npm states the range it wants in the failure, Aura Forge upgrades only an
@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-import hermes_cli.npm_engine as npm_engine
-from hermes_cli.npm_engine import (
+import auraforge_cli.npm_engine as npm_engine
+from auraforge_cli.npm_engine import (
     actual_npm_version,
     is_ebadengine,
     managed_npm_prefix,
@@ -253,7 +253,7 @@ class TestRepairDecision:
 
         managed = home / "node" / "bin" / "npm"
 
-        import hermes_cli.npm_engine as npm_engine
+        import auraforge_cli.npm_engine as npm_engine
 
         def fake_bootstrap():
             managed.parent.mkdir(parents=True, exist_ok=True)
@@ -288,7 +288,7 @@ class TestRepairDecision:
         system_npm = tmp_path / "usr-bin-npm"
         system_npm.write_text("#!/bin/sh\n", encoding="utf-8")
 
-        import hermes_cli.npm_engine as npm_engine
+        import auraforge_cli.npm_engine as npm_engine
 
         monkeypatch.setattr(
             npm_engine, "bootstrap_hermes_managed_node", lambda: None
@@ -325,7 +325,7 @@ class TestRepairDecision:
 
         managed = home / "node" / "bin" / "npm"
 
-        import hermes_cli.npm_engine as npm_engine
+        import auraforge_cli.npm_engine as npm_engine
 
         def fake_bootstrap():
             managed.parent.mkdir(parents=True, exist_ok=True)

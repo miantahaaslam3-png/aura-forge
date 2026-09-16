@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.session_filters — CLI time/filter parsing for
+"""Tests for auraforge_cli.session_filters — CLI time/filter parsing for
 `auraforge sessions prune` / `auraforge sessions archive`."""
 
 import time
@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pytest
 
-from hermes_cli.session_filters import (
+from auraforge_cli.session_filters import (
     build_prune_filters,
     describe_filters,
     parse_duration_seconds,

@@ -7,13 +7,13 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.dashboard_auth import clear_providers, get_provider
-from hermes_cli.dashboard_auth.base import (
+from auraforge_cli.dashboard_auth import clear_providers, get_provider
+from auraforge_cli.dashboard_auth.base import (
     DashboardAuthProvider, LoginStart, Session,
 )
-from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
-from hermes_cli.dashboard_auth import registry as _auth_registry
-from hermes_constants import hermes_home_key
+from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
+from auraforge_cli.dashboard_auth import registry as _auth_registry
+from auraforge_constants import hermes_home_key
 
 
 class _Stub(DashboardAuthProvider):

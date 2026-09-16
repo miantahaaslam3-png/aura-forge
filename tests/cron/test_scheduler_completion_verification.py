@@ -64,7 +64,7 @@ class _RecordingSessionDB:
 
 
 def _run_booked_job(monkeypatch, tmp_path):
-    import hermes_state
+    import auraforge_state
     import run_agent
 
     instances: list[_RecordingSessionDB] = []
@@ -75,10 +75,10 @@ def _run_booked_job(monkeypatch, tmp_path):
         instances.append(self)
 
     monkeypatch.setattr(_RecordingSessionDB, "__init__", _capture_init)
-    monkeypatch.setattr(hermes_state, "SessionDB", _RecordingSessionDB)
+    monkeypatch.setattr(auraforge_state, "SessionDB", _RecordingSessionDB)
     monkeypatch.setattr(run_agent, "AIAgent", _FakeCronAgent)
     monkeypatch.setattr(
-        "hermes_constants.resolve_reasoning_config", lambda *_a, **_k: None
+        "auraforge_constants.resolve_reasoning_config", lambda *_a, **_k: None
     )
     # The runtime key is read from the environment (never a literal here);
     # AIAgent and SessionDB are fakes above, so the value is never used.
@@ -95,7 +95,7 @@ def _run_booked_job(monkeypatch, tmp_path):
         }
 
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider", _fake_runtime
+        "auraforge_cli.runtime_provider.resolve_runtime_provider", _fake_runtime
     )
     monkeypatch.setattr("tools.mcp_tool.discover_mcp_tools", lambda: [])
     monkeypatch.setattr(cron_scheduler, "_get_hermes_home", lambda: tmp_path)

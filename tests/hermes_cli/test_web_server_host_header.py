@@ -29,7 +29,7 @@ class TestHostHeaderValidator:
         """0.0.0.0 means operator explicitly opted into all-interfaces
         (requires --insecure). No Host-layer defence is possible — rely
         on operator network controls."""
-        from hermes_cli.web_server import _is_accepted_host
+        from auraforge_cli.web_server import _is_accepted_host
 
         for host in ("10.0.0.5", "evil.example", "my-server.corp.net"):
             assert _is_accepted_host(host, "0.0.0.0")
@@ -38,7 +38,7 @@ class TestHostHeaderValidator:
     def test_explicit_non_loopback_bind_requires_exact_match(self):
         """If the operator bound to a specific non-loopback hostname,
         the Host header must match exactly."""
-        from hermes_cli.web_server import _is_accepted_host
+        from auraforge_cli.web_server import _is_accepted_host
 
         assert _is_accepted_host("my-server.corp.net", "my-server.corp.net")
         assert _is_accepted_host("my-server.corp.net:9119", "my-server.corp.net")
@@ -50,7 +50,7 @@ class TestHostHeaderValidator:
 
     def test_trusted_public_host_is_exact_match_only(self):
         """A declared proxy host is accepted without weakening rebinding checks."""
-        from hermes_cli.web_server import _is_accepted_host
+        from auraforge_cli.web_server import _is_accepted_host
 
         trusted = frozenset({"dashboard.example.test"})
         assert _is_accepted_host(
@@ -63,7 +63,7 @@ class TestHostHeaderValidator:
 
     def test_malformed_host_authorities_fail_closed(self):
         """Ports, IPv6 brackets, and authority syntax must be unambiguous."""
-        from hermes_cli.web_server import _is_accepted_host
+        from auraforge_cli.web_server import _is_accepted_host
 
         trusted = frozenset({"dashboard.example.test"})
         for malformed in (
@@ -83,7 +83,7 @@ class TestHostHeaderMiddleware:
 
     def test_rebinding_request_rejected(self):
         from fastapi.testclient import TestClient
-        from hermes_cli.web_server import app
+        from auraforge_cli.web_server import app
 
         # Simulate start_server having set the bound_host
         app.state.bound_host = "127.0.0.1"
@@ -106,7 +106,7 @@ class TestHostHeaderMiddleware:
     def test_trusted_public_host_request_accepted(self):
         """A loopback backend may accept its declared reverse-proxy host."""
         from fastapi.testclient import TestClient
-        from hermes_cli.web_server import app
+        from auraforge_cli.web_server import app
 
         app.state.bound_host = "127.0.0.1"
         app.state.trusted_public_hosts = frozenset({"dashboard.example.test"})
@@ -126,7 +126,7 @@ class TestHostHeaderMiddleware:
         infra without calling start_server), middleware must pass through
         rather than crash."""
         from fastapi.testclient import TestClient
-        from hermes_cli.web_server import app
+        from auraforge_cli.web_server import app
 
         # Make sure bound_host isn't set
         if hasattr(app.state, "bound_host"):
@@ -145,7 +145,7 @@ class TestWebSocketHostOriginGuard:
         from fastapi.testclient import TestClient
         from starlette.websockets import WebSocketDisconnect
 
-        import hermes_cli.web_server as ws
+        import auraforge_cli.web_server as ws
 
         monkeypatch.setattr(ws.app.state, "bound_host", "127.0.0.1", raising=False)
         monkeypatch.setattr(ws.app.state, "auth_required", False, raising=False)
@@ -169,7 +169,7 @@ class TestWebSocketHostOriginGuard:
     def test_loopback_websocket_host_and_origin_are_accepted(self, monkeypatch):
         from fastapi.testclient import TestClient
 
-        import hermes_cli.web_server as ws
+        import auraforge_cli.web_server as ws
 
         monkeypatch.setattr(ws.app.state, "bound_host", "127.0.0.1", raising=False)
         monkeypatch.setattr(ws.app.state, "auth_required", False, raising=False)
@@ -189,7 +189,7 @@ class TestWebSocketHostOriginGuard:
     def test_trusted_public_websocket_host_and_origin_are_accepted(self, monkeypatch):
         from fastapi.testclient import TestClient
 
-        import hermes_cli.web_server as ws
+        import auraforge_cli.web_server as ws
 
         monkeypatch.setattr(ws.app.state, "bound_host", "127.0.0.1", raising=False)
         monkeypatch.setattr(
@@ -216,7 +216,7 @@ class TestWebSocketHostOriginGuard:
         from fastapi.testclient import TestClient
         from starlette.websockets import WebSocketDisconnect
 
-        import hermes_cli.web_server as ws
+        import auraforge_cli.web_server as ws
 
         monkeypatch.setattr(ws.app.state, "bound_host", "127.0.0.1", raising=False)
         monkeypatch.setattr(

@@ -1,6 +1,6 @@
 """Upload a Aura Forge session transcript to Hugging Face as an agent trace.
 
-Aura Forge stores sessions in its own SQLite store (``hermes_state.SessionDB``),
+Aura Forge stores sessions in its own SQLite store (``auraforge_state.SessionDB``),
 so we reconstruct the conversation and emit it in the **Claude Code JSONL**
 shape — one of the three formats the Hugging Face Agent Trace Viewer
 auto-detects (Claude Code / Codex / Pi). No dataset-side preprocessing is
@@ -334,7 +334,7 @@ def load_session_messages(
     Returns ``(messages, meta)``. ``meta`` is ``{}`` when the session row is
     missing (messages may still be present for a live, untitled session).
     """
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
     db = SessionDB(db_path=db_path) if db_path else SessionDB()
     try:
         resolved = db.resolve_session_id(session_id) or session_id

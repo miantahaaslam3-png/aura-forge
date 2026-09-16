@@ -11,7 +11,7 @@ import pytest
 pwd = pytest.importorskip("pwd")
 grp = pytest.importorskip("grp")
 
-import hermes_cli.gateway as gateway_cli
+import auraforge_cli.gateway as gateway_cli
 from gateway import status
 from gateway.restart import (
     DEFAULT_GATEWAY_CRON_DRAIN_TIMEOUT,
@@ -318,7 +318,7 @@ class TestGeneratedSystemdUnits:
         """The generated plist must carry SoftResourceLimits/NumberOfFiles so a
         plist rewrite by `auraforge gateway start` cannot strip the FD floor and
         reintroduce EMFILE crashes (launchd default soft limit is 256)."""
-        import hermes_cli.resource_limits as resource_limits
+        import auraforge_cli.resource_limits as resource_limits
 
         monkeypatch.setattr(
             resource_limits, "configured_nofile_soft_limit", lambda config=None: 65536
@@ -333,7 +333,7 @@ class TestGeneratedSystemdUnits:
     def test_launchd_plist_omits_nofile_block_when_disabled(self, monkeypatch):
         """runtime.nofile_soft_limit: 0/false/null disables the adjustment; the
         plist must then not contain a SoftResourceLimits block at all."""
-        import hermes_cli.resource_limits as resource_limits
+        import auraforge_cli.resource_limits as resource_limits
 
         monkeypatch.setattr(
             resource_limits, "configured_nofile_soft_limit", lambda config=None: None
@@ -1264,10 +1264,10 @@ class TestSystemUnitHermesHome:
     ):
         """External Node installs still work when the managed tree is absent."""
         monkeypatch.setattr(
-            "hermes_constants.iter_hermes_node_dirs", lambda root=None: []
+            "auraforge_constants.iter_hermes_node_dirs", lambda root=None: []
         )
         monkeypatch.setattr(
-            "hermes_constants.hermes_managed_node_tree_present",
+            "auraforge_constants.hermes_managed_node_tree_present",
             lambda root=None: False,
         )
         monkeypatch.setattr(
@@ -1671,13 +1671,13 @@ class TestProfileArg:
         assert program_args == [
             "/usr/bin/python3",
             "-m",
-            "hermes_cli.stderr_timestamp",
+            "auraforge_cli.stderr_timestamp",
             "--error-log",
             str(profile_dir / "logs" / "gateway.error.log"),
             "--",
             "/usr/bin/python3",
             "-m",
-            "hermes_cli.main",
+            "auraforge_cli.main",
             "--profile",
             "mybot",
             "gateway",
@@ -1823,7 +1823,7 @@ class TestLegacyHermesUnitDetection:
     # Minimal ExecStart that looks like our gateway
     _OUR_UNIT_TEXT = (
         "[Unit]\nDescription=Aura Forge Gateway\n[Service]\n"
-        "ExecStart=/usr/bin/python -m hermes_cli.main gateway run --replace\n"
+        "ExecStart=/usr/bin/python -m auraforge_cli.main gateway run --replace\n"
     )
 
     @staticmethod
@@ -1861,15 +1861,15 @@ class TestLegacyHermesUnitDetection:
         """Older installs may have used different python invocations.
 
         ExecStart variants we've seen in the wild:
-          - python -m hermes_cli.main gateway run
-          - python path/to/hermes_cli/main.py gateway run
+          - python -m auraforge_cli.main gateway run
+          - python path/to/auraforge_cli/main.py gateway run
           - auraforge gateway run   (direct binary)
           - python path/to/gateway/run.py
         """
         user_dir, _ = self._setup_search_paths(tmp_path, monkeypatch)
         variants = [
-            "ExecStart=/venv/bin/python -m hermes_cli.main gateway run --replace",
-            "ExecStart=/venv/bin/python /opt/auraforge/hermes_cli/main.py gateway run",
+            "ExecStart=/venv/bin/python -m auraforge_cli.main gateway run --replace",
+            "ExecStart=/venv/bin/python /opt/auraforge/auraforge_cli/main.py gateway run",
             "ExecStart=/usr/local/bin/auraforge gateway run --replace",
             "ExecStart=/venv/bin/python /opt/auraforge/gateway/run.py",
         ]
@@ -1902,7 +1902,7 @@ class TestRemoveLegacyHermesUnits:
 
     _OUR_UNIT_TEXT = (
         "[Unit]\nDescription=Aura Forge Gateway\n[Service]\n"
-        "ExecStart=/usr/bin/python -m hermes_cli.main gateway run --replace\n"
+        "ExecStart=/usr/bin/python -m auraforge_cli.main gateway run --replace\n"
     )
 
     @staticmethod
@@ -1974,7 +1974,7 @@ class TestMigrateLegacyCommand:
 
     def test_migrate_legacy_subparser_accepts_dry_run_and_yes(self):
         """Verify the argparse subparser is registered and parses flags."""
-        import hermes_cli.main as cli_main
+        import auraforge_cli.main as cli_main
 
         parser = cli_main.build_parser() if hasattr(cli_main, "build_parser") else None
         # Fall back to calling main's setup helper if direct access isn't exposed
@@ -1986,11 +1986,11 @@ class TestMigrateLegacyCommand:
 
         project_root = cli_main.PROJECT_ROOT if hasattr(cli_main, "PROJECT_ROOT") else None
         if project_root is None:
-            import hermes_cli.gateway as gw
+            import auraforge_cli.gateway as gw
             project_root = gw.PROJECT_ROOT
 
         result = subprocess.run(
-            [sys.executable, "-m", "hermes_cli.main", "gateway", "--help"],
+            [sys.executable, "-m", "auraforge_cli.main", "gateway", "--help"],
             cwd=str(project_root),
             capture_output=True,
             text=True,
@@ -2028,7 +2028,7 @@ class TestGatewayStatusParser:
         import sys
 
         result = subprocess.run(
-            [sys.executable, "-m", "hermes_cli.main", "gateway", "status", "-l", "--help"],
+            [sys.executable, "-m", "auraforge_cli.main", "gateway", "status", "-l", "--help"],
             cwd=str(gateway_cli.PROJECT_ROOT),
             capture_output=True,
             text=True,

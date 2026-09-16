@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.config import DEFAULT_CONFIG, load_config
-from hermes_cli.main import (
+from auraforge_cli.config import DEFAULT_CONFIG, load_config
+from auraforge_cli.main import (
     _AUX_TASKS,
     _DELEGATION_TASK_KEY,
     _delegation_cfg_as_task,
@@ -139,7 +139,7 @@ def test_save_delegation_auto_stores_empty_provider(tmp_path, monkeypatch):
 def test_reset_aux_clears_delegation_routing_preserves_settings(tmp_path, monkeypatch):
     """Reset-all clears delegation provider/model/base_url/api_key but leaves
     non-routing delegation settings (max_concurrent_children, etc.) alone."""
-    from hermes_cli.config import load_config as _lc, save_config
+    from auraforge_cli.config import load_config as _lc, save_config
 
     _isolate_home(tmp_path, monkeypatch)
 
@@ -178,7 +178,7 @@ def test_leave_unchanged_replaces_cancel_label(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     (tmp_path / ".auraforge").mkdir(exist_ok=True)
 
-    from hermes_cli import main as main_mod
+    from auraforge_cli import main as main_mod
 
     captured: list[list[str]] = []
 

@@ -22,8 +22,8 @@ def _clean_env(monkeypatch):
 
 
 def test_cmd_chat_safe_mode_sets_env_before_startup(monkeypatch):
-    import hermes_cli.main as main_mod
-    from hermes_cli._parser import build_top_level_parser
+    import auraforge_cli.main as main_mod
+    from auraforge_cli._parser import build_top_level_parser
 
     parser, _subparsers, chat_parser = build_top_level_parser()
     chat_parser.set_defaults(func=main_mod.cmd_chat)
@@ -57,7 +57,7 @@ def test_cmd_chat_safe_mode_sets_env_before_startup(monkeypatch):
 
 def test_plugin_discovery_skipped(monkeypatch):
     monkeypatch.setenv("HERMES_SAFE_MODE", "1")
-    from hermes_cli.plugins import PluginManager
+    from auraforge_cli.plugins import PluginManager
 
     mgr = PluginManager()
     called = []

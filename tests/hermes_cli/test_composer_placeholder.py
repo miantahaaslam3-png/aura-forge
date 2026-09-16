@@ -1,6 +1,6 @@
 """Test for rotating task-oriented composer placeholders (C-09)."""
 
-from hermes_cli.tips import COMPOSER_PLACEHOLDERS, get_random_composer_placeholder
+from auraforge_cli.tips import COMPOSER_PLACEHOLDERS, get_random_composer_placeholder
 
 
 def test_composer_placeholders_nonempty():

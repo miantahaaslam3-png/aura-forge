@@ -25,15 +25,15 @@ import sys
 
 import pytest
 
-import hermes_cli.gateway as gw
-import hermes_cli.profiles
-from hermes_cli.gateway import (
+import auraforge_cli.gateway as gw
+import auraforge_cli.profiles
+from auraforge_cli.gateway import (
     _locate_launchd_gateway_service,
     _parse_launchd_pid_from_print_output,
     _probe_launchd_domain_for_label,
     launchd_gateway_labels_for_install,
 )
-from hermes_cli.update_cmd import (
+from auraforge_cli.update_cmd import (
     _restart_macos_launchd_gateways,
     _warn_incomplete_gateway_fleet_restart,
 )
@@ -88,7 +88,7 @@ class TestLaunchdGatewayLabelsForInstall:
         install's services, and the hermetic test suite must not see the dev
         machine's real fleet."""
         monkeypatch.setattr(
-            hermes_cli.profiles,
+            auraforge_cli.profiles,
             "list_profiles",
             lambda: [
                 _Profile("tfl-wiki"),
@@ -104,7 +104,7 @@ class TestLaunchdGatewayLabelsForInstall:
         ]
 
     def test_no_profiles_means_no_fleet(self, monkeypatch):
-        monkeypatch.setattr(hermes_cli.profiles, "list_profiles", lambda: [])
+        monkeypatch.setattr(auraforge_cli.profiles, "list_profiles", lambda: [])
         assert launchd_gateway_labels_for_install() == []
 
 
@@ -247,7 +247,7 @@ def _fleet(monkeypatch, tmp_path, *, current, labels, located,
            registered=None, plist_exists=True,
            drain_results=None, kick_errors=None, wait_results=None,
            current_supervised=True):
-    """Wire a fake launchd fleet through hermes_cli.gateway seams.
+    """Wire a fake launchd fleet through auraforge_cli.gateway seams.
 
     ``located`` maps label -> (domain, pid) as ``_locate_launchd_gateway_service``
     would return it (values may also be exceptions to raise). ``registered``

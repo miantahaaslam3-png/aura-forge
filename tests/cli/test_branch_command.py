@@ -22,7 +22,7 @@ def session_db(tmp_path):
     """Create a real SessionDB for testing."""
     os.environ["HERMES_HOME"] = str(tmp_path / ".auraforge")
     os.makedirs(tmp_path / ".auraforge", exist_ok=True)
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
     db = SessionDB(db_path=tmp_path / ".auraforge" / "test_sessions.db")
     yield db
     db.close()
@@ -153,14 +153,14 @@ class TestBranchCommandDef:
 
     def test_branch_in_registry(self):
         """The branch command should be in the command registry."""
-        from hermes_cli.commands import COMMAND_REGISTRY
+        from auraforge_cli.commands import COMMAND_REGISTRY
         names = [c.name for c in COMMAND_REGISTRY]
         assert "branch" in names
 
 
     def test_branch_in_session_category(self):
         """The branch command should be in the Session category."""
-        from hermes_cli.commands import COMMAND_REGISTRY
+        from auraforge_cli.commands import COMMAND_REGISTRY
         branch = next(c for c in COMMAND_REGISTRY if c.name == "branch")
         assert branch.category == "Session"
 

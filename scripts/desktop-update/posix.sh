@@ -63,10 +63,10 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HERMES_HOME="${INSTALL_ROOT:+$(dirname "$INSTALL_ROOT")}"
 HERMES_HOME="${HERMES_HOME:-${TMPDIR:-/tmp}}"
-MARKER="$HERMES_HOME/.hermes-update-in-progress"
+MARKER="$HERMES_HOME/.auraforge-update-in-progress"
 LOG_DIR="$HERMES_HOME/logs"; mkdir -p "$LOG_DIR" 2>/dev/null || true
 LOG="$LOG_DIR/desktop-update-handoff.log"
-RESULT="$HERMES_HOME/.hermes-update-result.json"
+RESULT="$HERMES_HOME/.auraforge-update-result.json"
 STATUS="${TMPDIR:-/tmp}/hermes-update-status.$$"
 STARTED_AT="$(date +%s)"  # the shim's elapsed clock; see serve-ui.py
 

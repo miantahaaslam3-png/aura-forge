@@ -12,8 +12,8 @@ complete`` instead of the success line, and gateway mode writes ``1`` to
 
 import pytest
 
-from hermes_cli import update_cmd
-from hermes_cli.update_cmd import (
+from auraforge_cli import update_cmd
+from auraforge_cli.update_cmd import (
     _print_update_summary,
     _rebuild_desktop_after_update,
     _write_gateway_update_exit_code,
@@ -53,10 +53,10 @@ def desktop_env(tmp_path, monkeypatch):
 
     monkeypatch.setattr(update_cmd, "_m", lambda: _FakeMain)
     monkeypatch.setattr(
-        "hermes_constants.with_hermes_node_path", lambda: {}, raising=False
+        "auraforge_constants.with_hermes_node_path", lambda: {}, raising=False
     )
     monkeypatch.setattr(
-        "hermes_constants.display_hermes_home", lambda: str(tmp_path), raising=False
+        "auraforge_constants.display_hermes_home", lambda: str(tmp_path), raising=False
     )
     return desktop_dir, calls
 

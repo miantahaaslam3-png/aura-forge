@@ -1,15 +1,15 @@
-"""Tests for hermes_cli.stderr_timestamp."""
+"""Tests for auraforge_cli.stderr_timestamp."""
 
 import re
 import sys
 
 from gateway.restart import EXTERNAL_GATEWAY_SUPERVISOR_ENV
-from hermes_cli import stderr_timestamp
+from auraforge_cli import stderr_timestamp
 
 _STALE_GATEWAY_ARGV = [
     sys.executable,
     "-m",
-    "hermes_cli.main",
+    "auraforge_cli.main",
     "gateway",
     "run",
     "--replace",
@@ -92,7 +92,7 @@ def test_main_injects_flag_into_stale_gateway_child(tmp_path, monkeypatch):
         f"Path({str(marker_path)!r}).write_text("
         "'\\n'.join(sys.argv[1:]), encoding='utf-8')\n"
     )
-    stale = [sys.executable, "-c", code, "-m", "hermes_cli.main", "gateway", "run", "--replace"]
+    stale = [sys.executable, "-c", code, "-m", "auraforge_cli.main", "gateway", "run", "--replace"]
 
     rc = stderr_timestamp.main(
         ["--error-log", str(log_path), "--", *stale]

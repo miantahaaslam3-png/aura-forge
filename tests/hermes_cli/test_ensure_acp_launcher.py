@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli.main import _ensure_acp_launcher
+from auraforge_cli.main import _ensure_acp_launcher
 
 
 @pytest.fixture

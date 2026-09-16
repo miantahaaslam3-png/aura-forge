@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import hermes_cli.web_server as web_server
+import auraforge_cli.web_server as web_server
 
 
 class TestDashboardSpawnExecutable:

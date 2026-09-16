@@ -12,7 +12,7 @@ SCRIPT_PATH = (
     / "migration"
     / "openclaw-migration"
     / "scripts"
-    / "openclaw_to_hermes.py"
+    / "openclaw_to_auraforge.py"
 )
 
 
@@ -165,7 +165,7 @@ def test_unreadable_config_is_refused_not_overwritten(tmp_path: Path):
     not parse; the config-mutating steps read, merge and write the whole
     mapping back, so a YAML syntax error meant every existing setting was
     replaced by just the merged section.  Same defect as the ported twin in
-    ``hermes_cli/agent_import.py``.
+    ``auraforge_cli/agent_import.py``.
     """
     mod = load_module()
     migrator, config_path = _allowlist_migrator(

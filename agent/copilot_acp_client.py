@@ -157,7 +157,7 @@ def _build_subprocess_env() -> dict[str, str]:
     env = hermes_subprocess_env(inherit_credentials=True)
     home = _resolve_home_dir()
     env["HOME"] = home
-    from hermes_constants import apply_subprocess_home_env
+    from auraforge_constants import apply_subprocess_home_env
     apply_subprocess_home_env(env)
     return env
 
@@ -419,7 +419,7 @@ class CopilotACPClient:
         try:
             # Hide the console the CLI child would otherwise flash on Windows
             # (#56747). Hide-only — stdio pipes stay intact for the ACP wire.
-            from hermes_cli._subprocess_compat import windows_hide_flags
+            from auraforge_cli._subprocess_compat import windows_hide_flags
 
             proc = subprocess.Popen(
                 [self._acp_command] + self._acp_args,

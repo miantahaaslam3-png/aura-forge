@@ -13,8 +13,8 @@ from pathlib import Path
 
 
 def test_staged_apps_swap_preserves_live_release_dir(tmp_path, monkeypatch):
-    from hermes_cli import main as hermes_main
-    from hermes_cli.update_cmd import (
+    from auraforge_cli import main as hermes_main
+    from auraforge_cli.update_cmd import (
         _commit_staged_replacements,
         _stage_replacement,
     )

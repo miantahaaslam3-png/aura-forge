@@ -11,7 +11,7 @@ import urllib.request
 
 import pytest
 
-from hermes_cli.urllib_security import (
+from auraforge_cli.urllib_security import (
     SafeCredentialRedirectHandler,
     open_credentialed_url,
     url_origin,
@@ -261,7 +261,7 @@ def test_multihop_redirects_never_resurrect_credentials():
 
 
 def test_probe_api_models_drops_custom_credentials_on_wire():
-    from hermes_cli.models import probe_api_models
+    from auraforge_cli.models import probe_api_models
 
     source = _server()
     sink = _server()
@@ -338,7 +338,7 @@ def test_anthropic_profile_drops_x_api_key_on_redirect(monkeypatch):
 
 
 def test_azure_catalog_probe_drops_api_key_and_bearer_on_redirect():
-    from hermes_cli import azure_detect
+    from auraforge_cli import azure_detect
 
     source = _server()
     sink = _server()
@@ -361,7 +361,7 @@ def test_azure_catalog_probe_drops_api_key_and_bearer_on_redirect():
 
 
 def test_azure_anthropic_probe_drops_api_key_and_bearer_on_redirect():
-    from hermes_cli import azure_detect
+    from auraforge_cli import azure_detect
 
     sink = _server()
     source = ThreadingHTTPServer(("127.0.0.1", 0), _LmStudioSourceHandler)
@@ -392,7 +392,7 @@ def _clear_ca_bundle_env(monkeypatch) -> None:
 
 
 def test_hermes_owned_opener_uses_resolved_https_context(monkeypatch):
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     context = ssl.create_default_context()
     monkeypatch.setattr(urllib.request, "_opener", None)
@@ -412,7 +412,7 @@ def test_hermes_owned_opener_uses_resolved_https_context(monkeypatch):
 
 
 def test_resolved_https_context_prefers_configured_ca_bundle(monkeypatch, tmp_path):
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     _clear_ca_bundle_env(monkeypatch)
     ca_bundle = tmp_path / "corporate-ca.pem"
@@ -433,7 +433,7 @@ def test_resolved_https_context_prefers_configured_ca_bundle(monkeypatch, tmp_pa
 
 def test_resolved_https_context_uses_certifi_on_macos(monkeypatch):
     import certifi
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     _clear_ca_bundle_env(monkeypatch)
     expected_context = ssl.create_default_context()
@@ -453,7 +453,7 @@ def test_resolved_https_context_uses_certifi_on_macos(monkeypatch):
 
 def test_invalid_ca_bundle_falls_back_to_certifi_on_macos(monkeypatch, tmp_path):
     import certifi
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     _clear_ca_bundle_env(monkeypatch)
     missing_bundle = tmp_path / "missing-ca.pem"
@@ -474,7 +474,7 @@ def test_invalid_ca_bundle_falls_back_to_certifi_on_macos(monkeypatch, tmp_path)
 
 
 def test_resolved_https_context_keeps_stdlib_default_off_macos(monkeypatch):
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     _clear_ca_bundle_env(monkeypatch)
     monkeypatch.setattr(urllib_security.sys, "platform", "linux")
@@ -483,7 +483,7 @@ def test_resolved_https_context_keeps_stdlib_default_off_macos(monkeypatch):
 
 
 def test_installed_https_context_is_preserved(monkeypatch):
-    import hermes_cli.urllib_security as urllib_security
+    import auraforge_cli.urllib_security as urllib_security
 
     context = ssl.create_default_context()
     installed = urllib.request.build_opener(

@@ -1,10 +1,10 @@
-"""Tests for /heartbeat (hermes_cli/heartbeat.py)."""
+"""Tests for /heartbeat (auraforge_cli/heartbeat.py)."""
 
 import time
 
 import pytest
 
-from hermes_cli.heartbeat import (
+from auraforge_cli.heartbeat import (
     HeartbeatManager,
     HeartbeatState,
     MIN_INTERVAL_SECONDS,

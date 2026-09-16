@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.service_manager — the abstract ServiceManager
+"""Tests for auraforge_cli.service_manager — the abstract ServiceManager
 protocol, the detect_service_manager() entry point, and the host-side
 adapter wrappers (Systemd / Launchd / Windows).
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.service_manager import (
+from auraforge_cli.service_manager import (
     LaunchdServiceManager,
     S6ServiceManager,
     ServiceManager,
@@ -107,9 +107,9 @@ def test_systemd_manager_kind_and_registration_unsupported() -> None:
 def test_windows_manager_lifecycle_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
     called: list[str] = []
     # Force-import the submodule so monkeypatch's attribute lookup
-    # against the `hermes_cli` package succeeds — gateway_windows is
+    # against the `auraforge_cli` package succeeds — gateway_windows is
     # imported lazily inside the wrapper and may not yet be loaded.
-    import hermes_cli.gateway_windows  # noqa: F401
+    import auraforge_cli.gateway_windows  # noqa: F401
 
     class _FakeWindowsModule:
         @staticmethod
@@ -121,9 +121,9 @@ def test_windows_manager_lifecycle_delegates(monkeypatch: pytest.MonkeyPatch) ->
         @staticmethod
         def is_installed() -> bool: return True
 
-    monkeypatch.setattr("hermes_cli.gateway_windows", _FakeWindowsModule)
+    monkeypatch.setattr("auraforge_cli.gateway_windows", _FakeWindowsModule)
     monkeypatch.setattr(
-        "hermes_cli.gateway.find_gateway_pids",
+        "auraforge_cli.gateway.find_gateway_pids",
         lambda **kw: [12345],
     )
     mgr = WindowsServiceManager()
@@ -196,7 +196,7 @@ def test_seed_supervise_skeleton_creates_expected_layout(tmp_path) -> None:
     """Verifies the dirs + FIFO the helper lays down."""
     import stat
 
-    from hermes_cli.service_manager import _seed_supervise_skeleton
+    from auraforge_cli.service_manager import _seed_supervise_skeleton
 
     svc_dir = tmp_path / "gateway-foo"
     svc_dir.mkdir()
@@ -238,7 +238,7 @@ def test_seed_supervise_skeleton_sets_setgid_on_event_dirs(tmp_path) -> None:
     """
     import stat
 
-    from hermes_cli.service_manager import _seed_supervise_skeleton
+    from auraforge_cli.service_manager import _seed_supervise_skeleton
 
     svc_dir = tmp_path / "gateway-foo"
     svc_dir.mkdir()

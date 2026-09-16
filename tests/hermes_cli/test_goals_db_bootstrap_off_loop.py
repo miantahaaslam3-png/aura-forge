@@ -25,7 +25,7 @@ import time
 
 import pytest
 
-import hermes_cli.goals as goals
+import auraforge_cli.goals as goals
 
 
 class _RecordingDB:
@@ -48,9 +48,9 @@ def _clean_cache(monkeypatch):
 
 
 def _patch_sessiondb(monkeypatch):
-    import hermes_state
+    import auraforge_state
 
-    monkeypatch.setattr(hermes_state, "SessionDB", _RecordingDB)
+    monkeypatch.setattr(auraforge_state, "SessionDB", _RecordingDB)
 
 
 def test_loop_thread_cache_miss_constructs_off_loop(monkeypatch):
@@ -86,7 +86,7 @@ def test_loop_thread_cache_hit_returns_cached_instance(monkeypatch):
     """A warm cache is returned directly even on the loop thread."""
     _patch_sessiondb(monkeypatch)
     sentinel = _RecordingDB()
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     goals._DB_CACHE[str(get_hermes_home())] = sentinel
     result = "UNSET"
@@ -119,7 +119,7 @@ def test_slow_construction_does_not_block_the_loop(monkeypatch):
     1.5s window plus margins; the two-window CONTRACT is what's under
     test, not the production constants.
     """
-    import hermes_state
+    import auraforge_state
 
     monkeypatch.setattr(goals, "_DB_BOOTSTRAP_INIT_WAIT_S", 0.3)
     monkeypatch.setattr(goals, "_DB_BOOTSTRAP_LOOP_WAIT_S", 0.05)
@@ -134,7 +134,7 @@ def test_slow_construction_does_not_block_the_loop(monkeypatch):
         def get_meta(self, key):
             return None
 
-    monkeypatch.setattr(hermes_state, "SessionDB", _BlockingDB)
+    monkeypatch.setattr(auraforge_state, "SessionDB", _BlockingDB)
     elapsed = None
     elapsed2 = None
     result = "UNSET"

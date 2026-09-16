@@ -7,7 +7,7 @@ classifier must call out rate limiting / outages explicitly, and the raw
 stderr line must always be printed alongside the diagnosis.
 """
 
-from hermes_cli import update_cmd
+from auraforge_cli import update_cmd
 
 
 RATE_LIMIT_STDERR = (

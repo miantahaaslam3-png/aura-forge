@@ -11,7 +11,7 @@ import logging
 import pytest
 import yaml
 
-from hermes_cli.plugins import (
+from auraforge_cli.plugins import (
     PluginManager,
     PluginManifest,
     SUPPORTED_MANIFEST_VERSION,
@@ -77,7 +77,7 @@ class TestV1Regression:
             manifest_extra={"mystery_field": True},
         )
         _enable(hermes_home, ["oldie"])
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins"):
             mgr = PluginManager()
             mgr.discover_and_load()
         assert mgr._plugins["oldie"].enabled

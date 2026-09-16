@@ -13,8 +13,8 @@ import sqlite3
 
 import pytest
 
-import hermes_cli.doctor as doctor
-from hermes_cli.sqlite_safe_read import (
+import auraforge_cli.doctor as doctor
+from auraforge_cli.sqlite_safe_read import (
     connect_tracked,
     has_live_connection,
     track_connection,
@@ -53,7 +53,7 @@ def clean_registry():
     fixture) would otherwise leave the registry dirty and make the *next*
     test's refusal assertion pass for the wrong reason.
     """
-    import hermes_cli.sqlite_safe_read as mod
+    import auraforge_cli.sqlite_safe_read as mod
 
     def _clear():
         with mod._live_lock:

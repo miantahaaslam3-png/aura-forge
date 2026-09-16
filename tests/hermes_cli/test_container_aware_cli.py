@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hermes_cli.config import (
+from auraforge_cli.config import (
     get_container_exec_info,
 )
 
@@ -42,7 +42,7 @@ def container_env(tmp_path, monkeypatch):
 
 def test_get_container_exec_info_returns_metadata(container_env):
     """Reads .container-mode and returns all fields including exec_user."""
-    with patch("hermes_constants.is_container", return_value=False):
+    with patch("auraforge_constants.is_container", return_value=False):
         info = get_container_exec_info()
 
     assert info is not None
@@ -86,7 +86,7 @@ def podman_container_info():
 def test_exec_in_container_calls_execvp(docker_container_info):
     """Verifies os.execvp is called with correct args: runtime, tty flags,
     user, env vars, container name, binary, and CLI args."""
-    from hermes_cli.main import _exec_in_container
+    from auraforge_cli.main import _exec_in_container
 
     with patch("shutil.which", return_value="/usr/bin/docker"), \
          patch("subprocess.run") as mock_run, \

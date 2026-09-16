@@ -44,8 +44,8 @@ def test_update_via_zip_rejects_symlink_member(tmp_path, monkeypatch):
     fake_root = tmp_path / "install_dir"
     fake_root.mkdir()
 
-    from hermes_cli import main as hermes_main
-    from hermes_cli.main import _update_via_zip
+    from auraforge_cli import main as hermes_main
+    from auraforge_cli.main import _update_via_zip
 
     monkeypatch.setattr(hermes_main, "PROJECT_ROOT", fake_root)
 
@@ -104,7 +104,7 @@ def test_update_via_zip_accepts_normal_member(tmp_path, monkeypatch, capsys):
     fake_root = tmp_path / "install_dir"
     fake_root.mkdir()
 
-    from hermes_cli import main as hermes_main
+    from auraforge_cli import main as hermes_main
 
     monkeypatch.setattr(hermes_main, "PROJECT_ROOT", fake_root)
 

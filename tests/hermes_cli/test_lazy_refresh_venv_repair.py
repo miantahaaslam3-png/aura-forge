@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import hermes_cli.main as m
+import auraforge_cli.main as m
 import pytest
 
 
@@ -135,7 +135,7 @@ def test_refresh_uses_pre_rebuild_snapshot_when_provided(monkeypatch):
 
 
 def test_capture_active_tool_dependencies_uses_tools_status_probes(monkeypatch):
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
 
     monkeypatch.setattr(
         tools_config,
@@ -168,7 +168,7 @@ def test_cmd_update_captures_and_propagates_pre_rebuild_snapshot(
     tmp_path, monkeypatch
 ):
     """The updater must carry pre-rebuild state into its repair refresh."""
-    from hermes_cli import managed_uv, update_cmd
+    from auraforge_cli import managed_uv, update_cmd
 
     (tmp_path / ".git").mkdir()
     snapshot = ["platform.telegram"]
@@ -235,7 +235,7 @@ def test_cmd_update_captures_and_propagates_pre_rebuild_snapshot(
     # The repair env is now built via managed_python_env (#83914): third-party
     # UV vars are stripped, managed pins set, then VIRTUAL_ENV re-pointed at
     # the install's venv. Assert the CONTRACT, not the raw environ copy.
-    from hermes_cli.managed_uv import managed_python_env
+    from auraforge_cli.managed_uv import managed_python_env
 
     expected_env = managed_python_env()
     expected_env["VIRTUAL_ENV"] = str(tmp_path / "venv")

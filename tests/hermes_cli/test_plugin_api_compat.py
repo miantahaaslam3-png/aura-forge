@@ -5,7 +5,7 @@ import shutil
 
 import yaml
 
-from hermes_cli.plugins import PluginManager
+from auraforge_cli.plugins import PluginManager
 
 
 LEGACY_PLUGIN = Path(__file__).parent / "fixtures" / "plugin_compat_legacy"

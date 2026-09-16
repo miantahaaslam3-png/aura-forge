@@ -70,8 +70,8 @@ You can also run a fully isolated Hermes instance (throwaway HERMES_HOME, separa
 userData, distinct Electron app name to avoid the single-instance lock):
 
 ```bash
-scripts/dev-sandbox.sh python -m hermes_cli.main
-scripts/dev-sandbox.sh --persistent python -m hermes_cli.main desktop  # state survives restarts, but lives in the worktree :)
+scripts/dev-sandbox.sh python -m auraforge_cli.main
+scripts/dev-sandbox.sh --persistent python -m auraforge_cli.main desktop  # state survives restarts, but lives in the worktree :)
 ```
 
 ### Manual clone fallback
@@ -79,7 +79,7 @@ scripts/dev-sandbox.sh --persistent python -m hermes_cli.main desktop  # state s
 Use this only if you intentionally do not want Hermes' managed install layout
 (for example, a throwaway clone inside a container or CI job). If you install
 this way, make sure you run the `hermes` entrypoint from this venv; running the
-system `python3 -m hermes_cli.main` can pick up unrelated system Python
+system `python3 -m auraforge_cli.main` can pick up unrelated system Python
 packages.
 
 Create the venv **outside** the cloned source tree. A venv that lives inside
@@ -143,7 +143,7 @@ scripts/run_tests.sh
 - **Comments**: Only when explaining non-obvious intent, trade-offs, or API quirks
 - **Error handling**: Catch specific exceptions. Use `logger.warning()`/`logger.error()` with `exc_info=True` for unexpected errors
 - **Cross-platform**: Never assume Unix (see below)
-- **Profile-safe paths**: Never hardcode `~/.hermes` — use `get_hermes_home()` from `hermes_constants` for code paths and `display_hermes_home()` for user-facing messages. See [AGENTS.md](https://github.com/NousResearch/hermes-agent/blob/main/AGENTS.md#profiles-multi-instance-support) for full rules.
+- **Profile-safe paths**: Never hardcode `~/.hermes` — use `get_hermes_home()` from `auraforge_constants` for code paths and `display_hermes_home()` for user-facing messages. See [AGENTS.md](https://github.com/NousResearch/hermes-agent/blob/main/AGENTS.md#profiles-multi-instance-support) for full rules.
 
 ## Cross-Platform Compatibility
 

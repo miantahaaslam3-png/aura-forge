@@ -17,8 +17,8 @@ reasoning_effort into a live one that OpenAI 400s on the chat_completions path.
 
 from unittest.mock import patch
 
-from hermes_cli.model_switch import switch_model
-from hermes_cli.providers import host_mandated_api_mode
+from auraforge_cli.model_switch import switch_model
+from auraforge_cli.providers import host_mandated_api_mode
 
 _MOCK_VALIDATION = {
     "accepted": True,
@@ -38,10 +38,10 @@ def _run_openai_switch(
 ):
     """Run switch_model with OpenAI-direct mocks and return the result."""
     with (
-        patch("hermes_cli.model_switch.resolve_alias", return_value=None),
-        patch("hermes_cli.model_switch.list_provider_models", return_value=[]),
+        patch("auraforge_cli.model_switch.resolve_alias", return_value=None),
+        patch("auraforge_cli.model_switch.list_provider_models", return_value=[]),
         patch(
-            "hermes_cli.runtime_provider.resolve_runtime_provider",
+            "auraforge_cli.runtime_provider.resolve_runtime_provider",
             return_value={
                 "api_key": "sk-test",
                 "base_url": runtime_base_url,
@@ -49,12 +49,12 @@ def _run_openai_switch(
             },
         ),
         patch(
-            "hermes_cli.models.validate_requested_model",
+            "auraforge_cli.models.validate_requested_model",
             return_value=_MOCK_VALIDATION,
         ),
-        patch("hermes_cli.model_switch.get_model_info", return_value=None),
-        patch("hermes_cli.model_switch.get_model_capabilities", return_value=None),
-        patch("hermes_cli.models.detect_provider_for_model", return_value=None),
+        patch("auraforge_cli.model_switch.get_model_info", return_value=None),
+        patch("auraforge_cli.model_switch.get_model_capabilities", return_value=None),
+        patch("auraforge_cli.models.detect_provider_for_model", return_value=None),
     ):
         return switch_model(
             raw_input=raw_input,

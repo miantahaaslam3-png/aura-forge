@@ -27,9 +27,9 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import _early_recovery as er
-from hermes_cli import _install_repair as ir
-from hermes_cli import main as cli_main
+from auraforge_cli import _early_recovery as er
+from auraforge_cli import _install_repair as ir
+from auraforge_cli import main as cli_main
 
 
 def _make_scripts_dir(tmp_path: Path) -> Path:

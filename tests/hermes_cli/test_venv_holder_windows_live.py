@@ -56,7 +56,7 @@ def _spawn(args: list[str], cwd: Path | None = None) -> subprocess.Popen:
 
 
 def _detect() -> list[tuple[int, str, str]]:
-    from hermes_cli.update_cmd import _detect_venv_python_processes
+    from auraforge_cli.update_cmd import _detect_venv_python_processes
 
     return _detect_venv_python_processes()
 
@@ -72,16 +72,16 @@ def _kill(*procs: subprocess.Popen) -> None:
 
 class TestDetection:
     def test_detects_hermes_argv_process(self):
-        """Baseline: a live process running `-m hermes_cli.main serve` with
+        """Baseline: a live process running `-m auraforge_cli.main serve` with
         cwd under the install root is detected as a venv holder."""
-        proc = _spawn(["-m", "hermes_cli.main", "serve"])
+        proc = _spawn(["-m", "auraforge_cli.main", "serve"])
         try:
             matches = _detect()
             pids = [pid for pid, _, _ in matches]
             assert proc.pid in pids, f"holder scan missed live process: {matches}"
             cmdline = next(c for p, _, c in matches if p == proc.pid)
             # Full cmdline, not a 120-char prefix (#78089 regression guard).
-            assert "hermes_cli.main" in cmdline
+            assert "auraforge_cli.main" in cmdline
         finally:
             _kill(proc)
 
@@ -104,7 +104,7 @@ class TestDetection:
         see `gateway run` past the 120-char mark."""
         # Pad the argv front so `gateway run` sits beyond 120 chars.
         padding = os.path.join("C:\\", "Users", "x" * 90, ".auraforge-runtime")
-        proc = _spawn([padding, "-m", "hermes_cli.main", "gateway", "run"])
+        proc = _spawn([padding, "-m", "auraforge_cli.main", "gateway", "run"])
         try:
             matches = _detect()
             cmdline = next((c for p, _, c in matches if p == proc.pid), None)
@@ -120,10 +120,10 @@ class TestClassification:
     def test_pausable_exemption_sees_long_path_gateway(self):
         """#78089 follow-through: `_leftover_pausable_gateway_pids` must
         classify the long-path gateway as pausable (not None)."""
-        from hermes_cli.update_cmd import _leftover_pausable_gateway_pids
+        from auraforge_cli.update_cmd import _leftover_pausable_gateway_pids
 
         padding = os.path.join("C:\\", "Users", "y" * 90, ".auraforge-runtime")
-        proc = _spawn([padding, "-m", "hermes_cli.main", "gateway", "run"])
+        proc = _spawn([padding, "-m", "auraforge_cli.main", "gateway", "run"])
         try:
             matches = [m for m in _detect() if m[0] == proc.pid]
             assert matches, "gateway not detected"
@@ -137,9 +137,9 @@ class TestClassification:
     def test_serve_backend_not_classified_pausable(self):
         """#81774 premise probe: a serve backend is NOT pausable today —
         pinning current behavior so the consolidation change is visible."""
-        from hermes_cli.update_cmd import _leftover_pausable_gateway_pids
+        from auraforge_cli.update_cmd import _leftover_pausable_gateway_pids
 
-        proc = _spawn(["-m", "hermes_cli.main", "serve"])
+        proc = _spawn(["-m", "auraforge_cli.main", "serve"])
         try:
             matches = [m for m in _detect() if m[0] == proc.pid]
             assert matches, "serve backend not detected"
@@ -152,9 +152,9 @@ class TestHolderMessage:
     """#90778 — the refusal message must name holders accurately."""
 
     def test_dashboard_not_labeled_desktop_backend(self):
-        from hermes_cli.update_cmd import _format_venv_python_holders_message
+        from auraforge_cli.update_cmd import _format_venv_python_holders_message
 
-        proc = _spawn(["-m", "hermes_cli.main", "dashboard"])
+        proc = _spawn(["-m", "auraforge_cli.main", "dashboard"])
         try:
             matches = [m for m in _detect() if m[0] == proc.pid]
             assert matches, "dashboard process not detected"
@@ -169,9 +169,9 @@ class TestHolderMessage:
     def test_substring_subcommand_not_mislabeled(self):
         """`--preserve-cache` contains 'serve'; the classifier must not
         label an unrelated subcommand as the Desktop backend (#90778)."""
-        from hermes_cli.update_cmd import _format_venv_python_holders_message
+        from auraforge_cli.update_cmd import _format_venv_python_holders_message
 
-        proc = _spawn(["-m", "hermes_cli.main", "kanban", "--preserve-cache"])
+        proc = _spawn(["-m", "auraforge_cli.main", "kanban", "--preserve-cache"])
         try:
             matches = [m for m in _detect() if m[0] == proc.pid]
             assert matches, "kanban process not detected"
@@ -193,12 +193,12 @@ class TestAncestorExclusion:
         # a child python that runs the REAL detection and reports whether it
         # can see its gateway parent. The child's code lives in a FILE so the
         # parent's cmdline stays realistic (a real gateway's argv is clean
-        # `... -m hermes_cli.main gateway run`, not a multi-line -c blob).
+        # `... -m auraforge_cli.main gateway run`, not a multi-line -c blob).
         child_file = tmp_path / "child_scan.py"
         child_file.write_text(
             "import json, os, sys\n"
             f"sys.path.insert(0, {str(PROJECT_ROOT)!r})\n"
-            "from hermes_cli.update_cmd import _detect_venv_python_processes\n"
+            "from auraforge_cli.update_cmd import _detect_venv_python_processes\n"
             "import psutil\n"
             "from gateway.status import looks_like_gateway_command_line\n"
             "# The venv shim makes every spawn a launcher/worker CHAIN, so the\n"
@@ -226,7 +226,7 @@ class TestAncestorExclusion:
                 "-c",
                 parent_oneliner,
                 "-m",
-                "hermes_cli.main",
+                "auraforge_cli.main",
                 "gateway",
                 "run",
             ],
@@ -258,11 +258,11 @@ class TestConcurrentGateClassification:
     machinery owns them), everything else keeps aborting the update."""
 
     def test_live_gateway_process_classified_gateway(self):
-        """A real process whose argv carries `-m hermes_cli.main gateway run`
+        """A real process whose argv carries `-m auraforge_cli.main gateway run`
         classifies as ``gateway`` via real psutil against the live table."""
-        from hermes_cli.update_cmd import _classify_concurrent_instance
+        from auraforge_cli.update_cmd import _classify_concurrent_instance
 
-        proc = _spawn(["-m", "hermes_cli.main", "gateway", "run"])
+        proc = _spawn(["-m", "auraforge_cli.main", "gateway", "run"])
         try:
             assert _classify_concurrent_instance(proc.pid) == "gateway"
         finally:
@@ -271,10 +271,10 @@ class TestConcurrentGateClassification:
     def test_live_non_gateway_processes_keep_the_abort(self):
         """A REPL-shaped process and a gateway MANAGEMENT command both
         classify as ``non-gateway`` — they stay in the abort list."""
-        from hermes_cli.update_cmd import _classify_concurrent_instance
+        from auraforge_cli.update_cmd import _classify_concurrent_instance
 
-        repl = _spawn(["-m", "hermes_cli.main"])
-        mgmt = _spawn(["-m", "hermes_cli.main", "gateway", "status"])
+        repl = _spawn(["-m", "auraforge_cli.main"])
+        mgmt = _spawn(["-m", "auraforge_cli.main", "gateway", "status"])
         try:
             assert _classify_concurrent_instance(repl.pid) == "non-gateway"
             assert _classify_concurrent_instance(mgmt.pid) == "non-gateway"
@@ -284,12 +284,12 @@ class TestConcurrentGateClassification:
     def test_live_filter_drops_only_the_gateway(self):
         """End-to-end filter over a mixed live process set: the gateway PID
         drops, the serve-backend PID stays, a dead PID stays (unknown)."""
-        from hermes_cli.update_cmd import (
+        from auraforge_cli.update_cmd import (
             _filter_non_gateway_concurrent_instances,
         )
 
-        gw = _spawn(["-m", "hermes_cli.main", "gateway", "run"])
-        backend = _spawn(["-m", "hermes_cli.main", "serve", "--port", "8127"])
+        gw = _spawn(["-m", "auraforge_cli.main", "gateway", "run"])
+        backend = _spawn(["-m", "auraforge_cli.main", "serve", "--port", "8127"])
         dead = _spawn([])
         _kill(dead)  # reaped → unreadable cmdline → unknown → kept
         try:

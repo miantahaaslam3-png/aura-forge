@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import uninstall
+from auraforge_cli import uninstall
 
 
 ZSHRC = (

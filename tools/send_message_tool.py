@@ -88,7 +88,7 @@ _DEFAULT_CAPTION_LIMIT = 4096
 
 def prepare_send_message_platforms() -> None:
     """Load enabled standalone plugins before tool schemas/cache keys are built."""
-    from hermes_cli.plugins import discover_plugins
+    from auraforge_cli.plugins import discover_plugins
 
     discover_plugins()
 
@@ -1170,7 +1170,7 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
     # standalone_sender_fn (plugins/platforms/feishu/adapter.py::_standalone_send). #41112
     if platform == Platform.FEISHU and media_files:
         from gateway.platform_registry import platform_registry as _pr_feishu
-        from hermes_cli.plugins import discover_plugins as _dp_feishu
+        from auraforge_cli.plugins import discover_plugins as _dp_feishu
         _dp_feishu()
         _feishu_entry = _pr_feishu.get("feishu")
         if _feishu_entry is None or _feishu_entry.standalone_sender_fn is None:
@@ -1196,7 +1196,7 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
     # omitted Slack attachments and told the model media was unsupported.
     if platform == Platform.SLACK and media_files:
         from gateway.platform_registry import platform_registry as _pr_slack
-        from hermes_cli.plugins import discover_plugins as _dp_slack
+        from auraforge_cli.plugins import discover_plugins as _dp_slack
         _dp_slack()
         _slack_entry = _pr_slack.get("slack")
         if _slack_entry is None or _slack_entry.standalone_sender_fn is None:
@@ -1238,7 +1238,7 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
     # endpoint so images/videos/audio arrive as native bubbles, not documents. #41112
     if platform == Platform.WHATSAPP and media_files:
         from gateway.platform_registry import platform_registry as _pr_wa
-        from hermes_cli.plugins import discover_plugins as _dp_wa
+        from auraforge_cli.plugins import discover_plugins as _dp_wa
         _dp_wa()
         _wa_entry = _pr_wa.get("whatsapp")
         if _wa_entry is None or _wa_entry.standalone_sender_fn is None:
@@ -1743,7 +1743,7 @@ async def _registry_standalone_send(platform_name, pconfig, chat_id, message, th
     ``_standalone_send`` and is reached via the platform registry.
     """
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import discover_plugins
+    from auraforge_cli.plugins import discover_plugins
     discover_plugins()  # idempotent — ensure the entry is registered
     entry = platform_registry.get(platform_name)
     if entry is None or entry.standalone_sender_fn is None:
@@ -2347,7 +2347,7 @@ from tools.registry import tool_error
 # ``_send_via_adapter``, ``_parse_target_ref``, the per-platform ``_send_*``
 # helpers) remains the shared transport used by:
 #   - cron delivery (cron/scheduler.py)
-#   - the ``auraforge send`` CLI command (hermes_cli/send_cmd.py)
+#   - the ``auraforge send`` CLI command (auraforge_cli/send_cmd.py)
 #   - the gateway kanban notifier (dashboard-toggled, outside agent control)
 #   - the standalone MCP server (mcp_serve.py), which is an opt-in surface
 # Those callers import the helpers directly; none of them need the registry

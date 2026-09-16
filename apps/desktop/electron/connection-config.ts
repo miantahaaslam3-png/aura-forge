@@ -11,7 +11,7 @@
  *
  * Background on the two auth models a remote gateway can use:
  *   - 'token': legacy static dashboard session token. REST uses an
- *     `X-Hermes-Session-Token` header; WS uses `?token=`.
+ *     `X-AuraForge-Session-Token` header; WS uses `?token=`.
  *   - 'oauth': hosted gateways gate behind an OAuth provider. REST is authed
  *     by an HttpOnly session cookie; WS upgrades require a single-use
  *     `?ticket=` minted at POST /api/auth/ws-ticket. The gateway advertises
@@ -21,7 +21,7 @@
 // Bare + prefixed variants of the session cookies the gateway may set,
 // depending on its deploy shape (HTTPS direct → __Host-, behind a path prefix
 // → __Secure-, loopback HTTP → bare). Mirrors
-// hermes_cli/dashboard_auth/cookies.py.
+// auraforge_cli/dashboard_auth/cookies.py.
 //
 // Two cookies are in play (see that module):
 //   - hermes_session_at: the OAuth access token. Short-lived (~15 min); its
@@ -59,7 +59,7 @@ const PRIVY_SESSION_COOKIE_VARIANTS = [
 // `privy-token` is minted. Distinguishing the two is what lets a cold start
 // silently renew instead of demanding a re-login (#73495).
 const PRIVY_ACCESS_COOKIE_VARIANTS = ['__Host-privy-token', '__Secure-privy-token', 'privy-token']
-// Keep this aligned with hermes_cli.profiles.validate_profile_name(). `default`
+// Keep this aligned with auraforge_cli.profiles.validate_profile_name(). `default`
 // is the built-in root alias; these names cannot be created as profiles.
 const RESERVED_REMOTE_PROFILES = new Set(['hermes', 'test', 'tmp', 'root', 'sudo'])
 

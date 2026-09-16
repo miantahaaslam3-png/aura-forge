@@ -16,7 +16,7 @@ points at it), choosing the form by venv kind: exe copy for normal venvs,
 copied out of ``venv\\Scripts``. ``migrate_windows_bin_path`` moves an
 existing install's PATH to the canonical layout from the ``auraforge update``
 tail. Platform verdict, PATH values, and registry I/O are injected
-parameters (same pattern as ``hermes_constants.venv_bin_dir``), so these
+parameters (same pattern as ``auraforge_constants.venv_bin_dir``), so these
 tests are host-independent input→output checks, not host fakes.
 """
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli._install_repair import (
+from auraforge_cli._install_repair import (
     _WINDOWS_BIN_LAUNCHERS,
     _normalize_windows_path,
     ensure_windows_bin_launchers,

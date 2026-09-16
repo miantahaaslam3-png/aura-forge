@@ -166,7 +166,7 @@ def _spill_full_stdout(stdout_text: str) -> Optional[str]:
     """
     try:
         import hashlib
-        from hermes_constants import get_hermes_dir
+        from auraforge_constants import get_hermes_dir
 
         if len(stdout_text) > MAX_SPILLED_STDOUT_BYTES:
             stdout_text = (
@@ -216,7 +216,7 @@ _SECRET_SUBSTRINGS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL",
                       "CREDS", "BEARER", "APIKEY")
 
 # Operational HERMES_* vars the child legitimately needs by exact name — these
-# are non-secret runtime-location flags (the same set hermes_cli treats as the
+# are non-secret runtime-location flags (the same set auraforge_cli treats as the
 # runtime location) that repo-root modules a sandbox script imports may read at
 # import time.  None match _SECRET_SUBSTRINGS.
 _HERMES_CHILD_ALLOWED = frozenset({
@@ -1445,7 +1445,7 @@ def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
     secret scrubbing, UTF-8 forcing, TZ handling, subprocess HOME, and the
     PYTHONPATH hygiene for external interpreters.
     """
-    from hermes_constants import apply_subprocess_home_env
+    from auraforge_constants import apply_subprocess_home_env
     child_env = _scrub_child_env(os.environ)
     child_env["HERMES_RPC_SOCKET"] = rpc_endpoint
     child_env["HERMES_RPC_TOKEN"] = rpc_token
@@ -1502,7 +1502,7 @@ def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
         _pp_parts.append(_hermes_root)
     elif child_python not in _external_env_logged:
         # Import behavior changes silently otherwise — surface it (once
-        # per interpreter path) so "import hermes_constants suddenly
+        # per interpreter path) so "import auraforge_constants suddenly
         # fails" reports are diagnosable without log spam.
         _external_env_logged.add(child_python)
         logger.info(
@@ -2041,7 +2041,7 @@ def _load_config() -> dict:
     key cleanly falls back to DEFAULT_EXECUTION_MODE.
     """
     try:
-        from hermes_cli.config import read_raw_config
+        from auraforge_cli.config import read_raw_config
 
         cfg = read_raw_config().get("code_execution", {})
         return cfg if isinstance(cfg, dict) else {}

@@ -34,7 +34,7 @@ async def _request_with_wedged_default_executor(path: str, *, warm: bool = False
     except ImportError:
         pytest.skip("httpx not installed")
 
-    from hermes_cli import web_server
+    from auraforge_cli import web_server
 
     if warm:
         warm_transport = httpx.ASGITransport(app=web_server.app)
@@ -69,7 +69,7 @@ async def _request_with_wedged_default_executor(path: str, *, warm: bool = False
 
 
 def test_profiles_route_survives_default_executor_starvation(monkeypatch):
-    from hermes_cli import profiles
+    from auraforge_cli import profiles
 
     monkeypatch.setattr(profiles, "list_profiles", lambda: [])
 
@@ -80,7 +80,7 @@ def test_profiles_route_survives_default_executor_starvation(monkeypatch):
 
 
 def test_toolsets_route_survives_default_executor_starvation(monkeypatch):
-    from hermes_cli import platforms, tools_config
+    from auraforge_cli import platforms, tools_config
     import toolsets
 
     monkeypatch.setattr(
@@ -105,7 +105,7 @@ def test_toolsets_route_survives_default_executor_starvation(monkeypatch):
 
 
 def test_status_route_survives_default_executor_starvation(monkeypatch):
-    from hermes_cli import web_server
+    from auraforge_cli import web_server
 
     monkeypatch.setattr(
         web_server,

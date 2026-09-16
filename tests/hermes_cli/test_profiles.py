@@ -1,4 +1,4 @@
-"""Comprehensive tests for hermes_cli.profiles module.
+"""Comprehensive tests for auraforge_cli.profiles module.
 
 Tests cover: validation, directory resolution, CRUD operations, active profile
 management, export/import, renaming, alias collision checks, profile isolation,
@@ -18,8 +18,8 @@ from unittest.mock import patch, MagicMock
 import pytest
 import yaml
 
-from hermes_cli import profiles
-from hermes_cli.profiles import (
+from auraforge_cli import profiles
+from auraforge_cli.profiles import (
     normalize_profile_name,
     validate_profile_name,
     get_profile_dir,
@@ -45,7 +45,7 @@ from hermes_cli.profiles import (
     backfill_profile_envs,
     profiles_to_serve,
 )
-from hermes_cli.config import DEFAULT_CONFIG
+from auraforge_cli.config import DEFAULT_CONFIG
 
 
 # ---------------------------------------------------------------------------
@@ -316,9 +316,9 @@ class TestDeleteProfile:
         profile_dir = create_profile("coder", no_alias=True)
         set_active_profile("coder")
 
-        with patch("hermes_cli.profiles._cleanup_gateway_service"), \
-             patch("hermes_cli.profiles.time.sleep"), \
-             patch("hermes_cli.profiles.shutil.rmtree", side_effect=PermissionError("locked")):
+        with patch("auraforge_cli.profiles._cleanup_gateway_service"), \
+             patch("auraforge_cli.profiles.time.sleep"), \
+             patch("auraforge_cli.profiles.shutil.rmtree", side_effect=PermissionError("locked")):
             with pytest.raises(RuntimeError, match="Could not remove profile directory"):
                 delete_profile("coder", yes=True)
 
@@ -349,13 +349,13 @@ class TestDeleteProfile:
         self_pid = os.getpid()
         procs = [
             # Backend bound to coder → matched.
-            FakeProc(101, ["python", "-m", "hermes_cli.main", "--profile", "coder", "serve"]),
+            FakeProc(101, ["python", "-m", "auraforge_cli.main", "--profile", "coder", "serve"]),
             # Interactive chat for coder → NOT a backend subcommand, skipped.
-            FakeProc(102, ["python", "-m", "hermes_cli.main", "--profile", "coder", "chat"]),
+            FakeProc(102, ["python", "-m", "auraforge_cli.main", "--profile", "coder", "chat"]),
             # Backend for a different profile → skipped.
-            FakeProc(103, ["python", "-m", "hermes_cli.main", "--profile", "other", "serve"]),
+            FakeProc(103, ["python", "-m", "auraforge_cli.main", "--profile", "other", "serve"]),
             # This very process → skipped even if it matched.
-            FakeProc(self_pid, ["python", "-m", "hermes_cli.main", "--profile", "coder", "serve"]),
+            FakeProc(self_pid, ["python", "-m", "auraforge_cli.main", "--profile", "coder", "serve"]),
         ]
 
         fake_psutil = types.SimpleNamespace(
@@ -623,8 +623,8 @@ class TestWrapperScript:
     """Tests for create_wrapper_script() and remove_wrapper_script()."""
 
     def test_creates_sh_on_posix(self, profile_env, monkeypatch):
-        monkeypatch.setattr("hermes_cli.profiles.shutil.which", lambda name: "/opt/auraforge/bin/auraforge")
-        from hermes_cli.profiles import create_wrapper_script
+        monkeypatch.setattr("auraforge_cli.profiles.shutil.which", lambda name: "/opt/auraforge/bin/auraforge")
+        from auraforge_cli.profiles import create_wrapper_script
         wrapper = create_wrapper_script("mybot")
         assert wrapper is not None
         assert wrapper.name == "mybot"
@@ -635,7 +635,7 @@ class TestWrapperScript:
 
     @pytest.mark.windows_only
     def test_remove_finds_bat_on_windows(self, profile_env):
-        from hermes_cli.profiles import create_wrapper_script, remove_wrapper_script
+        from auraforge_cli.profiles import create_wrapper_script, remove_wrapper_script
         wrapper = create_wrapper_script("mybot")
         assert wrapper is not None
         assert wrapper.exists()
@@ -682,14 +682,14 @@ class TestFindAliasForProfile:
     """Tests for find_alias_for_profile() and alias display in list/show."""
 
     def test_profile_named_alias(self, profile_env):
-        from hermes_cli.profiles import create_wrapper_script, find_alias_for_profile
+        from auraforge_cli.profiles import create_wrapper_script, find_alias_for_profile
         create_wrapper_script("steve")
         assert find_alias_for_profile("steve") == "steve"
 
 
     def test_ignores_unrelated_files(self, profile_env):
         # ~/.local/bin commonly holds unrelated binaries; they must not match.
-        from hermes_cli.profiles import _get_wrapper_dir, find_alias_for_profile
+        from auraforge_cli.profiles import _get_wrapper_dir, find_alias_for_profile
         wrapper_dir = _get_wrapper_dir()
         wrapper_dir.mkdir(parents=True, exist_ok=True)
         (wrapper_dir / "pip").write_text("#!/bin/sh\nexec python -m pip \"$@\"\n")
@@ -697,7 +697,7 @@ class TestFindAliasForProfile:
 
 
     def test_list_profiles_surfaces_custom_alias(self, profile_env):
-        from hermes_cli.profiles import (
+        from auraforge_cli.profiles import (
             create_profile,
             create_wrapper_script,
             list_profiles,
@@ -724,7 +724,7 @@ class TestRenameProfile:
         assert old_dir.is_dir()
 
         # Mock alias collision to avoid subprocess calls
-        with patch("hermes_cli.profiles.check_alias_collision", return_value="skip"):
+        with patch("auraforge_cli.profiles.check_alias_collision", return_value="skip"):
             new_dir = rename_profile("oldname", "newname")
 
         assert not old_dir.is_dir()
@@ -750,7 +750,7 @@ class TestRenameProfile:
             }
         }))
 
-        with patch("hermes_cli.profiles.check_alias_collision", return_value="skip"):
+        with patch("auraforge_cli.profiles.check_alias_collision", return_value="skip"):
             rename_profile("ssi_health", "heimdall")
 
         cfg = json.loads(honcho_path.read_text())
@@ -1023,7 +1023,7 @@ class TestEdgeCases:
         """
         import os
         import gateway.status as gw_status
-        from hermes_cli.profiles import _check_gateway_running
+        from auraforge_cli.profiles import _check_gateway_running
 
         tmp_path = profile_env
         default_home = tmp_path / ".auraforge"

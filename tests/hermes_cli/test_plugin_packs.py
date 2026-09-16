@@ -14,7 +14,7 @@ from unittest import mock
 import pytest
 import yaml
 
-from hermes_cli.plugin_packs import (
+from auraforge_cli.plugin_packs import (
     PackError,
     PackPluginEntry,
     PluginPack,
@@ -28,7 +28,7 @@ from hermes_cli.plugin_packs import (
     resolve_pack_plugins,
     validate_config_seed,
 )
-from hermes_cli.subcommands.plugins import build_plugins_parser
+from auraforge_cli.subcommands.plugins import build_plugins_parser
 
 SHA_A = "a" * 40
 SHA_B = "b" * 40
@@ -191,9 +191,9 @@ def test_resolve_pack_plugins_uses_community_index_for_bare_names():
         install_identifier="idx-owner/idx-repo", capabilities=["tools"]
     )
     with mock.patch(
-        "hermes_cli.plugin_index.load_index", return_value=([fake_entry], "seed")
+        "auraforge_cli.plugin_index.load_index", return_value=([fake_entry], "seed")
     ), mock.patch(
-        "hermes_cli.plugin_index.resolve_name",
+        "auraforge_cli.plugin_index.resolve_name",
         return_value=(fake_entry, [fake_entry]),
     ):
         resolved = resolve_pack_plugins(pack)
@@ -210,9 +210,9 @@ def test_resolve_pack_plugins_carries_index_miss_as_error():
         )
     )
     with mock.patch(
-        "hermes_cli.plugin_index.load_index", return_value=([], "seed")
+        "auraforge_cli.plugin_index.load_index", return_value=([], "seed")
     ), mock.patch(
-        "hermes_cli.plugin_index.resolve_name", return_value=(None, [])
+        "auraforge_cli.plugin_index.resolve_name", return_value=(None, [])
     ):
         resolved = resolve_pack_plugins(pack)
     assert resolved[0].identifier is None
@@ -267,7 +267,7 @@ def test_install_fan_out_passes_pinned_refs_to_installer(tmp_path):
     )
     patches = _fanout_patches(None)
     patches["_install_plugin_core"] = installer
-    with mock.patch.multiple("hermes_cli.plugins_cmd", **patches):
+    with mock.patch.multiple("auraforge_cli.plugins_cmd", **patches):
         results = install_pack_plugins(pack, _resolved(pack), FakeConsole())
 
     assert [r.ok for r in results] == [True, True]
@@ -299,7 +299,7 @@ def test_install_fan_out_invokes_capability_consent_per_plugin(tmp_path):
         ],
         consent_mock=consent,
     )
-    with mock.patch.multiple("hermes_cli.plugins_cmd", **patches):
+    with mock.patch.multiple("auraforge_cli.plugins_cmd", **patches):
         install_pack_plugins(pack, _resolved(pack), FakeConsole())
 
     assert consent.call_count == 2
@@ -310,7 +310,7 @@ def test_install_fan_out_invokes_capability_consent_per_plugin(tmp_path):
 
 
 def test_install_fan_out_continues_past_failures_and_reports():
-    from hermes_cli.plugins_cmd import PluginOperationError
+    from auraforge_cli.plugins_cmd import PluginOperationError
 
     pack = parse_pack(
         yaml.safe_dump(
@@ -331,7 +331,7 @@ def test_install_fan_out_continues_past_failures_and_reports():
 
     patches = _fanout_patches(installer)
     console = FakeConsole()
-    with mock.patch.multiple("hermes_cli.plugins_cmd", **patches):
+    with mock.patch.multiple("auraforge_cli.plugins_cmd", **patches):
         results = install_pack_plugins(pack, _resolved(pack), console)
 
     assert [r.ok for r in results] == [False, True]
@@ -353,7 +353,7 @@ def test_pack_install_exits_nonzero_on_partial_failure(tmp_path, monkeypatch):
         ),
         encoding="utf-8",
     )
-    from hermes_cli.plugins_cmd import PluginOperationError
+    from auraforge_cli.plugins_cmd import PluginOperationError
 
     def installer(identifier, *, force, ref):
         if "bad" in identifier:
@@ -364,7 +364,7 @@ def test_pack_install_exits_nonzero_on_partial_failure(tmp_path, monkeypatch):
     patches = _fanout_patches(installer)
     monkeypatch.setattr("sys.stdin", mock.MagicMock(isatty=lambda: True))
     monkeypatch.setattr("sys.stdout", mock.MagicMock(isatty=lambda: True))
-    with mock.patch.multiple("hermes_cli.plugins_cmd", **patches), mock.patch(
+    with mock.patch.multiple("auraforge_cli.plugins_cmd", **patches), mock.patch(
         "rich.console.Console", return_value=fake_console
     ):
         with pytest.raises(SystemExit) as exc:
@@ -383,9 +383,9 @@ def test_pack_install_refuses_noninteractive_sessions(tmp_path, monkeypatch):
     with mock.patch(
         "rich.console.Console", return_value=fake_console
     ), mock.patch(
-        "hermes_cli.plugin_packs.resolve_pack_plugins",
+        "auraforge_cli.plugin_packs.resolve_pack_plugins",
         side_effect=lambda pack: _resolved(pack),
-    ), mock.patch("hermes_cli.plugins_cmd._install_plugin_core", installer):
+    ), mock.patch("auraforge_cli.plugins_cmd._install_plugin_core", installer):
         with pytest.raises(SystemExit) as exc:
             cmd_pack_install(str(pack_file))
     assert exc.value.code == 1
@@ -403,9 +403,9 @@ def test_pack_install_aborts_cleanly_on_decline(tmp_path, monkeypatch):
     with mock.patch(
         "rich.console.Console", return_value=fake_console
     ), mock.patch(
-        "hermes_cli.plugin_packs.resolve_pack_plugins",
+        "auraforge_cli.plugin_packs.resolve_pack_plugins",
         side_effect=lambda pack: _resolved(pack),
-    ), mock.patch("hermes_cli.plugins_cmd._install_plugin_core", installer):
+    ), mock.patch("auraforge_cli.plugins_cmd._install_plugin_core", installer):
         with pytest.raises(SystemExit):
             cmd_pack_install(str(pack_file))
     installer.assert_not_called()
@@ -425,15 +425,15 @@ def _seed_install_state(home, monkeypatch, *, metadata, config=None, plugins=())
         json.dumps(metadata), encoding="utf-8"
     )
     monkeypatch.setattr(
-        "hermes_cli.plugins_cmd._read_install_metadata", lambda: metadata
+        "auraforge_cli.plugins_cmd._read_install_metadata", lambda: metadata
     )
-    monkeypatch.setattr("hermes_cli.plugins_cmd._plugins_dir", lambda: plugins_dir)
+    monkeypatch.setattr("auraforge_cli.plugins_cmd._plugins_dir", lambda: plugins_dir)
     cfg = config or {}
     monkeypatch.setattr(
-        "hermes_cli.plugins_cmd._get_enabled_set",
+        "auraforge_cli.plugins_cmd._get_enabled_set",
         lambda: set((cfg.get("plugins") or {}).get("enabled") or []),
     )
-    monkeypatch.setattr("hermes_cli.plugin_packs._sanitized_entry_config",
+    monkeypatch.setattr("auraforge_cli.plugin_packs._sanitized_entry_config",
                         lambda pid: ((cfg.get("plugins") or {}).get("entries") or {}).get(pid, {}))
 
 
@@ -497,7 +497,7 @@ def test_export_strips_secret_and_capability_config_keys(tmp_path, monkeypatch):
     )
     # Use the real sanitizer against a fake loaded config.
     monkeypatch.setattr(
-        "hermes_cli.plugin_packs._sanitized_entry_config",
+        "auraforge_cli.plugin_packs._sanitized_entry_config",
         real_sanitized_entry_config,
     )
     fake_cfg = {
@@ -512,7 +512,7 @@ def test_export_strips_secret_and_capability_config_keys(tmp_path, monkeypatch):
             }
         }
     }
-    with mock.patch("hermes_cli.config.load_config", return_value=fake_cfg):
+    with mock.patch("auraforge_cli.config.load_config", return_value=fake_cfg):
         text, _warnings = export_pack()
     assert "sk-super-secret" not in text
     assert "api_key" not in text

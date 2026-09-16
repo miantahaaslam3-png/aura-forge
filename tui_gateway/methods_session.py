@@ -56,7 +56,7 @@ def _(rid, params: dict) -> dict:
     create_reasoning_override = None
     if effort := str(params.get("reasoning_effort") or "").strip():
         try:
-            from hermes_constants import parse_reasoning_effort
+            from auraforge_constants import parse_reasoning_effort
 
             create_reasoning_override = parse_reasoning_effort(effort)
         except Exception:
@@ -396,7 +396,7 @@ def _(rid, params: dict) -> dict:
     # shared launch db, which outlives the RPC and is never closed here.
     owns_db = False
     if profile_home is not None:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         db = SessionDB(db_path=profile_home / "state.db")
         owns_db = True
@@ -568,7 +568,7 @@ def _(rid, params: dict) -> dict:
         # the dashboard. The metadata fallback keeps lightweight test/adaptor DBs
         # that predate the shared SessionDB guard compatible. The limit resolves
         # from config (sessions.max_resume_messages, 0 disables).
-        from hermes_state import (
+        from auraforge_state import (
             SessionResumeTooLargeError,
             resolved_max_resume_messages,
         )
@@ -1053,7 +1053,7 @@ def _(rid, params: dict) -> dict:
         # Dropping it merely relied on refcounting to release the sqlite fds; that
         # stops being true the moment anything pins the instance — SessionDB pins
         # ITSELF once its background token writer starts, via
-        # atexit.register(_drain_token_queue_at_exit) (hermes_state.py), which only
+        # atexit.register(_drain_token_queue_at_exit) (auraforge_state.py), which only
         # close() unregisters. A pinned handle keeps its db/-wal/-shm fds and its
         # writer thread for the life of the process.
         if owns_db and db is not None:
@@ -1129,7 +1129,7 @@ def _(rid, params: dict) -> dict:
     raw = str(params.get("cwd", "") or "").strip()
     if not raw:
         return _err(rid, 4016, "cwd required")
-    from hermes_constants import translate_cwd_for_wsl_backend
+    from auraforge_constants import translate_cwd_for_wsl_backend
 
     resolved = os.path.abspath(os.path.expanduser(translate_cwd_for_wsl_backend(raw)))
     if not os.path.isdir(resolved):
@@ -1810,7 +1810,7 @@ def _(rid, params: dict) -> dict:
         from agent.pet.render import PetRenderer
 
         try:
-            from hermes_cli.config import load_config
+            from auraforge_cli.config import load_config
 
             cfg = load_config()
             display = cfg.get("display", {}) if isinstance(cfg.get("display"), dict) else {}
@@ -1917,7 +1917,7 @@ def _(rid, params: dict) -> dict:
         from agent.pet import store
 
         try:
-            from hermes_cli.config import load_config
+            from auraforge_cli.config import load_config
 
             cfg = load_config()
             display = cfg.get("display", {}) if isinstance(cfg.get("display"), dict) else {}
@@ -1995,7 +1995,7 @@ def _(rid, params: dict) -> dict:
     try:
         from agent.pet import store
         from agent.pet.manifest import ManifestError
-        from hermes_cli.pets import _set_active
+        from auraforge_cli.pets import _set_active
 
         try:
             pet = store.install_pet(slug)
@@ -2022,7 +2022,7 @@ def _(rid, params: dict) -> dict:
         return _err(rid, 4004, "missing slug")
     try:
         from agent.pet import store
-        from hermes_cli.pets import _clear_active_if
+        from auraforge_cli.pets import _clear_active_if
 
         removed = store.remove_pet(slug)
 
@@ -2091,7 +2091,7 @@ def _(rid, params: dict) -> dict:
         # in config so surfaces don't point at the old (now-missing) directory.
         if new_slug != slug:
             try:
-                from hermes_cli.pets import _rename_active_if
+                from auraforge_cli.pets import _rename_active_if
 
                 _rename_active_if(slug, new_slug)
             except Exception as exc:  # noqa: BLE001 - rename already succeeded
@@ -2143,7 +2143,7 @@ def _(rid, params: dict) -> dict:
 def _(rid, params: dict) -> dict:
     """Turn the pet off from the desktop picker (``display.pet.enabled=false``)."""
     try:
-        from hermes_cli.pets import _set_enabled
+        from auraforge_cli.pets import _set_enabled
 
         _set_enabled(False)
         return _ok(rid, {"ok": True})
@@ -2162,7 +2162,7 @@ def _(rid, params: dict) -> dict:
     terminal surfaces on their next read.
     """
     try:
-        from hermes_cli.pets import set_pet_scale
+        from auraforge_cli.pets import set_pet_scale
 
         scale, err = set_pet_scale(params.get("scale"))
         if err:
@@ -2486,7 +2486,7 @@ def _(rid, params: dict) -> dict:
     drives the device step-up exactly like the mutations.
     """
     from agent.subscription_view import subscription_change_preview_from_payload
-    from hermes_cli.nous_billing import BillingError, post_subscription_preview
+    from auraforge_cli.nous_billing import BillingError, post_subscription_preview
 
     tier_id = params.get("subscription_type_id")
     if not tier_id:
@@ -2510,7 +2510,7 @@ def _(rid, params: dict) -> dict:
     same-price change OR a cancellation at period end (chargeless). Requires
     billing:manage.
     """
-    from hermes_cli.nous_billing import BillingError, put_subscription_pending_change
+    from auraforge_cli.nous_billing import BillingError, put_subscription_pending_change
 
     cancel = bool(params.get("cancel"))
     tier_id = params.get("subscription_type_id")
@@ -2532,7 +2532,7 @@ def _(rid, params: dict) -> dict:
     Clears a scheduled downgrade or cancellation (resume / undo). Chargeless, but it
     re-enables recurring spend → requires billing:manage and honors the kill-switch.
     """
-    from hermes_cli.nous_billing import BillingError, delete_subscription_pending_change
+    from auraforge_cli.nous_billing import BillingError, delete_subscription_pending_change
 
     try:
         result = delete_subscription_pending_change()
@@ -2554,7 +2554,7 @@ def _(rid, params: dict) -> dict:
     the TUI reuses it on retry of the SAME upgrade. Requires billing:manage.
     """
     from agent.billing_view import new_idempotency_key
-    from hermes_cli.nous_billing import BillingError, post_subscription_upgrade
+    from auraforge_cli.nous_billing import BillingError, post_subscription_upgrade
 
     tier_id = params.get("subscription_type_id")
     if not tier_id:
@@ -2589,7 +2589,7 @@ def _(rid, params: dict) -> dict:
     supplied, the server-side core mints a fresh one and returns it so the TUI can
     reuse it on retry of the SAME purchase.
     """
-    from hermes_cli.nous_billing import BillingError, post_charge
+    from auraforge_cli.nous_billing import BillingError, post_charge
     from agent.billing_view import new_idempotency_key
 
     amount = params.get("amount_usd")
@@ -2613,7 +2613,7 @@ def _(rid, params: dict) -> dict:
 
     The poll. Caller drives the 2s/5-min cadence; this is a single status read.
     """
-    from hermes_cli.nous_billing import BillingError, get_charge_status
+    from auraforge_cli.nous_billing import BillingError, get_charge_status
 
     charge_id = params.get("charge_id")
     if not charge_id:
@@ -2642,7 +2642,7 @@ def _(rid, params: dict) -> dict:
 
     params: {enabled: bool, threshold: number, top_up_amount: number}.
     """
-    from hermes_cli.nous_billing import BillingError, patch_auto_top_up
+    from auraforge_cli.nous_billing import BillingError, patch_auto_top_up
 
     try:
         enabled = bool(params.get("enabled"))
@@ -2674,8 +2674,8 @@ def _(rid, params: dict) -> dict:
     """
     sid = params.get("session_id") or ""
     try:
-        from hermes_cli.auth import step_up_nous_billing_scope
-        from hermes_cli.nous_billing import BillingError
+        from auraforge_cli.auth import step_up_nous_billing_scope
+        from auraforge_cli.nous_billing import BillingError
 
         def _on_verification(url: str, code: str) -> None:
             _emit(
@@ -2705,7 +2705,7 @@ def _(rid, params: dict) -> dict:
     if err:
         return err
 
-    from hermes_constants import display_hermes_home
+    from auraforge_constants import display_hermes_home
 
     key = session.get("session_key") or params.get("session_id") or ""
     agent = session.get("agent")
@@ -3246,7 +3246,7 @@ def _(rid, params: dict) -> dict:
         # recreate the cross-profile split one turn later.
         parent_home = session.get("profile_home")
         if parent_home:
-            from hermes_state import SessionDB
+            from auraforge_state import SessionDB
 
             # DEDICATED handle, same ownership rule as session.resume: ours
             # until the branched agent takes it below. _make_agent raising, or

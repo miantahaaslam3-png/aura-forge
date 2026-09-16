@@ -305,7 +305,7 @@ hermes config set model.aliases.grok x-ai/grok-4
 > hermes config set display.tool_progress_overrides '{"terminal": "off"}'
 > ```
 
-Both paths feed the same loader (`hermes_cli/model_switch.py`). Entries declared in `model_aliases:` take precedence over `model.aliases:` entries with the same name.
+Both paths feed the same loader (`auraforge_cli/model_switch.py`). Entries declared in `model_aliases:` take precedence over `model.aliases:` entries with the same name.
 
 Then `/model fav` or `/model grok` in chat. User aliases shadow built-in short names (`sonnet`, `kimi`, `opus`, etc.). See [Custom model aliases](/reference/slash-commands#custom-model-aliases) for the full reference.
 
@@ -329,28 +329,28 @@ The dashboard uses three endpoints. Useful for scripting:
 
 ```bash
 # List authenticated providers + curated model lists
-curl -H "X-Hermes-Session-Token: $TOKEN" http://localhost:PORT/api/model/options
+curl -H "X-AuraForge-Session-Token: $TOKEN" http://localhost:PORT/api/model/options
 
 # Read current main + auxiliary assignments
-curl -H "X-Hermes-Session-Token: $TOKEN" http://localhost:PORT/api/model/auxiliary
+curl -H "X-AuraForge-Session-Token: $TOKEN" http://localhost:PORT/api/model/auxiliary
 
 # Set the main model
-curl -X POST -H "Content-Type: application/json" -H "X-Hermes-Session-Token: $TOKEN" \
+curl -X POST -H "Content-Type: application/json" -H "X-AuraForge-Session-Token: $TOKEN" \
   -d '{"scope":"main","provider":"openrouter","model":"anthropic/claude-opus-4.7"}' \
   http://localhost:PORT/api/model/set
 
 # Override a single auxiliary task
-curl -X POST -H "Content-Type: application/json" -H "X-Hermes-Session-Token: $TOKEN" \
+curl -X POST -H "Content-Type: application/json" -H "X-AuraForge-Session-Token: $TOKEN" \
   -d '{"scope":"auxiliary","task":"vision","provider":"openrouter","model":"google/gemini-2.5-flash"}' \
   http://localhost:PORT/api/model/set
 
 # Assign one model to every auxiliary task
-curl -X POST -H "Content-Type: application/json" -H "X-Hermes-Session-Token: $TOKEN" \
+curl -X POST -H "Content-Type: application/json" -H "X-AuraForge-Session-Token: $TOKEN" \
   -d '{"scope":"auxiliary","task":"","provider":"openrouter","model":"google/gemini-2.5-flash"}' \
   http://localhost:PORT/api/model/set
 
 # Reset all auxiliary tasks to auto
-curl -X POST -H "Content-Type: application/json" -H "X-Hermes-Session-Token: $TOKEN" \
+curl -X POST -H "Content-Type: application/json" -H "X-AuraForge-Session-Token: $TOKEN" \
   -d '{"scope":"auxiliary","task":"__reset__","provider":"","model":""}' \
   http://localhost:PORT/api/model/set
 ```

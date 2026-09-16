@@ -16,10 +16,10 @@ Windows post-update path already uses for exactly this case.
 
 import pytest
 
-import hermes_cli.gateway as gateway
+import auraforge_cli.gateway as gateway
 
 
-_ARGV = ["python", "-m", "hermes_cli.main", "gateway", "run"]
+_ARGV = ["python", "-m", "auraforge_cli.main", "gateway", "run"]
 
 
 def _stub_argv(monkeypatch, argv):

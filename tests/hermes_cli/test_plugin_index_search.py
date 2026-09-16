@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import plugin_index
-from hermes_cli.plugin_index import (
+from auraforge_cli import plugin_index
+from auraforge_cli.plugin_index import (
     PluginIndexEntry,
     _parse_entries,
     load_index,
@@ -265,7 +265,7 @@ class TestLoadIndex:
             "get_index_url",
             plugin_index.get_index_url,  # keep real fn, patch config below
         )
-        from hermes_cli import config as config_mod
+        from auraforge_cli import config as config_mod
 
         monkeypatch.setattr(
             config_mod,
@@ -312,7 +312,7 @@ class TestResolveName:
 
 class TestInstallResolution:
     def test_bare_name_detection(self):
-        from hermes_cli.plugins_cmd import _looks_like_bare_index_name
+        from auraforge_cli.plugins_cmd import _looks_like_bare_index_name
 
         assert _looks_like_bare_index_name("auraforge-media-studio")
         assert not _looks_like_bare_index_name("owner/repo")
@@ -322,7 +322,7 @@ class TestInstallResolution:
         assert not _looks_like_bare_index_name("file:///tmp/x")
 
     def test_install_resolves_name_and_pins_ref(self, hermes_home, monkeypatch):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -341,7 +341,7 @@ class TestInstallResolution:
         assert captured["ref"] == "e" * 40
 
     def test_install_explicit_ref_beats_index_pin(self, hermes_home, monkeypatch):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -360,7 +360,7 @@ class TestInstallResolution:
     def test_install_ambiguous_name_lists_candidates_and_exits(
         self, hermes_home, monkeypatch, capsys
     ):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -381,7 +381,7 @@ class TestInstallResolution:
         assert "auraforge-telegram-business" in out
 
     def test_install_unknown_name_exits(self, hermes_home, monkeypatch, capsys):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -393,7 +393,7 @@ class TestInstallResolution:
 
     def test_owner_repo_passthrough_skips_index(self, hermes_home, monkeypatch):
         """Explicit owner/repo installs never consult the index."""
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         def boom(**kw):  # pragma: no cover
             raise AssertionError("index consulted for owner/repo identifier")
@@ -420,7 +420,7 @@ class TestInstallResolution:
 
 class TestCmdSearch:
     def test_json_output(self, hermes_home, monkeypatch, capsys):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -437,7 +437,7 @@ class TestCmdSearch:
     def test_table_output_includes_security_footer(
         self, hermes_home, monkeypatch, capsys
     ):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -448,7 +448,7 @@ class TestCmdSearch:
         assert "audited" in out
 
     def test_no_results_message(self, hermes_home, monkeypatch, capsys):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         monkeypatch.setattr(
             plugin_index, "load_index", lambda **kw: (_parse_entries(SAMPLE), "seed")
@@ -459,7 +459,7 @@ class TestCmdSearch:
     def test_parser_accepts_search(self):
         import argparse
 
-        from hermes_cli.subcommands.plugins import build_plugins_parser
+        from auraforge_cli.subcommands.plugins import build_plugins_parser
 
         parser = argparse.ArgumentParser()
         sub = parser.add_subparsers(dest="command")
@@ -474,7 +474,7 @@ class TestCmdSearch:
         assert args.refresh is True
 
     def test_dispatch_routes_search(self, hermes_home, monkeypatch):
-        from hermes_cli import plugins_cmd
+        from auraforge_cli import plugins_cmd
 
         captured = {}
 

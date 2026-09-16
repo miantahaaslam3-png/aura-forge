@@ -16,7 +16,7 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# Thread-safe cache entry update (hermes_cli/models.py)
+# Thread-safe cache entry update (auraforge_cli/models.py)
 # ---------------------------------------------------------------------------
 
 class TestUpdateProviderCacheEntry:
@@ -24,7 +24,7 @@ class TestUpdateProviderCacheEntry:
 
     def test_writes_new_entry(self, tmp_path, monkeypatch):
         """A new entry is persisted to the cache file."""
-        import hermes_cli.models as mod
+        import auraforge_cli.models as mod
 
         cache_path = tmp_path / "provider_models_cache.json"
         monkeypatch.setattr(mod, "_provider_models_cache_path", lambda: cache_path)
@@ -39,7 +39,7 @@ class TestUpdateProviderCacheEntry:
 
     def test_does_not_clobber_other_entries(self, tmp_path, monkeypatch):
         """Concurrent writes to different providers don't lose entries."""
-        import hermes_cli.models as mod
+        import auraforge_cli.models as mod
 
         cache_path = tmp_path / "provider_models_cache.json"
         monkeypatch.setattr(mod, "_provider_models_cache_path", lambda: cache_path)
@@ -60,7 +60,7 @@ class TestUpdateProviderCacheEntry:
 
     def test_skips_empty_models(self, tmp_path, monkeypatch):
         """Empty model lists are not written to cache."""
-        import hermes_cli.models as mod
+        import auraforge_cli.models as mod
 
         cache_path = tmp_path / "provider_models_cache.json"
         monkeypatch.setattr(mod, "_provider_models_cache_path", lambda: cache_path)
@@ -71,7 +71,7 @@ class TestUpdateProviderCacheEntry:
 
     def test_concurrent_writes_no_lost_entries(self, tmp_path, monkeypatch):
         """Multiple threads writing different providers concurrently — all land."""
-        import hermes_cli.models as mod
+        import auraforge_cli.models as mod
         import concurrent.futures
 
         cache_path = tmp_path / "provider_models_cache.json"
@@ -93,7 +93,7 @@ class TestUpdateProviderCacheEntry:
 
 
 # ---------------------------------------------------------------------------
-# Parallel prefetch (hermes_cli/model_switch.py)
+# Parallel prefetch (auraforge_cli/model_switch.py)
 # ---------------------------------------------------------------------------
 
 class TestPrefetchProviderModelsParallel:
@@ -101,23 +101,23 @@ class TestPrefetchProviderModelsParallel:
 
     def test_skips_all_fresh_entries(self, monkeypatch):
         """When all cache entries are fresh, no fetch is made."""
-        from hermes_cli.model_switch import _prefetch_provider_models_parallel
+        from auraforge_cli.model_switch import _prefetch_provider_models_parallel
 
         fresh_cache = {
             "openrouter": {"fp": "fp", "at": time.time(), "models": ["m1"]},
             "anthropic": {"fp": "fp", "at": time.time(), "models": ["m2"]},
         }
 
-        with patch("hermes_cli.models._load_provider_models_cache", return_value=fresh_cache), \
-             patch("hermes_cli.models._credential_fingerprint", return_value="fp"), \
-             patch("hermes_cli.models.cached_provider_model_ids") as fetch:
+        with patch("auraforge_cli.models._load_provider_models_cache", return_value=fresh_cache), \
+             patch("auraforge_cli.models._credential_fingerprint", return_value="fp"), \
+             patch("auraforge_cli.models.cached_provider_model_ids") as fetch:
             _prefetch_provider_models_parallel(["openrouter", "anthropic"])
 
         fetch.assert_not_called()
 
     def test_fetches_only_stale_entries(self, monkeypatch):
         """Only providers with stale/missing cache entries are fetched."""
-        from hermes_cli.model_switch import _prefetch_provider_models_parallel
+        from auraforge_cli.model_switch import _prefetch_provider_models_parallel
 
         cache = {
             "fresh_prov": {"fp": "fp_f", "at": time.time(), "models": ["m1"]},
@@ -129,10 +129,10 @@ class TestPrefetchProviderModelsParallel:
             fetch_calls.append(slug)
             return [f"model_{slug}"]
 
-        with patch("hermes_cli.models._load_provider_models_cache", return_value=cache), \
-             patch("hermes_cli.models._credential_fingerprint", return_value="fp_f"), \
-             patch("hermes_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
-             patch("hermes_cli.models.update_provider_cache_entry"):
+        with patch("auraforge_cli.models._load_provider_models_cache", return_value=cache), \
+             patch("auraforge_cli.models._credential_fingerprint", return_value="fp_f"), \
+             patch("auraforge_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
+             patch("auraforge_cli.models.update_provider_cache_entry"):
             _prefetch_provider_models_parallel(["fresh_prov", "stale_prov"])
 
         assert "fresh_prov" not in fetch_calls
@@ -140,7 +140,7 @@ class TestPrefetchProviderModelsParallel:
 
     def test_fetches_in_parallel(self, monkeypatch):
         """Multiple providers are fetched concurrently, not serially."""
-        from hermes_cli.model_switch import _prefetch_provider_models_parallel
+        from auraforge_cli.model_switch import _prefetch_provider_models_parallel
 
         # Track overlap: if serial, no two fetches should overlap in time.
         active = []
@@ -158,33 +158,33 @@ class TestPrefetchProviderModelsParallel:
 
         slugs = [f"prov_{i}" for i in range(6)]
 
-        with patch("hermes_cli.models._load_provider_models_cache", return_value={}), \
-             patch("hermes_cli.models._credential_fingerprint", return_value="fp"), \
-             patch("hermes_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
-             patch("hermes_cli.models.update_provider_cache_entry"):
+        with patch("auraforge_cli.models._load_provider_models_cache", return_value={}), \
+             patch("auraforge_cli.models._credential_fingerprint", return_value="fp"), \
+             patch("auraforge_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
+             patch("auraforge_cli.models.update_provider_cache_entry"):
             _prefetch_provider_models_parallel(slugs)
 
         assert max_concurrent[0] > 1, "fetches were serial, not parallel"
 
     def test_swallows_exceptions(self):
         """A failing provider fetch doesn't raise — best-effort."""
-        from hermes_cli.model_switch import _prefetch_provider_models_parallel
+        from auraforge_cli.model_switch import _prefetch_provider_models_parallel
 
         def mock_fetch(slug, force_refresh=False):
             raise ConnectionError("simulated network failure")
 
-        with patch("hermes_cli.models._load_provider_models_cache", return_value={}), \
-             patch("hermes_cli.models._credential_fingerprint", return_value="fp"), \
-             patch("hermes_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
-             patch("hermes_cli.models.update_provider_cache_entry"):
+        with patch("auraforge_cli.models._load_provider_models_cache", return_value={}), \
+             patch("auraforge_cli.models._credential_fingerprint", return_value="fp"), \
+             patch("auraforge_cli.models.cached_provider_model_ids", side_effect=mock_fetch), \
+             patch("auraforge_cli.models.update_provider_cache_entry"):
             # Should not raise
             _prefetch_provider_models_parallel(["failing_prov"])
 
     def test_empty_list_is_noop(self):
         """Empty provider list does nothing."""
-        from hermes_cli.model_switch import _prefetch_provider_models_parallel
+        from auraforge_cli.model_switch import _prefetch_provider_models_parallel
 
-        with patch("hermes_cli.models.cached_provider_model_ids") as fetch:
+        with patch("auraforge_cli.models.cached_provider_model_ids") as fetch:
             _prefetch_provider_models_parallel([])
         fetch.assert_not_called()
 
@@ -198,7 +198,7 @@ class TestPrefetchIntegration:
 
     def test_prefetch_called_with_more_than_3_providers(self):
         """When >3 providers are authed, parallel prefetch is invoked."""
-        from hermes_cli import model_switch
+        from auraforge_cli import model_switch
 
         slugs = [f"prov_{i}" for i in range(5)]
         captured_slugs = []
@@ -219,7 +219,7 @@ class TestPrefetchIntegration:
 
     def test_prefetch_skipped_with_3_or_fewer_providers(self):
         """When ≤3 providers are authed, parallel prefetch is skipped."""
-        from hermes_cli import model_switch
+        from auraforge_cli import model_switch
 
         slugs = ["prov_a", "prov_b"]
 
@@ -237,7 +237,7 @@ class TestPrefetchIntegration:
 
     def test_prefetch_skipped_on_refresh(self):
         """When refresh=True, prefetch is skipped (serial path force-refreshes)."""
-        from hermes_cli import model_switch
+        from auraforge_cli import model_switch
 
         with patch.object(model_switch, "_collect_authed_provider_slugs") as collect, \
              patch.object(model_switch, "_prefetch_provider_models_parallel") as prefetch:

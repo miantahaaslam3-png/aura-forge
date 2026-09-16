@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.plugins_cmd — the ``auraforge plugins`` CLI subcommand."""
+"""Tests for auraforge_cli.plugins_cmd — the ``auraforge plugins`` CLI subcommand."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from hermes_cli.plugins_cmd import (
+from auraforge_cli.plugins_cmd import (
     PluginOperationError,
     _copy_example_files,
     _read_manifest,
@@ -123,14 +123,14 @@ class TestResolveGitExecutable:
         _resolve_git_executable.cache_clear()
 
     def test_prefers_shutil_which(self):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         _resolve_git_executable.cache_clear()
         with patch.object(pc.shutil, "which", return_value="/usr/local/bin/git"):
             assert pc._resolve_git_executable() == "/usr/local/bin/git"
 
     def test_fallback_posix_first_matching_path(self):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         _resolve_git_executable.cache_clear()
 
@@ -144,7 +144,7 @@ class TestResolveGitExecutable:
 
 
     def test_git_pull_uses_resolved_executable(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         _resolve_git_executable.cache_clear()
         with patch.object(
@@ -167,7 +167,7 @@ class TestResolveGitExecutable:
         assert run.call_args_list[1].args[0][1:] == ["pull", "--ff-only"]
 
     def test_git_pull_clean_tree_never_stashes(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         _resolve_git_executable.cache_clear()
         with patch.object(pc, "_resolve_git_executable", return_value="/g"):
@@ -222,7 +222,7 @@ class TestGitPullPluginDirAutostash:
         f.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def test_dirty_checkout_pulls_and_reapplies_local_edit(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         if not pc._resolve_git_executable():
             pytest.skip("git not available")
@@ -243,7 +243,7 @@ class TestGitPullPluginDirAutostash:
         assert git(checkout, "stash", "list").strip() == ""
 
     def test_conflicting_local_edit_is_preserved_in_stash(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         if not pc._resolve_git_executable():
             pytest.skip("git not available")
@@ -268,7 +268,7 @@ class TestGitPullPluginDirAutostash:
         assert "VALUE = 99" in stash_diff
 
     def test_untracked_local_file_survives_update(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         if not pc._resolve_git_executable():
             pytest.skip("git not available")
@@ -284,7 +284,7 @@ class TestGitPullPluginDirAutostash:
         assert "VALUE = 2" in (checkout / "plugin.py").read_text(encoding="utf-8")
 
     def test_clean_checkout_unchanged_behavior(self, tmp_path):
-        import hermes_cli.plugins_cmd as pc
+        import auraforge_cli.plugins_cmd as pc
 
         if not pc._resolve_git_executable():
             pytest.skip("git not available")
@@ -325,7 +325,7 @@ class TestReadManifest:
 
     def test_invalid_yaml_returns_empty_and_logs(self, tmp_path, caplog):
         (tmp_path / "plugin.yaml").write_text(": : : bad yaml [[[", encoding="utf-8")
-        with caplog.at_level(logging.WARNING, logger="hermes_cli.plugins_cmd"):
+        with caplog.at_level(logging.WARNING, logger="auraforge_cli.plugins_cmd"):
             result = _read_manifest(tmp_path)
         assert result == {}
         assert any("Failed to read plugin.yaml" in r.message for r in caplog.records)
@@ -343,14 +343,14 @@ class TestCmdInstall:
     """Test the install command."""
 
     def test_install_requires_identifier(self):
-        from hermes_cli.plugins_cmd import cmd_install
+        from auraforge_cli.plugins_cmd import cmd_install
 
         with pytest.raises(SystemExit):
             cmd_install("")
 
-    @patch("hermes_cli.plugins_cmd._resolve_git_url")
+    @patch("auraforge_cli.plugins_cmd._resolve_git_url")
     def test_install_validates_identifier(self, mock_resolve):
-        from hermes_cli.plugins_cmd import cmd_install
+        from auraforge_cli.plugins_cmd import cmd_install
 
         mock_resolve.side_effect = ValueError("Invalid identifier")
 
@@ -358,12 +358,12 @@ class TestCmdInstall:
             cmd_install("invalid")
         assert exc_info.value.code == 1
 
-    @patch("hermes_cli.plugins_cmd._display_after_install")
-    @patch("hermes_cli.plugins_cmd.shutil.move")
-    @patch("hermes_cli.plugins_cmd.shutil.rmtree")
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
-    @patch("hermes_cli.plugins_cmd._read_manifest")
-    @patch("hermes_cli.plugins_cmd.subprocess.run")
+    @patch("auraforge_cli.plugins_cmd._display_after_install")
+    @patch("auraforge_cli.plugins_cmd.shutil.move")
+    @patch("auraforge_cli.plugins_cmd.shutil.rmtree")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd._read_manifest")
+    @patch("auraforge_cli.plugins_cmd.subprocess.run")
     def test_install_rejects_manifest_name_pointing_at_plugins_root(
         self,
         mock_run,
@@ -374,7 +374,7 @@ class TestCmdInstall:
         mock_display_after_install,
         tmp_path,
     ):
-        from hermes_cli.plugins_cmd import cmd_install
+        from auraforge_cli.plugins_cmd import cmd_install
 
         plugins_dir = tmp_path / "plugins"
         plugins_dir.mkdir()
@@ -397,11 +397,11 @@ class TestCmdInstall:
 class TestCmdUpdate:
     """Test the update command."""
 
-    @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
-    @patch("hermes_cli.plugins_cmd.subprocess.run")
+    @patch("auraforge_cli.plugins_cmd._sanitize_plugin_name")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd.subprocess.run")
     def test_update_git_pull_success(self, mock_run, mock_plugins_dir, mock_sanitize):
-        from hermes_cli.plugins_cmd import cmd_update
+        from auraforge_cli.plugins_cmd import cmd_update
 
         mock_plugins_dir_val = MagicMock()
         mock_plugins_dir.return_value = mock_plugins_dir_val
@@ -421,10 +421,10 @@ class TestCmdUpdate:
 
         assert mock_run.call_count == 2
 
-    @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd._sanitize_plugin_name")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
     def test_update_plugin_not_found(self, mock_plugins_dir, mock_sanitize):
-        from hermes_cli.plugins_cmd import cmd_update
+        from auraforge_cli.plugins_cmd import cmd_update
 
         mock_plugins_dir_val = MagicMock()
         mock_plugins_dir_val.iterdir.return_value = []
@@ -445,11 +445,11 @@ class TestCmdUpdate:
 class TestCmdRemove:
     """Test the remove command."""
 
-    @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
-    @patch("hermes_cli.plugins_cmd.shutil.rmtree")
+    @patch("auraforge_cli.plugins_cmd._sanitize_plugin_name")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd.shutil.rmtree")
     def test_remove_deletes_plugin(self, mock_rmtree, mock_plugins_dir, mock_sanitize):
-        from hermes_cli.plugins_cmd import cmd_remove
+        from auraforge_cli.plugins_cmd import cmd_remove
 
         mock_plugins_dir.return_value = MagicMock()
         mock_target = MagicMock()
@@ -460,10 +460,10 @@ class TestCmdRemove:
 
         mock_rmtree.assert_called_once_with(mock_target)
 
-    @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd._sanitize_plugin_name")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
     def test_remove_plugin_not_found(self, mock_plugins_dir, mock_sanitize):
-        from hermes_cli.plugins_cmd import cmd_remove
+        from auraforge_cli.plugins_cmd import cmd_remove
 
         mock_plugins_dir_val = MagicMock()
         mock_plugins_dir_val.iterdir.return_value = []
@@ -484,9 +484,9 @@ class TestCmdRemove:
 class TestCmdList:
     """Test the list command."""
 
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
     def test_list_empty_plugins_dir(self, mock_plugins_dir):
-        from hermes_cli.plugins_cmd import cmd_list
+        from auraforge_cli.plugins_cmd import cmd_list
 
         mock_plugins_dir_val = MagicMock()
         mock_plugins_dir_val.iterdir.return_value = []
@@ -494,10 +494,10 @@ class TestCmdList:
 
         cmd_list()
 
-    @patch("hermes_cli.plugins_cmd._plugins_dir")
-    @patch("hermes_cli.plugins_cmd._read_manifest")
+    @patch("auraforge_cli.plugins_cmd._plugins_dir")
+    @patch("auraforge_cli.plugins_cmd._read_manifest")
     def test_list_with_plugins(self, mock_read_manifest, mock_plugins_dir):
-        from hermes_cli.plugins_cmd import cmd_list
+        from auraforge_cli.plugins_cmd import cmd_list
 
         mock_plugins_dir_val = MagicMock()
         mock_plugin_dir = MagicMock()
@@ -546,7 +546,7 @@ class TestCopyExampleFiles:
 
         # Mock shutil.copy2 to raise an error
         with patch(
-            "hermes_cli.plugins_cmd.shutil.copy2",
+            "auraforge_cli.plugins_cmd.shutil.copy2",
             side_effect=OSError("Permission denied"),
         ):
             # Should not raise, just warn
@@ -563,7 +563,7 @@ class TestPromptPluginEnvVars:
 
 
     def test_prompts_for_missing_var_rich_format(self):
-        from hermes_cli.plugins_cmd import _prompt_plugin_env_vars
+        from auraforge_cli.plugins_cmd import _prompt_plugin_env_vars
         from unittest.mock import MagicMock, patch
 
         console = MagicMock()
@@ -579,9 +579,9 @@ class TestPromptPluginEnvVars:
             ],
         }
 
-        with patch("hermes_cli.config.get_env_value", return_value=None), \
+        with patch("auraforge_cli.config.get_env_value", return_value=None), \
              patch("builtins.input", return_value="pk-lf-123"), \
-             patch("hermes_cli.config.save_env_value") as mock_save:
+             patch("auraforge_cli.config.save_env_value") as mock_save:
             _prompt_plugin_env_vars(manifest, console)
 
         mock_save.assert_called_once_with("LANGFUSE_PUBLIC_KEY", "pk-lf-123")
@@ -590,7 +590,7 @@ class TestPromptPluginEnvVars:
         assert "langfuse.com" in printed
 
     def test_secret_uses_masked_prompt(self):
-        from hermes_cli.plugins_cmd import _prompt_plugin_env_vars
+        from auraforge_cli.plugins_cmd import _prompt_plugin_env_vars
         from unittest.mock import MagicMock, patch
 
         console = MagicMock()
@@ -599,9 +599,9 @@ class TestPromptPluginEnvVars:
             "requires_env": [{"name": "SECRET_KEY", "secret": True}],
         }
 
-        with patch("hermes_cli.config.get_env_value", return_value=None), \
-             patch("hermes_cli.plugins_cmd.masked_secret_prompt", return_value="s3cret") as mock_prompt, \
-             patch("hermes_cli.config.save_env_value"):
+        with patch("auraforge_cli.config.get_env_value", return_value=None), \
+             patch("auraforge_cli.plugins_cmd.masked_secret_prompt", return_value="s3cret") as mock_prompt, \
+             patch("auraforge_cli.config.save_env_value"):
             _prompt_plugin_env_vars(manifest, console)
 
         mock_prompt.assert_called_once()
@@ -616,7 +616,7 @@ class TestCursesRadiolist:
     """Test the curses_radiolist function."""
 
     def test_non_tty_returns_default(self):
-        from hermes_cli.curses_ui import curses_radiolist
+        from auraforge_cli.curses_ui import curses_radiolist
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = False
             result = curses_radiolist("Pick one", ["a", "b", "c"], selected=1)
@@ -636,7 +636,7 @@ class TestProviderDiscovery:
         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
         config_file = tmp_path / "config.yaml"
         config_file.write_text("context:\n  engine: compressor\n", encoding="utf-8")
-        from hermes_cli.plugins_cmd import _save_context_engine
+        from auraforge_cli.plugins_cmd import _save_context_engine
         _save_context_engine("lcm")
         content = yaml.safe_load(config_file.read_text(encoding="utf-8"))
         assert content["context"]["engine"] == "lcm"
@@ -646,7 +646,7 @@ class TestProviderDiscovery:
         """Discovery returns empty list when import fails."""
         with patch("plugins.context_engine.discover_context_engines",
                     side_effect=ImportError("no module")):
-            from hermes_cli.plugins_cmd import _discover_context_engines
+            from auraforge_cli.plugins_cmd import _discover_context_engines
             result = _discover_context_engines()
             assert result == []
 
@@ -717,7 +717,7 @@ class TestSubdirInstallE2E:
         if shutil.which("git") is None:
             pytest.skip("git not available")
 
-        from hermes_cli import plugins_cmd as pc
+        from auraforge_cli import plugins_cmd as pc
 
         repo_root = tmp_path / "monorepo"
         self._make_repo_with_subdir_plugin(repo_root)
@@ -745,7 +745,7 @@ class TestSubdirInstallE2E:
         if shutil.which("git") is None:
             pytest.skip("git not available")
 
-        from hermes_cli import plugins_cmd as pc
+        from auraforge_cli import plugins_cmd as pc
 
         repo_root = tmp_path / "monorepo"
         self._make_repo_with_subdir_plugin(repo_root)
@@ -764,8 +764,8 @@ class TestSubdirInstallE2E:
 
         import json
         import subprocess as sp
-        from hermes_cli import plugins_cmd as pc
-        from hermes_cli.agent_plugins import PLUGIN_SCHEMA_V1
+        from auraforge_cli import plugins_cmd as pc
+        from auraforge_cli.agent_plugins import PLUGIN_SCHEMA_V1
 
         repo_root = tmp_path / "portable-repo"
         repo_root.mkdir()
@@ -799,8 +799,8 @@ class TestSubdirInstallE2E:
 def test_portable_manifest_is_visible_to_plugin_cli(tmp_path):
     import json
 
-    from hermes_cli.agent_plugins import PLUGIN_SCHEMA_V1
-    from hermes_cli.plugins_cmd import _read_manifest_info
+    from auraforge_cli.agent_plugins import PLUGIN_SCHEMA_V1
+    from auraforge_cli.plugins_cmd import _read_manifest_info
 
     plugin = tmp_path / "portable"
     plugin.mkdir()

@@ -12,8 +12,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from hermes_constants import reset_hermes_home_override, set_hermes_home_override
-from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
+from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
 
 def _context(
@@ -162,7 +162,7 @@ def test_concurrent_config_writes_do_not_drop_sibling_settings(
 def test_config_cross_process_lock_preserves_every_setting(isolated_home: Path) -> None:
     script = """
 import sys
-from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 ctx = PluginContext(PluginManifest(name='fixture-plugin'), PluginManager())
 for i in range(int(sys.argv[1]), int(sys.argv[2])):
     ctx.set_config(f'process_{i}', i)
@@ -233,7 +233,7 @@ def test_concurrent_state_updates_do_not_drop_keys(isolated_home: Path) -> None:
 def test_state_cross_process_lock_preserves_every_update(isolated_home: Path) -> None:
     script = """
 import sys
-from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 ctx = PluginContext(PluginManifest(name='fixture-plugin'), PluginManager())
 for i in range(int(sys.argv[1]), int(sys.argv[2])):
     ctx.state.set(f'process_{i}', i)

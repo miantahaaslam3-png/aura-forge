@@ -11,8 +11,8 @@ import os
 
 import yaml
 
-from hermes_cli.cli_commands_mixin import CLICommandsMixin
-from hermes_cli.config import DEFAULT_CONFIG
+from auraforge_cli.cli_commands_mixin import CLICommandsMixin
+from auraforge_cli.config import DEFAULT_CONFIG
 
 
 class _Stub(CLICommandsMixin):

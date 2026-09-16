@@ -102,7 +102,7 @@ class TestChatParserOneshotFlag:
     """The chat subcommand's --oneshot must not collide with top-level -z."""
 
     def _parse(self, argv):
-        from hermes_cli._parser import build_top_level_parser
+        from auraforge_cli._parser import build_top_level_parser
 
         parser, _subparsers, _chat = build_top_level_parser()
         return parser.parse_args(argv)

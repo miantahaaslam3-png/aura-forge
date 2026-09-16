@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli.console_engine import HermesConsoleEngine, run_console_repl
+from auraforge_cli.console_engine import HermesConsoleEngine, run_console_repl
 
 
 EXPECTED_CONSOLE_COMMANDS = {
@@ -242,7 +242,7 @@ MUTATING_CONFIRMATION_SMOKE_COMMANDS = [
 
 
 def test_sessions_list_and_stats_use_isolated_session_store(_isolate_hermes_home):
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     try:
@@ -267,8 +267,8 @@ def test_sessions_export_rejects_oversized_single_before_touching_output(
     monkeypatch,
     tmp_path,
 ):
-    import hermes_state
-    from hermes_state import SessionDB
+    import auraforge_state
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     try:
@@ -280,7 +280,7 @@ def test_sessions_export_rejects_oversized_single_before_touching_output(
     finally:
         db.close()
 
-    monkeypatch.setattr(hermes_state, "resolved_max_export_messages", lambda: 2)
+    monkeypatch.setattr(auraforge_state, "resolved_max_export_messages", lambda: 2)
     materialized = []
     original_export_session = SessionDB.export_session
 
@@ -317,8 +317,8 @@ def test_sessions_export_all_uses_per_session_budget(
     """
     import json
 
-    import hermes_state
-    from hermes_state import SessionDB
+    import auraforge_state
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     try:
@@ -331,7 +331,7 @@ def test_sessions_export_all_uses_per_session_budget(
     finally:
         db.close()
 
-    monkeypatch.setattr(hermes_state, "resolved_max_export_messages", lambda: 3)
+    monkeypatch.setattr(auraforge_state, "resolved_max_export_messages", lambda: 3)
     output = tmp_path / "all-sessions.jsonl"
 
     # 3 sessions x 2 messages = 6 total > 3, but each session is under the
@@ -358,8 +358,8 @@ def test_sessions_export_all_rejects_single_oversized_session(
     monkeypatch,
     tmp_path,
 ):
-    import hermes_state
-    from hermes_state import SessionDB
+    import auraforge_state
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     try:
@@ -376,7 +376,7 @@ def test_sessions_export_all_rejects_single_oversized_session(
     finally:
         db.close()
 
-    monkeypatch.setattr(hermes_state, "resolved_max_export_messages", lambda: 3)
+    monkeypatch.setattr(auraforge_state, "resolved_max_export_messages", lambda: 3)
     export_all_calls = []
 
     def tracked_export_all(self, source=None):
@@ -405,8 +405,8 @@ def test_sessions_export_zero_limit_disables_guard(
     monkeypatch,
     tmp_path,
 ):
-    import hermes_state
-    from hermes_state import SessionDB
+    import auraforge_state
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     try:
@@ -418,7 +418,7 @@ def test_sessions_export_zero_limit_disables_guard(
     finally:
         db.close()
 
-    monkeypatch.setattr(hermes_state, "resolved_max_export_messages", lambda: 0)
+    monkeypatch.setattr(auraforge_state, "resolved_max_export_messages", lambda: 0)
     output = tmp_path / "huge.jsonl"
 
     result = HermesConsoleEngine().execute(
@@ -477,7 +477,7 @@ def test_repl_runs_non_interactive_lines_without_prompts(_isolate_hermes_home):
 
 
 def test_capture_output_surfaces_string_exit_code_as_command_error():
-    from hermes_cli.console_engine import ConsoleCommandError, _capture_output
+    from auraforge_cli.console_engine import ConsoleCommandError, _capture_output
 
     def _boom():
         sys.exit("No credential matching \"nope\".")
@@ -489,7 +489,7 @@ def test_capture_output_surfaces_string_exit_code_as_command_error():
 
 
 def test_capture_output_preserves_integer_exit_code_message():
-    from hermes_cli.console_engine import ConsoleCommandError, _capture_output
+    from auraforge_cli.console_engine import ConsoleCommandError, _capture_output
 
     with pytest.raises(ConsoleCommandError) as exc_info:
         _capture_output(lambda: sys.exit(3))

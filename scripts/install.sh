@@ -563,7 +563,7 @@ install_uv() {
 
     # Aura Forge owns its own uv at $AURA_FORGE_HOME/bin/uv.  Always install there —
     # no PATH probing, no conda guards, no multi-location resolution chains.
-    # The runtime update path (hermes_cli/managed_uv.py) looks in the same
+    # The runtime update path (auraforge_cli/managed_uv.py) looks in the same
     # place, so install.sh and `hermes update` stay in sync.
     local _managed_uv="$AURA_FORGE_HOME/bin/uv"
 
@@ -1749,7 +1749,7 @@ install_deps() {
         # one subprocess while keeping ambient user/system uv config hidden
         # (redirected to an empty XDG dir), preserving the #21269 guarantee.
         # Runtime code does the same before its locked syncs
-        # (hermes_cli/managed_uv.py).
+        # (auraforge_cli/managed_uv.py).
         if run_locked_uv_sync "$INSTALL_DIR/venv"; then
             log_success "Main package installed (hash-verified via uv.lock)"
             log_success "All dependencies installed"
@@ -1794,7 +1794,7 @@ try:
     specs = data["project"]["optional-dependencies"]["all"]
     extras = []
     for s in specs:
-        m = re.search(r"hermes-agent\[([\w-]+)\]", s)
+        m = re.search(r"aura-forge-agent\[([\w-]+)\]", s)
         if m:
             extras.append(m.group(1))
     print(",".join(extras))
@@ -2140,7 +2140,7 @@ copy_config_templates() {
     fi
 
     # Create SOUL.md if it doesn't exist (global persona file).
-    # This MUST match DEFAULT_SOUL_MD in hermes_cli/default_soul.py — the
+    # This MUST match DEFAULT_SOUL_MD in auraforge_cli/default_soul.py — the
     # runtime (_ensure_default_soul_md) treats the old comment-only scaffold as
     # "never customized" and upgrades it to this text on next run, so any drift
     # here is self-healing, but keep them in sync to avoid a churn on first run.
@@ -2764,9 +2764,9 @@ run_setup_wizard() {
     # Run hermes setup using the venv Python directly (no activation needed).
     # Redirect stdin from /dev/tty so interactive prompts work when piped from curl.
     if [ "$USE_VENV" = true ]; then
-        "$INSTALL_DIR/venv/bin/python" -m hermes_cli.main setup < /dev/tty
+        "$INSTALL_DIR/venv/bin/python" -m auraforge_cli.main setup < /dev/tty
     else
-        python -m hermes_cli.main setup < /dev/tty
+        python -m auraforge_cli.main setup < /dev/tty
     fi
 }
 
@@ -2868,7 +2868,7 @@ maybe_start_gateway() {
 }
 
 write_bootstrap_marker() {
-    # Writes $INSTALL_DIR/.hermes-bootstrap-complete, which tells the Aura Forge
+    # Writes $INSTALL_DIR/.auraforge-bootstrap-complete, which tells the Aura Forge
     # desktop app (apps/desktop/electron/main.ts) and the macOS launcher fast
     # path (apps/bootstrap-installer) "a real install finished here -- don't
     # re-run first-run bootstrap."
@@ -2897,7 +2897,7 @@ write_bootstrap_marker() {
         return 0
     fi
 
-    local marker_path="$INSTALL_DIR/.hermes-bootstrap-complete"
+    local marker_path="$INSTALL_DIR/.auraforge-bootstrap-complete"
     local tmp_path="$marker_path.tmp"
 
     # Atomic publish: the macOS launcher predicate only checks existence, so a
@@ -3462,7 +3462,7 @@ install_desktop() {
             if AURA_FORGE_HOME="$AURA_FORGE_HOME" "$config_python" - "$desktop_dir" <<'PYEOF'
 import sys
 from pathlib import Path
-from hermes_cli.main import _desktop_macos_relaunchable_fixup
+from auraforge_cli.main import _desktop_macos_relaunchable_fixup
 ok = _desktop_macos_relaunchable_fixup(
     Path(sys.argv[1]), publisher_signing_configured=False
 )

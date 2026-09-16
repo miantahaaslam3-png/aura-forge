@@ -1,13 +1,13 @@
-"""Unit tests for hermes_cli.win_pty_bridge — ConPTY spawning + byte forwarding.
+"""Unit tests for auraforge_cli.win_pty_bridge — ConPTY spawning + byte forwarding.
 
-Windows-only counterpart to tests/hermes_cli/test_pty_bridge.py.  Drives
+Windows-only counterpart to tests/auraforge_cli/test_pty_bridge.py.  Drives
 ``WinPtyBridge`` with minimal Windows processes (``cmd.exe``, ``python -c …``)
 to verify it behaves like a PTY you can read/write/resize/close, then a small
 set of platform-fallback assertions (``is_available``, ``PtyUnavailableError``)
 that run on every OS so the import surface stays exercised in CI.
 
 The bridge is the ConPTY backend behind the dashboard ``/chat`` tab — see
-``hermes_cli/web_server.py`` ``/api/pty`` handler — so these tests are the
+``auraforge_cli/web_server.py`` ``/api/pty`` handler — so these tests are the
 unit-level half of the integration check that the dashboard chat pane is
 actually live on native Windows.
 """
@@ -23,7 +23,7 @@ import pytest
 # WinPtyBridge can be imported on every platform — ``is_available`` just
 # returns False when pywinpty isn't usable.  Importing the module itself
 # must never raise, otherwise the web_server import branch becomes a trap.
-from hermes_cli.win_pty_bridge import PtyUnavailableError, WinPtyBridge
+from auraforge_cli.win_pty_bridge import PtyUnavailableError, WinPtyBridge
 
 # ``pytest.mark.windows_only`` rather than a local ``skipif`` alias: the
 # dedicated Windows CI job selects its files by grepping for the marker name
@@ -65,7 +65,7 @@ class TestWinPtyBridgeUnavailable:
 
     def test_bridge_class_is_importable(self):
         # The platform-branched import in web_server.py relies on this:
-        #     from hermes_cli.win_pty_bridge import WinPtyBridge, PtyUnavailableError
+        #     from auraforge_cli.win_pty_bridge import WinPtyBridge, PtyUnavailableError
         # Both symbols must always exist; ``is_available()`` is the gate.
         assert WinPtyBridge is not None
         assert callable(WinPtyBridge.is_available)
@@ -172,14 +172,14 @@ class TestClampDimension:
     setwinsize will happily raise on out-of-range u16 values."""
 
     def test_clamps_above_max(self):
-        from hermes_cli.win_pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp
+        from auraforge_cli.win_pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp
 
         assert _clamp(131072, _MAX_COLS) == _MAX_COLS
         assert _clamp(131072, _MAX_ROWS) == _MAX_ROWS
 
 
     def test_non_numeric_falls_back_to_min(self):
-        from hermes_cli.win_pty_bridge import _MAX_COLS, _clamp
+        from auraforge_cli.win_pty_bridge import _MAX_COLS, _clamp
 
         assert _clamp(None, _MAX_COLS) == 1  # type: ignore[arg-type]
         assert _clamp("not-a-number", _MAX_COLS) == 1  # type: ignore[arg-type]

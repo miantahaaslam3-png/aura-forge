@@ -28,7 +28,7 @@ def _run_hermes(home: Path, *args: str, marker: bool = False) -> subprocess.Comp
     else:
         env.pop("HERMES_DELEGATED_CHILD_CONTEXT", None)
     return subprocess.run(
-        [sys.executable, "-m", "hermes_cli.main", *args],
+        [sys.executable, "-m", "auraforge_cli.main", *args],
         cwd=ROOT,
         env=env,
         capture_output=True,

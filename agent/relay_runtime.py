@@ -18,8 +18,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable
 
-from hermes_constants import get_hermes_home
-from hermes_cli.relay_plugin_cutover import (
+from auraforge_constants import get_hermes_home
+from auraforge_cli.relay_plugin_cutover import (
     RELAY_PLUGINS_CONFIG_ENV,
     configured_legacy_relay_env_vars,
 )

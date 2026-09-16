@@ -21,7 +21,7 @@ import threading
 
 import pytest
 
-from hermes_cli.plugins import (
+from auraforge_cli.plugins import (
     _EVENT_EMIT_DEPTH_CAP,
     PluginContext,
     PluginManager,
@@ -237,7 +237,7 @@ def test_emit_returns_before_blocking_subscriber_finishes():
 
 
 def test_pending_budget_drops_new_event_without_blocking(monkeypatch, caplog):
-    from hermes_cli import plugins as plugins_mod
+    from auraforge_cli import plugins as plugins_mod
 
     monkeypatch.setattr(plugins_mod, "_EVENT_PENDING_CAP", 1)
     manager = _fresh_manager()
@@ -469,7 +469,7 @@ def test_manifest_parse_absent_emits_listens(tmp_path):
 
 
 def test_get_plugin_subscriptions_accessor(monkeypatch):
-    from hermes_cli import plugins as plugins_mod
+    from auraforge_cli import plugins as plugins_mod
 
     fresh = _fresh_manager()
     monkeypatch.setattr(plugins_mod, "_ensure_plugins_discovered", lambda force=False: fresh)
@@ -487,7 +487,7 @@ def test_get_plugin_subscriptions_accessor(monkeypatch):
 
 def test_plugins_show_includes_emits_listens(tmp_path, monkeypatch, capsys):
     import yaml
-    from hermes_cli import plugins_cmd
+    from auraforge_cli import plugins_cmd
 
     plugin_dir = tmp_path / "showplug"
     plugin_dir.mkdir()
@@ -522,7 +522,7 @@ def test_plugins_show_includes_emits_listens(tmp_path, monkeypatch, capsys):
 
 
 def test_plugins_show_not_found_exits(monkeypatch, capsys):
-    from hermes_cli import plugins_cmd
+    from auraforge_cli import plugins_cmd
 
     monkeypatch.setattr(plugins_cmd, "_discover_all_plugins", lambda: [])
     with pytest.raises(SystemExit):

@@ -33,12 +33,12 @@ except ImportError:  # pragma: no cover - non-Windows
     msvcrt = None
 from datetime import datetime, timedelta
 from pathlib import Path
-from hermes_constants import get_hermes_home
+from auraforge_constants import get_hermes_home
 from typing import Optional, Dict, List, Any, Set, Tuple, Union, Collection
 
 logger = logging.getLogger(__name__)
 
-from hermes_time import now as _hermes_now
+from auraforge_time import now as _hermes_now
 from utils import atomic_replace, atomic_write_text
 
 # ``croniter`` compiles ~15 ms of regexes at import and only matters for
@@ -94,7 +94,7 @@ TICKER_HEARTBEAT_FILE = CRON_DIR / "ticker_heartbeat"
 TICKER_SUCCESS_FILE = CRON_DIR / "ticker_last_success"
 # Default ticker loop interval (seconds). The single source of truth shared by
 # the in-process ticker (cron/scheduler_provider.py) and the staleness
-# threshold in `auraforge cron status` (hermes_cli/cron.py), so the two never
+# threshold in `auraforge cron status` (auraforge_cli/cron.py), so the two never
 # drift apart.
 TICKER_INTERVAL_SECONDS = 60
 
@@ -856,7 +856,7 @@ def parse_schedule(schedule: str) -> Dict[str, Any]:
             #
             # Anchor to the CONFIGURED Aura Forge timezone, not the server's local
             # timezone. The due-check (`get_due_jobs`) compares `next_run_at`
-            # against `hermes_time.now()`, which uses the configured zone. If a
+            # against `auraforge_time.now()`, which uses the configured zone. If a
             # naive "20:07" were interpreted as server-local (e.g. UTC) while
             # now() runs in Asia/Kolkata, the stored instant would land hours
             # off from the user's wall-clock intent — far enough that one-shots
@@ -1821,14 +1821,14 @@ def _resolve_default_model_snapshot() -> Optional[str]:
     or resolution fails (fail-open — caller treats ``None`` as "no snapshot").
     """
     try:
-        from hermes_cli.config import _expand_env_vars, read_user_config_raw
+        from auraforge_cli.config import _expand_env_vars, read_user_config_raw
 
         cfg_path = get_hermes_home() / "config.yaml"
         if not cfg_path.exists():
             return None
         cfg = read_user_config_raw(cfg_path)
         try:
-            from hermes_cli import managed_scope
+            from auraforge_cli import managed_scope
             cfg = managed_scope.apply_managed_overlay(cfg)
         except Exception:
             pass
@@ -1865,7 +1865,7 @@ def _normalize_reasoning_effort(value: Any) -> Optional[str]:
     """Validate a per-job reasoning effort against the canonical grammar.
 
     Spelling-only validation at the storage choke point: the SAME parser
-    every other effort surface uses (``hermes_constants.parse_reasoning_effort``)
+    every other effort surface uses (``auraforge_constants.parse_reasoning_effort``)
     decides validity, so the cron knob can never be stricter or looser than
     its config.yaml sibling. Capability (whether the resolved model supports
     the level) is intentionally NOT checked here — the model is not knowable
@@ -1881,7 +1881,7 @@ def _normalize_reasoning_effort(value: Any) -> Optional[str]:
     text = str(value).strip().lower()
     if not text:
         return None
-    from hermes_constants import parse_reasoning_effort
+    from auraforge_constants import parse_reasoning_effort
 
     if parse_reasoning_effort(text) is None:
         raise ValueError(
@@ -1923,7 +1923,7 @@ def _compute_provider_model_snapshots(
     model_snapshot: Optional[str] = None
     if normalized_provider is None:
         try:
-            from hermes_cli.runtime_provider import resolve_runtime_provider
+            from auraforge_cli.runtime_provider import resolve_runtime_provider
 
             runtime_kwargs = {"requested": None}
             if normalized_base_url:
@@ -3301,7 +3301,7 @@ def _completed_oneshot_retention_days() -> float:
     sweep, retaining completed one-shot records indefinitely.
     """
     try:
-        from hermes_cli.config import load_config
+        from auraforge_cli.config import load_config
         cfg = load_config() or {}
         cron_cfg = cfg.get("cron", {}) if isinstance(cfg, dict) else {}
         return float(
@@ -3953,7 +3953,7 @@ def _get_due_jobs_locked() -> List[Dict[str, Any]]:
 
 
 # Per-run cron output (`cron/output/<job>/<timestamp>.md`) is written once per
-# execution. Unlike the quick-snapshot store (`hermes_cli.backup`, capped at 20)
+# execution. Unlike the quick-snapshot store (`auraforge_cli.backup`, capped at 20)
 # it had no retention, so a frequently-scheduled job on a long-running deploy
 # accumulated one file per run forever and could fill the disk (#52383). Keep the
 # most recent N files per job; a non-positive value disables pruning (opt-out).
@@ -3963,7 +3963,7 @@ _CRON_OUTPUT_DEFAULT_KEEP = 50
 def _cron_output_keep() -> int:
     """Resolve the per-job output-file retention cap from config (``cron.output_retention``)."""
     try:
-        from hermes_cli.config import load_config
+        from auraforge_cli.config import load_config
         cfg = load_config() or {}
         cron_cfg = cfg.get("cron", {}) if isinstance(cfg, dict) else {}
         return int(cron_cfg.get("output_retention", _CRON_OUTPUT_DEFAULT_KEEP))
@@ -3974,7 +3974,7 @@ def _cron_output_keep() -> int:
 def _prune_job_output(job_output_dir: Path, keep: int) -> int:
     """Remove the oldest ``*.md`` run-output files beyond *keep*. Returns count deleted.
 
-    Mirrors the quick-snapshot retention in ``hermes_cli.backup._prune_quick_snapshots``:
+    Mirrors the quick-snapshot retention in ``auraforge_cli.backup._prune_quick_snapshots``:
     output filenames are timestamp-based (``%Y-%m-%d_%H-%M-%S.md``) so a reverse
     lexical sort orders newest-first, and everything past *keep* is the tail to
     drop. A non-positive *keep* disables pruning. Pruning failures are swallowed

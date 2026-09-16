@@ -1295,7 +1295,7 @@ def interactive_setup() -> None:
 
     Prompts for the WebSocket URL and the optional allowlist / groups /
     auto-accept / home channel. Writes to ``~/.auraforge/.env`` via
-    ``hermes_cli.config``.
+    ``auraforge_cli.config``.
     """
     print()
     print("SimpleX Chat setup")
@@ -1306,10 +1306,10 @@ def interactive_setup() -> None:
     print()
 
     try:
-        from hermes_cli.config import get_env_value, save_env_value
+        from auraforge_cli.config import get_env_value, save_env_value
     except ImportError:
         print(
-            "hermes_cli.config not available; set SIMPLEX_* vars manually in "
+            "auraforge_cli.config not available; set SIMPLEX_* vars manually in "
             "~/.auraforge/.env"
         )
         return
@@ -1319,7 +1319,7 @@ def interactive_setup() -> None:
         suffix = " [keep current]" if existing else ""
         try:
             if secret:
-                from hermes_cli.secret_prompt import masked_secret_prompt
+                from auraforge_cli.secret_prompt import masked_secret_prompt
                 value = masked_secret_prompt(f"{prompt}{suffix}: ")
             else:
                 value = input(f"{prompt}{suffix}: ").strip()

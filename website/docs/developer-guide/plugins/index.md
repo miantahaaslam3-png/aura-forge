@@ -247,7 +247,7 @@ def register(ctx):
 
 Known capability ids: `tools.override`, `llm.provider_override`,
 `llm.model_override`, `llm.agent_id_override`, `llm.profile_override`,
-`llm.task_override` (see `hermes_cli/plugin_capabilities.py` for the
+`llm.task_override` (see `auraforge_cli/plugin_capabilities.py` for the
 canonical registry). Unknown ids are ignored. The older per-capability
 config keys (`plugins.entries.<id>.allow_tool_override`, …) still work but
 are deprecated — declare capabilities instead so users get a single,
@@ -1080,7 +1080,7 @@ def register(ctx):
     ctx.register_middleware("tool_request", cap_find_output)
 ```
 
-The canonical list of kinds is `VALID_MIDDLEWARE` in `hermes_cli/middleware.py`:
+The canonical list of kinds is `VALID_MIDDLEWARE` in `auraforge_cli/middleware.py`:
 
 | Kind | Receives | Return contract |
 |------|----------|-----------------|

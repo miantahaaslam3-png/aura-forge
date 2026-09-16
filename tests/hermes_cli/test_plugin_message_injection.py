@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import yaml
 
-from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
 
 def _context(name: str = "notify-plugin") -> tuple[PluginContext, PluginManager]:
@@ -108,7 +108,7 @@ def test_gateway_injection_fails_closed_when_config_cannot_be_read():
     manager.set_gateway_message_injector(object(), injector)
 
     with patch(
-        "hermes_cli.plugins.load_config_readonly",
+        "auraforge_cli.plugins.load_config_readonly",
         side_effect=OSError("config unavailable"),
     ):
         assert (

@@ -23,7 +23,7 @@ from agent.secret_scope import (
     reset_secret_scope,
     set_secret_scope,
 )
-from hermes_constants import (
+from auraforge_constants import (
     DEFAULT_INDICATOR_STYLE,
     INDICATOR_STYLES,
     get_hermes_home,
@@ -31,7 +31,7 @@ from hermes_constants import (
     reset_hermes_home_override,
     set_hermes_home_override,
 )
-from hermes_cli.env_loader import load_hermes_dotenv
+from auraforge_cli.env_loader import load_hermes_dotenv
 from utils import is_truthy_value
 from tools.environments.local import hermes_subprocess_env
 from agent.replay_cleanup import sanitize_replay_history
@@ -133,7 +133,7 @@ def _thread_panic_hook(args):
 threading.excepthook = _thread_panic_hook
 
 try:
-    from hermes_cli.banner import prefetch_update_check
+    from auraforge_cli.banner import prefetch_update_check
 
     prefetch_update_check()
 except Exception:
@@ -190,7 +190,7 @@ def _resolve_ws_orphan_reap_grace() -> float:
     raw = os.environ.get("HERMES_TUI_WS_ORPHAN_REAP_GRACE_S")
     if raw is None or not str(raw).strip():
         try:
-            from hermes_cli.config import load_config
+            from auraforge_cli.config import load_config
 
             raw = (load_config().get("dashboard") or {}).get(
                 "ws_orphan_reap_grace_s"
@@ -431,7 +431,7 @@ def _prepend_tool_paths(env: dict[str, str]) -> dict[str, str]:
     resolution policy for the Browser Use CLI."""
     managed_bin = ""
     try:
-        from hermes_constants import get_hermes_home
+        from auraforge_constants import get_hermes_home
 
         managed_bin = str(Path(get_hermes_home()) / "bin")
     except Exception:
@@ -466,7 +466,7 @@ class _SlashWorker:
             argv += ["--model", model]
 
         self._closed = False
-        from hermes_cli._subprocess_compat import windows_hide_flags
+        from auraforge_cli._subprocess_compat import windows_hide_flags
 
         # slash_worker runs the Aura Forge agent → needs provider credentials.
         # Tier-1 secrets (gateway/GitHub/infra) are still stripped (#29157).
@@ -614,7 +614,7 @@ def _notify_session_boundary(
 ) -> None:
     """Fire session lifecycle hooks with CLI parity."""
     try:
-        from hermes_cli.lifecycle import finalize_session, invoke_hook
+        from auraforge_cli.lifecycle import finalize_session, invoke_hook
 
         if event_type == "on_session_finalize":
             finalize_session(
@@ -653,7 +653,7 @@ def _claim_active_session_slot(
 ) -> tuple[Any, str | None]:
     track_liveness = str(surface or "").strip().lower() == "desktop"
     try:
-        from hermes_cli.active_sessions import try_acquire_active_session
+        from auraforge_cli.active_sessions import try_acquire_active_session
 
         return try_acquire_active_session(
             session_id=session_key,
@@ -734,7 +734,7 @@ def _other_runtime_lease_guard(session_id: str, session: dict):
     """Release this runtime and lock sibling ownership through the DB write."""
     lease = session.get("active_session_lease")
     try:
-        from hermes_cli.active_sessions import (
+        from auraforge_cli.active_sessions import (
             active_session_liveness_guard,
             release_active_session_liveness_guard,
         )
@@ -797,7 +797,7 @@ def _transfer_active_session_slot(
     if lease is None:
         return True
     try:
-        from hermes_cli.active_sessions import transfer_active_session
+        from auraforge_cli.active_sessions import transfer_active_session
 
         if transfer_active_session(
             lease,
@@ -942,7 +942,7 @@ def _finalize_session(session: dict | None, end_reason: str = "tui_close") -> No
     # the user Ctrl‑C's mid‑turn.
     if agent is not None:
         try:
-            from hermes_cli.lifecycle import invoke_hook
+            from auraforge_cli.lifecycle import invoke_hook
 
             invoke_hook(
                 "on_session_end",
@@ -1825,7 +1825,7 @@ def _reap_idle_sessions() -> None:
     # Calling trim_memory here ensures every reaper scan (default every 5 min)
     # returns releasable pages, preventing unbounded RSS growth over days/weeks.
     try:
-        from hermes_cli.mem_trim import trim_memory
+        from auraforge_cli.mem_trim import trim_memory
 
         trim_memory(reason="idle reaper periodic trim")
     except Exception as exc:
@@ -1839,7 +1839,7 @@ def _reap_idle_sessions() -> None:
 def _reclaim_orphaned_leases() -> None:
     """Hand the registry the lease ids we still own so it can drop the rest."""
     try:
-        from hermes_cli.active_sessions import release_orphaned_leases
+        from auraforge_cli.active_sessions import release_orphaned_leases
 
         with _sessions_lock:
             live = {
@@ -1863,7 +1863,7 @@ def _reclaim_orphaned_leases() -> None:
 # mid-build / live-transport one. 0/null disables.
 def _max_live_sessions() -> int:
     try:
-        from hermes_cli.active_sessions import coerce_max_concurrent_sessions
+        from auraforge_cli.active_sessions import coerce_max_concurrent_sessions
 
         cfg = _load_cfg() or {}
         raw = cfg.get("max_live_sessions")
@@ -2206,7 +2206,7 @@ _start_idle_reaper()
 def _get_db():
     global _db, _db_error
     if _db is None:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         try:
             _db = SessionDB()
@@ -2235,7 +2235,7 @@ def _db_for_profile(profile: str | None = None):
     if profile_home is None:
         return _get_db(), False
     try:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         return SessionDB(db_path=Path(profile_home) / "state.db"), True
     except Exception as exc:
@@ -2299,7 +2299,7 @@ def _open_profile_session_db(profile_home):
     the build's ``agent_error`` path) instead of swallowing it back onto the
     launch handle.
     """
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
 
     db_path = Path(profile_home) / "state.db"
     try:
@@ -2360,7 +2360,7 @@ def _profile_home(profile: str | None) -> Path | None:
     if not name:
         return None
     try:
-        from hermes_cli import profiles as profiles_mod
+        from auraforge_cli import profiles as profiles_mod
 
         home = Path(profiles_mod.get_profile_dir(name))
     except Exception:
@@ -2429,7 +2429,7 @@ def _profile_configured_cwd(profile_home: Path | None) -> str | None:
     if profile_home is None:
         return None
     try:
-        from hermes_cli.config import _expand_env_vars, read_user_config_raw
+        from auraforge_cli.config import _expand_env_vars, read_user_config_raw
 
         p = Path(profile_home) / "config.yaml"
         if not p.exists():
@@ -3817,7 +3817,7 @@ def _ensure_session_db_row(session: dict) -> None:
     # unified list mis-tags it, and resume 404s ("session not found").
     profile_home = session.get("profile_home")
     if profile_home:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         try:
             db = SessionDB(db_path=Path(profile_home) / "state.db")
@@ -3862,7 +3862,7 @@ def _ensure_session_db_row(session: dict) -> None:
     # start (matches _runtime_model_config's normalization).
     if str(model_config.get("provider") or "").strip().lower() == "custom":
         try:
-            from hermes_cli.runtime_provider import canonical_custom_identity
+            from auraforge_cli.runtime_provider import canonical_custom_identity
 
             healed = canonical_custom_identity(
                 base_url=model_config.get("base_url") or None,
@@ -3931,7 +3931,7 @@ def _ensure_session_db_row(session: dict) -> None:
         # Disk-full is not a soft failure: if we swallow it here, prompt.submit
         # returns {"status":"streaming"} and the user's message vanishes with
         # no toast. Re-raise so the submit handler can return a real RPC error.
-        from hermes_state import is_disk_full_error
+        from auraforge_state import is_disk_full_error
 
         if is_disk_full_error(exc):
             raise
@@ -4000,7 +4000,7 @@ def _persist_branch_seed(session: dict) -> None:
             )
             session["_branch_seed_persisted"] = True
         except Exception as exc:
-            from hermes_state import is_disk_full_error
+            from auraforge_state import is_disk_full_error
 
             if is_disk_full_error(exc):
                 raise
@@ -4019,7 +4019,7 @@ def _session_db(session: dict):
     db, close_db = None, False
     profile_home = session.get("profile_home")
     if profile_home:
-        from hermes_state import SessionDB
+        from auraforge_state import SessionDB
 
         try:
             db, close_db = SessionDB(db_path=Path(profile_home) / "state.db"), True
@@ -4269,7 +4269,7 @@ def _persist_session_cwd_and_schedule_git_meta(
 
 
 def _set_session_cwd(session: dict, cwd: str) -> str:
-    from hermes_constants import translate_cwd_for_wsl_backend
+    from auraforge_constants import translate_cwd_for_wsl_backend
 
     cwd = translate_cwd_for_wsl_backend(str(cwd))
     resolved = os.path.abspath(os.path.expanduser(cwd))
@@ -4316,7 +4316,7 @@ def _load_dashboard_process_isolation_config(cfg: dict | None = None) -> dict[st
 
     ``_load_cfg()`` intentionally returns the user ``config.yaml`` plus the
     managed overlay and ``${VAR}`` expansion; it does not deep-merge
-    ``hermes_cli.config.DEFAULT_CONFIG``. Keep
+    ``auraforge_cli.config.DEFAULT_CONFIG``. Keep
     the Phase-0 defaults here so dashboard runtime and the REST editor's
     DEFAULT_CONFIG-backed schema cannot drift.
     """
@@ -4365,7 +4365,7 @@ def _load_cfg_raw() -> dict:
             if _cfg_cache is not None and _cfg_mtime == mtime and _cfg_path == p:
                 return copy.deepcopy(_cfg_cache)
         if p.exists():
-            from hermes_cli.config import read_user_config_raw
+            from auraforge_cli.config import read_user_config_raw
             data = read_user_config_raw(p)
         else:
             data = {}
@@ -4388,7 +4388,7 @@ def _load_cfg() -> dict:
 
     Delegates the disk read to :func:`_load_cfg_raw` (shared cache), then
     applies the same read-side pipeline as the canonical
-    ``hermes_cli.config.load_config_readonly`` — managed-scope overlay and
+    ``auraforge_cli.config.load_config_readonly`` — managed-scope overlay and
     ``${ENV_VAR}`` expansion — minus the DEFAULT_CONFIG merge (callers here
     treat a missing key as "unset" and apply their own defaults; merging
     would also break ``_load_cfg() == {}`` sentinels). Do NOT pass the
@@ -4398,7 +4398,7 @@ def _load_cfg() -> dict:
     """
     cfg = _apply_managed(_load_cfg_raw())
     try:
-        from hermes_cli.config import _expand_env_vars
+        from auraforge_cli.config import _expand_env_vars
 
         expanded = _expand_env_vars(cfg)
         if isinstance(expanded, dict):
@@ -4412,12 +4412,12 @@ def _apply_managed(cfg: dict) -> dict:
     """Overlay administrator-pinned managed-scope values on a config dict.
 
     The TUI/desktop backend builds config independently of
-    hermes_cli.config.load_config, so without this a managed skin / reasoning_effort
+    auraforge_cli.config.load_config, so without this a managed skin / reasoning_effort
     / service_tier / provider_routing would be silently ignored here. Read-side
     only — the raw user config is what gets cached and saved. Fail-open.
     """
     try:
-        from hermes_cli import managed_scope
+        from auraforge_cli import managed_scope
 
         return managed_scope.apply_managed_overlay(cfg if isinstance(cfg, dict) else {})
     except Exception:
@@ -4771,7 +4771,7 @@ def _clear_pending(sid: str | None = None) -> None:
 
 def resolve_skin() -> dict:
     try:
-        from hermes_cli.skin_engine import init_skin_from_config, get_active_skin
+        from auraforge_cli.skin_engine import init_skin_from_config, get_active_skin
 
         init_skin_from_config(_load_cfg())
         skin = get_active_skin()
@@ -5096,7 +5096,7 @@ def _resolve_model() -> str:
     # default (catalog-labeled, cache-only read), never an expensive Anthropic
     # flagship the user didn't pick.
     try:
-        from hermes_cli.models import get_preferred_silent_default_model
+        from auraforge_cli.models import get_preferred_silent_default_model
 
         return get_preferred_silent_default_model()
     except Exception:
@@ -5192,7 +5192,7 @@ def _resolve_startup_runtime() -> tuple[str, str | None]:
         return model, None
 
     try:
-        from hermes_cli.models import detect_static_provider_for_model
+        from auraforge_cli.models import detect_static_provider_for_model
 
         cfg = _load_cfg().get("model") or {}
         current_provider = (
@@ -5222,7 +5222,7 @@ def _resolve_startup_runtime() -> tuple[str, str | None]:
 # ``billing_provider="openrouter"``; dropping it forces resume to the current
 # global model (e.g. a custom endpoint), which is the wrong provider for the
 # stored model. See #57588.
-from hermes_state import _BARE_BILLING_PROVIDERS
+from auraforge_state import _BARE_BILLING_PROVIDERS
 
 
 def _overrides_have_routable_provider(overrides: dict) -> bool:
@@ -5242,7 +5242,7 @@ def _overrides_have_routable_provider(overrides: dict) -> bool:
     if not provider:
         return False
     try:
-        from hermes_cli.runtime_provider import is_routable_provider
+        from auraforge_cli.runtime_provider import is_routable_provider
 
         return is_routable_provider(provider)
     except Exception:
@@ -5372,7 +5372,7 @@ def _stored_session_runtime_overrides(row: dict | None) -> dict:
     if provider:
         routable = False
         try:
-            from hermes_cli.runtime_provider import is_routable_provider
+            from auraforge_cli.runtime_provider import is_routable_provider
 
             routable = is_routable_provider(provider)
         except Exception:
@@ -5380,7 +5380,7 @@ def _stored_session_runtime_overrides(row: dict | None) -> dict:
         if not routable:
             healed = None
             try:
-                from hermes_cli.runtime_provider import canonical_custom_identity
+                from auraforge_cli.runtime_provider import canonical_custom_identity
 
                 healed = canonical_custom_identity(
                     base_url=base_url or None, model=model or None
@@ -5469,7 +5469,7 @@ def _runtime_model_config(agent, existing: dict | None = None) -> dict:
             # bare "custom" with no base_url was persisted verbatim and routed
             # to OpenRouter with no key on the next resume).
             try:
-                from hermes_cli.runtime_provider import (
+                from auraforge_cli.runtime_provider import (
                     canonical_custom_identity,
                 )
 
@@ -5718,7 +5718,7 @@ def _load_approval_mode() -> str:
     Previously this re-read the config raw via ``_load_cfg`` +
     ``_deep_merge(DEFAULT_CONFIG, ...)`` and normalized locally, which
     could disagree with the gate's own view of the mode (e.g. the
-    canonical ``hermes_cli.config.load_config`` path applies managed-scope
+    canonical ``auraforge_cli.config.load_config`` path applies managed-scope
     overlays and ``${VAR}`` env expansion that the TUI's raw YAML read did
     not fully mirror).
     """
@@ -5786,11 +5786,11 @@ def _load_reasoning_config(model: str = "") -> dict | None:
     """Load reasoning effort from config.yaml, respecting per-model overrides.
 
     Thin wrapper over the shared chokepoint
-    :func:`hermes_constants.resolve_reasoning_config` (per-model override >
+    :func:`auraforge_constants.resolve_reasoning_config` (per-model override >
     global ``agent.reasoning_effort``; YAML boolean False = disabled).
     Closes #21256.
     """
-    from hermes_constants import resolve_reasoning_config
+    from auraforge_constants import resolve_reasoning_config
 
     return resolve_reasoning_config(_load_cfg(), model)
 
@@ -5919,7 +5919,7 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
 
         if unresolved:
             try:
-                from hermes_cli.plugins import discover_plugins
+                from auraforge_cli.plugins import discover_plugins
 
                 discover_plugins()
                 plugin_valid = [name for name in unresolved if validate_toolset(name)]
@@ -5947,8 +5947,8 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
         mcp_names: set[str] = set()
         mcp_disabled: set[str] = set()
         try:
-            from hermes_cli.config import read_raw_config
-            from hermes_cli.tools_config import _parse_enabled_flag
+            from auraforge_cli.config import read_raw_config
+            from auraforge_cli.tools_config import _parse_enabled_flag
 
             raw_cfg = read_raw_config()
             mcp_servers = (
@@ -5999,8 +5999,8 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
         )
 
     try:
-        from hermes_cli.config import load_config
-        from hermes_cli.tools_config import _get_platform_tools
+        from auraforge_cli.config import load_config
+        from auraforge_cli.tools_config import _get_platform_tools
 
         cfg = cfg if cfg is not None else load_config()
 
@@ -6196,14 +6196,14 @@ def _apply_model_switch(
     parsed_flags: Any | None = None,
     persist_override: bool | None = None,
 ) -> dict:
-    from hermes_cli.model_switch import (
+    from auraforge_cli.model_switch import (
         parse_model_switch_args,
         resolve_persist_behavior,
         switch_model,
         MODEL_SWITCH_ERR_ONCE_WITH_GLOBAL,
         MODEL_SWITCH_ERROR_TEXT,
     )
-    from hermes_cli.runtime_provider import resolve_runtime_provider
+    from auraforge_cli.runtime_provider import resolve_runtime_provider
 
     if parsed_flags is None:
         parsed_flags = parse_model_switch_args(raw_input)
@@ -6268,7 +6268,7 @@ def _apply_model_switch(
     custom_provs = None
     cfg = None
     try:
-        from hermes_cli.config import get_compatible_custom_providers, load_config
+        from auraforge_cli.config import get_compatible_custom_providers, load_config
 
         cfg = load_config()
         user_provs = cfg.get("providers")
@@ -6294,7 +6294,7 @@ def _apply_model_switch(
 
     if agent:
         try:
-            from hermes_cli.context_switch_guard import merge_preflight_compression_warning
+            from auraforge_cli.context_switch_guard import merge_preflight_compression_warning
 
             _cfg_ctx = None
             if isinstance(cfg, dict):
@@ -6313,7 +6313,7 @@ def _apply_model_switch(
 
     if not confirm_expensive_model:
         try:
-            from hermes_cli.model_selection_guards import combined_selection_warning
+            from auraforge_cli.model_selection_guards import combined_selection_warning
 
             warning = combined_selection_warning(
                 result.new_model,
@@ -6529,7 +6529,7 @@ def _pending_switch_selection_warning(model: str, provider: str) -> str | None:
     if not model:
         return None
     try:
-        from hermes_cli.model_selection_guards import combined_selection_warning
+        from auraforge_cli.model_selection_guards import combined_selection_warning
 
         warning = combined_selection_warning(model, provider=provider or None)
     except Exception:
@@ -6913,7 +6913,7 @@ def _compress_session_history(
         finalize_context_engine_compression_notification,
     )
     from agent.model_metadata import estimate_request_tokens_rough
-    from hermes_cli.partial_compress import (
+    from auraforge_cli.partial_compress import (
         parse_partial_compress_args,
         rejoin_compressed_head_and_tail,
         split_history_for_partial_compress,
@@ -7213,7 +7213,7 @@ def _probe_config_health(cfg: dict) -> str:
         personality = str(display_cfg.get("personality", "") or "").strip().lower()
         if personality and personality not in {"default", "none", "neutral"}:
             try:
-                from hermes_cli.personality import available_personalities
+                from auraforge_cli.personality import available_personalities
 
                 if personality not in available_personalities(cfg):
                     warnings.append(
@@ -7229,7 +7229,7 @@ def _probe_config_health(cfg: dict) -> str:
 
 def _current_profile_name() -> str:
     try:
-        from hermes_cli.profiles import get_active_profile_name
+        from auraforge_cli.profiles import get_active_profile_name
 
         return get_active_profile_name() or "default"
     except Exception:
@@ -7271,7 +7271,7 @@ def _project_info_for_cwd(cwd: str) -> dict | None:
     if not str(cwd or "").strip():
         return None
     try:
-        from hermes_cli import projects_db as pdb
+        from auraforge_cli import projects_db as pdb
 
         with pdb.connect_closing() as conn:
             project = pdb.project_for_path(conn, cwd)
@@ -7384,7 +7384,7 @@ def _session_info(agent, session: dict | None = None) -> dict:
         else _current_profile_name(),
     }
     try:
-        from hermes_cli import __version__, __release_date__
+        from auraforge_cli import __version__, __release_date__
 
         info["version"] = __version__
         info["release_date"] = __release_date__
@@ -7403,7 +7403,7 @@ def _session_info(agent, session: dict | None = None) -> dict:
         except Exception:
             pass
         try:
-            from hermes_cli.banner import get_available_skills
+            from auraforge_cli.banner import get_available_skills
 
             info["skills"] = get_available_skills()
         except Exception:
@@ -7423,8 +7423,8 @@ def _session_info(agent, session: dict | None = None) -> dict:
     except Exception:
         pass
     try:
-        from hermes_cli.banner import get_update_result
-        from hermes_cli.config import recommended_update_command
+        from auraforge_cli.banner import get_update_result
+        from auraforge_cli.config import recommended_update_command
 
         info["update_behind"] = get_update_result(timeout=0.5)
         info["update_command"] = recommended_update_command()
@@ -8125,7 +8125,7 @@ def _wire_callbacks(sid: str):
                 "skipped": True,
                 "message": "skipped",
             }
-        from hermes_cli.config import save_env_value_secure
+        from auraforge_cli.config import save_env_value_secure
 
         return {
             **save_env_value_secure(env_var, val),
@@ -8137,15 +8137,15 @@ def _wire_callbacks(sid: str):
 
 
 def _render_personality_prompt(value) -> str:
-    """Delegates to hermes_cli.personality (single owner of rendering)."""
-    from hermes_cli.personality import render_personality_prompt
+    """Delegates to auraforge_cli.personality (single owner of rendering)."""
+    from auraforge_cli.personality import render_personality_prompt
 
     return render_personality_prompt(value)
 
 
 def _available_personalities(cfg: dict | None = None) -> dict:
-    """Built-ins + user overrides, via hermes_cli.personality (single owner)."""
-    from hermes_cli.personality import available_personalities
+    """Built-ins + user overrides, via auraforge_cli.personality (single owner)."""
+    from auraforge_cli.personality import available_personalities
 
     if cfg is None:
         cfg = _load_cfg()
@@ -8155,12 +8155,12 @@ def _available_personalities(cfg: dict | None = None) -> dict:
 def _validate_personality(value: str, cfg: dict | None = None) -> tuple[str, str]:
     """Resolve a requested personality against _available_personalities.
 
-    Same contract as hermes_cli.personality.resolve_personality — (name,
+    Same contract as auraforge_cli.personality.resolve_personality — (name,
     prompt) or ValueError — but resolves through the module-level
     _available_personalities so tests (and future gateway-side overrides)
     keep a single patch point.
     """
-    from hermes_cli.personality import normalize_personality_name
+    from auraforge_cli.personality import normalize_personality_name
 
     name = normalize_personality_name(value)
     if not name:
@@ -8177,9 +8177,9 @@ def _validate_personality(value: str, cfg: dict | None = None) -> tuple[str, str
 def _prompt_text(value) -> str:
     """Normalize config prompt values from YAML before handing them to AIAgent.
 
-    Delegates to hermes_cli.personality (single owner).
+    Delegates to auraforge_cli.personality (single owner).
     """
-    from hermes_cli.personality import prompt_text
+    from auraforge_cli.personality import prompt_text
 
     return prompt_text(value)
 
@@ -8240,7 +8240,7 @@ def _apply_personality_to_session(
 
 
 def _cfg_max_turns(cfg: dict, default: int) -> int:
-    from hermes_cli.config import resolve_turn_limit as _resolve_turn_limit
+    from auraforge_cli.config import resolve_turn_limit as _resolve_turn_limit
     # Env var override (highest priority)
     env_val = os.environ.get("HERMES_TUI_MAX_TURNS")
     if env_val:
@@ -8277,7 +8277,7 @@ def _load_fallback_model():
     order, with legacy ``fallback_model`` entries merged in afterwards
     (deduped on provider/model/base_url).
     """
-    from hermes_cli.fallback_config import get_fallback_chain
+    from auraforge_cli.fallback_config import get_fallback_chain
 
     return get_fallback_chain(_load_cfg())
 
@@ -8593,8 +8593,8 @@ def _resolve_runtime_with_fallback(
     into a different runtime. ``used_fallback`` remains explicit rather than
     overloading a nullable model as control flow.
     """
-    from hermes_cli.auth import AuthError
-    from hermes_cli.runtime_provider import resolve_runtime_provider
+    from auraforge_cli.auth import AuthError
+    from auraforge_cli.runtime_provider import resolve_runtime_provider
 
     kwargs = resolve_kwargs or {}
     try:
@@ -8613,7 +8613,7 @@ def _resolve_runtime_with_fallback(
             if not fb_provider or not fb_model:
                 continue
             try:
-                from hermes_cli.fallback_config import resolve_entry_api_key
+                from auraforge_cli.fallback_config import resolve_entry_api_key
 
                 fb_kwargs: dict = {
                     "requested": fb_provider,
@@ -8665,10 +8665,10 @@ def _make_agent(
     # dead server can't freeze the shell.  The agent snapshots its tool list
     # once here and never re-reads it, so briefly wait for in-flight discovery
     # to land before building — bounded, so a slow/dead server still can't
-    # block. Dashboard /api/ws uses hermes_cli.mcp_startup; TUI stdio keeps
+    # block. Dashboard /api/ws uses auraforge_cli.mcp_startup; TUI stdio keeps
     # its existing tui_gateway.entry-owned thread.
     try:
-        from hermes_cli.mcp_startup import wait_for_mcp_discovery
+        from auraforge_cli.mcp_startup import wait_for_mcp_discovery
 
         wait_for_mcp_discovery()
     except Exception:
@@ -8681,7 +8681,7 @@ def _make_agent(
         pass
 
     cfg = _load_cfg()
-    from hermes_cli.config import resolve_ephemeral_system_prompt_from_config
+    from auraforge_cli.config import resolve_ephemeral_system_prompt_from_config
 
     system_prompt = resolve_ephemeral_system_prompt_from_config(cfg)
     startup_skills = _parse_tui_skills_env()
@@ -8733,7 +8733,7 @@ def _make_agent(
             # the entry identity from the persisted base_url, falling back to
             # the configured provider when the override carries no base_url
             # (the recurring Desktop/TUI regression vector).
-            from hermes_cli.runtime_provider import canonical_custom_identity
+            from auraforge_cli.runtime_provider import canonical_custom_identity
 
             recovered = canonical_custom_identity(
                 base_url=override_base_url or None, model=model or None
@@ -10353,7 +10353,7 @@ def _finalize_superseded_runtimes(stale: list[tuple[str, dict]]) -> None:
     _RECLAIM_END_REASONS, so no ``session.reclaimed`` broadcast fires (that
     broadcast triggers client auto-re-resume and fed the
     reap->broadcast->resume feedback loop). ``superseded_by_resume`` IS in
-    hermes_state_common._RECOVERABLE_END_REASONS so canonical Bot Chat
+    auraforge_state_common._RECOVERABLE_END_REASONS so canonical Bot Chat
     resurrection still applies to the stored session.
     """
     for old_sid, popped in stale:
@@ -10819,7 +10819,7 @@ def _pet_config_scale() -> float:
     from agent.pet import constants
 
     try:
-        from hermes_cli.config import load_config
+        from auraforge_cli.config import load_config
 
         cfg = load_config()
         display = cfg.get("display", {}) if isinstance(cfg.get("display"), dict) else {}
@@ -10877,7 +10877,7 @@ def _pet_active_selection():
     from agent.pet import constants, store
 
     try:
-        from hermes_cli.config import load_config
+        from auraforge_cli.config import load_config
 
         cfg = load_config()
         display = cfg.get("display", {}) if isinstance(cfg.get("display"), dict) else {}
@@ -10915,7 +10915,7 @@ def _pet_state_rows(spritesheet) -> list[str]:
 
 def _pet_gen_root():
     """Profile-scoped staging dir for in-progress generation drafts."""
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     root = get_hermes_home() / "cache" / "pet-gen"
     root.mkdir(parents=True, exist_ok=True)
@@ -11036,12 +11036,12 @@ def _pet_cancel_release(token: str) -> None:
 # Ink side can branch on the typed billing error code (insufficient_scope,
 # rate_limited, no_payment_method, …) to render the right affordance instead of
 # landing in a generic catch. The data-building lives in the shared core
-# (agent/billing_view.py + hermes_cli/nous_billing.py) — same as /topup.
+# (agent/billing_view.py + auraforge_cli/nous_billing.py) — same as /topup.
 
 
 def _serialize_billing_error(exc) -> dict:
     """Map a BillingError into the result.error envelope the TUI branches on."""
-    from hermes_cli.nous_billing import (
+    from auraforge_cli.nous_billing import (
         BillingRemoteSpendingRevoked,
         BillingScopeRequired,
         BillingSessionRevoked,
@@ -11342,7 +11342,7 @@ def _serialize_subscription_preview(p) -> dict:
 
 
 def _spawn_trees_root():
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     root = get_hermes_home() / "spawn-trees"
     root.mkdir(parents=True, exist_ok=True)
@@ -11586,7 +11586,7 @@ def _maybe_fire_tui_loop_tick(sid: str, session: dict) -> None:
     in the turn dispatcher completes the tick.
     """
     try:
-        from hermes_cli.loops import LoopManager, goal_blocks_loop_tick
+        from auraforge_cli.loops import LoopManager, goal_blocks_loop_tick
     except Exception:
         return
 
@@ -11735,7 +11735,7 @@ def _collect_kanban_notifications(session: dict) -> list:
     if not session_key or session.get("_finalized"):
         return []
     try:
-        from hermes_cli import kanban_db as _kb
+        from auraforge_cli import kanban_db as _kb
     except Exception:
         return []
     texts: list = []
@@ -12277,7 +12277,7 @@ def _plan_goal_compression_recovery(
             session.pop(_GOAL_COMPRESSION_RECOVERY_ATTEMPTS, None)
         return None, None
 
-    from hermes_cli.goals import GoalManager
+    from auraforge_cli.goals import GoalManager
 
     sid_key = str(session.get("session_key") or "")
     if not sid_key:
@@ -12587,7 +12587,7 @@ def _run_prompt_submit(
                         decide_image_input_mode,
                         build_native_content_parts,
                     )
-                    from hermes_cli.config import load_config as _tui_load_config
+                    from auraforge_cli.config import load_config as _tui_load_config
 
                     _cfg = _tui_load_config()
                     _provider, _model = _active_image_routing_identity(agent)
@@ -12664,7 +12664,7 @@ def _run_prompt_submit(
                         if is_audio_output_active():
                             return False
                         try:
-                            from hermes_cli.voice import is_continuous_active
+                            from auraforge_cli.voice import is_continuous_active
 
                             return not is_continuous_active()
                         except Exception:
@@ -13037,7 +13037,7 @@ def _run_prompt_submit(
                 result, status, raw
             ):
                 try:
-                    from hermes_cli.goals import GoalManager
+                    from auraforge_cli.goals import GoalManager
 
                     sid_key = session.get("session_key") or ""
                     if sid_key:
@@ -13052,7 +13052,7 @@ def _run_prompt_submit(
                         )
                         if goal_mgr.is_active():
                             try:
-                                from hermes_cli.goals import gather_background_processes as _gather_bg
+                                from auraforge_cli.goals import gather_background_processes as _gather_bg
                                 _bg_procs = _gather_bg()
                             except Exception:
                                 _bg_procs = None
@@ -13085,7 +13085,7 @@ def _run_prompt_submit(
             # --until judge, --times / max_ticks caps, next-tick schedule.
             if status == "complete":
                 try:
-                    from hermes_cli.loops import LoopManager
+                    from auraforge_cli.loops import LoopManager
 
                     loop_sid_key = session.get("session_key") or ""
                     if loop_sid_key:
@@ -13149,7 +13149,7 @@ def _run_prompt_submit(
                         target=_speak_text_with_barge, args=(spoken,), daemon=True
                     ).start()
                 except ImportError:
-                    logger.warning("voice TTS skipped: hermes_cli.voice unavailable")
+                    logger.warning("voice TTS skipped: auraforge_cli.voice unavailable")
                 except Exception as e:
                     logger.warning("voice TTS dispatch failed: %s", e)
         except Exception as e:
@@ -13201,7 +13201,7 @@ def _run_prompt_submit(
             # Run while any profile-specific HERMES_HOME override is still active
             # so context.memory_trim is resolved from the session's own config.
             try:
-                from hermes_cli.mem_trim import trim_memory
+                from auraforge_cli.mem_trim import trim_memory
 
                 trim_memory(reason="tui turn completion")
             except Exception:
@@ -13704,7 +13704,7 @@ def _(rid, params: dict) -> dict:
             if not value:
                 return _err(rid, 4002, "model value required")
             if session:
-                from hermes_cli.model_switch import parse_model_switch_args
+                from auraforge_cli.model_switch import parse_model_switch_args
 
                 # A live swap can't run in-place while a turn streams:
                 # agent.switch_model() mutates self.model / self.provider /
@@ -13896,7 +13896,7 @@ def _(rid, params: dict) -> dict:
 
         overrides = None
         if nv == "fast":
-            from hermes_cli.models import resolve_fast_mode_overrides
+            from auraforge_cli.models import resolve_fast_mode_overrides
 
             if agent is not None:
                 target_model = getattr(agent, "model", None)
@@ -13994,7 +13994,7 @@ def _(rid, params: dict) -> dict:
         # pins tool_progress to "off" (the same value /verbose off uses) after
         # stashing the configured mode, and disabling it restores that mode.
         # Nothing about the request payload changes.
-        from hermes_cli.focus_view import (
+        from auraforge_cli.focus_view import (
             FOCUS_TOOL_PROGRESS_MODE,
             normalize_tool_progress_mode,
             resolve_focus_arg,
@@ -14147,7 +14147,7 @@ def _(rid, params: dict) -> dict:
 
     if key == "reasoning":
         try:
-            from hermes_constants import parse_reasoning_effort
+            from auraforge_constants import parse_reasoning_effort
 
             arg = str(value or "").strip().lower()
             scope = str(params.get("scope") or "").strip().lower()
@@ -14438,9 +14438,9 @@ def _(rid, params: dict) -> dict:
                 sid_key = params.get("session_id", "")
                 pname, new_prompt = _validate_personality(str(value or ""), cfg)
                 # Personality text is an in-session overlay. Persistence goes
-                # through hermes_cli.personality (single owner) and never
+                # through auraforge_cli.personality (single owner) and never
                 # touches the user-owned global system prompt.
-                from hermes_cli.personality import persist_personality
+                from auraforge_cli.personality import persist_personality
 
                 persist_personality(pname)
                 nv = str(value or "none")
@@ -14484,7 +14484,7 @@ class _NoProject(Exception):
 
 
 def _projects_payload(conn) -> dict:
-    from hermes_cli import projects_db as pdb
+    from auraforge_cli import projects_db as pdb
 
     return {
         "projects": [p.to_dict() for p in pdb.list_projects(conn, include_archived=True)],
@@ -14505,7 +14505,7 @@ def _projects_method(name: str):
         @_profile_scoped
         def handler(rid, params: dict) -> dict:
             try:
-                from hermes_cli import projects_db as pdb
+                from auraforge_cli import projects_db as pdb
 
                 with pdb.connect_closing() as conn:
                     return fn(rid, params, pdb, conn)
@@ -14652,7 +14652,7 @@ def _is_repo_junk(root: str) -> bool:
     if not root:
         return True
 
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     real = os.path.realpath(root)
     hermes_home = os.path.realpath(str(get_hermes_home()))
@@ -14676,7 +14676,7 @@ def _is_session_cwd_junk(cwd: str) -> bool:
     if not cwd:
         return True
 
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     real = os.path.normcase(os.path.realpath(cwd))
     hermes_home = os.path.normcase(os.path.realpath(str(get_hermes_home())))
@@ -14685,7 +14685,7 @@ def _is_session_cwd_junk(cwd: str) -> bool:
 
 def _repo_discovery_policy(raw: dict | None = None) -> dict:
     """Return the effective, profile-local Desktop repository scan policy."""
-    from hermes_cli.config import DEFAULT_CONFIG
+    from auraforge_cli.config import DEFAULT_CONFIG
 
     defaults = DEFAULT_CONFIG["desktop"]
     source = raw if isinstance(raw, dict) else (_load_cfg().get("desktop") or {})
@@ -14734,7 +14734,7 @@ def _repo_discovery_policy_key(policy: dict) -> str:
 
 
 def _repo_discovery_policy_is_default(policy: dict) -> bool:
-    from hermes_cli.config import DEFAULT_CONFIG
+    from auraforge_cli.config import DEFAULT_CONFIG
 
     return _repo_discovery_policy_key(policy) == _repo_discovery_policy_key(
         _repo_discovery_policy(DEFAULT_CONFIG["desktop"])
@@ -14760,7 +14760,7 @@ def _scan_discovered_repos_remote(conn, policy: dict) -> bool:
     a failed remote refresh can't blank the previously cached repos into the
     silent, unpopulated sidebar of #81723.
     """
-    from hermes_cli import projects_db as pdb
+    from auraforge_cli import projects_db as pdb
 
     roots = policy.get("roots") or []
     excludes = policy.get("exclude_paths") or []
@@ -14883,7 +14883,7 @@ def _discover_repos_payload(
     # Filesystem-scanned roots from the cache (may have zero sessions). Reuse the
     # caller's projects.db connection when given, else open a short-lived one.
     try:
-        from hermes_cli import projects_db as pdb
+        from auraforge_cli import projects_db as pdb
 
         def _read(c) -> None:
             for entry in pdb.list_discovered_repos(c):
@@ -14988,7 +14988,7 @@ def _project_tree_inputs(
     # skips the discovery warm-up below).
     git_probe.warm_roots(s["cwd"] for s in sessions if s.get("cwd"))
 
-    from hermes_cli import projects_db as pdb
+    from auraforge_cli import projects_db as pdb
 
     policy = _repo_discovery_policy()
     policy_key = _repo_discovery_policy_key(policy)
@@ -15319,7 +15319,7 @@ def _cli_exec_blocked(argv: list[str]) -> str | None:
 
 def _resolve_name(name: str) -> str:
     try:
-        from hermes_cli.commands import resolve_command
+        from auraforge_cli.commands import resolve_command
 
         r = resolve_command(name)
         return r.name if r else name
@@ -15378,7 +15378,7 @@ def _list_repo_files(root: str) -> list[str]:
             return cached[1]
 
     files: list[str] = []
-    from hermes_cli._subprocess_compat import windows_hide_flags
+    from auraforge_cli._subprocess_compat import windows_hide_flags
 
     _creationflags = windows_hide_flags()
     try:
@@ -15627,14 +15627,14 @@ def _details_completions(text: str) -> list[dict] | None:
 
 def _model_picker_context(agent):
     """Layer live session state onto config without losing custom identity."""
-    from hermes_cli.inventory import load_picker_context
+    from auraforge_cli.inventory import load_picker_context
 
     ctx = load_picker_context()
     provider = getattr(agent, "provider", "") if agent else ""
     base_url = getattr(agent, "base_url", "") if agent else ""
     if str(provider or "").strip().lower() == "custom":
         try:
-            from hermes_cli.runtime_provider import canonical_custom_identity
+            from auraforge_cli.runtime_provider import canonical_custom_identity
 
             provider = (
                 canonical_custom_identity(
@@ -15881,7 +15881,7 @@ def _format_live_tools_output(session: dict) -> str:
 
 def _format_live_help_output() -> str:
     try:
-        from hermes_cli.commands import COMMANDS_BY_CATEGORY
+        from auraforge_cli.commands import COMMANDS_BY_CATEGORY
 
         lines = ["Available commands:", ""]
         for category, commands in COMMANDS_BY_CATEGORY.items():
@@ -16021,7 +16021,7 @@ def _mirror_slash_side_effects(sid: str, session: dict, command: str) -> str:
             # Persist through the single owner so this surface can never
             # drift from the others (the old TUI slash path applied the
             # overlay in-session but skipped persistence entirely).
-            from hermes_cli.personality import persist_personality
+            from auraforge_cli.personality import persist_personality
 
             persist_personality(pname)
             _apply_personality_to_session(sid, session, new_prompt, pname)
@@ -16169,7 +16169,7 @@ def _voice_tts_enabled() -> bool:
 def _any_session_running() -> bool:
     """True while any session's agent turn is in flight.
 
-    Registered as the voice busy-probe (``hermes_cli.voice.set_voice_busy_probe``)
+    Registered as the voice busy-probe (``auraforge_cli.voice.set_voice_busy_probe``)
     so silent capture cycles during a long agent turn don't count toward the
     no-speech limit — the user is correctly quiet while the agent works.
     Voice is process-global (one microphone), so any running session holds.
@@ -16415,7 +16415,7 @@ def _full_duplex_listener() -> None:
                     os.environ["HERMES_VOICE"] = "0"
                     os.environ["HERMES_VOICE_TTS"] = "0"
                     try:
-                        from hermes_cli.voice import stop_continuous
+                        from auraforge_cli.voice import stop_continuous
 
                         stop_continuous()
                     except Exception:
@@ -16436,7 +16436,7 @@ def _full_duplex_listener() -> None:
 
 
 def _speak_text_with_barge(text: str) -> None:
-    """Speak *text* via hermes_cli.voice.speak_text with spoken barge-in.
+    """Speak *text* via auraforge_cli.voice.speak_text with spoken barge-in.
 
     The fallback whole-reply path (streaming couldn't start) and the
     ``voice.tts`` RPC previously called ``speak_text`` bare — speech over
@@ -16445,7 +16445,7 @@ def _speak_text_with_barge(text: str) -> None:
     ``_fd_speak_pipelines`` so the listener can cut the private stop event
     on a playback trip and keeps listening while this speak is pending.
     """
-    from hermes_cli.voice import speak_text
+    from auraforge_cli.voice import speak_text
 
     stop = threading.Event()
     done = threading.Event()
@@ -17000,7 +17000,7 @@ def _(rid, params: dict) -> dict:
             # Disabling the mode must tear the continuous loop down; the
             # loop holds the microphone and would otherwise keep running.
             try:
-                from hermes_cli.voice import stop_continuous
+                from auraforge_cli.voice import stop_continuous
 
                 stop_continuous()
             except ImportError:
@@ -17077,7 +17077,7 @@ def _(rid, params: dict) -> dict:
                 global _voice_event_sid, _voice_wake_owner
                 _voice_event_sid = params.get("session_id") or _voice_event_sid
 
-            from hermes_cli.voice import start_continuous
+            from auraforge_cli.voice import start_continuous
 
             # Register the agent-busy probe so the shared voice wrapper can
             # hold the no-speech counter during long agent turns (item:
@@ -17085,7 +17085,7 @@ def _(rid, params: dict) -> dict:
             # re-register on every start; older wrappers without the setter
             # are tolerated.
             try:
-                from hermes_cli.voice import set_voice_busy_probe
+                from auraforge_cli.voice import set_voice_busy_probe
 
                 set_voice_busy_probe(_any_session_running)
             except Exception:
@@ -17184,7 +17184,7 @@ def _(rid, params: dict) -> dict:
         with _voice_sid_lock:
             _voice_event_sid = params.get("session_id") or _voice_event_sid
 
-        from hermes_cli.voice import stop_continuous
+        from auraforge_cli.voice import stop_continuous
 
         stop_continuous(force_transcribe=True)
         _resume_voice_wake()
@@ -17209,7 +17209,7 @@ def _(rid, params: dict) -> dict:
     try:
         # Import check up front so a missing voice module still returns the
         # documented 5026 instead of failing silently in the thread.
-        import hermes_cli.voice  # noqa: F401
+        import auraforge_cli.voice  # noqa: F401
 
         threading.Thread(
             target=_speak_text_with_barge, args=(text,), daemon=True
@@ -17252,7 +17252,7 @@ def _resolve_browser_cdp_url() -> str:
     if env_url:
         return env_url
     try:
-        from hermes_cli.config import read_raw_config
+        from auraforge_cli.config import read_raw_config
 
         cfg = read_raw_config()
         browser_cfg = cfg.get("browser", {}) if isinstance(cfg, dict) else {}
@@ -17311,7 +17311,7 @@ def _normalize_cdp_url(parsed) -> str:
 
 
 def _failure_messages(url: str, port: int, system: str) -> list[str]:
-    from hermes_cli.browser_connect import manual_chrome_debug_command
+    from auraforge_cli.browser_connect import manual_chrome_debug_command
 
     command = manual_chrome_debug_command(port, system)
     hint = (
@@ -17332,7 +17332,7 @@ def _failure_messages(url: str, port: int, system: str) -> list[str]:
 def _browser_connect(rid, params: dict) -> dict:
     import platform
 
-    from hermes_cli.browser_connect import DEFAULT_BROWSER_CDP_URL
+    from auraforge_cli.browser_connect import DEFAULT_BROWSER_CDP_URL
     from tools.browser_tool import cleanup_all_browsers
     from urllib.parse import urlparse
 
@@ -17387,7 +17387,7 @@ def _browser_connect(rid, params: dict) -> dict:
             except OSError as e:
                 return _err(rid, 5031, f"could not reach browser CDP at {url}: {e}")
         elif _is_default_local_cdp(parsed):
-            from hermes_cli.browser_connect import (
+            from auraforge_cli.browser_connect import (
                 discover_local_cdp_url,
                 find_free_debug_port,
                 launch_chrome_debug,

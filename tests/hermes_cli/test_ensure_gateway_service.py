@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.gateway.ensure_gateway_service — the zero-prompt
+"""Tests for auraforge_cli.gateway.ensure_gateway_service — the zero-prompt
 service install/start path used by `auraforge setup` and `auraforge import`.
 
 The helper's contract:
@@ -10,11 +10,11 @@ The helper's contract:
   * refuses to install on top of conflicting user+system systemd units
 """
 
-import hermes_cli.gateway as gateway_mod
+import auraforge_cli.gateway as gateway_mod
 
 
 def _patch_host(monkeypatch, *, container=False, systemd=True, macos=False, windows=False):
-    monkeypatch.setattr("hermes_constants.is_container", lambda: container)
+    monkeypatch.setattr("auraforge_constants.is_container", lambda: container)
     monkeypatch.setattr(gateway_mod, "supports_systemd_services", lambda: systemd)
     monkeypatch.setattr(gateway_mod, "is_macos", lambda: macos)
     monkeypatch.setattr(gateway_mod, "is_windows", lambda: windows)

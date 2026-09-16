@@ -5,7 +5,7 @@ import pytest
 from rich.console import Console
 
 from cli import ChatConsole
-from hermes_cli.skills_hub import do_check, do_install, do_list, do_update, handle_skills_slash
+from auraforge_cli.skills_hub import do_check, do_install, do_list, do_update, handle_skills_slash
 
 
 class _DummyLockFile:
@@ -82,7 +82,7 @@ def _capture_check(monkeypatch, results, name=None) -> str:
 
 def _capture_update(monkeypatch, results) -> tuple[str, list[tuple[str, str, bool]]]:
     import tools.skills_hub as hub
-    import hermes_cli.skills_hub as cli_hub
+    import auraforge_cli.skills_hub as cli_hub
 
     sink = StringIO()
     console = Console(file=sink, force_terminal=False, color_system=None)
@@ -194,7 +194,7 @@ def test_resolve_does_not_pair_catalog_meta_with_foreign_same_name_bundle():
     SKILL.md. The header then showed the requested identifier and the preview
     showed the wrong skill.
     """
-    from hermes_cli.skills_hub import _resolve_source_meta_and_bundle
+    from auraforge_cli.skills_hub import _resolve_source_meta_and_bundle
     from tools.skills_hub import SkillBundle, SkillMeta
 
     class CatalogSource:
@@ -245,7 +245,7 @@ def test_resolve_does_not_pair_catalog_meta_with_foreign_same_name_bundle():
 
 
 def test_resolve_keeps_catalog_meta_when_later_sources_do_not_fetch():
-    from hermes_cli.skills_hub import _resolve_source_meta_and_bundle
+    from auraforge_cli.skills_hub import _resolve_source_meta_and_bundle
     from tools.skills_hub import SkillMeta
 
     class CatalogSource:
@@ -387,7 +387,7 @@ _LONG_RESULT = type("R", (), {
 
 def test_do_search_json_flag_emits_full_identifiers(capsys):
     """`--json` must print a parseable array with full identifiers and skip the table."""
-    from hermes_cli.skills_hub import do_search
+    from auraforge_cli.skills_hub import do_search
 
     sink = StringIO()
     console = Console(file=sink, force_terminal=False, color_system=None, width=40)
@@ -420,7 +420,7 @@ def _update_env(monkeypatch, tmp_path, *, edit_after_install: bool):
 
     Returns (console_sink, installs_list).
     """
-    import hermes_cli.skills_hub as cli_hub
+    import auraforge_cli.skills_hub as cli_hub
     import tools.skills_hub as hub
     from tools.skills_guard import content_hash
 

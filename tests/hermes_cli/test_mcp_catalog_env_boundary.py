@@ -9,17 +9,17 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
-from hermes_cli.web_server import _SESSION_TOKEN, app
+from auraforge_cli.web_server import _SESSION_TOKEN, app
 
 
-HEADERS = {"X-Aura Forge-Session-Token": _SESSION_TOKEN}
+HEADERS = {"X-AuraForge-Session-Token": _SESSION_TOKEN}
 
 
 @pytest.fixture
 def catalog_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, _isolate_hermes_home):
     """Install one synthetic API-key catalog entry in the isolated test home."""
-    from hermes_constants import get_hermes_home
-    from hermes_cli.config import invalidate_env_cache
+    from auraforge_constants import get_hermes_home
+    from auraforge_cli.config import invalidate_env_cache
 
     catalog = tmp_path / "optional-mcps"
     entry_dir = catalog / "demo"
@@ -65,7 +65,7 @@ def test_catalog_rejects_undeclared_key_before_any_write_or_install(
     catalog_env: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    import hermes_cli.mcp_catalog as mcp_catalog
+    import auraforge_cli.mcp_catalog as mcp_catalog
 
     installs: list[str] = []
     monkeypatch.setattr(
@@ -101,7 +101,7 @@ def test_catalog_cannot_declare_reserved_control_key(
     catalog_env: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    import hermes_cli.mcp_catalog as mcp_catalog
+    import auraforge_cli.mcp_catalog as mcp_catalog
 
     catalog_root = Path(os.environ["HERMES_OPTIONAL_MCPS"])
     manifest_path = catalog_root / "demo" / "manifest.yaml"
@@ -142,7 +142,7 @@ def test_catalog_accepts_declared_credential(
     catalog_env: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    import hermes_cli.mcp_catalog as mcp_catalog
+    import auraforge_cli.mcp_catalog as mcp_catalog
 
     installs: list[str] = []
     monkeypatch.setattr(
@@ -192,7 +192,7 @@ def test_generic_env_endpoint_rejects_protected_key(
 
 
 def test_process_supplied_catalog_root_remains_supported(catalog_env: Path):
-    from hermes_cli.mcp_catalog import get_entry
+    from auraforge_cli.mcp_catalog import get_entry
 
     assert get_entry("demo") is not None
 
@@ -235,7 +235,7 @@ def test_preexisting_copilot_controls_remain_usable(
     monkeypatch: pytest.MonkeyPatch,
 ):
     from agent.copilot_acp_client import _resolve_args, _resolve_command
-    from hermes_cli.env_loader import load_hermes_dotenv
+    from auraforge_cli.env_loader import load_hermes_dotenv
 
     monkeypatch.setenv("HERMES_COPILOT_ACP_COMMAND", "parent-placeholder")
     monkeypatch.setenv("HERMES_COPILOT_ACP_ARGS", "--parent-placeholder")

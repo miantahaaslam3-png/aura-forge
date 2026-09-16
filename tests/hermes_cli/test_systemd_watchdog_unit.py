@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from gateway.config import GatewayConfig
-from hermes_cli import gateway as gateway_cli
+from auraforge_cli import gateway as gateway_cli
 
 
 

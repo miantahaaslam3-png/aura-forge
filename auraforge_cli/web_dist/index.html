@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" type="image/png" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="shortcut icon" href="./apple-touch-icon.png" />
+    <title>Aura Forge</title>
+    <script>
+      // Pre-paint the themed background before the app bundle loads. Without
+      // this, the first frame (which is what `ready-to-show` waits for) is the
+      // UA-default white page, and the real theme only lands once the whole
+      // module graph has executed — i.e. the "white flash" on every new
+      // window. applyTheme() in src/themes/context.tsx keeps these keys fresh.
+      try {
+        let bg = localStorage.getItem('aura-forge-boot-background')
+        let scheme = localStorage.getItem('aura-forge-boot-color-scheme')
+        if (!bg) {
+          const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          bg = dark ? '#111111' : '#f7f7f7'
+          scheme = dark ? 'dark' : 'light'
+        }
+        document.documentElement.style.backgroundColor = bg
+        if (scheme === 'dark' || scheme === 'light') {
+          document.documentElement.style.colorScheme = scheme
+        }
+      } catch {
+        // localStorage unavailable — keep UA defaults.
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/index-DUDQkp3r.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-UghPS6Et.css">
+  </head>
+  <body>
+    <div id="root" class="scrollbar-dt"></div>
+    <script>
+      // Runtime Aura Forge branding — replace ALL "Hermes" text in DOM
+      (function() {
+        var SKIP = {SCRIPT:1,STYLE:1,INPUT:1,TEXTAREA:1,CODE:1,PRE:1};
+
+        function walk(node) {
+          if (!node) return;
+          if (node.nodeType === 3 && node.textContent) {
+            if (/hermes/i.test(node.textContent)) {
+              // Replace "HERMES AGENT" / "Hermes Agent" as a phrase first
+              node.textContent = node.textContent.replace(/hermes\s*agent/gi, 'Aura Forge');
+              // Then replace any remaining standalone "Hermes"
+              node.textContent = node.textContent.replace(/hermes/gi, 'Aura Forge');
+            }
+            return;
+          }
+          if (node.nodeType === 1) {
+            if (SKIP[node.tagName]) return;
+            var kids = node.childNodes;
+            for (var i = 0; i < kids.length; i++) {
+              walk(kids[i]);
+            }
+            // Also replace alt text and title attributes
+            if (node.getAttribute && /hermes/i.test(node.getAttribute('alt') || '')) {
+              node.setAttribute('alt', (node.getAttribute('alt') || '').replace(/hermes\s*agent/gi, 'Aura Forge').replace(/hermes/gi, 'Aura Forge'));
+            }
+          }
+        }
+
+        function runAll() { walk(document.body); }
+
+        // Run repeatedly to catch React lazy rendering
+        [300, 800, 1500, 3000, 6000, 12000].forEach(function(ms) {
+          setTimeout(runAll, ms);
+        });
+
+        // Observe for new nodes React adds after initial render
+        var obs = new MutationObserver(function(muts) {
+          for (var i = 0; i < muts.length; i++) {
+            var added = muts[i].addedNodes;
+            for (var j = 0; j < added.length; j++) {
+              walk(added[j]);
+            }
+          }
+        });
+        obs.observe(document.body, {childList: true, subtree: true, characterData: true});
+
+        // Stop after 60s
+        setTimeout(function() { obs.disconnect(); }, 60000);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-"""Unit tests for hermes_cli.toolset_validation (see #38798).
+"""Unit tests for auraforge_cli.toolset_validation (see #38798).
 
 Pure logic — the validity predicate is injected, so these tests need neither the
 tool registry nor a running Aura Forge.
@@ -6,7 +6,7 @@ tool registry nor a running Aura Forge.
 
 import pytest
 
-from hermes_cli.toolset_validation import validate_platform_toolsets
+from auraforge_cli.toolset_validation import validate_platform_toolsets
 
 # A representative set of real toolset names. `auraforge` is deliberately absent —
 # that is the corruption #38798 reported (`auraforge-cli` rewritten to `auraforge`).

@@ -11,14 +11,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import hermes_cli.gateway as gateway_mod
+import auraforge_cli.gateway as gateway_mod
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-_GATEWAY_CMD = "python -m hermes_cli.main gateway run"
+_GATEWAY_CMD = "python -m auraforge_cli.main gateway run"
 _OTHER_CMD = "python -m some_other_thing"
 
 
@@ -66,7 +66,7 @@ class TestProcFallback:
     def test_detects_gateway_pid_via_proc(self):
         my_pid = os.getpid()
         entries = {
-            my_pid: "python -m hermes_cli.main",   # own process — excluded
+            my_pid: "python -m auraforge_cli.main",   # own process — excluded
             12345: _GATEWAY_CMD,
             99999: _OTHER_CMD,
         }
@@ -76,7 +76,7 @@ class TestProcFallback:
             patch("os.path.isdir", side_effect=_isdir),
             patch("os.listdir", side_effect=_listdir),
             patch("builtins.open", side_effect=_open),
-            patch("hermes_cli.gateway._get_ancestor_pids", return_value=set()),
+            patch("auraforge_cli.gateway._get_ancestor_pids", return_value=set()),
             patch("subprocess.run") as mock_ps,
         ):
             pids = gateway_mod._scan_gateway_pids(set(), all_profiles=True)
@@ -104,7 +104,7 @@ class TestProcFallback:
             patch("os.path.isdir", side_effect=_isdir),
             patch("os.listdir", side_effect=_listdir),
             patch("builtins.open", side_effect=_open),
-            patch("hermes_cli.gateway._get_ancestor_pids", return_value=set()),
+            patch("auraforge_cli.gateway._get_ancestor_pids", return_value=set()),
             patch("subprocess.run") as mock_ps,
         ):
             pids = gateway_mod._scan_gateway_pids(set(), all_profiles=True)
@@ -125,9 +125,9 @@ class TestPsFallbackBsdCompat:
     def test_ps_flags_are_bsd_compatible(self):
         """ps is called with ``-Aww``, not ``-A eww``."""
         with (
-            patch("hermes_cli.gateway.is_windows", return_value=False),
+            patch("auraforge_cli.gateway.is_windows", return_value=False),
             patch("os.path.isdir", side_effect=lambda p: p != "/proc"),
-            patch("hermes_cli.gateway._get_ancestor_pids", return_value=set()),
+            patch("auraforge_cli.gateway._get_ancestor_pids", return_value=set()),
             patch("subprocess.run") as mock_run,
         ):
             # Return a failing rc=1 so the scan finishes quickly.
@@ -155,9 +155,9 @@ class TestPsFallbackBsdCompat:
     def test_ps_command_includes_pid_and_command_columns(self):
         """The ps command requests ``pid=,command=`` output columns."""
         with (
-            patch("hermes_cli.gateway.is_windows", return_value=False),
+            patch("auraforge_cli.gateway.is_windows", return_value=False),
             patch("os.path.isdir", side_effect=lambda p: p != "/proc"),
-            patch("hermes_cli.gateway._get_ancestor_pids", return_value=set()),
+            patch("auraforge_cli.gateway._get_ancestor_pids", return_value=set()),
             patch("subprocess.run") as mock_run,
         ):
             mock_run.return_value = MagicMock(
@@ -190,14 +190,14 @@ class TestGetServicePidsAllProfiles:
             return ("gui/501", 123)
 
         with (
-            patch("hermes_cli.gateway.is_macos", return_value=True),
-            patch("hermes_cli.gateway.supports_systemd_services", return_value=False),
+            patch("auraforge_cli.gateway.is_macos", return_value=True),
+            patch("auraforge_cli.gateway.supports_systemd_services", return_value=False),
             patch(
-                "hermes_cli.gateway.get_launchd_label",
+                "auraforge_cli.gateway.get_launchd_label",
                 return_value="ai.auraforge.gateway.myprofile",
             ),
             patch(
-                "hermes_cli.gateway._locate_launchd_gateway_service",
+                "auraforge_cli.gateway._locate_launchd_gateway_service",
                 side_effect=_fake_locate,
             ),
             patch("subprocess.run") as mock_run,
@@ -232,18 +232,18 @@ class TestGetServicePidsAllProfiles:
             return ("gui/501", pid) if pid else (None, None)
 
         with (
-            patch("hermes_cli.gateway.is_macos", return_value=True),
-            patch("hermes_cli.gateway.supports_systemd_services", return_value=False),
+            patch("auraforge_cli.gateway.is_macos", return_value=True),
+            patch("auraforge_cli.gateway.supports_systemd_services", return_value=False),
             patch(
-                "hermes_cli.gateway.get_launchd_label",
+                "auraforge_cli.gateway.get_launchd_label",
                 return_value="ai.auraforge.gateway",
             ),
             patch(
-                "hermes_cli.gateway.launchd_gateway_labels_for_install",
+                "auraforge_cli.gateway.launchd_gateway_labels_for_install",
                 return_value=["ai.auraforge.gateway", "ai.auraforge.gateway-profile-b"],
             ),
             patch(
-                "hermes_cli.gateway._locate_launchd_gateway_service",
+                "auraforge_cli.gateway._locate_launchd_gateway_service",
                 side_effect=_fake_locate,
             ),
             patch("subprocess.run") as mock_run,
@@ -275,8 +275,8 @@ class TestGetServicePidsAllProfiles:
     def test_all_profiles_empty_when_no_gateway_labels(self):
         """When no ai.auraforge.gateway* labels exist, all_profiles returns empty."""
         with (
-            patch("hermes_cli.gateway.is_macos", return_value=True),
-            patch("hermes_cli.gateway.supports_systemd_services", return_value=False),
+            patch("auraforge_cli.gateway.is_macos", return_value=True),
+            patch("auraforge_cli.gateway.supports_systemd_services", return_value=False),
             patch("subprocess.run") as mock_run,
         ):
             mock_run.return_value = MagicMock(
@@ -291,8 +291,8 @@ class TestGetServicePidsAllProfiles:
     def test_all_profiles_handles_broken_pid_column(self):
         """Non-integer PID entries are silently skipped."""
         with (
-            patch("hermes_cli.gateway.is_macos", return_value=True),
-            patch("hermes_cli.gateway.supports_systemd_services", return_value=False),
+            patch("auraforge_cli.gateway.is_macos", return_value=True),
+            patch("auraforge_cli.gateway.supports_systemd_services", return_value=False),
             patch("subprocess.run") as mock_run,
         ):
             mock_run.return_value = MagicMock(
@@ -311,8 +311,8 @@ class TestGetServicePidsAllProfiles:
         """systemd scope is unaffected by the all_profiles switch — it already
         lists every auraforge-gateway* unit unconditionally."""
         with (
-            patch("hermes_cli.gateway.is_macos", return_value=False),
-            patch("hermes_cli.gateway.supports_systemd_services", return_value=True),
+            patch("auraforge_cli.gateway.is_macos", return_value=False),
+            patch("auraforge_cli.gateway.supports_systemd_services", return_value=True),
             patch("subprocess.run") as mock_run,
         ):
             def _run_side_effect(args, **kwargs):

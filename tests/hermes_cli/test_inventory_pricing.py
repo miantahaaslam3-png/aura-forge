@@ -5,8 +5,8 @@ columns + Free/Pro badges and gate paid models on free Nous accounts, the
 same way the `auraforge model` CLI picker does.
 """
 
-import hermes_cli.inventory as inv
-import hermes_cli.models as models_mod
+import auraforge_cli.inventory as inv
+import auraforge_cli.models as models_mod
 
 
 def _patch_pricing(monkeypatch, *, free_tier, pricing, unavailable=None):

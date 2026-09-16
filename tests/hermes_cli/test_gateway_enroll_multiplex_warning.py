@@ -21,8 +21,8 @@ from contextlib import redirect_stdout
 
 import pytest
 
-import hermes_constants
-from hermes_cli.gateway_enroll import _warn_if_secondary_multiplex_profile
+import auraforge_constants
+from auraforge_cli.gateway_enroll import _warn_if_secondary_multiplex_profile
 
 
 @pytest.fixture()
@@ -30,7 +30,7 @@ def topology(tmp_path, monkeypatch):
     """Standard multiplex layout: default root + one secondary profile."""
     root = tmp_path / "root"
     (root / "profiles" / "alice").mkdir(parents=True)
-    monkeypatch.setattr(hermes_constants, "get_default_hermes_root", lambda: root)
+    monkeypatch.setattr(auraforge_constants, "get_default_hermes_root", lambda: root)
     monkeypatch.delenv("GATEWAY_MULTIPLEX_PROFILES", raising=False)
     return root
 

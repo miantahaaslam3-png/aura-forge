@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli import gateway as hermes_gateway
-from hermes_cli import gateway_windows
-from hermes_cli import main as cli_main
-from hermes_cli import update_cmd
+from auraforge_cli import gateway as hermes_gateway
+from auraforge_cli import gateway_windows
+from auraforge_cli import main as cli_main
+from auraforge_cli import update_cmd
 
 
 def _run_cold_start(monkeypatch, capsys, *, surviving_pids):

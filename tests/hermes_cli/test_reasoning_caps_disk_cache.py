@@ -16,7 +16,7 @@ import json
 
 import pytest
 
-import hermes_cli.models as models_mod
+import auraforge_cli.models as models_mod
 
 
 _CATALOG = json.dumps({

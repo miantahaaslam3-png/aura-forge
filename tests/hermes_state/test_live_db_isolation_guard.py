@@ -19,17 +19,17 @@ from pathlib import Path
 
 import pytest
 
-import hermes_state
+import auraforge_state
 from gateway.config import GatewayConfig
 from gateway.session import SessionStore
-from hermes_state import SessionDB
+from auraforge_state import SessionDB
 
 # Must match the root the guard itself computes.  Hardcoding ``~/.auraforge``
 # silently disarmed every assertion below on Windows, where the real root is
 # ``%LOCALAPPDATA%\auraforge``: the paths under test were then *correctly*
 # classified as non-production, so the guard never raised and the whole
 # TestProductionPathRefused class failed for the wrong reason (#82770).
-REAL_ROOT = hermes_state._real_platform_state_root()
+REAL_ROOT = auraforge_state._real_platform_state_root()
 if REAL_ROOT is None:  # pragma: no cover - no resolvable home on this platform
     pytest.skip(
         "no real platform state root to assert against", allow_module_level=True
@@ -70,7 +70,7 @@ class TestProductionPathRefused:
         # resolver follows the (production-pointing) env, as it would in a
         # process that never imported the hermetic conftest.
         monkeypatch.setattr(
-            hermes_state, "DEFAULT_DB_PATH", hermes_state._IMPORT_DEFAULT_DB_PATH
+            auraforge_state, "DEFAULT_DB_PATH", auraforge_state._IMPORT_DEFAULT_DB_PATH
         )
         with pytest.raises(RuntimeError, match="live-system guard"):
             SessionDB()
@@ -89,7 +89,7 @@ class TestHermeticPathsAllowed:
         """Argless SessionDB() under a hermetic HERMES_HOME must succeed."""
         monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermetic-home"))
         monkeypatch.setattr(
-            hermes_state, "DEFAULT_DB_PATH", hermes_state._IMPORT_DEFAULT_DB_PATH
+            auraforge_state, "DEFAULT_DB_PATH", auraforge_state._IMPORT_DEFAULT_DB_PATH
         )
         db = SessionDB()
         try:
@@ -106,7 +106,7 @@ class TestBypassMarker:
         Drives the guard function directly (never actually opens the live
         DB) — with the bypass marker active it must not raise.
         """
-        hermes_state._ensure_test_isolation(REAL_ROOT / "state.db")
+        auraforge_state._ensure_test_isolation(REAL_ROOT / "state.db")
 
 
 class TestSessionStoreLoudFailure:
@@ -126,7 +126,7 @@ class TestSessionStoreLoudFailure:
                 "live-system guard: test attempted to open production state.db"
             )
 
-        monkeypatch.setattr(hermes_state, "SessionDB", _boom)
+        monkeypatch.setattr(auraforge_state, "SessionDB", _boom)
         with pytest.raises(RuntimeError, match="live-system guard"):
             SessionStore(sessions_dir=tmp_path, config=GatewayConfig())
 
@@ -138,7 +138,7 @@ class TestSessionStoreLoudFailure:
         def _boom(*args, **kwargs):
             raise RuntimeError("disk on fire")
 
-        monkeypatch.setattr(hermes_state, "SessionDB", _boom)
+        monkeypatch.setattr(auraforge_state, "SessionDB", _boom)
         store = SessionStore(sessions_dir=tmp_path, config=GatewayConfig())
         assert store._db is None
 
@@ -161,7 +161,7 @@ class TestSubprocessChildCovered:
         env["PYTEST_CURRENT_TEST"] = "tests/fake.py::test_child (call)"
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
         code = (
-            "from hermes_state import SessionDB\n"
+            "from auraforge_state import SessionDB\n"
             "SessionDB()\n"
         )
         proc = subprocess.run(
@@ -185,7 +185,7 @@ class TestSubprocessChildCovered:
         env["HERMES_HOME"] = str(tmp_path / "child-home")
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
         code = (
-            "from hermes_state import SessionDB\n"
+            "from auraforge_state import SessionDB\n"
             "db = SessionDB()\n"
             "db.close()\n"
             "print('OK', db.db_path)\n"

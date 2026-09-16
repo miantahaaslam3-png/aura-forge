@@ -73,7 +73,7 @@ def test_locked_shim_really_cannot_be_renamed(held_shim):
 
 
 def test_strict_quarantine_refuses_against_real_lock(held_shim, monkeypatch):
-    import hermes_cli.main as cli_main
+    import auraforge_cli.main as cli_main
 
     scripts, _shim = held_shim
     install_ran: list = []
@@ -98,7 +98,7 @@ def test_strict_quarantine_refuses_against_real_lock(held_shim, monkeypatch):
 
 
 def test_recovery_installer_refuses_against_real_lock(held_shim, monkeypatch):
-    import hermes_cli._install_repair as ir
+    import auraforge_cli._install_repair as ir
 
     scripts, _shim = held_shim
     monkeypatch.setattr(ir, "_venv_scripts_dir", lambda root: scripts)
@@ -112,7 +112,7 @@ def test_recovery_installer_refuses_against_real_lock(held_shim, monkeypatch):
 
 def test_release_then_strict_quarantine_succeeds(tmp_path, monkeypatch):
     """After the holder exits, the same strict path proceeds normally."""
-    import hermes_cli.main as cli_main
+    import auraforge_cli.main as cli_main
 
     scripts = tmp_path / "venv" / "Scripts"
     scripts.mkdir(parents=True)

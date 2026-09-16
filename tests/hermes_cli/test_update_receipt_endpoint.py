@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-import hermes_cli.web_server as web_server
+import auraforge_cli.web_server as web_server
 
 
 @pytest.fixture()
@@ -24,7 +24,7 @@ def client():
         from starlette.testclient import TestClient
     except ImportError:
         pytest.skip("fastapi/starlette not installed")
-    from hermes_cli.web_server import _SESSION_HEADER_NAME, _SESSION_TOKEN, app
+    from auraforge_cli.web_server import _SESSION_HEADER_NAME, _SESSION_TOKEN, app
 
     c = TestClient(app)
     c.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
@@ -51,7 +51,7 @@ def _write_receipt(tmp_path: Path, monkeypatch, *, outcome="success") -> dict:
     receipt_dir = tmp_path / "logs" / "update_receipts"
     receipt_dir.mkdir(parents=True)
     (receipt_dir / "latest.json").write_text(json.dumps(receipt), encoding="utf-8")
-    import hermes_cli.update_receipt as ur
+    import auraforge_cli.update_receipt as ur
 
     monkeypatch.setattr(ur, "_receipt_dir", lambda: receipt_dir)
     return receipt
@@ -76,7 +76,7 @@ class TestUpdateReceiptEndpoint:
         assert summary["fleet_states"] == ["current"]
 
     def test_receipt_endpoint_404_when_no_receipt(self, client, tmp_path, monkeypatch):
-        import hermes_cli.update_receipt as ur
+        import auraforge_cli.update_receipt as ur
 
         monkeypatch.setattr(ur, "_receipt_dir", lambda: tmp_path / "none")
 

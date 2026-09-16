@@ -148,7 +148,7 @@ Aura Forge 在执行 `hermes update` 时也会同步内置技能，但同步清�
 | 技能 | 描述 | 路径 |
 |-------|-------------|------|
 | [`dogfood`](/user-guide/skills/bundled/software-development/software-development-dogfood) | Web 应用探索性 QA：发现 bug、收集证据、生成报告。 | `software-development/dogfood` |
-| [`hermes-agent-skill-authoring`](/user-guide/skills/bundled/software-development/software-development-hermes-agent-skill-authoring) | 编写仓库内 SKILL.md：frontmatter、验证器、结构规范。 | `software-development/hermes-agent-skill-authoring` |
+| [`aura-forge-agent-skill-authoring`](/user-guide/skills/bundled/software-development/software-development-aura-forge-agent-skill-authoring) | 编写仓库内 SKILL.md：frontmatter、验证器、结构规范。 | `software-development/aura-forge-agent-skill-authoring` |
 | [`node-inspect-debugger`](/user-guide/skills/bundled/software-development/software-development-node-inspect-debugger) | 通过 --inspect + Chrome DevTools Protocol CLI 调试 Node.js。 | `software-development/node-inspect-debugger` |
 | [`plan`](/user-guide/skills/bundled/software-development/software-development-plan) | 计划模式：将 Markdown 计划写入 `.hermes/plans/`，不执行。 | `software-development/plan` |
 | [`python-debugpy`](/user-guide/skills/bundled/software-development/software-development-python-debugpy) | 调试 Python：pdb REPL + debugpy 远程调试（DAP）。 | `software-development/python-debugpy` |

@@ -62,7 +62,7 @@ scripts/run_tests.sh
 
 ### 手动克隆备用路径
 
-只有在你明确不想使用 Aura Forge managed install layout 时才使用这种方式（例如容器或 CI job 里的临时 clone）。如果这样安装，请确保运行的是这个 venv 里的 `hermes` entrypoint；运行系统 `python3 -m hermes_cli.main` 可能会加载无关的系统 Python 包。
+只有在你明确不想使用 Aura Forge managed install layout 时才使用这种方式（例如容器或 CI job 里的临时 clone）。如果这样安装，请确保运行的是这个 venv 里的 `hermes` entrypoint；运行系统 `python3 -m auraforge_cli.main` 可能会加载无关的系统 Python 包。
 
 ```bash
 git clone https://github.com/miantahaaslam3-png/aura-forge.git
@@ -117,7 +117,7 @@ scripts/run_tests.sh
 - **注释**：仅在解释非显而易见的意图、权衡取舍或 API 特殊行为时添加
 - **错误处理**：捕获具体异常。对于意外错误，使用 `logger.warning()`/`logger.error()` 并设置 `exc_info=True`
 - **跨平台**：不得假设 Unix 环境（见下文）
-- **Profile 安全路径**：不得硬编码 `~/.hermes` — 代码路径使用 `hermes_constants` 中的 `get_hermes_home()`，面向用户的消息使用 `display_hermes_home()`。完整规则参见 [AGENTS.md](https://github.com/miantahaaslam3-png/aura-forge/blob/main/AGENTS.md#profiles-multi-instance-support)。
+- **Profile 安全路径**：不得硬编码 `~/.hermes` — 代码路径使用 `auraforge_constants` 中的 `get_hermes_home()`，面向用户的消息使用 `display_hermes_home()`。完整规则参见 [AGENTS.md](https://github.com/miantahaaslam3-png/aura-forge/blob/main/AGENTS.md#profiles-multi-instance-support)。
 
 ## 跨平台兼容性
 

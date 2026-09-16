@@ -473,7 +473,7 @@ def _handle_sudo_failure(output: str, env_type: str) -> str:
     
     for failure in sudo_failures:
         if failure in output:
-            from hermes_constants import display_hermes_home as _dhh
+            from auraforge_constants import display_hermes_home as _dhh
             if is_delegated_child:
                 return output + (
                     "\n\n💡 Tip: Subagents cannot prompt for a sudo password. "
@@ -1734,7 +1734,7 @@ def _ensure_terminal_env_bridged() -> None:
         return
     _terminal_config_bridge_attempted = True
     try:
-        from hermes_cli.config import apply_terminal_config_to_env, read_raw_config
+        from auraforge_cli.config import apply_terminal_config_to_env, read_raw_config
 
         # If config.yaml has an explicit terminal section, bridge with
         # override enabled. The helper only overrides env vars for keys present
@@ -1811,7 +1811,7 @@ def _get_env_config() -> Dict[str, Any]:
     # /workspace and track the original host path separately. Otherwise keep the
     # normal sandbox behavior and discard host paths.
     cwd = os.getenv("TERMINAL_CWD", default_cwd)
-    from hermes_cli.config import _is_ssh_remote_tilde_cwd
+    from auraforge_cli.config import _is_ssh_remote_tilde_cwd
     if cwd and not _is_ssh_remote_tilde_cwd(env_type, cwd):
         cwd = os.path.expanduser(cwd)
     host_cwd = None
@@ -3072,7 +3072,7 @@ def terminal_tool(
         # gateway process itself. The restart would SIGTERM the gateway, which
         # kills this very subprocess before it can complete — the service may
         # never restart. This mirrors the `auraforge gateway restart` guard in
-        # hermes_cli/gateway.py and the cron-path guard in hermes_cli/cron.py,
+        # auraforge_cli/gateway.py and the cron-path guard in auraforge_cli/cron.py,
         # but applies unconditionally (force=True cannot help here).
         # Gate on the SUPERVISED-gateway probe, not the raw _HERMES_GATEWAY
         # marker: gateway.run sets it at import time, so it leaks into every
@@ -3673,7 +3673,7 @@ def terminal_tool(
             # still subject to the final output limit below.
             # The hook is fail-open, and the first valid string return wins.
             try:
-                from hermes_cli.lifecycle import invoke_hook
+                from auraforge_cli.lifecycle import invoke_hook
                 hook_results = invoke_hook(
                     "transform_terminal_output",
                     command=command,
@@ -4087,7 +4087,7 @@ if __name__ == "__main__":
     print(f"  TERMINAL_MODAL_IMAGE: {os.getenv('TERMINAL_MODAL_IMAGE', default_img)}")
     print(f"  TERMINAL_DAYTONA_IMAGE: {os.getenv('TERMINAL_DAYTONA_IMAGE', default_img)}")
     print(f"  TERMINAL_CWD: {os.getenv('TERMINAL_CWD', _safe_getcwd())}")
-    from hermes_constants import display_hermes_home as _dhh
+    from auraforge_constants import display_hermes_home as _dhh
     print(f"  TERMINAL_SANDBOX_DIR: {os.getenv('TERMINAL_SANDBOX_DIR', f'{_dhh()}/sandboxes')}")
     print(f"  TERMINAL_TIMEOUT: {os.getenv('TERMINAL_TIMEOUT', '60')}")
     print(f"  TERMINAL_LIFETIME_SECONDS: {os.getenv('TERMINAL_LIFETIME_SECONDS', '300')}")

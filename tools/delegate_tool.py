@@ -39,7 +39,7 @@ from agent.interrupt_compat import request_hard_interrupt
 
 # Sentinel value used by the runtime provider system for providers that are
 # not natively known (named custom providers, third-party aggregators, etc.).
-# Must match hermes_cli.runtime_provider.RUNTIME_PROVIDER_TYPE_CUSTOM.
+# Must match auraforge_cli.runtime_provider.RUNTIME_PROVIDER_TYPE_CUSTOM.
 _RUNTIME_PROVIDER_CUSTOM = "custom"
 from tools import file_state
 from tools.terminal_tool import set_approval_callback as _set_subagent_approval_cb
@@ -1802,7 +1802,7 @@ def _build_child_agent(
     if override_api_mode is not None:
         effective_api_mode = override_api_mode
     elif _effective_provider_norm in {"nous", "nous-portal", "nousresearch"}:
-        from hermes_cli.providers import nous_api_mode
+        from auraforge_cli.providers import nous_api_mode
 
         effective_api_mode = nous_api_mode(effective_model)
     elif effective_provider != _parent_provider:
@@ -1856,7 +1856,7 @@ def _build_child_agent(
         # instead of disabling thinking for children.
         delegation_effort = delegation_cfg.get("reasoning_effort")
         if delegation_effort or delegation_effort is False:
-            from hermes_constants import parse_reasoning_effort
+            from auraforge_constants import parse_reasoning_effort
 
             parsed = parse_reasoning_effort(delegation_effort)
             if parsed is not None:
@@ -1943,7 +1943,7 @@ def _build_child_agent(
     parent_session_db = getattr(parent_agent, "_session_db", None)
     if parent_session_db is not None:
         try:
-            from hermes_state import SessionDB
+            from auraforge_state import SessionDB
 
             _parent_db_path = getattr(parent_session_db, "db_path", None)
             child_session_db = (
@@ -2078,7 +2078,7 @@ def _build_child_agent(
             logger.debug("spawn_requested relay failed: %s", exc)
 
     try:
-        from hermes_cli.lifecycle import invoke_hook as _invoke_hook
+        from auraforge_cli.lifecycle import invoke_hook as _invoke_hook
         _invoke_hook(
             "subagent_start",
             parent_session_id=getattr(parent_agent, "session_id", None),
@@ -2116,7 +2116,7 @@ def _dump_subagent_timeout_diagnostic(
     Returns the absolute path to the diagnostic file, or None on failure.
     """
     try:
-        from hermes_constants import get_hermes_home
+        from auraforge_constants import get_hermes_home
         import datetime as _dt
         import sys as _sys
         import traceback as _traceback
@@ -2282,7 +2282,7 @@ def _spill_summary_to_file(task_index: int, summary: str) -> Optional[str]:
     the trimmed head+tail is still returned to the parent regardless).
     """
     try:
-        from hermes_constants import get_hermes_dir
+        from auraforge_constants import get_hermes_dir
         import datetime as _dt
 
         cache_dir = get_hermes_dir("cache/delegation", "delegation_cache")
@@ -3460,7 +3460,7 @@ def _finalize_child_results(
 
         parent_session_id = getattr(parent_agent, "session_id", None)
         try:
-            from hermes_cli.plugins import invoke_hook as invoke_hook
+            from auraforge_cli.plugins import invoke_hook as invoke_hook
         except Exception:
             invoke_hook = None
 
@@ -4508,7 +4508,7 @@ def _resolve_delegation_credentials(cfg: dict, parent_agent) -> dict:
         # proxies — pick the right transport automatically. Without this,
         # subagents would default to chat_completions and hit 404s on endpoints
         # that only speak the Anthropic Messages protocol. Fixes #10213.
-        from hermes_cli.runtime_provider import _detect_api_mode_for_url
+        from auraforge_cli.runtime_provider import _detect_api_mode_for_url
 
         base_lower = configured_base_url.lower()
         provider = "custom"
@@ -4553,7 +4553,7 @@ def _resolve_delegation_credentials(cfg: dict, parent_agent) -> dict:
 
     # Provider is configured — resolve full credentials
     try:
-        from hermes_cli.runtime_provider import resolve_runtime_provider
+        from auraforge_cli.runtime_provider import resolve_runtime_provider
 
         runtime = resolve_runtime_provider(requested=configured_provider, target_model=configured_model)
     except Exception as exc:
@@ -4620,7 +4620,7 @@ def _load_config() -> dict:
     prefer_legacy = os.environ.get("HERMES_IGNORE_USER_CONFIG") == "1"
     if not prefer_legacy:
         try:
-            from hermes_cli.config import load_config_readonly
+            from auraforge_cli.config import load_config_readonly
 
             full = load_config_readonly()
             cfg = full.get("delegation") or {}

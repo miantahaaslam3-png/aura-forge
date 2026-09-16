@@ -1,7 +1,7 @@
-"""The decomposed command modules stay lazy after `import hermes_cli.main`.
+"""The decomposed command modules stay lazy after `import auraforge_cli.main`.
 
 The main.py decomposition re-exports the sessions/update/dashboard command
-surface from hermes_cli.main so argparse wiring and monkeypatches keep
+surface from auraforge_cli.main so argparse wiring and monkeypatches keep
 resolving. Those re-exports must not import the modules eagerly: every
 `auraforge` invocation (including `auraforge --version`) would pay for update_cmd's
 dependency chain (jwt, click, ...) even when no subcommand runs.
@@ -11,20 +11,20 @@ import subprocess
 import sys
 import textwrap
 
-import hermes_cli.main
+import auraforge_cli.main
 
 
 def test_importing_main_does_not_import_command_modules():
     code = textwrap.dedent(
         """
         import sys
-        import hermes_cli.main  # noqa: F401
+        import auraforge_cli.main  # noqa: F401
         loaded = [
             m
             for m in (
-                "hermes_cli.update_cmd",
-                "hermes_cli.sessions_cmd",
-                "hermes_cli.dashboard_procs",
+                "auraforge_cli.update_cmd",
+                "auraforge_cli.sessions_cmd",
+                "auraforge_cli.dashboard_procs",
             )
             if m in sys.modules
         ]
@@ -41,26 +41,26 @@ def test_importing_main_does_not_import_command_modules():
 
 
 def test_lazy_reexports_resolve_to_real_objects():
-    import hermes_cli.dashboard_procs
-    import hermes_cli.sessions_cmd
-    import hermes_cli.update_cmd
+    import auraforge_cli.dashboard_procs
+    import auraforge_cli.sessions_cmd
+    import auraforge_cli.update_cmd
 
-    assert hermes_cli.main.cmd_sessions is hermes_cli.sessions_cmd.cmd_sessions
+    assert auraforge_cli.main.cmd_sessions is auraforge_cli.sessions_cmd.cmd_sessions
     assert (
-        hermes_cli.main._cmd_update_impl is hermes_cli.update_cmd._cmd_update_impl
+        auraforge_cli.main._cmd_update_impl is auraforge_cli.update_cmd._cmd_update_impl
     )
     assert (
-        hermes_cli.main._scan_dashboard_processes
-        is hermes_cli.dashboard_procs._scan_dashboard_processes
+        auraforge_cli.main._scan_dashboard_processes
+        is auraforge_cli.dashboard_procs._scan_dashboard_processes
     )
     # Back-compat alias resolves to the kill helper.
     assert (
-        hermes_cli.main._warn_stale_dashboard_processes
-        is hermes_cli.dashboard_procs._kill_stale_dashboard_processes
+        auraforge_cli.main._warn_stale_dashboard_processes
+        is auraforge_cli.dashboard_procs._kill_stale_dashboard_processes
     )
 
 
 def test_lazy_reexports_accept_monkeypatch(monkeypatch):
     sentinel = object()
-    monkeypatch.setattr("hermes_cli.main._cmd_update_impl", sentinel)
-    assert hermes_cli.main._cmd_update_impl is sentinel
+    monkeypatch.setattr("auraforge_cli.main._cmd_update_impl", sentinel)
+    assert auraforge_cli.main._cmd_update_impl is sentinel

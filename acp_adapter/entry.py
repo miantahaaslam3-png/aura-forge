@@ -13,12 +13,12 @@ Usage::
     auraforge-acp
 """
 
-# IMPORTANT: hermes_bootstrap must be the very first import — UTF-8 stdio
-# on Windows.  No-op on POSIX.  See hermes_bootstrap.py for full rationale.
+# IMPORTANT: auraforge_bootstrap must be the very first import — UTF-8 stdio
+# on Windows.  No-op on POSIX.  See auraforge_bootstrap.py for full rationale.
 try:
-    import hermes_bootstrap  # noqa: F401
+    import auraforge_bootstrap  # noqa: F401
 except ModuleNotFoundError:
-    # Graceful fallback when hermes_bootstrap isn't registered in the venv
+    # Graceful fallback when auraforge_bootstrap isn't registered in the venv
     # yet — happens during partial ``auraforge update`` where git-reset landed
     # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
     # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.
@@ -27,7 +27,7 @@ else:
     # Stop a ``utils/``/``proxy/``/``ui/`` package in the launch directory from
     # shadowing Aura Forge's own modules — ``auraforge acp`` can be started from any
     # cwd, including a project that has same-named packages on its path.
-    hermes_bootstrap.harden_import_path()
+    auraforge_bootstrap.harden_import_path()
 
 import argparse
 import asyncio
@@ -35,7 +35,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from hermes_constants import get_hermes_home
+from auraforge_constants import get_hermes_home
 
 
 # Methods clients send as periodic liveness probes. They are not part of the
@@ -103,7 +103,7 @@ def _setup_logging() -> None:
 
 def _load_env() -> None:
     """Load .env from HERMES_HOME (default ``~/.auraforge``)."""
-    from hermes_cli.env_loader import load_hermes_dotenv
+    from auraforge_cli.env_loader import load_hermes_dotenv
 
     hermes_home = get_hermes_home()
     loaded = load_hermes_dotenv(hermes_home=hermes_home)
@@ -150,7 +150,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _print_version() -> None:
-    from hermes_cli import __version__ as hermes_version
+    from auraforge_cli import __version__ as hermes_version
 
     print(hermes_version)
 
@@ -163,7 +163,7 @@ def _run_check() -> None:
 
 
 def _run_setup() -> None:
-    from hermes_cli.main import main as hermes_main
+    from auraforge_cli.main import main as hermes_main
 
     old_argv = sys.argv[:]
     try:
@@ -197,7 +197,7 @@ def _run_setup_browser(assume_yes: bool = False) -> int:
 
     Returns 0 on success, 1 on failure.
     """
-    from hermes_cli.dep_ensure import ensure_dependency
+    from auraforge_cli.dep_ensure import ensure_dependency
 
     try:
         node_ok = ensure_dependency("node", interactive=not assume_yes)
@@ -259,7 +259,7 @@ def main(argv: list[str] | None = None) -> None:
     # Metadata-only hosts can opt out of unrelated global MCP startup.
     if os.environ.get("HERMES_ACP_SKIP_CONFIGURED_MCP", "").strip() != "1":
         try:
-            from hermes_cli.mcp_startup import start_background_mcp_discovery
+            from auraforge_cli.mcp_startup import start_background_mcp_discovery
 
             start_background_mcp_discovery(
                 logger=logger,

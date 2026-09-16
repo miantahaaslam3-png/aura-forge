@@ -24,7 +24,7 @@ from __future__ import annotations
 import inspect
 import types
 
-from hermes_cli.main import _fleet_probe_expected_runtimes
+from auraforge_cli.main import _fleet_probe_expected_runtimes
 
 
 def _plan(runtimes):
@@ -128,7 +128,7 @@ class TestCallSiteWiring:
     """
 
     def _impl_source(self):
-        from hermes_cli import update_cmd
+        from auraforge_cli import update_cmd
 
         return inspect.getsource(update_cmd._cmd_update_impl)
 

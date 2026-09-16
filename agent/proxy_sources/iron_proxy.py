@@ -357,7 +357,7 @@ class TokenMapping:
 
 
 def _hermes_bin_dir() -> Path:
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     return get_hermes_home() / "bin"
 
@@ -369,7 +369,7 @@ def _proxy_state_dir_ro() -> Path:
     this — there's no reason to materialize ``~/.auraforge/proxy/`` just to
     check whether a pidfile exists.
     """
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     return get_hermes_home() / "proxy"
 

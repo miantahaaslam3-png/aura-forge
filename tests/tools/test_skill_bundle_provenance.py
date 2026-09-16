@@ -140,7 +140,7 @@ def test_lock_file_persists_scan_provenance(tmp_path):
 
 
 def test_real_temp_repo_and_home_install_e2e(served_repo, monkeypatch, tmp_path):
-    from hermes_cli.skills_hub import do_install
+    from auraforge_cli.skills_hub import do_install
     import tools.skills_hub as hub
 
     _repo, url = served_repo
@@ -195,7 +195,7 @@ def test_install_with_junctioned_skills_dir(served_repo, monkeypatch, tmp_path):
     raises ValueError after the files have already been moved, leaving a lock
     entry without a content_hash (which then poisons 'auraforge skills check').
     """
-    from hermes_cli.skills_hub import do_install
+    from auraforge_cli.skills_hub import do_install
     import tools.skills_hub as hub
 
     _repo, url = served_repo

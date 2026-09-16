@@ -13,9 +13,9 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import patch  # noqa: F401 - kept for parity with siblings
 
-import hermes_cli.update_cmd as update_cmd
-import hermes_cli.update_inventory as update_inventory
-from hermes_cli import main as cli_main
+import auraforge_cli.update_cmd as update_cmd
+import auraforge_cli.update_inventory as update_inventory
+from auraforge_cli import main as cli_main
 
 
 def _ledger_entry(**over):
@@ -42,7 +42,7 @@ def _ledger_entry(**over):
 
 
 def test_register_self_records_structured_detail(tmp_path, monkeypatch):
-    from hermes_cli import process_identity as pi
+    from auraforge_cli import process_identity as pi
 
     monkeypatch.setattr(pi, "_ledger_path", lambda: tmp_path / "ledger.json")
     monkeypatch.setattr(pi, "install_id", lambda *a, **k: "inst")
@@ -64,7 +64,7 @@ def test_register_self_records_structured_detail(tmp_path, monkeypatch):
 def test_register_self_without_detail_stays_backward_compatible(
     tmp_path, monkeypatch
 ):
-    from hermes_cli import process_identity as pi
+    from auraforge_cli import process_identity as pi
 
     monkeypatch.setattr(pi, "_ledger_path", lambda: tmp_path / "ledger.json")
     monkeypatch.setattr(pi, "install_id", lambda *a, **k: "inst")
@@ -84,7 +84,7 @@ def test_inventory_includes_manual_serve_from_ledger(monkeypatch):
         ledger_entries=lambda **k: [entry],
         spawner_is_dead=lambda e: None,  # no spawner recorded → manual
     )
-    monkeypatch.setitem(sys.modules, "hermes_cli.process_identity", fake_pi)
+    monkeypatch.setitem(sys.modules, "auraforge_cli.process_identity", fake_pi)
     plan = update_inventory.collect_runtime_inventory()
     serves = [r for r in plan.runtimes if r.kind == "serve"]
     assert serves, "manual serve must appear in the inventory"
@@ -102,7 +102,7 @@ def test_inventory_classifies_desktop_owned_serve(monkeypatch):
         ledger_entries=lambda **k: [entry],
         spawner_is_dead=lambda e: False,  # Electron parent alive
     )
-    monkeypatch.setitem(sys.modules, "hermes_cli.process_identity", fake_pi)
+    monkeypatch.setitem(sys.modules, "auraforge_cli.process_identity", fake_pi)
     plan = update_inventory.collect_runtime_inventory()
     serves = [r for r in plan.runtimes if r.kind == "serve"]
     assert serves and serves[0].supervisor == "desktop"
@@ -129,7 +129,7 @@ def test_ledger_manual_serve_holders_filters_correctly(monkeypatch):
         ledger_entries=lambda **k: [manual, desktop_owned, gateway, not_a_holder],
         spawner_is_dead=lambda e: False if e["pid"] == 200 else None,
     )
-    monkeypatch.setitem(sys.modules, "hermes_cli.process_identity", fake_pi)
+    monkeypatch.setitem(sys.modules, "auraforge_cli.process_identity", fake_pi)
     holders = [(100, "python.exe", "..."), (200, "python.exe", "..."), (300, "python.exe", "...")]
 
     result = update_cmd._ledger_manual_serve_holders(holders)
@@ -187,7 +187,7 @@ def test_relaunch_stopped_serves_untriggered_token_noop(monkeypatch):
 def test_scan_dashboard_processes_includes_ledger_only_serves(monkeypatch):
     """A profiled serve (`auraforge --profile p serve ...`) matches no scan
     pattern; the ledger row must still surface it."""
-    import hermes_cli.dashboard_procs as dp
+    import auraforge_cli.dashboard_procs as dp
 
     profiled = _ledger_entry(
         pid=8123,
@@ -195,7 +195,7 @@ def test_scan_dashboard_processes_includes_ledger_only_serves(monkeypatch):
         profile="work",
     )
     fake_pi = SimpleNamespace(ledger_entries=lambda **k: [profiled])
-    monkeypatch.setitem(sys.modules, "hermes_cli.process_identity", fake_pi)
+    monkeypatch.setitem(sys.modules, "auraforge_cli.process_identity", fake_pi)
 
     # Force the ps/wmic scan itself to find nothing.
     fake_run = SimpleNamespace(returncode=0, stdout="")
@@ -207,11 +207,11 @@ def test_scan_dashboard_processes_includes_ledger_only_serves(monkeypatch):
 
 
 def test_scan_dashboard_processes_ledger_respects_exclusions(monkeypatch):
-    import hermes_cli.dashboard_procs as dp
+    import auraforge_cli.dashboard_procs as dp
 
     entry = _ledger_entry(pid=8124)
     fake_pi = SimpleNamespace(ledger_entries=lambda **k: [entry])
-    monkeypatch.setitem(sys.modules, "hermes_cli.process_identity", fake_pi)
+    monkeypatch.setitem(sys.modules, "auraforge_cli.process_identity", fake_pi)
     fake_run = SimpleNamespace(returncode=0, stdout="")
     monkeypatch.setattr(dp.subprocess, "run", lambda *a, **k: fake_run)
 

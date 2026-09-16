@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from hermes_cli.subcommands.plugins import build_plugins_parser
+from auraforge_cli.subcommands.plugins import build_plugins_parser
 
 
 def _parse_plugins_args(*argv: str):
@@ -26,7 +26,7 @@ def test_plugins_parser_exposes_doctor() -> None:
 def test_doctor_uses_registration_to_reject_bad_hook_and_callback_signature(
     tmp_path: Path,
 ) -> None:
-    from hermes_cli.plugin_dev import doctor_plugin
+    from auraforge_cli.plugin_dev import doctor_plugin
 
     plugin = tmp_path / "bad-plugin"
     plugin.mkdir()
@@ -61,7 +61,7 @@ def test_doctor_uses_registration_to_reject_bad_hook_and_callback_signature(
 
 
 def test_doctor_accepts_manifest_defaults_from_runtime_parser(tmp_path: Path) -> None:
-    from hermes_cli.plugin_dev import doctor_plugin
+    from auraforge_cli.plugin_dev import doctor_plugin
 
     plugin = tmp_path / "minimal"
     plugin.mkdir()
@@ -79,7 +79,7 @@ def test_doctor_accepts_manifest_defaults_from_runtime_parser(tmp_path: Path) ->
 def test_doctor_restores_global_tool_policy_and_module_state(tmp_path: Path) -> None:
     import sys
 
-    from hermes_cli.plugin_dev import doctor_plugin
+    from auraforge_cli.plugin_dev import doctor_plugin
     from tools.registry import registry
 
     target = tmp_path / "cleanup-plugin"
@@ -119,7 +119,7 @@ def test_doctor_restores_global_tool_policy_and_module_state(tmp_path: Path) -> 
 
 
 def test_doctor_blocks_live_network(tmp_path: Path) -> None:
-    from hermes_cli.plugin_dev import doctor_plugin
+    from auraforge_cli.plugin_dev import doctor_plugin
 
     plugin = tmp_path / "network-plugin"
     plugin.mkdir()

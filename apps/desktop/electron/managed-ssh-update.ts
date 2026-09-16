@@ -322,7 +322,7 @@ correlation=sys.argv[2]
 profile_parent=home.parent.name
 is_profile_home=(profile_parent.lower()=='profiles') if os.name=='nt' else (profile_parent=='profiles')
 install_root=home.parent.parent if is_profile_home else home
-marker_path=install_root/'.hermes-update-in-progress'
+marker_path=install_root/'.auraforge-update-in-progress'
 status_path=home/('.update_exit_code.'+correlation)
 ready_path=home/('.update_coordinator_ready.'+correlation)
 intent_path=home/('.update_launch_intent.'+correlation)

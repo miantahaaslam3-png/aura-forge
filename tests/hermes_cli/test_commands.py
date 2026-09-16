@@ -3,7 +3,7 @@
 from prompt_toolkit.completion import CompleteEvent
 from prompt_toolkit.document import Document
 
-from hermes_cli.commands import (
+from auraforge_cli.commands import (
     COMMAND_REGISTRY,
     COMMANDS,
     COMMANDS_BY_CATEGORY,
@@ -437,12 +437,12 @@ class TestSubcommandCompletion:
     def test_tools_enable_skips_already_listed(self, monkeypatch):
         """If the user already typed a name, don't suggest it again."""
         monkeypatch.setattr(
-            "hermes_cli.tools_config._get_platform_tools",
+            "auraforge_cli.tools_config._get_platform_tools",
             lambda *_a, **_k: set(),
         )
-        monkeypatch.setattr("hermes_cli.config.load_config", lambda: {})
+        monkeypatch.setattr("auraforge_cli.config.load_config", lambda: {})
         monkeypatch.setattr(
-            "hermes_cli.tools_config._get_plugin_toolset_keys",
+            "auraforge_cli.tools_config._get_plugin_toolset_keys",
             lambda: set(),
         )
 
@@ -887,7 +887,7 @@ class TestDiscordSkillCommands:
 # Discord skill commands grouped by category
 # ---------------------------------------------------------------------------
 
-from hermes_cli.commands import discord_skill_commands_by_category  # noqa: E402
+from auraforge_cli.commands import discord_skill_commands_by_category  # noqa: E402
 
 
 class TestDiscordSkillCommandsByCategory:
@@ -1020,8 +1020,8 @@ class TestPluginCommandEnumeration:
     """
 
     def _patch_plugin_commands(self, monkeypatch, commands):
-        """Monkeypatch hermes_cli.plugins.get_plugin_commands() to a fixed dict."""
-        from hermes_cli import plugins as _plugins_mod
+        """Monkeypatch auraforge_cli.plugins.get_plugin_commands() to a fixed dict."""
+        from auraforge_cli import plugins as _plugins_mod
 
         monkeypatch.setattr(
             _plugins_mod, "get_plugin_commands", lambda: dict(commands)
@@ -1047,7 +1047,7 @@ class TestPluginCommandEnumeration:
 
     def test_plugin_enumerator_handles_missing_plugin_manager(self, monkeypatch):
         """Enumerators must never raise when plugin discovery raises."""
-        from hermes_cli import plugins as _plugins_mod
+        from auraforge_cli import plugins as _plugins_mod
 
         def _boom():
             raise RuntimeError("plugin system down")

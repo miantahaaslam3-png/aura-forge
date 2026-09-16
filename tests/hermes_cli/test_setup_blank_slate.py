@@ -1,4 +1,4 @@
-"""Tests for Blank Slate setup mode (hermes_cli/setup.py).
+"""Tests for Blank Slate setup mode (auraforge_cli/setup.py).
 
 Blank Slate is the third first-time setup option: everything off except the
 bare minimum needed to run an agent (provider/model + file + terminal). These
@@ -8,7 +8,7 @@ resolver + tool-schema builder yield exactly the file/terminal tools.
 
 import pytest
 
-from hermes_cli.setup import (
+from auraforge_cli.setup import (
     _blank_slate_minimal_toolsets,
     _blank_slate_minimize_config,
 )
@@ -53,7 +53,7 @@ class TestBlankSlateMinimalToolsets:
         from tools.registry import registry as _tool_registry
         _entry = _tool_registry.get_entry("vision_analyze")
         monkeypatch.setattr(_entry, "check_fn", lambda: True)
-        from hermes_cli.tools_config import _get_platform_tools
+        from auraforge_cli.tools_config import _get_platform_tools
         cfg = {}
         _blank_slate_minimal_toolsets(cfg)
         _blank_slate_minimize_config(cfg)
@@ -88,7 +88,7 @@ class TestBlankSlateFork:
     """The post-baseline fork: finish now vs walk through configurations."""
 
     def _patch_common(self, monkeypatch):
-        import hermes_cli.setup as s
+        import auraforge_cli.setup as s
         # Neutralize side-effecting setup steps and I/O.
         monkeypatch.setattr(s, "setup_model_provider", lambda cfg, **k: None)
         monkeypatch.setattr(s, "setup_terminal_backend", lambda cfg, **k: None)
@@ -100,7 +100,7 @@ class TestBlankSlateFork:
         monkeypatch.setattr(s, "print_warning", lambda *a, **k: None)
 
     def test_finish_now_skips_walkthrough(self, monkeypatch, tmp_path):
-        import hermes_cli.setup as s
+        import auraforge_cli.setup as s
         self._patch_common(monkeypatch)
         # Fork prompt returns 0 = finish now.
         monkeypatch.setattr(s, "prompt_choice", lambda *a, **k: 0)

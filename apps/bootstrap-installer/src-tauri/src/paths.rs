@@ -1,6 +1,6 @@
 //! Filesystem paths + logging setup.
 //!
-//! Mirrors `hermes_constants.get_hermes_home()` from the Python CLI:
+//! Mirrors `auraforge_constants.get_hermes_home()` from the Python CLI:
 //!   Windows: %LOCALAPPDATA%\hermes
 //!   macOS:   ~/.hermes
 //!   Linux:   ~/.hermes  (override via $HERMES_HOME)
@@ -87,7 +87,7 @@ pub fn installer_dest() -> PathBuf {
 /// Electron desktop — which resolves HERMES_HOME identically and pins it into
 /// the updater's env — agrees on the exact path.
 pub fn update_in_progress_marker() -> PathBuf {
-    hermes_home().join(".hermes-update-in-progress")
+    hermes_home().join(".auraforge-update-in-progress")
 }
 
 /// Copy the currently-running installer binary to `installer_dest()` so it's
@@ -157,11 +157,11 @@ fn repair_macos_installer_helper(_path: &Path) {}
 
 /// Where the bootstrap-complete marker lives (existence-only for the Rust
 /// installer fast path; JSON schema-checked by the Electron app). Per main.ts:
-///   const BOOTSTRAP_COMPLETE_MARKER = path.join(ACTIVE_HERMES_ROOT, '.hermes-bootstrap-complete')
+///   const BOOTSTRAP_COMPLETE_MARKER = path.join(ACTIVE_HERMES_ROOT, '.auraforge-bootstrap-complete')
 /// We don't always know ACTIVE_HERMES_ROOT until install.ps1 reports it, so
 /// this is a probe helper, not a definitive path.
 pub fn likely_bootstrap_marker(install_root: &Path) -> PathBuf {
-    install_root.join(".hermes-bootstrap-complete")
+    install_root.join(".auraforge-bootstrap-complete")
 }
 
 /// Initializes tracing to bootstrap-installer.log under HERMES_HOME/logs/.

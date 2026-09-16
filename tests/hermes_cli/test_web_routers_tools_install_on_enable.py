@@ -20,18 +20,18 @@ class TestToggleToolsetInstallOnEnable:
         except ImportError:
             pytest.skip("fastapi/starlette not installed")
 
-        import hermes_state
-        from hermes_constants import get_hermes_home
-        from hermes_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
+        import auraforge_state
+        from auraforge_constants import get_hermes_home
+        from auraforge_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
         monkeypatch.setattr(
-            hermes_state, "DEFAULT_DB_PATH", get_hermes_home() / "state.db"
+            auraforge_state, "DEFAULT_DB_PATH", get_hermes_home() / "state.db"
         )
         self.client = TestClient(app)
         self.client.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
 
     def _spawn_recorder(self, monkeypatch):
-        import hermes_cli.web_server as web_server
+        import auraforge_cli.web_server as web_server
 
         calls = []
 
@@ -48,7 +48,7 @@ class TestToggleToolsetInstallOnEnable:
     def test_enable_computer_use_spawns_cua_install_when_binary_missing(
         self, monkeypatch
     ):
-        import hermes_cli.tools_config as tools_config
+        import auraforge_cli.tools_config as tools_config
 
         calls = self._spawn_recorder(monkeypatch)
         # Binary missing → the cua_driver predicate reports unsatisfied.
@@ -74,7 +74,7 @@ class TestToggleToolsetInstallOnEnable:
     def test_enable_computer_use_skips_install_when_binary_present(
         self, monkeypatch
     ):
-        import hermes_cli.tools_config as tools_config
+        import auraforge_cli.tools_config as tools_config
 
         calls = self._spawn_recorder(monkeypatch)
         monkeypatch.setattr(
@@ -92,7 +92,7 @@ class TestToggleToolsetInstallOnEnable:
         assert calls == []
 
     def test_disable_never_spawns_install(self, monkeypatch):
-        import hermes_cli.tools_config as tools_config
+        import auraforge_cli.tools_config as tools_config
 
         calls = self._spawn_recorder(monkeypatch)
         monkeypatch.setattr(
@@ -110,8 +110,8 @@ class TestToggleToolsetInstallOnEnable:
         assert calls == []
 
     def test_spawn_failure_does_not_fail_the_toggle(self, monkeypatch):
-        import hermes_cli.tools_config as tools_config
-        import hermes_cli.web_server as web_server
+        import auraforge_cli.tools_config as tools_config
+        import auraforge_cli.web_server as web_server
 
         monkeypatch.setattr(
             tools_config, "_resolved_cua_driver_cmd", lambda: None

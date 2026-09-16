@@ -1,6 +1,6 @@
 """Tests for the HTML session export renderer."""
 
-from hermes_cli.session_export_html import (
+from auraforge_cli.session_export_html import (
     _generate_messages_html,
     generate_html_export,
     generate_multi_session_html_export,

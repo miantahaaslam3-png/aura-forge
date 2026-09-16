@@ -46,7 +46,7 @@ def is_connected(config) -> bool:
 
 def interactive_setup() -> None:
     """`auraforge gateway setup` flow for A2A."""
-    from hermes_cli.setup import (
+    from auraforge_cli.setup import (
         prompt,
         prompt_yes_no,
         save_env_value,

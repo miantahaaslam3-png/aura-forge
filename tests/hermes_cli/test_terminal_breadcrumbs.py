@@ -1,4 +1,4 @@
-"""Tests for hermes_cli/terminal_breadcrumbs.py — per-terminal ``auraforge -c``.
+"""Tests for auraforge_cli/terminal_breadcrumbs.py — per-terminal ``auraforge -c``.
 
 Covers terminal id derivation (tty vs env vars vs none), breadcrumb
 write/read roundtrip under a temp HERMES_HOME, stale-session fallback
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import terminal_breadcrumbs as tb
+from auraforge_cli import terminal_breadcrumbs as tb
 
 
 TERMINAL_ENV_VARS = (
@@ -138,7 +138,7 @@ def test_corrupt_breadcrumb_returns_none(hermes_home, monkeypatch, no_terminal_e
 # ------------------------------------------------------------- resolution
 
 def _make_session(home: Path, session_id: str):
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
 
     db = SessionDB()
     db.create_session(session_id, "cli")
@@ -165,7 +165,7 @@ def test_resolve_projects_through_compression_chain(hermes_home, monkeypatch, no
     _make_session(hermes_home, "20260815_100000_parent")
     tb.write_breadcrumb("20260815_100000_parent")
 
-    from hermes_state import SessionDB
+    from auraforge_state import SessionDB
 
     monkeypatch.setattr(
         SessionDB,
@@ -181,7 +181,7 @@ def test_config_gate_off_disables_writes_and_resolution(
     hermes_home, monkeypatch, no_terminal_env
 ):
     _fake_tty(monkeypatch, "/dev/pts/9")
-    import hermes_cli.config as config_mod
+    import auraforge_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod, "load_config", lambda: {"session": {"terminal_continue": False}}
@@ -198,7 +198,7 @@ def test_config_gate_off_disables_writes_and_resolution(
 
 
 def test_config_gate_default_is_enabled(monkeypatch):
-    import hermes_cli.config as config_mod
+    import auraforge_cli.config as config_mod
 
     monkeypatch.setattr(config_mod, "load_config", lambda: {})
     assert tb.is_enabled() is True

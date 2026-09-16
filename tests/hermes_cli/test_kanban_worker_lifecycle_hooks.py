@@ -18,8 +18,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import kanban_db as kb
-from hermes_cli.plugins import VALID_HOOKS, get_plugin_manager
+from auraforge_cli import kanban_db as kb
+from auraforge_cli.plugins import VALID_HOOKS, get_plugin_manager
 
 WORKER_HOOKS = (
     "on_kanban_worker_spawned",
@@ -189,7 +189,7 @@ def test_no_subscriber_short_circuits_worker_hooks(
     kanban_home, all_assignees_spawnable, monkeypatch,
 ):
     """With nothing registered, the new observers are never invoked at all."""
-    from hermes_cli import lifecycle
+    from auraforge_cli import lifecycle
 
     invoked: list[str] = []
     real_invoke = lifecycle.invoke_hook

@@ -26,7 +26,7 @@ import pytest
 
 
 def _make_pconfig(provider_id, env_vars=None):
-    from hermes_cli.auth import ProviderConfig
+    from auraforge_cli.auth import ProviderConfig
     return ProviderConfig(
         id=provider_id,
         name=provider_id.title(),
@@ -75,7 +75,7 @@ class TestMalformedEnvKeySkipped:
         _write_env_file(isolated_hermes_home, OPENROUTER_API_KEY="not-a-real-openrouter-key")
         pool = _mock_pool(_entry("sk-or-v1-valid-pool-key-abc123"))
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         with patch("agent.credential_pool.load_pool", return_value=pool):
             with caplog.at_level(logging.WARNING):
                 key, source = _resolve_api_key_provider_secret(
@@ -95,7 +95,7 @@ class TestMalformedEnvKeySkipped:
         _write_env_file(isolated_hermes_home, OPENROUTER_API_KEY="sk-proj-wrong-provider-key")
         pool = _mock_pool()
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         with patch("agent.credential_pool.load_pool", return_value=pool):
             with caplog.at_level(logging.WARNING):
                 key, source = _resolve_api_key_provider_secret(
@@ -112,7 +112,7 @@ class TestMalformedEnvKeySkipped:
             _entry("sk-or-v1-second-entry-good"),
         )
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         with patch("agent.credential_pool.load_pool", return_value=pool):
             key, source = _resolve_api_key_provider_secret(
                 provider_id="openrouter",
@@ -128,7 +128,7 @@ class TestNoDeclaredPrefixUnaffected:
     def test_undeclared_provider_env_key_returned_verbatim(self, isolated_hermes_home):
         _write_env_file(isolated_hermes_home, DEEPSEEK_API_KEY="totally-unknown-format-key")
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         pool = _mock_pool(_entry("pool-key-should-not-win"))
         with patch("agent.credential_pool.load_pool", return_value=pool) as mp:
             key, source = _resolve_api_key_provider_secret(
@@ -147,7 +147,7 @@ class TestValidEnvKeyStillWins:
         _write_env_file(isolated_hermes_home, OPENROUTER_API_KEY="sk-or-v1-env-key-wins")
         pool = _mock_pool(_entry("sk-or-v1-pool-key-loses"))
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         with patch("agent.credential_pool.load_pool", return_value=pool) as mp:
             key, source = _resolve_api_key_provider_secret(
                 provider_id="openrouter",
@@ -165,7 +165,7 @@ class TestValidEnvKeyStillWins:
             OPENROUTER_KEY="sk-or-v1-second-var-good",
         )
 
-        from hermes_cli.auth import _resolve_api_key_provider_secret
+        from auraforge_cli.auth import _resolve_api_key_provider_secret
         key, source = _resolve_api_key_provider_secret(
             provider_id="openrouter",
             pconfig=_make_pconfig(

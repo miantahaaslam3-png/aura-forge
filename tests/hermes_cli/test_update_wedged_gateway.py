@@ -22,7 +22,7 @@ from unittest.mock import patch
 
 import pytest
 
-import hermes_cli.gateway as gateway_cli
+import auraforge_cli.gateway as gateway_cli
 from gateway.shutdown_watchdog import (
     get_loop_heartbeat_path,
     get_loop_tick_socket_path,
@@ -981,5 +981,5 @@ def test_default_probe_budget_stays_inside_query_tier():
     assert worst_case <= 5.0, (
         f"default probe budget {worst_case:.1f}s exceeds half the 10s query "
         "tier — retune tick_timeout/tick_strikes/tick_gap_s or update the "
-        "subprocess-timeout doc reference in hermes_cli/gateway.py"
+        "subprocess-timeout doc reference in auraforge_cli/gateway.py"
     )

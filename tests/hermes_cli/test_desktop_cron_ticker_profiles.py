@@ -13,7 +13,7 @@ import threading
 
 import pytest
 
-import hermes_cli.web_server as ws
+import auraforge_cli.web_server as ws
 
 
 class _RecordingBuiltin:
@@ -59,7 +59,7 @@ def test_multi_profile_homes_passed_to_builtin(monkeypatch, _providers, tmp_path
         ("default", tmp_path / "root"),
         ("coder", tmp_path / "profiles" / "coder"),
     ]
-    import hermes_cli.profiles as profiles_mod
+    import auraforge_cli.profiles as profiles_mod
 
     monkeypatch.setattr(profiles_mod, "profiles_to_serve", lambda **_kw: list(homes))
 
@@ -72,7 +72,7 @@ def test_multi_profile_homes_passed_to_builtin(monkeypatch, _providers, tmp_path
 
 def test_single_profile_keeps_legacy_path(monkeypatch, _providers, tmp_path):
     _sp, builtin = _providers
-    import hermes_cli.profiles as profiles_mod
+    import auraforge_cli.profiles as profiles_mod
 
     monkeypatch.setattr(
         profiles_mod,
@@ -88,7 +88,7 @@ def test_single_profile_keeps_legacy_path(monkeypatch, _providers, tmp_path):
 def test_enumeration_failure_fails_open(monkeypatch, _providers):
     """The active profile's jobs keep firing even if profile listing breaks."""
     _sp, builtin = _providers
-    import hermes_cli.profiles as profiles_mod
+    import auraforge_cli.profiles as profiles_mod
 
     def _boom(**_kw):
         raise RuntimeError("profiles dir unreadable")
@@ -107,7 +107,7 @@ def test_external_provider_never_gets_profile_homes(monkeypatch, tmp_path):
     external = _RecordingExternal()
     monkeypatch.setattr(sp, "resolve_cron_scheduler", lambda: external)
 
-    import hermes_cli.profiles as profiles_mod
+    import auraforge_cli.profiles as profiles_mod
 
     monkeypatch.setattr(
         profiles_mod,

@@ -51,7 +51,7 @@ iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 
 ### 依赖引导（`dep_ensure`）
 
-在首次启动时（以及检测到缺少工具时按需触发），Aura Forge 会运行一个小型 Python 引导程序——`hermes_cli/dep_ensure.py`——检查并懒加载安装所需的非 Python 依赖。在 Windows 上，相关依赖如下：
+在首次启动时（以及检测到缺少工具时按需触发），Aura Forge 会运行一个小型 Python 引导程序——`auraforge_cli/dep_ensure.py`——检查并懒加载安装所需的非 Python 依赖。在 Windows 上，相关依赖如下：
 
 | 依赖            | Aura Forge 需要它的原因                                                                             |
 | --------------- | ----------------------------------------------------------------------------------------------- |
@@ -121,7 +121,7 @@ Aura Forge 的终端工具通过 **Git Bash** 运行命令，与 Claude Code 采
 
 Python 在 Windows 上的默认 stdio 使用控制台的活动代码页（通常是 cp1252 或 cp437）。Aura Forge 的横幅、斜杠命令列表、工具输出、Rich 面板和技能描述均包含 Unicode 字符。若不加干预，任何此类内容都会导致 `UnicodeEncodeError: 'charmap' codec can't encode character…` 崩溃。
 
-修复逻辑位于 `hermes_cli/stdio.py::configure_windows_stdio()`，在每个入口点（`cli.py::main`、`hermes_cli/main.py::main`、`gateway/run.py::main`）的早期调用。它会：
+修复逻辑位于 `auraforge_cli/stdio.py::configure_windows_stdio()`，在每个入口点（`cli.py::main`、`auraforge_cli/main.py::main`、`gateway/run.py::main`）的早期调用。它会：
 
 1. 通过 `kernel32.SetConsoleCP` / `SetConsoleOutputCP` 将控制台代码页切换为 CP_UTF8（65001）。
 2. 使用 `errors='replace'` 将 `sys.stdout` / `sys.stderr` / `sys.stdin` 重新配置为 UTF-8。

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import env_loader
+from auraforge_cli import env_loader
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -46,7 +46,7 @@ secrets:
     probe = (
         "import json, sys\n"
         f"sys.argv = {argv!r}\n"
-        "import hermes_cli.main as hermes_main\n"
+        "import auraforge_cli.main as hermes_main\n"
         f"{dispatch}"
         "print('LOADED_MODULES=' + json.dumps(sorted(sys.modules)))\n"
     )

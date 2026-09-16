@@ -1,5 +1,5 @@
 """
-Tests for timezone support (hermes_time module + integration points).
+Tests for timezone support (auraforge_time module + integration points).
 
 Covers:
   - Valid timezone applies correctly
@@ -17,18 +17,18 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-import hermes_time
+import auraforge_time
 
 
 def _reset_hermes_time_cache():
-    """Reset the hermes_time module cache (replacement for removed reset_cache)."""
-    hermes_time._cached_tz = None
-    hermes_time._cached_tz_name = None
-    hermes_time._cache_resolved = False
+    """Reset the auraforge_time module cache (replacement for removed reset_cache)."""
+    auraforge_time._cached_tz = None
+    auraforge_time._cached_tz_name = None
+    auraforge_time._cache_resolved = False
 
 
 # =========================================================================
-# hermes_time.now() — core helper
+# auraforge_time.now() — core helper
 # =========================================================================
 
 class TestHermesTimeNow:
@@ -44,7 +44,7 @@ class TestHermesTimeNow:
     def test_valid_timezone_applies(self):
         """With a valid IANA timezone, now() returns time in that zone."""
         os.environ["HERMES_TIMEZONE"] = "Asia/Kolkata"
-        result = hermes_time.now()
+        result = auraforge_time.now()
         assert result.tzinfo is not None
         # IST is UTC+5:30
         offset = result.utcoffset()
@@ -53,13 +53,13 @@ class TestHermesTimeNow:
     def test_utc_timezone(self):
         """UTC timezone works."""
         os.environ["HERMES_TIMEZONE"] = "UTC"
-        result = hermes_time.now()
+        result = auraforge_time.now()
         assert result.utcoffset() == timedelta(0)
 
     def test_us_eastern(self):
         """US/Eastern timezone works (DST-aware zone)."""
         os.environ["HERMES_TIMEZONE"] = "America/New_York"
-        result = hermes_time.now()
+        result = auraforge_time.now()
         assert result.tzinfo is not None
         # Offset is -5h or -4h depending on DST
         offset_hours = result.utcoffset().total_seconds() / 3600
@@ -82,7 +82,7 @@ class TestGetTimezone:
 
     def test_returns_zoneinfo_for_valid(self):
         os.environ["HERMES_TIMEZONE"] = "Europe/London"
-        tz = hermes_time.get_timezone()
+        tz = auraforge_time.get_timezone()
         assert isinstance(tz, ZoneInfo)
         assert str(tz) == "Europe/London"
 

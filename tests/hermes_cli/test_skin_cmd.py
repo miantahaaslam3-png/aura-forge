@@ -9,8 +9,8 @@ import os
 import pytest
 import yaml
 
-from hermes_cli import skin_cmd
-from hermes_constants import get_hermes_home
+from auraforge_cli import skin_cmd
+from auraforge_constants import get_hermes_home
 
 
 def _skins():

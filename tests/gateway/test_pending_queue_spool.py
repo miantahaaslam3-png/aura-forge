@@ -43,9 +43,9 @@ class BrokenThenHealedDb:
 def spool_home(tmp_path, monkeypatch):
     """Point the pending spool at an isolated HERMES_HOME."""
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    import hermes_constants
+    import auraforge_constants
     monkeypatch.setattr(
-        hermes_constants, "get_hermes_home", lambda: tmp_path, raising=True
+        auraforge_constants, "get_hermes_home", lambda: tmp_path, raising=True
     )
     return tmp_path
 

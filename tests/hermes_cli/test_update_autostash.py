@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import config as hermes_config
-from hermes_cli import main as hermes_main
+from auraforge_cli import config as hermes_config
+from auraforge_cli import main as hermes_main
 
 
 # ---------------------------------------------------------------------------
@@ -34,9 +34,9 @@ def _patch_managed_uv(request):
     def _fake_update_managed_uv(**kwargs):
         return None  # never actually self-update in tests
 
-    with patch("hermes_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
-         patch("hermes_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
-         patch("hermes_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
+    with patch("auraforge_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
+         patch("auraforge_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
+         patch("auraforge_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
         yield
 
 
@@ -76,11 +76,11 @@ def test_refresh_active_memory_provider_dependencies_reinstalls_active_provider(
     recorded = []
 
     monkeypatch.setattr(
-        "hermes_cli.config.load_config",
+        "auraforge_cli.config.load_config",
         lambda: {"memory": {"provider": "mem0"}},
     )
     monkeypatch.setattr(
-        "hermes_cli.memory_setup._install_dependencies",
+        "auraforge_cli.memory_setup._install_dependencies",
         lambda provider_name, force=False: recorded.append((provider_name, force)),
     )
 
@@ -93,14 +93,14 @@ def test_refresh_active_memory_provider_dependencies_reinstalls_active_provider(
 
 def test_reload_updated_runtime_modules_restores_new_hermes_constants_symbol(monkeypatch):
     """A pre-pull module object missing a new helper is repaired by reload."""
-    import hermes_constants
+    import auraforge_constants
 
-    monkeypatch.delattr(hermes_constants, "apply_subprocess_home_env", raising=False)
-    assert not hasattr(hermes_constants, "apply_subprocess_home_env")
+    monkeypatch.delattr(auraforge_constants, "apply_subprocess_home_env", raising=False)
+    assert not hasattr(auraforge_constants, "apply_subprocess_home_env")
 
     hermes_main._reload_updated_runtime_modules()
 
-    assert callable(hermes_constants.apply_subprocess_home_env)
+    assert callable(auraforge_constants.apply_subprocess_home_env)
 
 
 
@@ -261,7 +261,7 @@ def _setup_keep_stash_test(monkeypatch, tmp_path):
     # a live gateway PID would trip the test-suite kill guard and turn the
     # run into exit 1 (gateway_fleet_restart_incomplete).
     monkeypatch.setattr(
-        "hermes_cli.gateway.find_gateway_pids", lambda **kw: [], raising=False
+        "auraforge_cli.gateway.find_gateway_pids", lambda **kw: [], raising=False
     )
     return restore_calls, discard_calls, park_calls
 
@@ -315,7 +315,7 @@ def test_update_parser_accepts_keep_stash():
     """The flag parses and defaults off."""
     import argparse
 
-    from hermes_cli.subcommands.update import build_update_parser
+    from auraforge_cli.subcommands.update import build_update_parser
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
@@ -364,7 +364,7 @@ def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     marker = tmp_path / ".auraforge-bootstrap-complete"
     marker.write_text("")
 
-    # Exact flags used by auraforge update (hermes_cli/main.py).
+    # Exact flags used by auraforge update (auraforge_cli/main.py).
     git("stash", "push", "--include-untracked", "-m", "auraforge-update-autostash")
 
     assert marker.exists(), (

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from hermes_cli import update_cmd
+from auraforge_cli import update_cmd
 
 
 def test_current_checkout_repairs_failed_node_deps(capsys):

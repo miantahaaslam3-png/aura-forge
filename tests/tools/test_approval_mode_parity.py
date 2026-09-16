@@ -44,8 +44,8 @@ def tui_server():
     with patch.dict(
         "sys.modules",
         {
-            "hermes_cli.env_loader": MagicMock(),
-            "hermes_cli.banner": MagicMock(),
+            "auraforge_cli.env_loader": MagicMock(),
+            "auraforge_cli.banner": MagicMock(),
         },
     ):
         yield importlib.import_module("tui_gateway.server")

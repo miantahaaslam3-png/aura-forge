@@ -1,7 +1,7 @@
 import pytest
 
-from hermes_cli import kanban_db as kb
-from hermes_cli.kanban_swarm import (
+from auraforge_cli import kanban_db as kb
+from auraforge_cli.kanban_swarm import (
     SwarmWorkerSpec,
     create_swarm,
     latest_blackboard,
@@ -88,7 +88,7 @@ def test_create_swarm_graph_is_atomic_and_rolls_back_partial_build(
         assert reader.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
 
         monkeypatch.setattr(kb, "create_task", original_create)
-        import hermes_cli.kanban_swarm as ks
+        import auraforge_cli.kanban_swarm as ks
 
         original_activate = ks._activate_root_inline
         monkeypatch.setattr(

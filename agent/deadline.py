@@ -221,7 +221,7 @@ def _timeouts_section() -> dict:
     the call path the timeout was protecting.
     """
     try:
-        from hermes_cli.config import load_config_readonly
+        from auraforge_cli.config import load_config_readonly
 
         section = load_config_readonly().get("timeouts")
         return section if isinstance(section, dict) else {}
@@ -575,7 +575,7 @@ def kill_process_tree(pid: int, *, sig: Optional[int] = None) -> bool:
     """
     if sys.platform == "win32":
         try:
-            from hermes_cli._subprocess_compat import windows_hide_flags
+            from auraforge_cli._subprocess_compat import windows_hide_flags
 
             creationflags = windows_hide_flags()
         except Exception:

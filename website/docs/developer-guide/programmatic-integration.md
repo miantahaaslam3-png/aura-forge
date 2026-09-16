@@ -136,7 +136,7 @@ If an external control plane needs Hermes' curated provider rows, per-model
 pricing, or capability hints, use one of the authenticated picker surfaces:
 
 - API server REST: `GET /api/model/options` with the API-server bearer key
-- Dashboard backend REST: `GET /api/model/options` with `X-Hermes-Session-Token`
+- Dashboard backend REST: `GET /api/model/options` with `X-AuraForge-Session-Token`
 - TUI gateway RPC: `model.options`
 
 Those surfaces share the same payload builder and the same custom-provider
@@ -176,7 +176,7 @@ Mid-session model switching works on every surface — it's the `/model` slash c
 - **ACP:** the IDE sends the slash command as a prompt; the agent dispatches it
 - **API server:** include a `model` field in the request body
 
-Provider-aware resolution (the same model name picks the right format for whatever provider you're on) is built in. See `hermes_cli/model_switch.py`.
+Provider-aware resolution (the same model name picks the right format for whatever provider you're on) is built in. See `auraforge_cli/model_switch.py`.
 
 ---
 

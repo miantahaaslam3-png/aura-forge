@@ -12,7 +12,7 @@ import sys
 from unittest.mock import MagicMock
 
 
-from hermes_cli.plugins import (
+from auraforge_cli.plugins import (
     PluginContext,
     PluginManager,
     PluginManifest,

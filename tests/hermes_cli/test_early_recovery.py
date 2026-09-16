@@ -1,9 +1,9 @@
-"""Tests for hermes_cli._early_recovery — the dependency-light bootstrap
-repair that runs BEFORE hermes_cli.main's third-party imports (#57828 / #58004).
+"""Tests for auraforge_cli._early_recovery — the dependency-light bootstrap
+repair that runs BEFORE auraforge_cli.main's third-party imports (#57828 / #58004).
 
 Covers:
 - entry-point lifecycle: a broken core import (dotenv) crashes the import of
-  hermes_cli.main WITHOUT early recovery, and imports fine when recovery runs
+  auraforge_cli.main WITHOUT early recovery, and imports fine when recovery runs
   first (proving main.py invokes recovery before its third-party imports)
 - recover_if_needed unit behavior: fast path, marker gating, update-argv skip,
   lock single-flight, no marker clearing, pinned repair specs
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import _early_recovery as er
+from auraforge_cli import _early_recovery as er
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -55,7 +55,7 @@ def _run_lifecycle_subprocess(tmp_path: Path, *, repair: bool) -> subprocess.Com
 
             # _early_recovery must be importable on the corrupted venv
             # (stdlib-only) — this import itself is part of the contract.
-            import hermes_cli._early_recovery as er
+            import auraforge_cli._early_recovery as er
 
             REPAIR = {repair!r}
 
@@ -67,7 +67,7 @@ def _run_lifecycle_subprocess(tmp_path: Path, *, repair: bool) -> subprocess.Com
 
             er.recover_if_needed = recorder
 
-            import hermes_cli.main  # noqa: F401
+            import auraforge_cli.main  # noqa: F401
             print("MAIN_IMPORTED_OK", flush=True)
             """
         ),
@@ -89,7 +89,7 @@ def _run_lifecycle_subprocess(tmp_path: Path, *, repair: bool) -> subprocess.Com
 
 
 def test_broken_dotenv_crashes_main_import_without_repair(tmp_path):
-    """Negative control: the shadow really breaks importing hermes_cli.main,
+    """Negative control: the shadow really breaks importing auraforge_cli.main,
     and recovery was invoked BEFORE the crash (i.e. before third-party
     imports) — so a real repair at that point can save the launch."""
     result = _run_lifecycle_subprocess(tmp_path, repair=False)
@@ -111,7 +111,7 @@ def test_early_recovery_module_is_stdlib_only(tmp_path):
             import builtins
             import sys
 
-            STDLIB = set(sys.stdlib_module_names) | {"hermes_cli"}
+            STDLIB = set(sys.stdlib_module_names) | {"auraforge_cli"}
             real_import = builtins.__import__
 
             def guard(name, *args, **kwargs):
@@ -121,7 +121,7 @@ def test_early_recovery_module_is_stdlib_only(tmp_path):
                 return real_import(name, *args, **kwargs)
 
             builtins.__import__ = guard
-            import hermes_cli._early_recovery  # noqa: F401
+            import auraforge_cli._early_recovery  # noqa: F401
             print("STDLIB_ONLY_OK")
             """
         ),
@@ -362,7 +362,7 @@ def test_core_marker_triggers_install_before_any_native_import(
     core_marker = root / ".update-incomplete"
     core_marker.write_text('{"attempts": 0}', encoding="utf-8")
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     calls: list[dict] = []
 
@@ -379,7 +379,7 @@ def test_core_marker_triggers_install_before_any_native_import(
     monkeypatch.setattr(ir, "run_core_install", fake_install)
     # Early recovery imports _install_repair lazily inside the helper; make
     # sure the lazy import resolves to the SAME monkeypatched module object.
-    import hermes_cli._install_repair  # noqa: F401  (pre-import for patch)
+    import auraforge_cli._install_repair  # noqa: F401  (pre-import for patch)
 
     er.recover_if_needed(project_root=root, argv=[])
 
@@ -401,13 +401,13 @@ def test_core_marker_marks_attempts_and_keeps_marker_on_install_failure(
     core_marker = root / ".update-incomplete"
     core_marker.write_text('{"attempts": 0}', encoding="utf-8")
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     def boom(_project_root):
         raise RuntimeError("simulated install failure")
 
     monkeypatch.setattr(ir, "run_core_install", boom)
-    import hermes_cli._install_repair  # noqa: F401
+    import auraforge_cli._install_repair  # noqa: F401
 
     er.recover_if_needed(project_root=root, argv=[])
 
@@ -430,7 +430,7 @@ def test_core_marker_retry_ceiling_hands_off_to_late_recovery(
         f'{{"attempts": {er._EARLY_CORE_INSTALL_MAX_ATTEMPTS}}}', encoding="utf-8"
     )
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     monkeypatch.setattr(
         ir,
@@ -439,7 +439,7 @@ def test_core_marker_retry_ceiling_hands_off_to_late_recovery(
             AssertionError("install must NOT run past the attempts ceiling")
         ),
     )
-    import hermes_cli._install_repair  # noqa: F401
+    import auraforge_cli._install_repair  # noqa: F401
 
     er.recover_if_needed(project_root=root, argv=[])
 
@@ -454,7 +454,7 @@ def test_lazy_marker_alone_does_not_trigger_core_install(tmp_path, monkeypatch):
     root = _project(tmp_path)
     (root / ".lazy-refresh-incomplete").write_text("x", encoding="utf-8")
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     monkeypatch.setattr(
         ir,
@@ -463,7 +463,7 @@ def test_lazy_marker_alone_does_not_trigger_core_install(tmp_path, monkeypatch):
             AssertionError("core install must not run for the lazy marker")
         ),
     )
-    import hermes_cli._install_repair  # noqa: F401
+    import auraforge_cli._install_repair  # noqa: F401
 
     # Healthy probes → early pass does nothing (preserves existing behavior).
     monkeypatch.setattr(er, "_probe_broken_packages", lambda: [])
@@ -483,13 +483,13 @@ def test_core_marker_from_dead_updater_is_recovered_on_update_retry(
     core_marker = root / ".update-incomplete"
     core_marker.write_text("started=1\npid=1234\n", encoding="utf-8")
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     calls = []
     monkeypatch.setattr(ir, "run_core_install", lambda project_root: calls.append(project_root))
     monkeypatch.setattr(er, "_marker_owner_is_live", lambda _marker: False, raising=False)
     monkeypatch.setattr(er, "_UPDATE_RETRY_RECOVERED", False)
-    import hermes_cli._install_repair  # noqa: F401
+    import auraforge_cli._install_repair  # noqa: F401
 
     er.recover_if_needed(project_root=root, argv=["update"])
 
@@ -506,7 +506,7 @@ def test_core_marker_owned_by_live_updater_is_not_recovered(
     core_marker = root / ".update-incomplete"
     core_marker.write_text("started=1\npid=1234\n", encoding="utf-8")
 
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     monkeypatch.setattr(
         ir,
@@ -516,7 +516,7 @@ def test_core_marker_owned_by_live_updater_is_not_recovered(
         ),
     )
     monkeypatch.setattr(er, "_marker_owner_is_live", lambda _marker: True, raising=False)
-    import hermes_cli._install_repair  # noqa: F401
+    import auraforge_cli._install_repair  # noqa: F401
 
     er.recover_if_needed(project_root=root, argv=[])
 
@@ -524,7 +524,7 @@ def test_core_marker_owned_by_live_updater_is_not_recovered(
 
 
 def test_bump_marker_attempts_handles_missing_and_corrupt_bodies(tmp_path):
-    from hermes_cli import _install_repair as ir
+    from auraforge_cli import _install_repair as ir
 
     m = tmp_path / ".update-incomplete"
     m.write_text("", encoding="utf-8")

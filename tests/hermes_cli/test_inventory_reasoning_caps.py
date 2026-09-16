@@ -9,8 +9,8 @@ the Portal honors levels a route doesn't advertise, so publishing it would
 invite a picker filter that hides working levels.
 """
 
-import hermes_cli.inventory as inv
-import hermes_cli.models as models_mod
+import auraforge_cli.inventory as inv
+import auraforge_cli.models as models_mod
 
 
 def _patch_catalog(monkeypatch, caps_by_model, *, provider="nous"):

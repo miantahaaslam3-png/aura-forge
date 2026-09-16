@@ -21,7 +21,7 @@ class TestDisplayHermesHomePosix(unittest.TestCase):
     def test_nested_home_renders_forward_slashes(self):
         """Simulate the Windows shape portably: home nested several levels
         under the user profile must render with forward slashes only."""
-        import hermes_constants as hc
+        import auraforge_constants as hc
 
         fake_userhome = Path.home()
         nested = fake_userhome / "AppData" / "Local" / "auraforge"
@@ -31,7 +31,7 @@ class TestDisplayHermesHomePosix(unittest.TestCase):
         self.assertNotIn("\\", out)
 
     def test_default_home_unchanged(self):
-        import hermes_constants as hc
+        import auraforge_constants as hc
 
         with patch.object(hc, "get_hermes_home",
                           return_value=Path.home() / ".auraforge"):
@@ -39,7 +39,7 @@ class TestDisplayHermesHomePosix(unittest.TestCase):
         self.assertEqual(out, "~/.auraforge")
 
     def test_outside_home_falls_back_to_absolute(self):
-        import hermes_constants as hc
+        import auraforge_constants as hc
 
         outside = Path("/opt/auraforge-custom") if os.name != "nt" else Path("C:/opt/auraforge-custom")
         with patch.object(hc, "get_hermes_home", return_value=outside):

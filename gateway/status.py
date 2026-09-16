@@ -26,7 +26,7 @@ import time
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
-from hermes_constants import get_hermes_home, _get_platform_default_hermes_home
+from auraforge_constants import get_hermes_home, _get_platform_default_hermes_home
 from typing import Any, Callable, NamedTuple, Optional
 from utils import atomic_json_write
 
@@ -157,8 +157,8 @@ def _same_hermes_home(left: Path | str, right: Path | str) -> bool:
     )
 
 
-# Mirrors hermes_cli.profiles._PROFILE_ID_RE — duplicated here because gateway
-# identity code must stay import-light (hermes_constants + stdlib only).
+# Mirrors auraforge_cli.profiles._PROFILE_ID_RE — duplicated here because gateway
+# identity code must stay import-light (auraforge_constants + stdlib only).
 _PROFILE_LABEL_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 
@@ -177,7 +177,7 @@ def _profile_label_for_home(home: Path | str) -> Optional[str]:
     if canonical.parent.name == "profiles" and _PROFILE_LABEL_RE.match(canonical.name):
         return canonical.name
     try:
-        from hermes_constants import get_default_hermes_root
+        from auraforge_constants import get_default_hermes_root
 
         if _same_hermes_home(canonical, get_default_hermes_root()):
             return "default"
@@ -312,7 +312,7 @@ def terminate_pid(pid: int, *, force: bool = False) -> None:
         # CREATE_NO_WINDOW: terminate_pid runs from the windowless pythonw.exe
         # gateway/desktop backend, so a bare taskkill spawn would flash a
         # conhost window on every force-kill.
-        from hermes_cli._subprocess_compat import windows_hide_flags
+        from auraforge_cli._subprocess_compat import windows_hide_flags
 
         try:
             result = subprocess.run(
@@ -430,7 +430,7 @@ def _gateway_command_subcommand(command: str | None) -> str | None:
 
     Lifecycle decisions (is the gateway up? did restart relaunch it?) must not
     fire on loose substring matches.  The previous ``"... gateway" in cmdline``
-    test also matched ``hermes_cli.main gateway status`` and even unrelated
+    test also matched ``auraforge_cli.main gateway status`` and even unrelated
     processes like ``python -m tui_gateway`` -- which made ``restart()`` race
     against a still-draining old process and ``status``/``start`` report false
     positives.  This requires the actual ``gateway`` subcommand followed by
@@ -467,8 +467,8 @@ def _gateway_command_subcommand(command: str | None) -> str | None:
 
     joined = " ".join(tokens)
     has_gateway_entry = (
-        "hermes_cli.main" in joined
-        or "hermes_cli/main.py" in joined
+        "auraforge_cli.main" in joined
+        or "auraforge_cli/main.py" in joined
         or any(t.rsplit("/", 1)[-1] in ("auraforge", "auraforge.exe") for t in tokens)
     )
     if not has_gateway_entry:
@@ -555,7 +555,7 @@ def _profile_name_for_home(profile_home: Path) -> Optional[str]:
 def _command_line_belongs_to_profile(command: str, profile_home: Path) -> bool:
     """Return True when a gateway command line belongs to ``profile_home``.
 
-    Mirrors ``hermes_cli.gateway._matches_current_profile`` so the dashboard's
+    Mirrors ``auraforge_cli.gateway._matches_current_profile`` so the dashboard's
     cross-profile liveness fallback scopes a live PID to the *right* profile.
     In a per-profile container, one profile's stale ``gateway_state.json`` can
     record a PID that the OS has since recycled onto a DIFFERENT profile's live
@@ -642,7 +642,7 @@ def _get_code_identity_fields() -> dict[str, Any]:
     """Code identity of THIS gateway process, for fleet version checks.
 
     Lazy import so ``gateway.status`` keeps no import-time dependency on
-    ``hermes_cli``; the helper itself is cached per process. A gateway
+    ``auraforge_cli``; the helper itself is cached per process. A gateway
     keeps serving the module versions it imported at startup, so stamping
     the identity into ``gateway_state.json`` lets `auraforge update` (and the
     dashboard) prove whether a running gateway actually picked up new code
@@ -650,7 +650,7 @@ def _get_code_identity_fields() -> dict[str, Any]:
     Never raises; degrades to absent fields.
     """
     try:
-        from hermes_cli.build_info import get_code_identity
+        from auraforge_cli.build_info import get_code_identity
 
         identity = get_code_identity()
         return {
@@ -1377,7 +1377,7 @@ def resolve_gateway_liveness(
 
     ``pid_probe`` / ``runtime_reader`` / ``runtime_pid_probe`` let a caller
     inject its own module-level references to these helpers.  The dashboard
-    passes its ``hermes_cli.web_server`` bindings so the long-standing
+    passes its ``auraforge_cli.web_server`` bindings so the long-standing
     monkeypatch seam in the test-suite keeps working; production callers
     leave them ``None`` and get this module's implementations.
     """

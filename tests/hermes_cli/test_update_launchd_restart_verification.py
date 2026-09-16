@@ -24,9 +24,9 @@ import subprocess
 
 import pytest
 
-import hermes_cli.gateway as gateway_cli
-import hermes_cli.update_cmd as update_cmd
-from hermes_cli.update_cmd import _warn_incomplete_gateway_fleet_restart
+import auraforge_cli.gateway as gateway_cli
+import auraforge_cli.update_cmd as update_cmd
+from auraforge_cli.update_cmd import _warn_incomplete_gateway_fleet_restart
 
 LABEL = "ai.auraforge.gateway"
 

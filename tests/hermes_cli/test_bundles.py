@@ -1,10 +1,10 @@
-"""Tests for hermes_cli/bundles.py — the `auraforge bundles` CLI subcommand."""
+"""Tests for auraforge_cli/bundles.py — the `auraforge bundles` CLI subcommand."""
 
 import argparse
 
 import pytest
 
-from hermes_cli.bundles import (
+from auraforge_cli.bundles import (
     bundles_command,
     register_cli,
 )

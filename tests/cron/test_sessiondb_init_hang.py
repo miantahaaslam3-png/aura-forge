@@ -83,11 +83,11 @@ class TestSessionDbInitTimeout:
 
         with patch("cron.scheduler._hermes_home", tmp_path), \
              patch("cron.scheduler._resolve_origin", return_value=None), \
-             patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-             patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-             patch("hermes_state.SessionDB"), \
+             patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+             patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+             patch("auraforge_state.SessionDB"), \
              patch(
-                 "hermes_cli.runtime_provider.resolve_runtime_provider",
+                 "auraforge_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
              ), \
              patch("run_agent.AIAgent") as mock_agent_cls, \
@@ -118,11 +118,11 @@ class TestSessionDbInitTimeout:
 
         with patch("cron.scheduler._hermes_home", tmp_path), \
              patch("cron.scheduler._resolve_origin", return_value=None), \
-             patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-             patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-             patch("hermes_state.SessionDB", return_value=fake_db), \
+             patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+             patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+             patch("auraforge_state.SessionDB", return_value=fake_db), \
              patch(
-                 "hermes_cli.runtime_provider.resolve_runtime_provider",
+                 "auraforge_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
              ), \
              patch("run_agent.AIAgent") as mock_agent_cls, \
@@ -161,11 +161,11 @@ class TestSessionDbInitTimeout:
 
         with patch("cron.scheduler._hermes_home", tmp_path), \
              patch("cron.scheduler._resolve_origin", return_value=None), \
-             patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-             patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-             patch("hermes_state.SessionDB"), \
+             patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+             patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+             patch("auraforge_state.SessionDB"), \
              patch(
-                 "hermes_cli.runtime_provider.resolve_runtime_provider",
+                 "auraforge_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
              ), \
              patch("run_agent.AIAgent") as mock_agent_cls, \
@@ -211,11 +211,11 @@ class TestDispatchGuardReleasedAfterHang:
         try:
             with patch("cron.scheduler._hermes_home", tmp_path), \
                  patch("cron.scheduler._resolve_origin", return_value=None), \
-                 patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-                 patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-                 patch("hermes_state.SessionDB"), \
+                 patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+                 patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+                 patch("auraforge_state.SessionDB"), \
                  patch(
-                     "hermes_cli.runtime_provider.resolve_runtime_provider",
+                     "auraforge_cli.runtime_provider.resolve_runtime_provider",
                      return_value=_RUNTIME,
                  ), \
                  patch("run_agent.AIAgent") as mock_agent_cls, \
@@ -309,11 +309,11 @@ class TestLateSessionDbClosedAfterTimeout:
         try:
             with patch("cron.scheduler._hermes_home", tmp_path), \
                  patch("cron.scheduler._resolve_origin", return_value=None), \
-                 patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-                 patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-                 patch("hermes_state.SessionDB", side_effect=_hanging_then_capture), \
+                 patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+                 patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+                 patch("auraforge_state.SessionDB", side_effect=_hanging_then_capture), \
                  patch(
-                     "hermes_cli.runtime_provider.resolve_runtime_provider",
+                     "auraforge_cli.runtime_provider.resolve_runtime_provider",
                      return_value={
                          "api_key": "test-key",
                          "base_url": "https://example.invalid/v1",
@@ -367,9 +367,9 @@ class TestSessionDbInitAfterEarlyReturns:
 
         with patch("cron.scheduler._hermes_home", tmp_path), \
              patch("cron.scheduler._resolve_origin", return_value=None), \
-             patch("hermes_cli.env_loader.load_hermes_dotenv"), \
-             patch("hermes_cli.env_loader.reset_secret_source_cache"), \
-             patch("hermes_state.SessionDB") as mock_db_cls, \
+             patch("auraforge_cli.env_loader.load_hermes_dotenv"), \
+             patch("auraforge_cli.env_loader.reset_secret_source_cache"), \
+             patch("auraforge_state.SessionDB") as mock_db_cls, \
              patch(
                  "cron.scheduler._run_job_script_with_claim_heartbeat",
                  return_value=(True, '{"wakeAgent": false}'),

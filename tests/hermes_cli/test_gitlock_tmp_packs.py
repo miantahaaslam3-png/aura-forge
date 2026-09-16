@@ -12,7 +12,7 @@ import os
 import time
 from pathlib import Path
 
-from hermes_cli.gitlock import (
+from auraforge_cli.gitlock import (
     STALE_TMP_PACK_MIN_AGE_SECONDS,
     clear_stale_tmp_packs,
 )
@@ -31,7 +31,7 @@ def _age(path: Path, seconds: float) -> None:
 
 def test_removes_old_tmp_pack_debris(tmp_path, monkeypatch):
     repo = _mkrepo(tmp_path)
-    monkeypatch.setattr("hermes_cli.gitlock._git_proc_running", lambda: False)
+    monkeypatch.setattr("auraforge_cli.gitlock._git_proc_running", lambda: False)
     pack = repo / ".git" / "objects" / "pack"
 
     debris = []
@@ -49,7 +49,7 @@ def test_removes_old_tmp_pack_debris(tmp_path, monkeypatch):
 
 def test_spares_fresh_debris_and_real_packs(tmp_path, monkeypatch):
     repo = _mkrepo(tmp_path)
-    monkeypatch.setattr("hermes_cli.gitlock._git_proc_running", lambda: False)
+    monkeypatch.setattr("auraforge_cli.gitlock._git_proc_running", lambda: False)
     pack = repo / ".git" / "objects" / "pack"
 
     fresh = pack / "tmp_pack_fresh"           # a fetch may be writing this NOW
@@ -68,7 +68,7 @@ def test_spares_fresh_debris_and_real_packs(tmp_path, monkeypatch):
 
 def test_skips_sweep_while_git_is_running(tmp_path, monkeypatch):
     repo = _mkrepo(tmp_path)
-    monkeypatch.setattr("hermes_cli.gitlock._git_proc_running", lambda: True)
+    monkeypatch.setattr("auraforge_cli.gitlock._git_proc_running", lambda: True)
     pack = repo / ".git" / "objects" / "pack"
     p = pack / "tmp_pack_old"
     p.write_bytes(b"x")
@@ -84,7 +84,7 @@ def test_no_git_dir_is_a_noop(tmp_path):
 
 def test_never_raises_on_unlink_failure(tmp_path, monkeypatch):
     repo = _mkrepo(tmp_path)
-    monkeypatch.setattr("hermes_cli.gitlock._git_proc_running", lambda: False)
+    monkeypatch.setattr("auraforge_cli.gitlock._git_proc_running", lambda: False)
     pack = repo / ".git" / "objects" / "pack"
     p = pack / "tmp_pack_stuck"
     p.write_bytes(b"x")

@@ -20,9 +20,9 @@ from typing import Any
 
 import pytest
 from agent import relay_runtime
-from hermes_cli.observability import shared_metrics as shared_metrics_module
-from hermes_cli.observability.shared_metrics import SharedMetricsStore
-from hermes_cli.observability.shared_metrics_contract import (
+from auraforge_cli.observability import shared_metrics as shared_metrics_module
+from auraforge_cli.observability.shared_metrics import SharedMetricsStore
+from auraforge_cli.observability.shared_metrics_contract import (
     CLIENT_ACTIVE_METRIC,
     CLIENT_ARCHITECTURES,
     CLIENT_INSTALL_METHODS,
@@ -81,7 +81,7 @@ from hermes_cli.observability.shared_metrics_contract import (
 
 SCHEMA_PATH = (
     Path(__file__).resolve().parents[2]
-    / "hermes_cli"
+    / "auraforge_cli"
     / "observability"
     / "schemas"
     / "auraforge.shared_metrics.v2.schema.json"

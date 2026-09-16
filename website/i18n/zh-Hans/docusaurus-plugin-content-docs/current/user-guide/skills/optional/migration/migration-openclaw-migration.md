@@ -51,7 +51,7 @@ CLI 命令运行与下文所述相同的迁移脚本。当需要交互式、引�
 
 ## 此 skill 的功能
 
-它使用 `scripts/openclaw_to_hermes.py` 来：
+它使用 `scripts/openclaw_to_auraforge.py` 来：
 
 - 将 `SOUL.md` 导入 Aura Forge 主目录，保存为 `SOUL.md`
 - 将 OpenClaw 的 `MEMORY.md` 和 `USER.md` 转换为 Aura Forge 记忆条目
@@ -67,11 +67,11 @@ CLI 命令运行与下文所述相同的迁移脚本。当需要交互式、引�
 
 辅助脚本位于此 skill 目录下：
 
-- `scripts/openclaw_to_hermes.py`
+- `scripts/openclaw_to_auraforge.py`
 
 从 Skills Hub 安装此 skill 后，通常位于：
 
-- `~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py`
+- `~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py`
 
 请勿猜测更短的路径，如 `~/.hermes/skills/openclaw-migration/...`。
 
@@ -247,37 +247,37 @@ Aura Forge CLI 支持 `clarify` 工具进行交互式提示，但有以下限制
 完整发现的 dry run：
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py
+python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py
 ```
 
 使用终端工具时，优先使用绝对调用模式，例如：
 
 ```json
-{"command":"python3 /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py","workdir":"/home/USER"}
+{"command":"python3 /home/USER/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py","workdir":"/home/USER"}
 ```
 
 使用 user-data preset 的 dry run：
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --preset user-data
+python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --preset user-data
 ```
 
 执行 user-data 迁移：
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict skip
+python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset user-data --skill-conflict skip
 ```
 
 执行完整兼容迁移：
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset full --migrate-secrets --skill-conflict skip
+python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset full --migrate-secrets --skill-conflict skip
 ```
 
 包含工作区指令的执行：
 
 ```bash
-python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
+python3 ~/.hermes/skills/migration/openclaw-migration/scripts/openclaw_to_auraforge.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
 ```
 
 默认情况下不要使用 `$PWD` 或主目录作为工作区目标。请先明确询问工作区路径。

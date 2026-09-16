@@ -466,7 +466,7 @@ Common resets:
 
 ```bash
 # Force a clean first-launch setup (macOS/Linux)
-rm "$HOME/.hermes/hermes-agent/.hermes-bootstrap-complete"
+rm "$HOME/.hermes/hermes-agent/.auraforge-bootstrap-complete"
 
 # Rebuild a broken Python venv (macOS/Linux)
 rm -rf "$HOME/.hermes/hermes-agent/venv"

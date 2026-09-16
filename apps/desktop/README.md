@@ -171,7 +171,7 @@ Per-profile remote entries under `profiles[name].headers` use the same shape.
 Desktop applies these headers only to matching remote gateway requests, treats
 `https` and `wss` as the same gateway origin for WebSocket upgrades, and drops
 transport- or Hermes-managed header names such as `Authorization`, `Cookie`,
-`Host`, `Origin`, `Referer`, and `X-Hermes-Session-Token`.
+`Host`, `Origin`, `Referer`, and `X-AuraForge-Session-Token`.
 
 Projects are the workspace abstraction. A project may own multiple folders,
 repositories, worktrees, and sessions; a bare new chat remains detached unless
@@ -209,7 +209,7 @@ Boot logs land in `HERMES_HOME/logs/desktop.log` (includes backend output and re
 
 ```bash
 # Force a clean first-launch setup
-rm "$HOME/.hermes/hermes-agent/.hermes-bootstrap-complete"
+rm "$HOME/.hermes/hermes-agent/.auraforge-bootstrap-complete"
 # Rebuild a broken Python venv
 rm -rf "$HOME/.hermes/hermes-agent/venv"
 # Reset a stuck macOS microphone prompt (macOS only)
@@ -220,7 +220,7 @@ tccutil reset Microphone com.auraforge.desktop
 
 ```powershell
 # Force a clean first-launch setup
-Remove-Item "$env:LOCALAPPDATA\hermes\hermes-agent\.hermes-bootstrap-complete"
+Remove-Item "$env:LOCALAPPDATA\hermes\hermes-agent\.auraforge-bootstrap-complete"
 # Rebuild a broken Python venv
 Remove-Item -Recurse -Force "$env:LOCALAPPDATA\hermes\hermes-agent\venv"
 ```

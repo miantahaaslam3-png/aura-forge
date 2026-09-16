@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-import hermes_cli.commands as commands_mod
+import auraforge_cli.commands as commands_mod
 
 
 def _reset_personalities_memo():
@@ -56,12 +56,12 @@ class TestToolsCompletionsReadonlyConfig:
         # one-time plugin discovery (which legitimately calls load_config
         # during process init) — this test asserts on the completer's own
         # per-keystroke reads, not discovery's one-off startup reads.
-        with patch("hermes_cli.config.load_config", counting_deepcopy), \
-             patch("hermes_cli.config.load_config_readonly", counting_readonly), \
-             patch("hermes_cli.plugins.get_portable_mcp_server_names_nowait", lambda: set()), \
-             patch("hermes_cli.tools_config._get_plugin_toolset_keys", lambda: set()), \
-             patch("hermes_cli.tools_config._homeassistant_credentials_present", lambda: False), \
-             patch("hermes_cli.tools_config._xai_credentials_present", lambda: False):
+        with patch("auraforge_cli.config.load_config", counting_deepcopy), \
+             patch("auraforge_cli.config.load_config_readonly", counting_readonly), \
+             patch("auraforge_cli.plugins.get_portable_mcp_server_names_nowait", lambda: set()), \
+             patch("auraforge_cli.tools_config._get_plugin_toolset_keys", lambda: set()), \
+             patch("auraforge_cli.tools_config._homeassistant_credentials_present", lambda: False), \
+             patch("auraforge_cli.tools_config._xai_credentials_present", lambda: False):
             list(commands_mod.SlashCommandCompleter._tools_completions("enable ", "enable "))
 
         assert calls["readonly"] == 1, "completer should use the readonly loader"
@@ -129,7 +129,7 @@ class TestPersonalityCompletionsMemo:
 
         monkeypatch.setattr(commands_mod, "_personalities_memo", None)
         with patch("cli.load_cli_config", counting_load_cli_config), \
-             patch("hermes_cli.config.get_config_path", fake_config_path):
+             patch("auraforge_cli.config.get_config_path", fake_config_path):
             list(commands_mod.SlashCommandCompleter._personality_completions("h", "h"))
             assert calls["n"] == 1
 

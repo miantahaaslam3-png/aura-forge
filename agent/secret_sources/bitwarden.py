@@ -133,7 +133,7 @@ def _encrypted_disk_cache_path(home_path: Optional[Path] = None) -> Path:
 
 def _hermes_bin_dir() -> Path:
     """Where Aura Forge stores its managed binaries.  Profile-aware."""
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     return get_hermes_home() / "bin"
 
@@ -754,7 +754,7 @@ def _run_bws_list(
 
 
 # ---------------------------------------------------------------------------
-# Public entry point — called from hermes_cli.env_loader
+# Public entry point — called from auraforge_cli.env_loader
 # ---------------------------------------------------------------------------
 
 

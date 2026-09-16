@@ -3,7 +3,7 @@
 apply_aura_branding.py — Aura Forge rebrand engine.
 
 Replaces all user-visible "Aura Forge" references with "Aura Forge" in the
-codebase while preserving internal identifiers (hermes_cli, HERMES_HOME,
+codebase while preserving internal identifiers (auraforge_cli, HERMES_HOME,
 HermesGateway, etc.). Safe to run multiple times (idempotent).
 
 Usage:
@@ -126,7 +126,7 @@ RULES = [
      "macOS binary name"),
 
     # 9. Display name — standalone "Aura Forge" word (after all specific rules)
-    #    Protects: HERMES_HOME, hermes_cli, HermesGateway, auraforge-. prefix
+    #    Protects: HERMES_HOME, auraforge_cli, HermesGateway, auraforge-. prefix
     #    Only matches "Aura Forge" as a standalone word (not part of identifier)
     (r"(?<![A-Za-z0-9_/\\])Aura Forge(?![A-Za-z0-9_-])", "Aura Forge", None,
      "standalone 'Aura Forge'"),
@@ -152,11 +152,27 @@ SKIP_FILES = {
 
 # ── Protected tokens (must survive rebranding) ─────────────────────────────
 PROTECTED = [
-    "hermes_cli", "HERMES_HOME", "HERMES_WEB_DIST",
-    "HERMES_DESKTOP", "auraforge-bootstrap", "hermes_constants",
-    "auraforge-version", "hermes_version", "/api/auraforge/",
+    "HERMES_HOME", "HERMES_WEB_DIST",
+    "HERMES_DESKTOP", "auraforge-bootstrap",
+    "auraforge-version", "/api/auraforge/",
     "_skills_tool.HERMES_HOME",
     "HermesGateway", "HermesGitBranch",
+]
+
+# ── Python module/package renames (longest first) ─────────────────────────
+# Applied to every text file during a sync so upstream Hermes code arriving
+# after this commit gets the same rename the repo already carries.
+MODULE_RENAMES = [
+    ("hermes_state_portability", "auraforge_state_portability"),
+    ("hermes_state_schema", "auraforge_state_schema"),
+    ("hermes_state_search", "auraforge_state_search"),
+    ("hermes_state_common", "auraforge_state_common"),
+    ("hermes_state", "auraforge_state"),
+    ("hermes_cli", "auraforge_cli"),
+    ("hermes_constants", "auraforge_constants"),
+    ("hermes_logging", "auraforge_logging"),
+    ("hermes_bootstrap", "auraforge_bootstrap"),
+    ("hermes_time", "auraforge_time"),
 ]
 
 
@@ -200,6 +216,13 @@ def apply_rules(content: str, fname: str = "") -> tuple[str, list[str]]:
         if new_content != content:
             applied.append(desc)
             content = new_content
+    # Python module/package renames (auraforge rebrand, module-layer):
+    # upstream code arriving from Hermes still imports hermes_cli etc.
+    for old, new in MODULE_RENAMES:
+        pat = re.compile(rf"(?<![A-Za-z0-9_]){old}(?![A-Za-z0-9_])")
+        content, k = pat.subn(new, content)
+        if k:
+            applied.append(f"module rename {old} -> {new}")
     return content, applied
 
 
@@ -211,7 +234,7 @@ def check_hermes_leaks(content: str, relpath: str) -> list[str]:
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//") or stripped.startswith("*"):
             continue
-        # Find standalone "Aura Forge" (not HERMES_, hermes_cli, etc.)
+        # Find standalone "Aura Forge" (not HERMES_, auraforge_cli, etc.)
         for m in re.finditer(r"(?<![A-Za-z0-9_/\\])Aura Forge(?![A-Za-z0-9_-])", line):
             leaks.append(f"  {relpath}:{i}: {stripped[:120]}")
     return leaks

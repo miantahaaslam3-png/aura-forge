@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli.image_provenance import read_image_provenance
-from hermes_cli.update_contract import (
+from auraforge_cli.image_provenance import read_image_provenance
+from auraforge_cli.update_contract import (
     UpdateRefusal,
     evaluate_update_admission,
     record_refusal_receipt,
@@ -90,11 +90,11 @@ def test_reader_rejects_symlink_marker(tmp_path):
 def test_admission_marker_refuses_even_on_git_checkout(tmp_path, monkeypatch):
     """The bind-mounted-checkout case: heuristics say git, marker says image
     — the marker wins."""
-    import hermes_cli.image_provenance as ip
+    import auraforge_cli.image_provenance as ip
 
     monkeypatch.setattr(ip, "IMAGE_PROVENANCE_PATH", _valid_marker(tmp_path))
     monkeypatch.setattr(
-        "hermes_cli.config.detect_install_method", lambda *a, **k: "git"
+        "auraforge_cli.config.detect_install_method", lambda *a, **k: "git"
     )
     refusal = evaluate_update_admission(tmp_path)
     assert refusal is not None
@@ -103,7 +103,7 @@ def test_admission_marker_refuses_even_on_git_checkout(tmp_path, monkeypatch):
 
 
 def test_admission_invalid_marker_fails_closed(tmp_path, monkeypatch):
-    import hermes_cli.image_provenance as ip
+    import auraforge_cli.image_provenance as ip
 
     bad = tmp_path / "image-provenance.json"
     bad.write_text("corrupted {{{")
@@ -115,35 +115,35 @@ def test_admission_invalid_marker_fails_closed(tmp_path, monkeypatch):
 
 
 def test_admission_no_marker_falls_back_to_heuristics(tmp_path, monkeypatch):
-    import hermes_cli.image_provenance as ip
+    import auraforge_cli.image_provenance as ip
 
     monkeypatch.setattr(ip, "IMAGE_PROVENANCE_PATH", tmp_path / "absent.json")
     monkeypatch.setattr(
-        "hermes_cli.config.detect_install_method", lambda *a, **k: "docker"
+        "auraforge_cli.config.detect_install_method", lambda *a, **k: "docker"
     )
     refusal = evaluate_update_admission(tmp_path)
     assert refusal is not None and refusal.code == "docker"
 
 
 def test_admission_git_checkout_no_marker_is_admitted(tmp_path, monkeypatch):
-    import hermes_cli.image_provenance as ip
+    import auraforge_cli.image_provenance as ip
 
     monkeypatch.setattr(ip, "IMAGE_PROVENANCE_PATH", tmp_path / "absent.json")
     monkeypatch.setattr(
-        "hermes_cli.config.detect_install_method", lambda *a, **k: "git"
+        "auraforge_cli.config.detect_install_method", lambda *a, **k: "git"
     )
     assert evaluate_update_admission(tmp_path) is None
 
 
 def test_admission_apt_and_nix_refuse(tmp_path, monkeypatch):
-    import hermes_cli.image_provenance as ip
+    import auraforge_cli.image_provenance as ip
 
     monkeypatch.setattr(ip, "IMAGE_PROVENANCE_PATH", tmp_path / "absent.json")
     for method, code in (("apt", "apt"), ("nix", "nix")):
         def _detect(*a, _m=method, **k):
             return _m
 
-        monkeypatch.setattr("hermes_cli.config.detect_install_method", _detect)
+        monkeypatch.setattr("auraforge_cli.config.detect_install_method", _detect)
         refusal = evaluate_update_admission(tmp_path)
         assert refusal is not None and refusal.code == code
 
@@ -155,7 +155,7 @@ def test_admission_apt_and_nix_refuse(tmp_path, monkeypatch):
 
 def test_refusal_receipt_written_as_refused(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    import hermes_cli.update_receipt as ur
+    import auraforge_cli.update_receipt as ur
 
     monkeypatch.setattr(ur, "_receipt_dir", lambda: tmp_path / "receipts")
 

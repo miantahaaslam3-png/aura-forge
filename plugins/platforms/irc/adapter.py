@@ -564,10 +564,10 @@ def validate_config(config) -> bool:
 def interactive_setup() -> None:
     """Interactive `auraforge gateway setup` flow for the IRC platform.
 
-    Lazy-imports ``hermes_cli.setup`` helpers so the plugin stays importable
+    Lazy-imports ``auraforge_cli.setup`` helpers so the plugin stays importable
     in non-CLI contexts (gateway runtime, tests).
     """
-    from hermes_cli.setup import (
+    from auraforge_cli.setup import (
         prompt,
         prompt_yes_no,
         save_env_value,

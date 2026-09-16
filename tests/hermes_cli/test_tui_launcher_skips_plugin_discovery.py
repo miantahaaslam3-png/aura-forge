@@ -13,7 +13,7 @@ from argparse import Namespace
 import sys
 import types
 
-from hermes_cli import main as main_mod
+from auraforge_cli import main as main_mod
 
 
 def _install_discover_spy(monkeypatch):
@@ -24,7 +24,7 @@ def _install_discover_spy(monkeypatch):
 
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "auraforge_cli.plugins",
         types.SimpleNamespace(
             discover_plugins=_discover,
             # main.py now kicks discovery off in a background thread; both

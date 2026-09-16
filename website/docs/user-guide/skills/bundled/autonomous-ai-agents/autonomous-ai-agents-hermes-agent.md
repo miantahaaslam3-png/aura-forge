@@ -53,7 +53,7 @@ This skill is a concise operating guide, not the complete source of truth for ev
 
 Good verification targets:
 
-- CLI commands: `hermes --help`, `hermes <command> --help`, and `hermes_cli/main.py`
+- CLI commands: `hermes --help`, `hermes <command> --help`, and `auraforge_cli/main.py`
 - User documentation: https://hermes-agent.nousresearch.com/docs/
 - Source tree: https://github.com/NousResearch/hermes-agent
 

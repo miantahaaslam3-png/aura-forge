@@ -76,7 +76,7 @@ case "$MODE" in
     HERMES_HOME="$SANDBOX" bash "$SCRIPT_DIR/posix.sh" \
       --install-root "$SANDBOX_ROOT" --branch main --desktop-pid 0 || true
     say "result file:"
-    cat "$SANDBOX/.hermes-update-result.json" 2>/dev/null || echo "(none written)"
+    cat "$SANDBOX/.auraforge-update-result.json" 2>/dev/null || echo "(none written)"
     echo
     say "sandbox after update: $(git -C "$SANDBOX_ROOT" log --oneline -1)"
     ;;
@@ -88,7 +88,7 @@ case "$MODE" in
       --install-root "$SANDBOX_ROOT" --branch main --desktop-pid 0 || true
     mv "$SANDBOX_ROOT/venv.hidden" "$SANDBOX_ROOT/venv"
     say "result file (expect ok:false, exit 3):"
-    cat "$SANDBOX/.hermes-update-result.json" 2>/dev/null || echo "(none written)"
+    cat "$SANDBOX/.auraforge-update-result.json" 2>/dev/null || echo "(none written)"
     echo
     ;;
   gate)
@@ -122,7 +122,7 @@ case "$MODE" in
     QHOME="$G/qhome"; mkdir -p "$QHOME/hermes-agent"
     bash "$SCRIPT_DIR/posix.sh" --no-ui --no-marker-cleanup --desktop-pid 0 \
       --install-root "$QHOME/hermes-agent" --branch 'evil"branch\n$(x)' >/dev/null 2>&1 || true
-    if python3 -c "import json,sys; d=json.load(open('$QHOME/.hermes-update-result.json')); sys.exit(0 if d['branch']=='evil\"branch\\\\n\$(x)' and d['ok']==False else 1)"; then
+    if python3 -c "import json,sys; d=json.load(open('$QHOME/.auraforge-update-result.json')); sys.exit(0 if d['branch']=='evil\"branch\\\\n\$(x)' and d['ok']==False else 1)"; then
       printf 'ok   result JSON escapes hostile branch/message\n'
     else
       printf 'FAIL result JSON escaping\n'; fails=$((fails+1))
@@ -139,10 +139,10 @@ case "$MODE" in
     L="/tmp/hermes-launch-test.$$"
     fails=0
     expect_msg() { # name python-expr
-      if python3 -c "import json,sys; d=json.load(open('$L/.hermes-update-result.json')); sys.exit(0 if ($2) else 1)"; then
+      if python3 -c "import json,sys; d=json.load(open('$L/.auraforge-update-result.json')); sys.exit(0 if ($2) else 1)"; then
         printf 'ok   %s\n' "$1"
       else
-        printf 'FAIL %s -> %s\n' "$1" "$(cat "$L/.hermes-update-result.json" 2>/dev/null)"; fails=$((fails+1))
+        printf 'FAIL %s -> %s\n' "$1" "$(cat "$L/.auraforge-update-result.json" 2>/dev/null)"; fails=$((fails+1))
       fi
     }
     stub_install() { # creates a fake install whose hermes update succeeds

@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from hermes_cli.subcommands import peer as peer_cmd
+from auraforge_cli.subcommands import peer as peer_cmd
 
 
 # ── target parsing ───────────────────────────────────────────────────────────

@@ -296,7 +296,7 @@ from pathlib import Path
 
 home=Path(os.path.expanduser(sys.argv[1]))
 if home.parent.name=='profiles':home=home.parent.parent
-marker=home/'.hermes-update-in-progress'
+marker=home/'.auraforge-update-in-progress'
 try:
     with marker.open('rb') as stream:raw=stream.read(257)
 except FileNotFoundError:
@@ -1043,10 +1043,10 @@ function buildSpawnCommand(hermesPath, profile, opts: any = {}) {
   const tokenArg = tokenFilePath ? ` --ssh-session-token-file ${expandRemotePath(tokenFilePath)}` : ''
   const ownerArg = opts.spawnNonce ? ` --ssh-owner-nonce ${validateSpawnNonce(opts.spawnNonce)}` : ''
   const subCmd = `serve --isolated --host 127.0.0.1 --port 0${tokenArg}${ownerArg}`
-  const marker = expandRemotePath(`${remoteInstallRoot(opts.hermesHome || '~/.hermes')}/.hermes-update-in-progress`)
+  const marker = expandRemotePath(`${remoteInstallRoot(opts.hermesHome || '~/.hermes')}/.auraforge-update-in-progress`)
 
   const updateMutex = expandRemotePath(
-    `${remoteInstallRoot(opts.hermesHome || '~/.hermes')}/.hermes-update-in-progress.mutex`
+    `${remoteInstallRoot(opts.hermesHome || '~/.hermes')}/.auraforge-update-in-progress.mutex`
   )
 
   // The marker probe, ownership reservation, process creation, and initial

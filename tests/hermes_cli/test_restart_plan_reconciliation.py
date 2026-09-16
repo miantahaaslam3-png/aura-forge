@@ -9,7 +9,7 @@ Pins:
   rows — the silent-miss tripwire.
 """
 
-from hermes_cli.update_inventory import (
+from auraforge_cli.update_inventory import (
     RuntimeRecord,
     UpdatePlan,
     _restart_mechanism,
@@ -50,7 +50,7 @@ def test_mechanism_ids_are_machine_readable_and_described():
 
 
 def test_windows_service_supervisor_classification():
-    from hermes_cli.update_inventory import _detect_supervisor_for_pid
+    from auraforge_cli.update_inventory import _detect_supervisor_for_pid
 
     # An SCM-owned gateway PID classifies as windows-service even when the
     # generic service-PID probe also knows the pid.

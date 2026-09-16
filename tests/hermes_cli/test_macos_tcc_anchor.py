@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-import hermes_cli.doctor as doctor
-import hermes_cli.macos_tcc_anchor as tcc
-from hermes_constants import venv_python_path
+import auraforge_cli.doctor as doctor
+import auraforge_cli.macos_tcc_anchor as tcc
+from auraforge_constants import venv_python_path
 
 
 def _darwin(monkeypatch):
@@ -139,7 +139,7 @@ class TestEnsureTccAnchor:
     def test_install_signs_the_anchor_copy(self, tmp_path, monkeypatch):
         _darwin(monkeypatch)
         signed = []
-        import hermes_cli.managed_uv as managed_uv
+        import auraforge_cli.managed_uv as managed_uv
 
         monkeypatch.setattr(
             managed_uv, "_macos_sign_managed_python", lambda p: signed.append(Path(p)) or True
@@ -362,7 +362,7 @@ class TestEnsureTccAnchor:
     def test_store_root_marker_tracks_managed_uv_constant(self):
         # The repair-generation store marker must stay derived from
         # managed_uv's directory constant, not drift as a hardcoded string.
-        from hermes_cli.managed_uv import _RUNTIME_DIR_NAME
+        from auraforge_cli.managed_uv import _RUNTIME_DIR_NAME
 
         assert f"/{_RUNTIME_DIR_NAME}/python/" in tcc._STORE_ROOT_MARKERS
 

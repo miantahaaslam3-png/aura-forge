@@ -74,7 +74,7 @@ jobs:
           grep -q "com.auraforge.desktop" apps/desktop/electron/main.cjs || (echo "FAIL: AppUserModelId not rebranded" && exit 1)
           grep -q "auraforge" pyproject.toml || (echo "FAIL: entry points not rebranded" && exit 1)
           grep -q "aura-forge" scripts/install.ps1 || (echo "FAIL: install script not rebranded" && exit 1)
-          grep -q "miantahaaslam3-png" hermes_cli/main.py || (echo "FAIL: repo URL not rebranded" && exit 1)
+          grep -q "miantahaaslam3-png" auraforge_cli/main.py || (echo "FAIL: repo URL not rebranded" && exit 1)
           echo "All branding checks passed"
 
       - name: Commit and push

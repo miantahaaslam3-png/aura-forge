@@ -16,7 +16,7 @@ import subprocess
 
 import pytest
 
-from hermes_cli.update_cmd import _editable_install_is_current
+from auraforge_cli.update_cmd import _editable_install_is_current
 
 GIT = ["git"]
 

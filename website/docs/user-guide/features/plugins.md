@@ -268,7 +268,7 @@ When you upgrade to a version of Hermes that has opt-in plugins (config schema v
 
 ## Available hooks
 
-Plugins can register the 26 lifecycle events currently accepted by `hermes_cli.plugins.VALID_HOOKS`. The **[Event Hooks catalog](/user-guide/features/hooks#shipped-plugin-hook-catalog)** is canonical for exact timing, return handling, payload fields, and privacy notes.
+Plugins can register the 26 lifecycle events currently accepted by `auraforge_cli.plugins.VALID_HOOKS`. The **[Event Hooks catalog](/user-guide/features/hooks#shipped-plugin-hook-catalog)** is canonical for exact timing, return handling, payload fields, and privacy notes.
 
 | Descriptive category | Shipped hooks |
 |---|---|
@@ -547,7 +547,7 @@ all a bundled seed copy ships with Hermes — so search works fully offline.
 
 `repo` is the `owner/name` GitHub identifier, `ref` pins an immutable commit
 SHA, and optional `subdir` supports monorepos. The bundled seed file
-(`hermes_cli/data/plugin_index.json` in the repo) is the format reference.
+(`auraforge_cli/data/plugin_index.json` in the repo) is the format reference.
 
 **Submitting a plugin.** The index is maintained as a plain JSON file —
 submit a pull request to the

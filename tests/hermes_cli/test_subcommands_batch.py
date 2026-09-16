@@ -13,30 +13,30 @@ import argparse
 
 import pytest
 
-from hermes_cli.subcommands.auth import build_auth_parser
-from hermes_cli.subcommands.backup import build_backup_parser
-from hermes_cli.subcommands.config import build_config_parser
-from hermes_cli.subcommands.dashboard import build_dashboard_parser
-from hermes_cli.subcommands.debug import build_debug_parser
-from hermes_cli.subcommands.doctor import build_doctor_parser
-from hermes_cli.subcommands.dump import build_dump_parser
-from hermes_cli.subcommands.gui import build_gui_parser
-from hermes_cli.subcommands.hooks import build_hooks_parser
-from hermes_cli.subcommands.import_cmd import build_import_cmd_parser
-from hermes_cli.subcommands.login import build_login_parser
-from hermes_cli.subcommands.logout import build_logout_parser
-from hermes_cli.subcommands.logs import build_logs_parser
-from hermes_cli.subcommands.model import build_model_parser
+from auraforge_cli.subcommands.auth import build_auth_parser
+from auraforge_cli.subcommands.backup import build_backup_parser
+from auraforge_cli.subcommands.config import build_config_parser
+from auraforge_cli.subcommands.dashboard import build_dashboard_parser
+from auraforge_cli.subcommands.debug import build_debug_parser
+from auraforge_cli.subcommands.doctor import build_doctor_parser
+from auraforge_cli.subcommands.dump import build_dump_parser
+from auraforge_cli.subcommands.gui import build_gui_parser
+from auraforge_cli.subcommands.hooks import build_hooks_parser
+from auraforge_cli.subcommands.import_cmd import build_import_cmd_parser
+from auraforge_cli.subcommands.login import build_login_parser
+from auraforge_cli.subcommands.logout import build_logout_parser
+from auraforge_cli.subcommands.logs import build_logs_parser
+from auraforge_cli.subcommands.model import build_model_parser
 
-from hermes_cli.subcommands.prompt_size import build_prompt_size_parser
-from hermes_cli.subcommands.security import build_security_parser
-from hermes_cli.subcommands.setup import build_setup_parser
-from hermes_cli.subcommands.slack import build_slack_parser
-from hermes_cli.subcommands.status import build_status_parser
-from hermes_cli.subcommands.uninstall import build_uninstall_parser
-from hermes_cli.subcommands.update import build_update_parser
-from hermes_cli.subcommands.webhook import build_webhook_parser
-from hermes_cli.subcommands.whatsapp import build_whatsapp_parser
+from auraforge_cli.subcommands.prompt_size import build_prompt_size_parser
+from auraforge_cli.subcommands.security import build_security_parser
+from auraforge_cli.subcommands.setup import build_setup_parser
+from auraforge_cli.subcommands.slack import build_slack_parser
+from auraforge_cli.subcommands.status import build_status_parser
+from auraforge_cli.subcommands.uninstall import build_uninstall_parser
+from auraforge_cli.subcommands.update import build_update_parser
+from auraforge_cli.subcommands.webhook import build_webhook_parser
+from auraforge_cli.subcommands.whatsapp import build_whatsapp_parser
 
 
 def _h(name):
@@ -100,7 +100,7 @@ def test_config_get_unset_subcommands_parse():
 # ── deprecated `auraforge login` fails gracefully, not with argparse error ────
 #
 # `auraforge login` is a removed command; its handler (`login_command` in
-# `hermes_cli/auth.py`) prints a deprecation notice pointing at `auraforge auth` /
+# `auraforge_cli/auth.py`) prints a deprecation notice pointing at `auraforge auth` /
 # `auraforge model` and exits 0.  Two behavior contracts guard the UX:
 #   1. ANY `--provider <value>` (including ones the user actually wants, like
 #      `anthropic`) must parse and reach the handler — never crash in argparse

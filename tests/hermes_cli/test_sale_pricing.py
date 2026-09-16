@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock
 
-import hermes_cli.models as models_mod
-from hermes_cli.models import (
+import auraforge_cli.models as models_mod
+from auraforge_cli.models import (
     compute_sale_discount,
     fetch_models_with_pricing,
 )
@@ -97,7 +97,7 @@ def test_resolve_nous_pricing_credentials_honors_inference_env_override(monkeypa
     )
     # Auth resolution fails / returns nothing — the env override must still win.
     monkeypatch.setattr(
-        "hermes_cli.auth.resolve_nous_runtime_credentials",
+        "auraforge_cli.auth.resolve_nous_runtime_credentials",
         lambda: None,
     )
     api_key, base_url = models_mod._resolve_nous_pricing_credentials()
@@ -110,7 +110,7 @@ def test_resolve_nous_pricing_credentials_honors_inference_env_override(monkeypa
 def test_resolve_nous_pricing_credentials_normalizes_either_suffix(monkeypatch):
     """``/v1`` on the override is optional and must not change the result."""
     monkeypatch.setattr(
-        "hermes_cli.auth.resolve_nous_runtime_credentials", lambda: None
+        "auraforge_cli.auth.resolve_nous_runtime_credentials", lambda: None
     )
     for override in (
         "https://stg-inference-api.nousresearch.com",

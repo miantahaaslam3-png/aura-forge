@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from hermes_state import SCHEMA_VERSION, SessionDB
+from auraforge_state import SCHEMA_VERSION, SessionDB
 
 
 @pytest.fixture()

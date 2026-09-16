@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.gateway_windows."""
+"""Tests for auraforge_cli.gateway_windows."""
 
 import logging
 import subprocess
@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import hermes_cli.gateway as gateway
-import hermes_cli.gateway_windows as gateway_windows
-import hermes_cli.setup as setup
+import auraforge_cli.gateway as gateway
+import auraforge_cli.gateway_windows as gateway_windows
+import auraforge_cli.setup as setup
 
 
 _BREAKAWAY_MARKER = "_HERMES_GATEWAY_BREAKAWAY"
@@ -64,16 +64,16 @@ def test_build_gateway_argv_keeps_venv_console_python_for_uv_venv(monkeypatch, t
         encoding="utf-8",
     )
 
-    import hermes_cli.gateway as gateway
+    import auraforge_cli.gateway as gateway
 
     monkeypatch.setattr(gateway, "PROJECT_ROOT", project)
     monkeypatch.setattr(gateway, "get_python_path", lambda: str(venv_python))
     monkeypatch.setattr(gateway, "_profile_arg", lambda hermes_home: "")
-    monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: str(hermes_home))
+    monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: str(hermes_home))
 
     argv, cwd, env_overlay = gateway_windows._build_gateway_argv()
 
-    assert argv[:3] == [str(venv_python), "-m", "hermes_cli.main"]
+    assert argv[:3] == [str(venv_python), "-m", "auraforge_cli.main"]
     assert cwd == str(hermes_home.resolve())
     assert env_overlay["VIRTUAL_ENV"] == str(project / "venv")
     assert str(project) in env_overlay["PYTHONPATH"].split(gateway_windows.os.pathsep)
@@ -82,7 +82,7 @@ def test_build_gateway_argv_keeps_venv_console_python_for_uv_venv(monkeypatch, t
 @pytest.mark.windows_only
 def test_spawn_detached_marks_primary_breakaway_success(monkeypatch, tmp_path, caplog):
     """A successful breakaway spawn reports true without a warning."""
-    argv = ["python.exe", "-m", "hermes_cli.main", "gateway", "run"]
+    argv = ["python.exe", "-m", "auraforge_cli.main", "gateway", "run"]
     cwd = str(tmp_path)
     calls = []
 
@@ -95,7 +95,7 @@ def test_spawn_detached_marks_primary_breakaway_success(monkeypatch, tmp_path, c
         "_build_gateway_argv",
         lambda: (argv, cwd, {"HERMES_GATEWAY_DETACHED": "1"}),
     )
-    monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: tmp_path)
+    monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: tmp_path)
     monkeypatch.setattr(gateway_windows.subprocess, "Popen", fake_popen)
     caplog.set_level(logging.WARNING, logger=gateway_windows.__name__)
 
@@ -116,7 +116,7 @@ def test_spawn_detached_warns_and_marks_no_breakaway_fallback(
     monkeypatch, tmp_path, caplog
 ):
     """A denied breakaway retries once with private false metadata."""
-    argv = ["python.exe", "-m", "hermes_cli.main", "gateway", "run"]
+    argv = ["python.exe", "-m", "auraforge_cli.main", "gateway", "run"]
     cwd = str(tmp_path)
     calls = []
 
@@ -137,7 +137,7 @@ def test_spawn_detached_warns_and_marks_no_breakaway_fallback(
             {"HERMES_GATEWAY_DETACHED": "1", "SECRET_SENTINEL": "do-not-log"},
         ),
     )
-    monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: tmp_path)
+    monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: tmp_path)
     monkeypatch.setattr(gateway_windows.subprocess, "Popen", fake_popen)
     caplog.set_level(logging.WARNING, logger=gateway_windows.__name__)
 
@@ -178,13 +178,13 @@ class TestStableWindowsGatewayWorkingDir:
     def test_stable_gateway_working_dir_uses_hermes_home(self, tmp_path, monkeypatch):
         home = tmp_path / ".auraforge"
         home.mkdir()
-        monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: home)
+        monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: home)
         assert gateway_windows._stable_gateway_working_dir(tmp_path / "checkout") == str(home.resolve())
 
     def test_stable_gateway_working_dir_falls_back_to_project_root(self, tmp_path, monkeypatch):
         missing = tmp_path / "missing" / ".auraforge"
         project = tmp_path / "checkout"
-        monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: missing)
+        monkeypatch.setattr("auraforge_cli.config.get_hermes_home", lambda: missing)
         assert gateway_windows._stable_gateway_working_dir(project) == str(project)
 
 
@@ -331,7 +331,7 @@ def test_gateway_vbs_script_is_console_less(monkeypatch):
     assert "cmd.exe" not in content.lower()
     assert 'CreateObject("WScript.Shell")' in content
     assert "pythonw.exe" in content
-    assert "hermes_cli.main" in content
+    assert "auraforge_cli.main" in content
     assert "gateway run" in content
     assert ", 0, False" in content  # hidden window, detached/async
     for var in ("HERMES_HOME", "PYTHONIOENCODING", "HERMES_GATEWAY_DETACHED", "VIRTUAL_ENV", "PYTHONPATH"):

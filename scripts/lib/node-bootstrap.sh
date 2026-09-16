@@ -107,7 +107,7 @@ _nb_npm_range() {
 # 26.5.1 bundles npm 11.17.0, one minor below our own `engines.npm` floor of
 # >=12. With `engine-strict=true` in the repo .npmrc that is fatal, not a
 # warning, so a brand-new install died at the first `npm ci` with EBADENGINE.
-# The Python side recovers through hermes_cli/npm_engine.py; the installer path
+# The Python side recovers through auraforge_cli/npm_engine.py; the installer path
 # had no such rung, so provision the right npm here instead of reacting later.
 #
 # Three details are load-bearing, all mirroring upgrade_managed_npm():
@@ -349,7 +349,7 @@ _nb_managed_tool_broken() {
 # from a previous install (e.g. 22). Outdated heals the same way broken does,
 # so existing users get upgraded on the next heal probe, not just on a full
 # installer re-run. Mirrors _managed_node_tree_outdated() in
-# hermes_constants.py.
+# auraforge_constants.py.
 _nb_managed_node_outdated() {
     local probe ver major
     for probe in "$HERMES_HOME/node/bin/node" "$HERMES_HOME/node/node"; do
@@ -375,7 +375,7 @@ _nb_managed_node_needs_heal() {
 
 # Redownload the pinned nodejs.org tarball when a managed tree exists but
 # node/npm/npx fail a --version probe. No-op when the tree is healthy or
-# absent. Used by hermes_constants.find_hermes_node_executable() and safe
+# absent. Used by auraforge_constants.find_hermes_node_executable() and safe
 # to call from install reruns.
 heal_managed_node() {
     [ -d "$HERMES_HOME/node" ] || return 1

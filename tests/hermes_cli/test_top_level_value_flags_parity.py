@@ -7,7 +7,7 @@ option absent from both sets, so every ``auraforge --reasoning high <cmd> …``
 invocation mis-classified ``high`` as the first positional and forced eager
 plugin CLI discovery (~500-650ms startup tax).
 
-Both sites now share ``hermes_cli._parser.top_level_value_flag_sets()``,
+Both sites now share ``auraforge_cli._parser.top_level_value_flag_sets()``,
 derived from ``build_top_level_parser()`` (mirroring the
 ``update_cmd._holder_value_flags`` precedent). These tests pin:
 
@@ -21,8 +21,8 @@ import sys
 
 import pytest
 
-from hermes_cli._parser import build_top_level_parser, top_level_value_flag_sets
-from hermes_cli.main import _first_positional_argv, _plugin_cli_discovery_needed
+from auraforge_cli._parser import build_top_level_parser, top_level_value_flag_sets
+from auraforge_cli.main import _first_positional_argv, _plugin_cli_discovery_needed
 
 
 def _parser_value_flags() -> tuple[set, set]:

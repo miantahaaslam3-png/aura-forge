@@ -21,9 +21,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from hermes_cli import main as hermes_main
-from hermes_cli import update_cmd
-from hermes_constants import get_hermes_home
+from auraforge_cli import main as hermes_main
+from auraforge_cli import update_cmd
+from auraforge_constants import get_hermes_home
 
 
 def _make_head_moved_side_effect(pre_sha="abc123", post_sha="def456"):
@@ -108,7 +108,7 @@ def _patch_update_deps(monkeypatch, tmp_path, run_side_effect):
     )
     monkeypatch.setattr(update_cmd, "_update_node_dependencies", lambda: [])
 
-    import hermes_cli.gateway as hermes_gateway
+    import auraforge_cli.gateway as hermes_gateway
 
     monkeypatch.setattr(
         hermes_gateway, "find_gateway_pids", lambda all_profiles=False: []
@@ -118,11 +118,11 @@ def _patch_update_deps(monkeypatch, tmp_path, run_side_effect):
         hermes_gateway, "find_profile_gateway_processes", lambda *a, **k: []
     )
     monkeypatch.setattr(
-        "hermes_cli.update_receipt.collect_fleet_versions",
+        "auraforge_cli.update_receipt.collect_fleet_versions",
         lambda **k: [],
     )
     monkeypatch.setattr(
-        "hermes_cli.update_inventory.collect_runtime_inventory",
+        "auraforge_cli.update_inventory.collect_runtime_inventory",
         lambda: SimpleNamespace(runtimes=[], to_dict=lambda: {}),
     )
 
@@ -266,7 +266,7 @@ def test_stale_fleet_matrix_on_latest_receipt_is_pending(monkeypatch):
 
 def test_run_pending_restart_true_when_no_gateways(monkeypatch, capsys):
     monkeypatch.setattr(
-        "hermes_cli.gateway.find_gateway_pids", lambda **k: []
+        "auraforge_cli.gateway.find_gateway_pids", lambda **k: []
     )
     monkeypatch.setattr(hermes_main, "_purge_stale_hermes_modules", lambda: None)
 

@@ -12,7 +12,7 @@ from agent.context_compressor import (
     _MERGED_SUMMARY_DELIMITER,
     _SUMMARY_END_MARKER,
 )
-from hermes_state import (
+from auraforge_state import (
     CompressionSessionClosedError,
     SessionCompressionInProgressError,
     SessionDB,

@@ -40,10 +40,10 @@ class _FakeDB:
 
 
 def _run(monkeypatch, capsys, argv_tail, db):
-    import hermes_cli.main as main_mod
-    import hermes_state
+    import auraforge_cli.main as main_mod
+    import auraforge_state
 
-    monkeypatch.setattr(hermes_state, "SessionDB", lambda: db)
+    monkeypatch.setattr(auraforge_state, "SessionDB", lambda: db)
     monkeypatch.setattr(sys, "argv", ["auraforge", "sessions", *argv_tail])
     try:
         main_mod.main()

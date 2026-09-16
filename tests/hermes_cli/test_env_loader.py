@@ -3,13 +3,13 @@ import importlib
 import os
 import sys
 
-from hermes_cli.env_loader import load_hermes_dotenv
+from auraforge_cli.env_loader import load_hermes_dotenv
 
 
 def test_recovered_update_retry_skips_external_secret_sources(tmp_path, monkeypatch):
     """The post-recovery updater must not remap native vault dependencies."""
-    import hermes_cli.env_loader as env_loader
-    from hermes_cli import _early_recovery
+    import auraforge_cli.env_loader as env_loader
+    from auraforge_cli import _early_recovery
 
     home = tmp_path / "auraforge"
     home.mkdir()
@@ -155,7 +155,7 @@ def test_bomless_latin1_env_still_loads(tmp_path, monkeypatch):
 
 def test_latin1_fallback_stream_honors_override(tmp_path, monkeypatch):
     """Stream-based latin-1 fallback must honor override= identically to dotenv_path."""
-    from hermes_cli.env_loader import _load_dotenv_with_fallback
+    from auraforge_cli.env_loader import _load_dotenv_with_fallback
 
     home = tmp_path / "auraforge"
     home.mkdir()
@@ -256,14 +256,14 @@ def test_utf32_le_bom_leaves_file_untouched(tmp_path, caplog):
     """
     import logging
 
-    from hermes_cli.env_loader import _sanitize_env_file_if_needed
+    from auraforge_cli.env_loader import _sanitize_env_file_if_needed
 
     env_file = tmp_path / ".env"
     content = "HERMES_TEST_KEY=hello_utf32\nSECOND_KEY=world\n"
     raw = codecs.BOM_UTF32_LE + content.encode("utf-32-le")
     env_file.write_bytes(raw)
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.env_loader"):
+    with caplog.at_level(logging.WARNING, logger="auraforge_cli.env_loader"):
         _sanitize_env_file_if_needed(env_file)
 
     assert env_file.read_bytes() == raw  # untouched
@@ -280,8 +280,8 @@ def test_utf32_warning_fires_once_per_path(tmp_path, caplog, monkeypatch):
     """
     import logging
 
-    import hermes_cli.env_loader as env_loader
-    from hermes_cli.env_loader import _sanitize_env_file_if_needed
+    import auraforge_cli.env_loader as env_loader
+    from auraforge_cli.env_loader import _sanitize_env_file_if_needed
 
     # Isolate process-level seen-set so other tests' paths don't leak in.
     monkeypatch.setattr(env_loader, "_WARNED_UTF32_PATHS", set())
@@ -291,7 +291,7 @@ def test_utf32_warning_fires_once_per_path(tmp_path, caplog, monkeypatch):
     raw = codecs.BOM_UTF32_LE + content.encode("utf-32-le")
     env_file.write_bytes(raw)
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.env_loader"):
+    with caplog.at_level(logging.WARNING, logger="auraforge_cli.env_loader"):
         _sanitize_env_file_if_needed(env_file)
         _sanitize_env_file_if_needed(env_file)
         _sanitize_env_file_if_needed(env_file)
@@ -498,7 +498,7 @@ def test_cleanup_scope_is_the_profile_managed_set():
     widened _PROFILE_MANAGED_ENV_KEYS toward the full known-key set, which
     re-introduces the shell-export deletion bug.
     """
-    from hermes_cli.env_loader import _PROFILE_MANAGED_ENV_KEYS
+    from auraforge_cli.env_loader import _PROFILE_MANAGED_ENV_KEYS
 
     for key in _PROFILE_MANAGED_ENV_KEYS:
         assert not key.endswith(("_API_KEY", "_TOKEN", "_SECRET")), (
@@ -514,7 +514,7 @@ def test_cleanup_scope_is_the_profile_managed_set():
 # TERMINAL_ENV=docker in .env used to silently beat config.yaml's
 # terminal.backend on every reload (gateway per-turn reload, cron standalone
 # runs). The bridge re-applies config.yaml's EXPLICIT terminal keys last via
-# the shared hermes_cli.config.apply_terminal_config_to_env helper.
+# the shared auraforge_cli.config.apply_terminal_config_to_env helper.
 # ---------------------------------------------------------------------------
 
 

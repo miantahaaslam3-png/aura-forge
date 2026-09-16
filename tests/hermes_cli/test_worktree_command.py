@@ -15,7 +15,7 @@ import subprocess
 import pytest
 
 import cli as cli_mod
-from hermes_cli.cli_commands_mixin import CLICommandsMixin
+from auraforge_cli.cli_commands_mixin import CLICommandsMixin
 
 requires_git = pytest.mark.skipif(
     shutil.which("git") is None, reason="git required"

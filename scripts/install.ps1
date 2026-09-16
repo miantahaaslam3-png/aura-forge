@@ -358,7 +358,7 @@ if ($PSBoundParameters.ContainsKey('InstallDir')) {
 if ($script:NormalizedProfilePaths) {
     # Which paths the install actually settled on. Absent from every report of
     # this bug class, and the whole question once a short alias is in play.
-    Write-PathDiag "resolved install paths: HermesHome=$AuraForgeHome InstallDir=$InstallDir"
+    Write-PathDiag "resolved install paths: AuraForgeHome=$AuraForgeHome InstallDir=$InstallDir"
 }
 
 # Captured here, where the values are final, and emitted from the entry-point
@@ -744,7 +744,7 @@ function Get-PowerShellHostExe {
 function Install-Uv {
     # Aura Forge owns its own uv at $AuraForgeHome\bin\uv.exe.  Always install there --
     # no PATH probing, no conda guards, no multi-location resolution chains.
-    # The runtime update path (hermes_cli/managed_uv.py) looks in the same
+    # The runtime update path (auraforge_cli/managed_uv.py) looks in the same
     # place, so install.ps1 and `hermes update` stay in sync.
     $managedUv = Join-Path $AuraForgeHome "bin\uv.exe"
 
@@ -801,7 +801,7 @@ function Install-Uv {
         # on PATH, or at ~/.local/bin (the astral default location when
         # UV_INSTALL_DIR was ignored by an older installer) -- copy it into
         # the managed location so the managed-first invariant holds
-        # (hermes_cli/managed_uv.py looks only at $AuraForgeHome\bin\uv.exe).
+        # (auraforge_cli/managed_uv.py looks only at $AuraForgeHome\bin\uv.exe).
         if (-not (Test-Path $managedUv)) {
             $existingUv = $null
             $uvOnPath = Get-Command uv -CommandType Application -ErrorAction SilentlyContinue |
@@ -1023,7 +1023,7 @@ function Test-NpmVersionOk {
 #
 # Three details are load-bearing, mirroring _nb_ensure_bundled_npm_range in
 # scripts/lib/node-bootstrap.sh and upgrade_managed_npm in
-# hermes_cli/npm_engine.py:
+# auraforge_cli/npm_engine.py:
 #   - a temp cwd, so the checkout's own .npmrc (engine-strict,
 #     min-release-age) does not gate the very upgrade meant to satisfy it;
 #   - npm_config_min_release_age=0, which also neutralises a user ~/.npmrc;
@@ -2625,18 +2625,18 @@ function Install-Venv {
             & taskkill /F /T /IM hermes.exe /FI "PID ne $myPid" 2>$null | Out-Null
             # taskkill /IM hermes.exe is NOT enough: the gateway/agent that a
             # scheduled task or watchdog autostarts runs as
-            # `pythonw.exe -m hermes_cli.main gateway run` straight out of
+            # `pythonw.exe -m auraforge_cli.main gateway run` straight out of
             # venv\Scripts\, so its image name is python/pythonw, not hermes.exe.
             # That process holds the venv's .pyd files open and re-triggers the
             # access-denied failure. Select only roots whose executable lives
             # under this venv, then stop each root's whole process tree. Some
-            # Aura Forge children re-exec through .hermes-runtime, so killing only
+            # Aura Forge children re-exec through .auraforge-runtime, so killing only
             # the selected venv process can leave its child holding the install
             # open. The path-prefix check still keeps unrelated Python processes
             # outside this venv untouched.
             #
             # The gateway autostart task registers with /RL LIMITED as the current
-            # user (see hermes_cli/gateway_windows.py), so the installer always
+            # user (see auraforge_cli/gateway_windows.py), so the installer always
             # runs at equal-or-higher integrity and can read its executable path.
             # Get-CimInstance is used over Get-Process because it returns a null
             # ExecutablePath for a process it cannot inspect (a different session)
@@ -2951,7 +2951,7 @@ try:
     specs = data['project']['optional-dependencies']['all']
     out = []
     for s in specs:
-        m = re.search(r'hermes-agent\[([\w-]+)\]', s)
+        m = re.search(r'aura-forge-agent\[([\w-]+)\]', s)
         if m: out.append(m.group(1))
     print(','.join(out))
 except Exception:
@@ -3096,7 +3096,7 @@ print(','.join(scripts))
                     }
                     if ($stillMissing.Count -gt 0) {
                         Write-Warn "Entry points still missing after repair: $($stillMissing -join ', ')"
-                        Write-Info "Workaround: `"$pythonExe`" -m hermes_cli.main <command>"
+                        Write-Info "Workaround: `"$pythonExe`" -m auraforge_cli.main <command>"
                     } else {
                         Write-Success "Console entry points restored"
                     }
@@ -3125,7 +3125,7 @@ print(','.join(scripts))
             if ($LASTEXITCODE -eq 0) { $webOk = $true }
         } catch { }
         try {
-            & $pythonExe -m py_compile "$InstallDir\hermes_cli\web_server.py" 2>&1 | Out-Null
+            & $pythonExe -m py_compile "$InstallDir\auraforge_cli\web_server.py" 2>&1 | Out-Null
             if ($LASTEXITCODE -eq 0) { $webServerSyntaxOk = $true }
         } catch { }
         $ErrorActionPreference = $prevEAP
@@ -3140,7 +3140,7 @@ print(','.join(scripts))
             }
         }
         if (-not $webServerSyntaxOk) {
-            throw "dashboard backend source failed syntax check: hermes_cli/web_server.py"
+            throw "dashboard backend source failed syntax check: auraforge_cli/web_server.py"
         }
     }
     
@@ -3169,7 +3169,7 @@ function Install-HermesCommandLaunchers {
     New-Item -ItemType Directory -Force -Path $Destination | Out-Null
 
     # Launcher form depends on the venv (keep in lockstep with
-    # hermes_cli/_install_repair.py): a normal venv's exe trampoline
+    # auraforge_cli/_install_repair.py): a normal venv's exe trampoline
     # embeds an absolute interpreter path and survives copying; a
     # relocatable venv's trampoline (managed_uv rebuilds use
     # --relocatable) resolves relative to its own location, and a copy
@@ -3268,7 +3268,7 @@ function Set-PathVariable {
 }
 
 function Write-BootstrapMarker {
-    # Writes $InstallDir\.hermes-bootstrap-complete which tells the Aura Forge
+    # Writes $InstallDir\.auraforge-bootstrap-complete which tells the Aura Forge
     # desktop app (apps/desktop/electron/main.ts) "install.ps1 ran
     # successfully -- DON'T trigger the legacy first-launch bootstrap
     # runner."
@@ -3319,7 +3319,7 @@ function Write-BootstrapMarker {
         $pinnedBranch = "main"  # install.ps1's own default for -Branch
     }
 
-    $markerPath = Join-Path $InstallDir ".hermes-bootstrap-complete"
+    $markerPath = Join-Path $InstallDir ".auraforge-bootstrap-complete"
     $marker = [ordered]@{
         schemaVersion = 1
         pinnedCommit  = $pinnedCommit
@@ -3397,7 +3397,7 @@ function Copy-ConfigTemplates {
     # PowerShell version.
     $soulPath = "$AuraForgeHome\SOUL.md"
     if (-not (Test-Path $soulPath)) {
-        # MUST match DEFAULT_SOUL_MD in hermes_cli/default_soul.py. The runtime
+        # MUST match DEFAULT_SOUL_MD in auraforge_cli/default_soul.py. The runtime
         # upgrades the old comment-only scaffold to this text on next run, so
         # drift is self-healing, but keep them in sync to avoid first-run churn.
         $soulContent = @"
@@ -3833,7 +3833,7 @@ function Test-CuaDriverRuntimeContract {
 # Provision it at install time so enabling the tool later -- via `hermes
 # tools`, the dashboard, or the desktop app -- is a config flip, not a
 # surprise multi-minute binary fetch. Best-effort and non-fatal: the enable
-# paths still lazy-install via install_cua_driver() (hermes_cli/tools_config)
+# paths still lazy-install via install_cua_driver() (auraforge_cli/tools_config)
 # when this step was skipped or failed.
 function Install-CuaDriver {
     if ($SkipComputerUse) {
@@ -4523,9 +4523,9 @@ function Invoke-SetupWizard {
 
     # Run hermes setup using the venv Python directly (no activation needed)
     if (-not $NoVenv) {
-        & ".\venv\Scripts\python.exe" -m hermes_cli.main setup
+        & ".\venv\Scripts\python.exe" -m auraforge_cli.main setup
     } else {
-        python -m hermes_cli.main setup
+        python -m auraforge_cli.main setup
     }
 
     Pop-Location

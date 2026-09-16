@@ -21,12 +21,12 @@ def server():
     with patch.dict(
         "sys.modules",
         {
-            "hermes_constants": MagicMock(
+            "auraforge_constants": MagicMock(
                 get_hermes_home=MagicMock(return_value="/tmp/hermes_test_moa_emit")
             ),
-            "hermes_cli.env_loader": MagicMock(),
-            "hermes_cli.banner": MagicMock(),
-            "hermes_state": MagicMock(),
+            "auraforge_cli.env_loader": MagicMock(),
+            "auraforge_cli.banner": MagicMock(),
+            "auraforge_state": MagicMock(),
         },
     ):
         import importlib

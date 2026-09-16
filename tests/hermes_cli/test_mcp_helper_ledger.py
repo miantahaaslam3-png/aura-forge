@@ -23,7 +23,7 @@ from unittest.mock import patch
 import psutil
 import pytest
 
-from hermes_cli import process_identity as pi
+from auraforge_cli import process_identity as pi
 
 pytestmark = pytest.mark.skipif(
     sys.platform == "win32", reason="uses POSIX sleep children"
@@ -182,7 +182,7 @@ def test_reap_ignores_non_mcp_purposes(ledger, child):
 # ---------------------------------------------------------------------------
 
 def test_updater_ledger_rung_flows_mcp_helper(ledger, child):
-    from hermes_cli import update_cmd
+    from auraforge_cli import update_cmd
 
     pi.register_child(child.pid, "mcp-helper")
     matches = [(child.pid, "python", "sleep 300")]

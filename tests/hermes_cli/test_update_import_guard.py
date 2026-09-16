@@ -20,9 +20,9 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import main as hermes_main
-from hermes_cli import update_cmd
-from hermes_constants import partial_update_hint
+from auraforge_cli import main as hermes_main
+from auraforge_cli import update_cmd
+from auraforge_constants import partial_update_hint
 
 
 def _write_skewed_tree(root: Path, *, skewed: bool) -> None:
@@ -188,7 +188,7 @@ def test_hint_does_not_claim_partial_update_for_lookalike_third_party(modname):
 
 
 @pytest.mark.parametrize("modname", ["tools.todo_tool", "agent.context_compressor",
-                                     "hermes_constants", "cli"])
+                                     "auraforge_constants", "cli"])
 def test_hint_fires_for_each_first_party_root(modname):
     exc = ImportError("cannot import name 'X'")
     exc.name = modname
@@ -205,7 +205,7 @@ def test_probe_and_hint_share_one_first_party_definition():
     detection. Both now derive from FIRST_PARTY_MODULE_ROOTS; this test
     fails if either grows a private copy.
     """
-    from hermes_constants import FIRST_PARTY_MODULE_ROOTS, is_first_party_module
+    from auraforge_constants import FIRST_PARTY_MODULE_ROOTS, is_first_party_module
 
     captured = {}
 

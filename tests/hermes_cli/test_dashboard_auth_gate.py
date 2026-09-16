@@ -15,7 +15,7 @@ import pytest
 # files that gate the app.
 from fastapi.testclient import TestClient
 
-from hermes_cli import web_server
+from auraforge_cli import web_server
 
 
 @pytest.fixture
@@ -58,13 +58,13 @@ def client_loopback():
     ("auraforge-agent-prod-abc.fly.dev", False, True),
 ])
 def test_should_require_auth_truth_table(host, allow_public, expected):
-    from hermes_cli.web_server import should_require_auth
+    from auraforge_cli.web_server import should_require_auth
     assert should_require_auth(host, allow_public) is expected
 
 
 def test_empty_provider_login_page_shows_supported_auth_paths():
-    from hermes_cli.dashboard_auth import clear_providers
-    from hermes_cli.dashboard_auth.login_page import render_login_html
+    from auraforge_cli.dashboard_auth import clear_providers
+    from auraforge_cli.dashboard_auth.login_page import render_login_html
 
     clear_providers()
     html = render_login_html()
@@ -173,7 +173,7 @@ def test_start_server_insecure_public_no_longer_bypasses_gate(monkeypatch):
     June 2026 hardening: --insecure no longer disables auth. With no providers
     registered, the bind fails closed (SystemExit) and auth_required is True.
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from auraforge_cli.dashboard_auth import clear_providers
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
     web_server.app.state.auth_required = None
@@ -192,7 +192,7 @@ def test_start_server_public_without_insecure_records_auth_required(monkeypatch)
     flag-stashing happens BEFORE the exit so the rest of the system can
     branch on it. (See task 3.5 tests below for the with-provider path.)
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from auraforge_cli.dashboard_auth import clear_providers
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
     web_server.app.state.auth_required = None
@@ -217,8 +217,8 @@ def test_start_server_gate_with_provider_proceeds_and_sets_proxy_headers(monkeyp
     succeeds.  uvicorn is called with proxy_headers=True so X-Forwarded-Proto
     from Fly's TLS terminator is honoured for cookie Secure-flag decisions.
     """
-    from hermes_cli.dashboard_auth import clear_providers, register_provider
-    from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+    from auraforge_cli.dashboard_auth import clear_providers, register_provider
+    from tests.auraforge_cli.conftest_dashboard_auth import StubAuthProvider
 
     clear_providers()
     register_provider(StubAuthProvider())
@@ -242,8 +242,8 @@ def test_start_server_gate_with_provider_proceeds_and_sets_proxy_headers(monkeyp
 
 def test_start_server_passes_bounded_trusted_proxy_networks(monkeypatch, caplog):
     """A configured proxy network reaches uvicorn without broadening to all peers."""
-    from hermes_cli.dashboard_auth import clear_providers, register_provider
-    from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+    from auraforge_cli.dashboard_auth import clear_providers, register_provider
+    from tests.auraforge_cli.conftest_dashboard_auth import StubAuthProvider
 
     clear_providers()
     register_provider(StubAuthProvider())
@@ -284,7 +284,7 @@ def test_trusted_proxy_allowlist_rejects_unbounded_entries(caplog):
 
 def test_trusted_container_proxy_controls_https_detection():
     """Only a configured bridge peer may turn X-Forwarded-Proto into HTTPS."""
-    from hermes_cli.dashboard_auth.cookies import detect_https
+    from auraforge_cli.dashboard_auth.cookies import detect_https
     from starlette.requests import Request
     from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -330,7 +330,7 @@ def test_trusted_container_proxy_controls_https_detection():
 
 def test_public_url_aware_gate_requires_auth_for_loopback_proxy(monkeypatch):
     """The shared gate decision includes an external browser-facing URL."""
-    from hermes_cli.web_server import should_require_dashboard_auth
+    from auraforge_cli.web_server import should_require_dashboard_auth
 
     monkeypatch.setenv(
         "HERMES_DASHBOARD_PUBLIC_URL",
@@ -341,7 +341,7 @@ def test_public_url_aware_gate_requires_auth_for_loopback_proxy(monkeypatch):
 
 def test_public_url_aware_gate_preserves_local_only_mode(monkeypatch):
     """A loopback browser-facing URL does not change local token mode."""
-    from hermes_cli.web_server import should_require_dashboard_auth
+    from auraforge_cli.web_server import should_require_dashboard_auth
 
     monkeypatch.setenv(
         "HERMES_DASHBOARD_PUBLIC_URL",
@@ -352,8 +352,8 @@ def test_public_url_aware_gate_preserves_local_only_mode(monkeypatch):
 
 def test_start_server_loopback_public_url_enables_gate(monkeypatch):
     """A declared external URL turns a loopback reverse proxy into gated mode."""
-    from hermes_cli.dashboard_auth import clear_providers, register_provider
-    from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+    from auraforge_cli.dashboard_auth import clear_providers, register_provider
+    from tests.auraforge_cli.conftest_dashboard_auth import StubAuthProvider
 
     monkeypatch.setenv(
         "HERMES_DASHBOARD_PUBLIC_URL",
@@ -386,7 +386,7 @@ def test_start_server_loopback_public_url_enables_gate(monkeypatch):
 
 def test_start_server_loopback_public_url_without_provider_fails_closed(monkeypatch):
     """Trusting an external Host must never expose the loopback token mode."""
-    from hermes_cli.dashboard_auth import clear_providers
+    from auraforge_cli.dashboard_auth import clear_providers
 
     monkeypatch.setenv(
         "HERMES_DASHBOARD_PUBLIC_URL",
@@ -417,7 +417,7 @@ def test_loopback_public_url_fail_closed_message_is_actionable(monkeypatch):
     no auth provider must not face a mystery-locked dashboard — the error
     text IS the mitigation.
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from auraforge_cli.dashboard_auth import clear_providers
 
     monkeypatch.setenv(
         "HERMES_DASHBOARD_PUBLIC_URL",
@@ -469,7 +469,7 @@ def test_loopback_public_url_fail_closed_message_is_actionable(monkeypatch):
 def test_should_require_dashboard_auth_truth_table(
     monkeypatch, host, public_url, expected
 ):
-    from hermes_cli.web_server import should_require_dashboard_auth
+    from auraforge_cli.web_server import should_require_dashboard_auth
 
     if public_url is None:
         monkeypatch.delenv("HERMES_DASHBOARD_PUBLIC_URL", raising=False)

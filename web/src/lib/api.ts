@@ -38,7 +38,7 @@ declare global {
     __HERMES_AUTH_REQUIRED__?: boolean;
   }
 }
-const SESSION_HEADER = "X-Hermes-Session-Token";
+const SESSION_HEADER = "X-AuraForge-Session-Token";
 
 function setSessionHeader(headers: Headers, token: string): void {
   if (!headers.has(SESSION_HEADER)) {
@@ -190,7 +190,7 @@ function pluginPath(name: string): string {
 /**
  * Fetch a single-use ticket for a WebSocket upgrade in gated mode.
  *
- * The dashboard's gated-mode WS auth (``hermes_cli.web_server._ws_auth_ok``)
+ * The dashboard's gated-mode WS auth (``auraforge_cli.web_server._ws_auth_ok``)
  * rejects the legacy ``?token=<_SESSION_TOKEN>`` path and only accepts
  * ``?ticket=<minted>`` consumed against the in-memory ticket store. Browsers
  * can't set ``Authorization`` on a WS upgrade, so this round-trip via the
@@ -231,7 +231,7 @@ export async function buildWsAuthParam(): Promise<[string, string]> {
  * the caller can read ``.blob()`` / ``.formData()`` / stream it.
  *
  * Auth, in both modes, exactly as ``fetchJSON`` does it:
- *  - loopback / ``--insecure``: attach the ``X-Hermes-Session-Token`` header.
+ *  - loopback / ``--insecure``: attach the ``X-AuraForge-Session-Token`` header.
  *  - gated OAuth: no token header (it's absent by design); the
  *    ``hermes_session_at`` cookie rides along via ``credentials: 'include'``.
  *

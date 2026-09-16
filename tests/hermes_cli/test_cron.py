@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.cron command handling."""
+"""Tests for auraforge_cli.cron command handling."""
 
 import argparse
 from argparse import Namespace
@@ -7,9 +7,9 @@ from types import SimpleNamespace
 import pytest
 
 from cron.jobs import create_job, get_job, list_jobs
-from hermes_cli import cron as cron_cli
-from hermes_cli.cron import cron_command
-from hermes_cli.subcommands.cron import build_cron_parser
+from auraforge_cli import cron as cron_cli
+from auraforge_cli.cron import cron_command
+from auraforge_cli.subcommands.cron import build_cron_parser
 
 
 @pytest.fixture()
@@ -140,7 +140,7 @@ class TestGatewayNotRunningWarning:
 
     def test_list_warns_when_gateway_absent(self, tmp_cron_dir, capsys, monkeypatch):
         create_job(prompt="Daily report", schedule="0 11 * * *")
-        monkeypatch.setattr("hermes_cli.gateway.find_gateway_pids", lambda: [])
+        monkeypatch.setattr("auraforge_cli.gateway.find_gateway_pids", lambda: [])
         cron_command(Namespace(cron_command="list", all=True))
         out = capsys.readouterr().out
         assert "Gateway is not running" in out
@@ -160,11 +160,11 @@ class TestExternalCronProviderStatus:
     ):
         create_job(prompt="Ping", schedule="every 2m")
         monkeypatch.setattr(
-            "hermes_cli.cron._active_cron_provider_name", lambda: "chronos"
+            "auraforge_cli.cron._active_cron_provider_name", lambda: "chronos"
         )
         # Even with NO gateway process and NO ticker heartbeat, Chronos status
         # must NOT report a stall / "not firing".
-        monkeypatch.setattr("hermes_cli.gateway.find_gateway_pids", lambda: [])
+        monkeypatch.setattr("auraforge_cli.gateway.find_gateway_pids", lambda: [])
         cron_command(Namespace(cron_command="status"))
         out = capsys.readouterr().out
         assert "chronos" in out
@@ -182,9 +182,9 @@ class TestExternalCronProviderStatus:
         # The create-time "gateway not running" nag is a ticker-only concern;
         # an external provider doesn't depend on a live in-process ticker.
         monkeypatch.setattr(
-            "hermes_cli.cron._active_cron_provider_name", lambda: "chronos"
+            "auraforge_cli.cron._active_cron_provider_name", lambda: "chronos"
         )
-        monkeypatch.setattr("hermes_cli.gateway.find_gateway_pids", lambda: [])
+        monkeypatch.setattr("auraforge_cli.gateway.find_gateway_pids", lambda: [])
         cron_command(
             Namespace(
                 cron_command="create",
@@ -220,7 +220,7 @@ def test_cron_list_warns_when_gateway_not_running(monkeypatch, capsys):
             }
         ],
     )
-    monkeypatch.setattr("hermes_cli.gateway.find_gateway_pids", lambda: [])
+    monkeypatch.setattr("auraforge_cli.gateway.find_gateway_pids", lambda: [])
     monkeypatch.setattr(cron_cli, "_active_cron_provider_name", lambda: "builtin")
 
     cron_cli.cron_list()

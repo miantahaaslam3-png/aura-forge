@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import kanban_db as kb
+from auraforge_cli import kanban_db as kb
 
 
 def _git(*args: str, cwd: str | None = None) -> str:

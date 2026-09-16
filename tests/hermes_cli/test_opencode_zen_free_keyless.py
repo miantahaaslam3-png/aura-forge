@@ -24,7 +24,7 @@ from unittest import mock
 
 import pytest
 
-from hermes_cli.models import (
+from auraforge_cli.models import (
     OPENCODE_ZEN_FREE_KEYLESS_PLACEHOLDER,
     is_opencode_zen_free_model,
     opencode_zen_free_headers,
@@ -105,10 +105,10 @@ class TestRuntimeProviderKeylessRouting:
             monkeypatch.delenv(var, raising=False)
 
     def _resolve(self, provider, model):
-        from hermes_cli.runtime_provider import resolve_runtime_provider
+        from auraforge_cli.runtime_provider import resolve_runtime_provider
 
         with mock.patch(
-            "hermes_cli.runtime_provider._get_model_config",
+            "auraforge_cli.runtime_provider._get_model_config",
             return_value={"provider": provider, "model": model, "default": model},
         ):
             return resolve_runtime_provider(requested=provider, target_model=model)
@@ -125,7 +125,7 @@ class TestRuntimeProviderKeylessRouting:
         assert rt["base_url"] == "https://opencode.ai/zen/v1"
 
     def test_paid_model_still_fails_closed_without_key(self):
-        from hermes_cli.auth import AuthError
+        from auraforge_cli.auth import AuthError
 
         with pytest.raises(AuthError):
             self._resolve("opencode-zen", "claude-sonnet-5")
@@ -146,7 +146,7 @@ class TestKeylessProviderAlwaysAuthenticated:
             monkeypatch.delenv(var, raising=False)
 
     def test_auth_status_logged_in(self):
-        from hermes_cli.auth import get_auth_status
+        from auraforge_cli.auth import get_auth_status
 
         st = get_auth_status("opencode-free")
         assert st["logged_in"] is True
@@ -154,14 +154,14 @@ class TestKeylessProviderAlwaysAuthenticated:
         assert st["key_source"] == "keyless"
 
     def test_list_available_providers_authenticated(self):
-        from hermes_cli.models import list_available_providers
+        from auraforge_cli.models import list_available_providers
 
         rows = {r["id"]: r["authenticated"] for r in list_available_providers()}
         assert rows.get("opencode-free") is True
 
     def test_picker_source_includes_provider_with_models(self):
         import model_tools  # noqa: F401 — plugin discovery
-        from hermes_cli.model_switch import list_authenticated_providers
+        from auraforge_cli.model_switch import list_authenticated_providers
 
         provs = list_authenticated_providers(for_picker=True)
         free = [p for p in provs if p["slug"] == "opencode-free"]
@@ -169,7 +169,7 @@ class TestKeylessProviderAlwaysAuthenticated:
         assert free[0]["models"], "picker row must carry the curated models"
 
     def test_explicit_only_filter_keeps_keyless(self):
-        from hermes_cli.inventory import _provider_is_keyless
+        from auraforge_cli.inventory import _provider_is_keyless
 
         assert _provider_is_keyless("opencode-free") is True
         assert _provider_is_keyless("opencode-zen") is False

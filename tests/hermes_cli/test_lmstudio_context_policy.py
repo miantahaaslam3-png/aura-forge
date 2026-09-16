@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from hermes_cli import models
+from auraforge_cli import models
 
 
 MODEL = "publisher/model"

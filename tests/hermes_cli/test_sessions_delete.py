@@ -4,8 +4,8 @@ import pytest
 
 
 def test_sessions_delete_accepts_unique_id_prefix(monkeypatch, capsys):
-    import hermes_cli.main as main_mod
-    import hermes_state
+    import auraforge_cli.main as main_mod
+    import auraforge_state
 
     captured = {}
 
@@ -21,7 +21,7 @@ def test_sessions_delete_accepts_unique_id_prefix(monkeypatch, capsys):
         def close(self):
             captured["closed"] = True
 
-    monkeypatch.setattr(hermes_state, "SessionDB", lambda: FakeDB())
+    monkeypatch.setattr(auraforge_state, "SessionDB", lambda: FakeDB())
     monkeypatch.setattr(
         sys,
         "argv",
@@ -42,8 +42,8 @@ def test_sessions_delete_accepts_unique_id_prefix(monkeypatch, capsys):
 def _run_prune(monkeypatch, capsys, argv_tail, candidates=None, skipped_open=0):
     """Run `auraforge sessions prune <argv_tail>` against a FakeDB, capturing
     the filter kwargs passed to list_prune_candidates. Auto-confirms."""
-    import hermes_cli.main as main_mod
-    import hermes_state
+    import auraforge_cli.main as main_mod
+    import auraforge_state
 
     seen = {}
     rows = candidates if candidates is not None else [
@@ -84,7 +84,7 @@ def _run_prune(monkeypatch, capsys, argv_tail, candidates=None, skipped_open=0):
         def close(self):
             pass
 
-    monkeypatch.setattr(hermes_state, "SessionDB", lambda: FakeDB())
+    monkeypatch.setattr(auraforge_state, "SessionDB", lambda: FakeDB())
     monkeypatch.setattr(
         sys, "argv", ["auraforge", "sessions", "prune", *argv_tail]
     )
@@ -106,7 +106,7 @@ def test_sessions_prune_bare_keeps_90_day_default(monkeypatch, capsys):
 
 def test_sessions_prune_preview_shows_oldest_newest(monkeypatch, capsys):
     """Confirmation preview surfaces count + oldest/newest session times."""
-    from hermes_cli.session_filters import format_epoch
+    from auraforge_cli.session_filters import format_epoch
 
     _filters, out = _run_prune(monkeypatch, capsys, ["--source", "cron"])
     assert "2 session(s) match" in out

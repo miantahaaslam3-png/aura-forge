@@ -29,7 +29,7 @@ test('Windows spawn holds the update mutex across marker check and helper spawn'
 
   const encoded = command.match(/-EncodedCommand\s+([^\s]+)$/)?.[1]
   const script = encoded ? Buffer.from(encoded, 'base64').toString('utf16le') : ''
-  assert.match(script, /\.hermes-update-in-progress/)
+  assert.match(script, /\.auraforge-update-in-progress/)
   assert.match(script, /\$mutexPath=\$marker\+"\.mutex"/)
   assert.match(script, /\.Lock\(0,1\)/)
   assert.match(script, /windows_ssh_runtime.*spawn/)
@@ -89,7 +89,7 @@ test('Windows relaunch gate refuses live and uncertain markers before executing 
         })
       }
 
-      if (script.includes('.hermes-update-in-progress')) {
+      if (script.includes('.auraforge-update-in-progress')) {
         return observation
       }
 
@@ -110,7 +110,7 @@ test('Windows relaunch gate refuses live and uncertain markers before executing 
       (error: any) => error.kind === 'update-in-progress'
     )
     assert.equal(
-      scripts.some(script => script.includes('hermes_cli.windows_ssh_runtime')),
+      scripts.some(script => script.includes('auraforge_cli.windows_ssh_runtime')),
       false
     )
   }
@@ -126,7 +126,7 @@ test('Windows relaunch gate uses strict install-wide marker parsing and fail-clo
   })
 
   await assertWindowsRemoteInstallUpdateClear(ssh, 'C:\\Users\\alice\\.hermes\\profiles\\research')
-  assert.match(script, /\.hermes-update-in-progress/)
+  assert.match(script, /\.auraforge-update-in-progress/)
   assert.match(script, /Split-Path -Leaf \$parent.*profiles/)
   assert.match(script, /UTF8Encoding.*true/)
   assert.match(script, /\\A\(\[1-9\]/)
@@ -232,7 +232,7 @@ test('helper command uses the fixed remote Python entry point and quotes path da
 
   const encoded = command.split(' ').pop()!
   const script = Buffer.from(encoded, 'base64').toString('utf16le')
-  assert.match(script, /-m' 'hermes_cli\.windows_ssh_runtime' 'inspect'/)
+  assert.match(script, /-m' 'auraforge_cli\.windows_ssh_runtime' 'inspect'/)
   assert.match(script, /Hermes''s/)
   assert.match(script, /C:\\x y\\hermes\.exe/)
 })

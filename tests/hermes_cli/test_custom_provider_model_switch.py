@@ -40,8 +40,8 @@ class TestCustomProviderModelSwitch:
         credential selectable from the previous endpoint's pool."""
         import yaml
         from agent.credential_pool import load_pool
-        from hermes_cli.auth import read_credential_pool, write_credential_pool
-        from hermes_cli.main import _model_flow_custom
+        from auraforge_cli.auth import read_credential_pool, write_credential_pool
+        from auraforge_cli.main import _model_flow_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -79,15 +79,15 @@ class TestCustomProviderModelSwitch:
         )
 
         with patch(
-            "hermes_cli.models.probe_api_models",
+            "auraforge_cli.models.probe_api_models",
             return_value={
                 "models": ["new-model"],
                 "used_fallback": False,
                 "probed_url": "https://new.example.test/v1/models",
             },
         ), \
-             patch("hermes_cli.secret_prompt.masked_secret_prompt", return_value="sk-new"), \
-             patch("hermes_cli.main._prompt_custom_api_mode_selection", return_value=""), \
+             patch("auraforge_cli.secret_prompt.masked_secret_prompt", return_value="sk-new"), \
+             patch("auraforge_cli.main._prompt_custom_api_mode_selection", return_value=""), \
              patch(
                  "builtins.input",
                  side_effect=[
@@ -122,7 +122,7 @@ class TestCustomProviderModelSwitch:
     def test_env_template_api_key_is_preserved_in_model_config(self, config_home, monkeypatch):
         """Selecting an env-backed custom provider must not inline the secret."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -145,8 +145,8 @@ class TestCustomProviderModelSwitch:
             "model": "qwen3.6-35b-fast",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -165,7 +165,7 @@ class TestCustomProviderModelSwitch:
     def test_key_env_custom_provider_persists_reference_not_secret(self, config_home, monkeypatch):
         """key_env custom providers should also avoid writing plaintext keys."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -187,8 +187,8 @@ class TestCustomProviderModelSwitch:
             "model": "qwen3.6-35b-fast",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]), \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -212,7 +212,7 @@ class TestCustomProviderModelSwitch:
         ``config.yaml``. This test drives the real picker-callsite code path.
         """
         import yaml
-        from hermes_cli.main import select_provider_and_model
+        from auraforge_cli.main import select_provider_and_model
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -242,11 +242,11 @@ class TestCustomProviderModelSwitch:
                 f"NeuralWatt entry missing from provider menu: {labels}"
             )
 
-        with patch("hermes_cli.main._prompt_provider_choice",
+        with patch("auraforge_cli.main._prompt_provider_choice",
                    side_effect=_pick_neuralwatt), \
-             patch("hermes_cli.models.fetch_api_models",
+             patch("auraforge_cli.models.fetch_api_models",
                    return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             select_provider_and_model()
@@ -280,7 +280,7 @@ class TestCustomProviderModelSwitch:
         ``api_key`` belongs on disk.
         """
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -310,10 +310,10 @@ class TestCustomProviderModelSwitch:
         }
 
         with patch(
-            "hermes_cli.models.fetch_api_models",
+            "auraforge_cli.models.fetch_api_models",
             return_value=["claude-opus-4-7"],
         ) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -352,7 +352,7 @@ class TestCustomProviderModelSwitch:
         self, config_home, monkeypatch, stored_provider
     ):
         """The classic picker maps legacy and stable IDs to the keyed row."""
-        from hermes_cli.main import select_provider_and_model
+        from auraforge_cli.main import select_provider_and_model
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -378,7 +378,7 @@ class TestCustomProviderModelSwitch:
             return len(labels) - 1
 
         with patch(
-            "hermes_cli.main._prompt_provider_choice",
+            "auraforge_cli.main._prompt_provider_choice",
             side_effect=_capture_and_cancel,
         ), patch("builtins.print"):
             select_provider_and_model()
@@ -394,7 +394,7 @@ class TestCustomProviderModelSwitch:
         template must keep it untouched. Only entries that never declared
         an ``api_key`` should skip the write."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -423,10 +423,10 @@ class TestCustomProviderModelSwitch:
         }
 
         with patch(
-            "hermes_cli.models.fetch_api_models",
+            "auraforge_cli.models.fetch_api_models",
             return_value=["claude-opus-4-7"],
         ), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -448,7 +448,7 @@ class TestCustomProviderDiscoverModels:
 
     def test_discover_false_with_only_singular_model_skips_probe(self, config_home):
         """An active singular model is not an implicit discovery catalog."""
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Headered Ollama",
@@ -458,9 +458,9 @@ class TestCustomProviderDiscoverModels:
             "model": "qwen3:8b",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.models.fetch_ollama_local_models") as mock_ollama, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models") as mock_fetch, \
+             patch("auraforge_cli.models.fetch_ollama_local_models") as mock_ollama, \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -471,7 +471,7 @@ class TestCustomProviderDiscoverModels:
     def test_discover_false_saves_choice_from_configured_list(self, config_home):
         """User picks the 2nd configured model; it persists, list-driven."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Baidu Coding",
@@ -482,8 +482,8 @@ class TestCustomProviderDiscoverModels:
             "model": "kimi-k2.5",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models") as mock_fetch, \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -499,7 +499,7 @@ class TestCustomProviderDiscoverModels:
         """When discovery is on but the probe returns nothing, fall back to the
         configured models: list instead of forcing manual entry."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My Gateway",
@@ -509,8 +509,8 @@ class TestCustomProviderDiscoverModels:
             "model": "fallback-a",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=[]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models", return_value=[]), \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -522,7 +522,7 @@ class TestCustomProviderDiscoverModels:
 
     def test_discover_false_string_is_normalised(self, config_home):
         """String 'false' (hand-edited configs) disables discovery too."""
-        from hermes_cli.main import _model_flow_named_custom
+        from auraforge_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Baidu Coding",
@@ -533,8 +533,8 @@ class TestCustomProviderDiscoverModels:
             "model": "kimi-k2.5",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("auraforge_cli.models.fetch_api_models") as mock_fetch, \
+             patch("auraforge_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)

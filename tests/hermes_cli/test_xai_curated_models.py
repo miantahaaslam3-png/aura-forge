@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from hermes_cli.models import (
+from auraforge_cli.models import (
     _MODELS_DEV_PREFERRED,
     _PROVIDER_MODELS,
     provider_model_ids,
@@ -35,7 +35,7 @@ def test_xai_api_key_picker_merges_models_dev_when_live_unavailable():
     mdev = ["grok-build-0.1", "grok-new-from-models-dev", "grok-4.6"]
     with (
         patch(
-            "hermes_cli.auth.resolve_api_key_provider_credentials",
+            "auraforge_cli.auth.resolve_api_key_provider_credentials",
             side_effect=Exception("no key"),
         ),
         patch("agent.models_dev.list_agentic_models", return_value=mdev) as mocked,

@@ -321,8 +321,8 @@ const sidebars: SidebarsConfig = {
                   collapsed: true,
                   items: [
                     'user-guide/skills/bundled/software-development/software-development-dogfood',
-                    'user-guide/skills/bundled/software-development/software-development-hermes-agent-skill-authoring',
-                    'user-guide/skills/bundled/software-development/software-development-inspecting-hermes-desktop-dom',
+                    'user-guide/skills/bundled/software-development/software-development-aura-forge-agent-skill-authoring',
+                    'user-guide/skills/bundled/software-development/software-development-inspecting-auraforge-desktop-dom',
                     'user-guide/skills/bundled/software-development/software-development-node-inspect-debugger',
                     'user-guide/skills/bundled/software-development/software-development-plan',
                     'user-guide/skills/bundled/software-development/software-development-python-debugpy',
@@ -413,7 +413,7 @@ const sidebars: SidebarsConfig = {
                   items: [
                     'user-guide/skills/optional/devops/devops-actual-setup',
                     'user-guide/skills/optional/devops/devops-docker-management',
-                    'user-guide/skills/optional/devops/devops-hermes-s6-container-supervision',
+                    'user-guide/skills/optional/devops/devops-auraforge-s6-container-supervision',
                     'user-guide/skills/optional/devops/devops-inference-sh-cli',
                     'user-guide/skills/optional/devops/devops-pinggy-tunnel',
                     'user-guide/skills/optional/devops/devops-watchers',

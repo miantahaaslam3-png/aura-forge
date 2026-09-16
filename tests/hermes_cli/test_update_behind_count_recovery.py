@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import hermes_cli.banner as banner
+import auraforge_cli.banner as banner
 
 SHA_A = "a" * 40
 SHA_B = "b" * 40
@@ -104,7 +104,7 @@ def _ls_remote_result(sha):
 
 def test_check_via_rev_recovers_exact_count():
     with patch(
-        "hermes_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
+        "auraforge_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
     ), patch.object(banner, "_github_compare_behind", return_value=61) as compare:
         assert banner._check_via_rev(SHA_A) == 61
     compare.assert_called_once_with(SHA_A, SHA_B)
@@ -113,14 +113,14 @@ def test_check_via_rev_recovers_exact_count():
 def test_check_via_rev_falls_back_to_sentinel_offline():
     """FAIL-BEFORE (class): this path returned a fabricated 1 via callers."""
     with patch(
-        "hermes_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
+        "auraforge_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
     ), patch.object(banner, "_github_compare_behind", return_value=None):
         assert banner._check_via_rev(SHA_A) == banner.UPDATE_AVAILABLE_NO_COUNT
 
 
 def test_check_via_rev_up_to_date_short_circuits_compare():
     with patch(
-        "hermes_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_A)
+        "auraforge_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_A)
     ), patch.object(banner, "_github_compare_behind") as compare:
         assert banner._check_via_rev(SHA_A) == 0
     compare.assert_not_called()
@@ -129,7 +129,7 @@ def test_check_via_rev_up_to_date_short_circuits_compare():
 def test_check_via_rev_local_ahead_reports_up_to_date():
     """ahead_by == 0 with differing tips = local commits on top, not behind."""
     with patch(
-        "hermes_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
+        "auraforge_cli.banner.subprocess.run", return_value=_ls_remote_result(SHA_B)
     ), patch.object(banner, "_github_compare_behind", return_value=0):
         assert banner._check_via_rev(SHA_A) == 0
 
@@ -169,7 +169,7 @@ def test_shallow_checkout_recovers_exact_count(tmp_path):
     repo_dir.mkdir()
 
     with patch(
-        "hermes_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_B)
+        "auraforge_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_B)
     ), patch.object(banner, "_github_compare_behind", return_value=61):
         assert banner._check_via_local_git(repo_dir) == 61
 
@@ -179,7 +179,7 @@ def test_shallow_checkout_offline_keeps_honest_sentinel(tmp_path):
     repo_dir.mkdir()
 
     with patch(
-        "hermes_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_B)
+        "auraforge_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_B)
     ), patch.object(banner, "_github_compare_behind", return_value=None):
         assert (
             banner._check_via_local_git(repo_dir)
@@ -192,7 +192,7 @@ def test_shallow_checkout_equal_tips_up_to_date_without_compare(tmp_path):
     repo_dir.mkdir()
 
     with patch(
-        "hermes_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_A)
+        "auraforge_cli.banner.subprocess.run", side_effect=_shallow_git(SHA_A, SHA_A)
     ), patch.object(banner, "_github_compare_behind") as compare:
         assert banner._check_via_local_git(repo_dir) == 0
     compare.assert_not_called()

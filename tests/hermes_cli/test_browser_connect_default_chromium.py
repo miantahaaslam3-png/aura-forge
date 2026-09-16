@@ -1,4 +1,4 @@
-"""Default-Chromium detection and profile-dir resolution (hermes_cli.browser_connect).
+"""Default-Chromium detection and profile-dir resolution (auraforge_cli.browser_connect).
 
 These exercise the parsers with real command output shapes instead of
 patching the detectors themselves, so a change in what macOS / xdg report is
@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-import hermes_cli.browser_connect as bc
+import auraforge_cli.browser_connect as bc
 
 
 def _ls_dump(*entries: str) -> str:

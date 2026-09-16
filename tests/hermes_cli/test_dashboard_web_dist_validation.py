@@ -17,7 +17,7 @@ import pytest
 
 @pytest.fixture()
 def main_mod():
-    import hermes_cli.main as main
+    import auraforge_cli.main as main
     return main
 
 
@@ -37,23 +37,23 @@ def _args(**over):
 
 def _wire_common(main_mod, monkeypatch):
     monkeypatch.setattr(
-        "hermes_cli.profiles.get_active_profile_name", lambda: "default"
+        "auraforge_cli.profiles.get_active_profile_name", lambda: "default"
     )
     monkeypatch.setattr(main_mod, "_sync_bundled_skills_quietly", lambda: None)
     monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace())
     monkeypatch.setitem(sys.modules, "uvicorn", types.SimpleNamespace())
     monkeypatch.setitem(
         sys.modules,
-        "hermes_logging",
+        "auraforge_logging",
         types.SimpleNamespace(setup_logging=lambda **_k: None),
     )
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "auraforge_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
     monkeypatch.setattr(
-        "hermes_cli.mcp_startup.start_background_mcp_discovery",
+        "auraforge_cli.mcp_startup.start_background_mcp_discovery",
         lambda **_k: None,
     )
 
@@ -69,7 +69,7 @@ def test_env_dist_without_index_exits(main_mod, monkeypatch, tmp_path, capsys):
     started = []
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.web_server",
+        "auraforge_cli.web_server",
         types.SimpleNamespace(start_server=lambda **k: started.append(k)),
     )
     builds = []
@@ -104,14 +104,14 @@ def test_skip_build_missing_dist_attempts_one_recovery_build(
     _wire_common(main_mod, monkeypatch)
     monkeypatch.delenv("HERMES_WEB_DIST", raising=False)
     project_root = tmp_path / "proj"
-    dist = project_root / "hermes_cli" / "web_dist"
+    dist = project_root / "auraforge_cli" / "web_dist"
     dist.mkdir(parents=True)
     monkeypatch.setattr(main_mod, "PROJECT_ROOT", project_root)
 
     started = []
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.web_server",
+        "auraforge_cli.web_server",
         types.SimpleNamespace(start_server=lambda **k: started.append(k)),
     )
 

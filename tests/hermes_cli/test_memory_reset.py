@@ -36,7 +36,7 @@ def _run_memory_reset(target="all", yes=False, monkeypatch=None, confirm_input="
 
     Simulates what happens when `auraforge memory reset` is run.
     """
-    from hermes_constants import get_hermes_home
+    from auraforge_constants import get_hermes_home
 
     mem_dir = get_hermes_home() / "memories"
     files_to_reset = []

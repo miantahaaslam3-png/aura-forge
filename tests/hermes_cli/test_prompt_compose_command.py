@@ -13,8 +13,8 @@ import tempfile
 
 import pytest
 
-from hermes_cli.cli_commands_mixin import CLICommandsMixin
-from hermes_cli.commands import resolve_command
+from auraforge_cli.cli_commands_mixin import CLICommandsMixin
+from auraforge_cli.commands import resolve_command
 
 
 class _Stub(CLICommandsMixin):

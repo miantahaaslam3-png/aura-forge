@@ -4,7 +4,7 @@ import types
 import pytest
 from fastapi.testclient import TestClient
 
-from hermes_cli import web_server
+from auraforge_cli import web_server
 
 
 def test_ssh_ownership_endpoint_requires_token_and_returns_exact_nonce(monkeypatch):
@@ -18,7 +18,7 @@ def test_ssh_ownership_endpoint_requires_token_and_returns_exact_nonce(monkeypat
     assert client.get("/api/ssh/ownership").status_code == 401
     response = client.get(
         "/api/ssh/ownership",
-        headers={"X-Aura Forge-Session-Token": token},
+        headers={"X-AuraForge-Session-Token": token},
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -48,7 +48,7 @@ def test_ssh_ownership_reports_replaced_runtime(tmp_path, monkeypatch):
     )
     client = TestClient(web_server.app)
 
-    response = client.get("/api/ssh/ownership", headers={"X-Aura Forge-Session-Token": token})
+    response = client.get("/api/ssh/ownership", headers={"X-AuraForge-Session-Token": token})
 
     assert response.status_code == 200
     assert response.json()["runtimeIntact"] is False
@@ -155,6 +155,6 @@ def test_ssh_ownership_endpoint_is_absent_without_owner_nonce(monkeypatch):
 
     response = client.get(
         "/api/ssh/ownership",
-        headers={"X-Aura Forge-Session-Token": token},
+        headers={"X-AuraForge-Session-Token": token},
     )
     assert response.status_code == 404

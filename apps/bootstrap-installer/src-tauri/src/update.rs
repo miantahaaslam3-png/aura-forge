@@ -7,7 +7,7 @@
 //!      venv shim and packaged app.asar are free; otherwise `hermes update`
 //!      or repair bootstrap can race locked files),
 //!   2. run `hermes update --yes --gateway` (Python/repo update; this does NOT
-//!      rebuild apps/desktop by design — see cmd_update in hermes_cli/main.py),
+//!      rebuild apps/desktop by design — see cmd_update in auraforge_cli/main.py),
 //!   3. run `hermes desktop --build-only` (the rebuild step update skips),
 //!   4. launch the freshly-built desktop (reuses bootstrap::launch logic).
 //!
@@ -38,7 +38,7 @@ use crate::powershell::{pump_child, DRAIN_GRACE};
 
 /// `hermes update` exit code meaning "another hermes process is holding the
 /// venv shim open / dirty precondition" — see _cmd_update_impl in
-/// hermes_cli/main.py (sys.exit(2)). We surface a targeted message for this.
+/// auraforge_cli/main.py (sys.exit(2)). We surface a targeted message for this.
 const UPDATE_EXIT_CONCURRENT: i32 = 2;
 
 /// How long to wait for the old desktop process to release files under the
@@ -108,7 +108,7 @@ pub async fn start_update(app: AppHandle) -> Result<(), String> {
 /// hard ceiling) and self-heal rather than wait forever.
 ///
 /// The marker is also the cross-process update lock: `hermes update` claims
-/// the same file (see `hermes_cli/update_lock.py`) so a dashboard-spawned
+/// the same file (see `auraforge_cli/update_lock.py`) so a dashboard-spawned
 /// update and this updater can't mutate one checkout at the same time.
 /// `acquire` therefore REFUSES when a live foreign owner holds it rather than
 /// overwriting — the pre-fix clobber is what let a dashboard `hermes update`
@@ -122,7 +122,7 @@ struct UpdateMarkerGuard {
 
 /// Never treat a marker older than this as a live update. Mirrors
 /// UPDATE_MARKER_MAX_AGE_MS in apps/desktop/electron/update-marker.ts and
-/// UPDATE_MARKER_MAX_AGE_SECONDS in hermes_cli/update_lock.py — all three read
+/// UPDATE_MARKER_MAX_AGE_SECONDS in auraforge_cli/update_lock.py — all three read
 /// this one file, so a shorter ceiling in any of them would steal a lock the
 /// others still consider live.
 const UPDATE_MARKER_MAX_AGE_SECS: u64 = 20 * 60;
@@ -292,7 +292,7 @@ async fn run_update(app: AppHandle) -> Result<()> {
     // straggler-cleanup kills it, and the relaunch/kill cycle loops. The guard
     // removes the marker on every exit path (incl. early returns / panics).
     //
-    // The same marker is the cross-process update lock (hermes_cli/
+    // The same marker is the cross-process update lock (auraforge_cli/
     // update_lock.py claims it too), so a live foreign owner means another
     // updater — most often a dashboard-spawned `hermes update` — is already
     // mutating this checkout. Refuse instead of running a second one over it.
@@ -1042,12 +1042,12 @@ fn update_child_env(install_root: &Path) -> Vec<(String, OsString)> {
     // output instead.
     envs.push(("PYTHONUNBUFFERED".to_string(), OsString::from("1")));
     // We hold the update-in-progress marker for this whole run, and the
-    // `hermes update` child claims that SAME lock (hermes_cli/update_lock.py).
+    // `hermes update` child claims that SAME lock (auraforge_cli/update_lock.py).
     // Name our pid so the child recognizes the live holder as its own
     // orchestrator and runs under our claim — without this every GUI update
     // refuses its parent's marker with exit 2 ("Aura Forge is still running")
     // and no number of retries can ever succeed. Keep the variable name in
-    // sync with HANDOFF_PID_ENV in hermes_cli/update_lock.py.
+    // sync with HANDOFF_PID_ENV in auraforge_cli/update_lock.py.
     envs.push((
         "HERMES_UPDATE_HANDOFF_PID".to_string(),
         OsString::from(std::process::id().to_string()),
@@ -1165,8 +1165,8 @@ async fn install_macos_app_update(
     if let Some(parent) = target_app.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
-    let tmp = PathBuf::from(format!("{}.hermes-update-new", target_app.display()));
-    let old = PathBuf::from(format!("{}.hermes-update-old", target_app.display()));
+    let tmp = PathBuf::from(format!("{}.auraforge-update-new", target_app.display()));
+    let old = PathBuf::from(format!("{}.auraforge-update-old", target_app.display()));
     remove_dir_if_exists(&tmp).await;
     remove_dir_if_exists(&old).await;
 
@@ -1434,7 +1434,7 @@ mod tests {
     fn update_marker_guard_writes_then_removes_on_drop() {
         let dir = unique_tmp_dir("marker-guard");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         {
             let _g = UpdateMarkerGuard::acquire(marker.clone())
@@ -1461,7 +1461,7 @@ mod tests {
     fn update_marker_guard_drop_is_quiet_when_already_gone() {
         let dir = unique_tmp_dir("marker-guard-gone");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         let guard = UpdateMarkerGuard::acquire(marker.clone())
             .unwrap_or_else(|_| panic!("no live owner => acquire must succeed"));
@@ -1503,7 +1503,7 @@ mod tests {
     fn acquire_refuses_while_a_live_updater_owns_the_marker() {
         let dir = unique_tmp_dir("marker-contended");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         // A live *foreign* updater holds it. We must NOT clobber the marker and
         // run concurrently over the same checkout — that race is what let a
@@ -1538,7 +1538,7 @@ mod tests {
         // the holder age, so a wedged updater still reaches the stale ceiling.
         let dir = unique_tmp_dir("marker-own-pid");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         let started_at = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -1584,7 +1584,7 @@ mod tests {
     #[test]
     fn self_owned_marker_plus_exit_2_heals() {
         let dir = unique_tmp_dir("heal-self-owned");
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
         std::fs::write(&marker, format!("{}\n123\n", std::process::id())).unwrap();
 
         assert!(
@@ -1597,7 +1597,7 @@ mod tests {
     #[test]
     fn foreign_owned_marker_never_heals() {
         let dir = unique_tmp_dir("heal-foreign");
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
         // A live sibling process stands in for a genuinely concurrent updater.
         let mut foreign = spawn_foreign_holder();
         std::fs::write(&marker, format!("{}\n123\n", foreign.id())).unwrap();
@@ -1620,7 +1620,7 @@ mod tests {
             "no marker on disk = the child refused over something else entirely"
         );
 
-        let garbage = dir.join(".hermes-update-in-progress");
+        let garbage = dir.join(".auraforge-update-in-progress");
         std::fs::write(&garbage, "not-a-pid\n123\n").unwrap();
         assert!(
             !should_heal_self_marker_refusal(Some(UPDATE_EXIT_CONCURRENT), &garbage),
@@ -1632,7 +1632,7 @@ mod tests {
     #[test]
     fn non_exit_2_outcomes_never_heal() {
         let dir = unique_tmp_dir("heal-wrong-exit");
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
         std::fs::write(&marker, format!("{}\n123\n", std::process::id())).unwrap();
 
         for code in [Some(0), Some(1), Some(3), None] {
@@ -1652,7 +1652,7 @@ mod tests {
         // complete() drops the claim → the retry's precondition (no marker,
         // or a marker the child can now claim) holds.
         let dir = unique_tmp_dir("heal-e2e");
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         let guard = UpdateMarkerGuard::acquire(marker.clone())
             .unwrap_or_else(|_| panic!("no live owner => acquire must succeed"));
@@ -1684,7 +1684,7 @@ mod tests {
     fn acquire_reclaims_a_marker_owned_by_a_dead_pid() {
         let dir = unique_tmp_dir("marker-dead-pid");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         // pid 1 exists everywhere, so fabricate a dead one: a very large pid
         // that no live process owns. A crashed updater must never wedge every
@@ -1711,7 +1711,7 @@ mod tests {
     fn acquire_reclaims_a_marker_past_the_age_ceiling() {
         let dir = unique_tmp_dir("marker-stale-age");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         // Our own (live) pid, but started well past the ceiling: a wedged
         // updater must not hold the lock forever.
@@ -1732,7 +1732,7 @@ mod tests {
     fn completed_update_releases_marker_before_guard_drop() {
         let dir = unique_tmp_dir("marker-complete");
         std::fs::create_dir_all(&dir).unwrap();
-        let marker = dir.join(".hermes-update-in-progress");
+        let marker = dir.join(".auraforge-update-in-progress");
 
         let guard = UpdateMarkerGuard::acquire(marker.clone())
             .unwrap_or_else(|_| panic!("no live owner => acquire must succeed"));
@@ -1832,8 +1832,8 @@ mod tests {
     async fn swap_installs_new_bundle_and_cleans_up() {
         let base = unique_tmp_dir("ok");
         let target = base.join("AuraForge.app");
-        let tmp = base.join("AuraForge.app.hermes-update-new");
-        let old = base.join("AuraForge.app.hermes-update-old");
+        let tmp = base.join("AuraForge.app.auraforge-update-new");
+        let old = base.join("AuraForge.app.auraforge-update-old");
         write_marker(&target, "OLD");
         write_marker(&tmp, "NEW");
 
@@ -1862,8 +1862,8 @@ mod tests {
         //  - `tmp` does not exist       -> rename(tmp, target) fails
         let base = unique_tmp_dir("fail");
         let target = base.join("AuraForge.app");
-        let tmp = base.join("AuraForge.app.hermes-update-new"); // intentionally absent
-        let old = base.join("AuraForge.app.hermes-update-old");
+        let tmp = base.join("AuraForge.app.auraforge-update-new"); // intentionally absent
+        let old = base.join("AuraForge.app.auraforge-update-old");
         write_marker(&target, "OLD");
         write_marker(&old, "OCCUPIED"); // non-empty => rename(target,old) fails
 
@@ -1885,8 +1885,8 @@ mod tests {
         // absent). The original must be rolled back from `old` to `target`.
         let base = unique_tmp_dir("rollback");
         let target = base.join("AuraForge.app");
-        let tmp = base.join("AuraForge.app.hermes-update-new"); // absent
-        let old = base.join("AuraForge.app.hermes-update-old");
+        let tmp = base.join("AuraForge.app.auraforge-update-new"); // absent
+        let old = base.join("AuraForge.app.auraforge-update-old");
         write_marker(&target, "OLD");
 
         let result = swap_in_new_bundle(&tmp, &target, &old).await;

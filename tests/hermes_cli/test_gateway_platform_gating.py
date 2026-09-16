@@ -1,4 +1,4 @@
-"""Host-specific gating in ``hermes_cli.gateway._all_platforms()``.
+"""Host-specific gating in ``auraforge_cli.gateway._all_platforms()``.
 
 Some messaging platforms can't function on every host. The gate lives
 in one place — ``_all_platforms()`` — so the setup wizard, the curses
@@ -23,7 +23,7 @@ class TestMatrixHiddenOnWindows:
         Linux-gated because the assertion is the negative of the Windows
         gate — it only means anything when the host really is not Windows.
         """
-        import hermes_cli.gateway as gateway_mod
+        import auraforge_cli.gateway as gateway_mod
 
         platforms = gateway_mod._all_platforms()
         keys = {p["key"] for p in platforms}
@@ -37,7 +37,7 @@ class TestMatrixHiddenOnWindows:
         on native Windows this also proves the picker the user actually sees
         omits the platform whose dependency cannot build here.
         """
-        import hermes_cli.gateway as gateway_mod
+        import auraforge_cli.gateway as gateway_mod
 
         platforms = gateway_mod._all_platforms()
         keys = {p["key"] for p in platforms}
@@ -46,7 +46,7 @@ class TestMatrixHiddenOnWindows:
     @pytest.mark.windows_only
     def test_other_platforms_unaffected_on_windows(self):
         """Gating must only drop matrix, not collateral damage."""
-        import hermes_cli.gateway as gateway_mod
+        import auraforge_cli.gateway as gateway_mod
 
         platforms = gateway_mod._all_platforms()
         keys = {p["key"] for p in platforms}

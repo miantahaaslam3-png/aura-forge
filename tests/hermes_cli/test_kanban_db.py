@@ -1,4 +1,4 @@
-"""Tests for the Kanban DB layer (hermes_cli.kanban_db)."""
+"""Tests for the Kanban DB layer (auraforge_cli.kanban_db)."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-import hermes_state
-from hermes_cli import kanban_db as kb
+import auraforge_state
+from auraforge_cli import kanban_db as kb
 
 
 @pytest.fixture
@@ -214,7 +214,7 @@ def test_stale_claim_reclaim_event_records_diagnostic_payload(
     (#23025: previous payload only had ``stale_lock`` which gives no
     timing context)."""
     import json
-    import hermes_cli.kanban_db as _kb
+    import auraforge_cli.kanban_db as _kb
 
     with kb.connect() as conn:
         t = kb.create_task(conn, title="x", assignee="a")
@@ -270,7 +270,7 @@ def test_rate_limit_exit_requeues_without_counting_failure(
     """A rate-limit sentinel exit releases the task to ``ready`` and leaves
     ``consecutive_failures`` untouched — the breaker must never trip on a
     transient throttle, even across many quota-wall hits."""
-    import hermes_cli.kanban_db as _kb
+    import auraforge_cli.kanban_db as _kb
 
     monkeypatch.setattr(_kb, "_pid_alive", lambda _pid: False)
     monkeypatch.setenv("HERMES_KANBAN_CRASH_GRACE_SECONDS", "0")
@@ -334,7 +334,7 @@ def test_respawn_guard_defers_rate_limited_within_cooldown(
     """Within the cooldown after a rate-limit requeue, the guard defers the
     respawn; after the cooldown it allows a probe — and crucially does NOT
     fall into ``blocker_auth`` (which would defer forever)."""
-    import hermes_cli.kanban_db as _kb
+    import auraforge_cli.kanban_db as _kb
 
     monkeypatch.setenv("HERMES_KANBAN_RATE_LIMIT_COOLDOWN_SECONDS", "300")
     now = 5_000_000
@@ -873,7 +873,7 @@ class TestSharedBoardPaths:
 
 
 # ---------------------------------------------------------------------------
-# NFS / network-filesystem fallback (see hermes_state.apply_wal_with_fallback)
+# NFS / network-filesystem fallback (see auraforge_state.apply_wal_with_fallback)
 # ---------------------------------------------------------------------------
 
 def test_connect_falls_back_to_delete_on_locking_protocol(tmp_path, monkeypatch, caplog):
@@ -903,7 +903,7 @@ def test_connect_falls_back_to_delete_on_locking_protocol(tmp_path, monkeypatch,
 
     # These tests exercise the WAL-attempt path; assume a fixed SQLite so the
     # WAL-reset vulnerability gate doesn't short-circuit before the pragma.
-    import hermes_state as _hermes_state
+    import auraforge_state as _hermes_state
     monkeypatch.setattr(
         _hermes_state, "is_sqlite_wal_reset_vulnerable",
         lambda version_info=None: False,
@@ -912,7 +912,7 @@ def test_connect_falls_back_to_delete_on_locking_protocol(tmp_path, monkeypatch,
 
     # Clear module cache so a fresh connect() is attempted
     kb._INITIALIZED_PATHS.clear()
-    hermes_state._wal_fallback_warned_paths.clear()
+    auraforge_state._wal_fallback_warned_paths.clear()
 
     real_connect = _sqlite3.connect
 
@@ -931,8 +931,8 @@ def test_connect_falls_back_to_delete_on_locking_protocol(tmp_path, monkeypatch,
             *args, factory=_WalBlockingConnection, **kwargs
         )
 
-    with _patch("hermes_cli.kanban_db.sqlite3.connect", side_effect=wal_blocking_connect):
-        with caplog.at_level("ERROR", logger="hermes_state"):
+    with _patch("auraforge_cli.kanban_db.sqlite3.connect", side_effect=wal_blocking_connect):
+        with caplog.at_level("ERROR", logger="auraforge_state"):
             conn = kb.connect()
 
     # One fallback error, naming kanban.db
@@ -963,10 +963,10 @@ def test_connect_works_when_wal_is_silently_refused(tmp_path, monkeypatch, caplo
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     kb._INITIALIZED_PATHS.clear()
-    hermes_state._wal_fallback_warned_paths.clear()
+    auraforge_state._wal_fallback_warned_paths.clear()
     # Assume a fixed SQLite so the WAL-reset gate doesn't short-circuit.
     monkeypatch.setattr(
-        hermes_state, "is_sqlite_wal_reset_vulnerable",
+        auraforge_state, "is_sqlite_wal_reset_vulnerable",
         lambda version_info=None: False,
     )
 
@@ -985,10 +985,10 @@ def test_connect_works_when_wal_is_silently_refused(tmp_path, monkeypatch, caplo
         )
 
     with _patch(
-        "hermes_cli.kanban_db.sqlite3.connect",
+        "auraforge_cli.kanban_db.sqlite3.connect",
         side_effect=wal_silent_noop_connect,
     ):
-        with caplog.at_level("ERROR", logger="hermes_state"):
+        with caplog.at_level("ERROR", logger="auraforge_state"):
             conn = kb.connect()
 
     assert conn.execute("PRAGMA journal_mode").fetchone()[0].lower() == "delete"
@@ -1009,7 +1009,7 @@ def test_connect_works_when_wal_is_silently_refused(tmp_path, monkeypatch, caplo
 
 def test_sqlite_connect_closes_tracked_conn_on_setup_failure(tmp_path, monkeypatch):
     """A PRAGMA failure after connect must not abandon a tracked kanban fd."""
-    from hermes_cli import sqlite_safe_read
+    from auraforge_cli import sqlite_safe_read
 
     db_path = tmp_path / "kanban.db"
     real_connect = sqlite3.connect
@@ -1176,7 +1176,7 @@ def test_migrate_add_optional_columns_tolerates_concurrent_migration(kanban_home
 
 
 def test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim(monkeypatch):
-    """When the shim is not on PATH, fall back to `python -m hermes_cli.main`.
+    """When the shim is not on PATH, fall back to `python -m auraforge_cli.main`.
 
     Pins the correct module name (NOT `auraforge` — there is no top-level
     `auraforge` package). Regression for #23198: the original PR shipped
@@ -1185,25 +1185,25 @@ def test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim(monkeyp
     """
     import shutil
     import sys
-    import hermes_cli.kanban_db as kb
+    import auraforge_cli.kanban_db as kb
 
     monkeypatch.delenv("HERMES_BIN", raising=False)
     monkeypatch.setattr(shutil, "which", lambda name: None)
     argv = kb._resolve_hermes_argv()
-    assert argv == [sys.executable, "-m", "hermes_cli.main"]
+    assert argv == [sys.executable, "-m", "auraforge_cli.main"]
 
 
 def test_resolve_hermes_argv_module_actually_runs():
     """The fallback module name must be importable + runnable.
 
     A unit test that pins the literal string is necessary but not
-    sufficient — if `hermes_cli.main` ever loses `if __name__ == "__main__"`
-    handling or its argparse setup, `python -m hermes_cli.main --version`
+    sufficient — if `auraforge_cli.main` ever loses `if __name__ == "__main__"`
+    handling or its argparse setup, `python -m auraforge_cli.main --version`
     would fail and so would every dispatcher spawn that hits the fallback.
     Run it as a real subprocess to catch that regression.
     """
     import subprocess
-    import hermes_cli.kanban_db as kb
+    import auraforge_cli.kanban_db as kb
     import shutil
     import unittest.mock as mock
 
@@ -1441,7 +1441,7 @@ def test_maybe_emit_scratch_tip_fires_once_per_install(kanban_home, caplog):
     # Sentinel must not exist yet on a fresh install.
     assert not kb._scratch_tip_shown()
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.kanban_db"):
+    with caplog.at_level(logging.WARNING, logger="auraforge_cli.kanban_db"):
         with kb.connect() as conn:
             kb._maybe_emit_scratch_tip(conn, t1, "scratch")
 
@@ -1473,7 +1473,7 @@ def test_maybe_emit_scratch_tip_fires_once_per_install(kanban_home, caplog):
 
     # Second scratch materialization on the same install stays silent.
     caplog.clear()
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.kanban_db"):
+    with caplog.at_level(logging.WARNING, logger="auraforge_cli.kanban_db"):
         with kb.connect() as conn:
             kb._maybe_emit_scratch_tip(conn, t2, "scratch")
     tip_records2 = [
@@ -1583,8 +1583,8 @@ def test_write_txn_check_reads_correct_header_fields(tmp_path):
     way the file must never come back clean.
     """
     import struct
-    from hermes_cli.kanban_db import connect
-    from hermes_cli.sqlite_safe_read import file_length_matches_header
+    from auraforge_cli.kanban_db import connect
+    from auraforge_cli.sqlite_safe_read import file_length_matches_header
 
     db = tmp_path / "synthetic.db"
     conn = connect(db_path=db)

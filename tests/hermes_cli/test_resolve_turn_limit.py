@@ -1,4 +1,4 @@
-"""Tests for :func:`hermes_cli.config.resolve_turn_limit` and the
+"""Tests for :func:`auraforge_cli.config.resolve_turn_limit` and the
 ``TURN_LIMIT_UNLIMITED`` sentinel.
 
 Covers the full spelling table (int, float, numeric string, ``"none"``,
@@ -9,7 +9,7 @@ import os
 import sys
 import pytest
 
-from hermes_cli.config import resolve_turn_limit, TURN_LIMIT_UNLIMITED
+from auraforge_cli.config import resolve_turn_limit, TURN_LIMIT_UNLIMITED
 
 
 class TestNumericValues:

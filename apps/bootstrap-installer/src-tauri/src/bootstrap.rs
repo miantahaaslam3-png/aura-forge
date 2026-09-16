@@ -258,7 +258,8 @@ pub(crate) fn resolve_hermes_desktop_app(install_root: &std::path::Path) -> Opti
 /// launchable desktop app exists on disk. Used by the installer's launcher fast
 /// path so a bare re-open just opens Aura Forge instead of re-running setup.
 pub(crate) fn hermes_is_installed(install_root: &std::path::Path) -> bool {
-    install_root.join(".hermes-bootstrap-complete").exists()
+    (install_root.join(".auraforge-bootstrap-complete").exists()
+        || install_root.join(".hermes-bootstrap-complete").exists()) // legacy marker fallback
         && resolve_hermes_desktop_exe(install_root).is_some()
 }
 
@@ -317,7 +318,7 @@ fn write_bootstrap_complete_marker(install_root: &Path, pin: &Pin) -> Result<ser
     // Atomic publish (temp sibling + flush + rename), matching Electron's
     // writeFileAtomic(). hermes_is_installed() only checks existence, so a
     // partial direct write would incorrectly enable the launcher fast path.
-    let tmp_path = install_root.join(".hermes-bootstrap-complete.tmp");
+    let tmp_path = install_root.join(".auraforge-bootstrap-complete.tmp");
     {
         let mut file = std::fs::File::create(&tmp_path).with_context(|| {
             format!(
@@ -778,7 +779,7 @@ async fn run_bootstrap(
 
     // 4. Resolve install_root. install.ps1 doesn't (yet) report this back
     // explicitly; we infer it from $AuraForgeHome which Stage-Repository clones
-    // the repo INTO at $AuraForgeHome\hermes-agent. Mirrors hermes_constants.
+    // the repo INTO at $AuraForgeHome\hermes-agent. Mirrors auraforge_constants.
     let hermes_home = args
         .hermes_home
         .clone()
@@ -1094,7 +1095,7 @@ mod tests {
 
         let marker =
             write_bootstrap_complete_marker(&root, &pin).expect("marker write should succeed");
-        let marker_path = root.join(".hermes-bootstrap-complete");
+        let marker_path = root.join(".auraforge-bootstrap-complete");
         let from_disk: serde_json::Value =
             serde_json::from_slice(&std::fs::read(&marker_path).unwrap()).unwrap();
 
@@ -1120,8 +1121,8 @@ mod tests {
 
         write_bootstrap_complete_marker(&root, &pin).expect("marker write should succeed");
 
-        let marker_path = root.join(".hermes-bootstrap-complete");
-        let tmp_path = root.join(".hermes-bootstrap-complete.tmp");
+        let marker_path = root.join(".auraforge-bootstrap-complete");
+        let tmp_path = root.join(".auraforge-bootstrap-complete.tmp");
         assert!(
             marker_path.is_file(),
             "final marker must exist after atomic publish"
@@ -1144,7 +1145,7 @@ mod tests {
         // final marker would still enable the fast path.
         let root = unique_tmp_dir("marker-existence-only");
         make_release_tree(&root);
-        std::fs::write(root.join(".hermes-bootstrap-complete"), b"").unwrap();
+        std::fs::write(root.join(".auraforge-bootstrap-complete"), b"").unwrap();
 
         assert!(
             hermes_is_installed(&root),
@@ -1173,11 +1174,11 @@ mod tests {
             "error should mention the marker path: {msg}"
         );
         assert!(
-            !not_a_dir.join(".hermes-bootstrap-complete").exists(),
+            !not_a_dir.join(".auraforge-bootstrap-complete").exists(),
             "failed write must not leave a final marker that enables the fast path"
         );
         assert!(
-            !not_a_dir.join(".hermes-bootstrap-complete.tmp").exists(),
+            !not_a_dir.join(".auraforge-bootstrap-complete.tmp").exists(),
             "failed write must not leave a temp marker sibling either"
         );
         let _ = std::fs::remove_dir_all(&base);

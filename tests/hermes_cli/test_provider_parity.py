@@ -13,12 +13,12 @@ can never silently drift again when a provider plugin is added.
 
 from fastapi.testclient import TestClient
 
-from hermes_cli.models import CANONICAL_PROVIDERS
-from hermes_cli.provider_catalog import provider_catalog
-from hermes_cli.web_server import _SESSION_TOKEN, app
+from auraforge_cli.models import CANONICAL_PROVIDERS
+from auraforge_cli.provider_catalog import provider_catalog
+from auraforge_cli.web_server import _SESSION_TOKEN, app
 
 client = TestClient(app)
-HEADERS = {"X-Aura Forge-Session-Token": _SESSION_TOKEN}
+HEADERS = {"X-AuraForge-Session-Token": _SESSION_TOKEN}
 
 # `custom` is the bring-your-own-endpoint pseudo-provider configured inline via
 # the model picker's local-endpoint flow, not a fixed credential card. It is in

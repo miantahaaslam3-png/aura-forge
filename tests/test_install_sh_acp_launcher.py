@@ -201,7 +201,7 @@ def test_venv_install_writes_executable_hermes_agent_launcher(tmp_path):
 def test_hermes_agent_launcher_cleanup_on_uninstall(tmp_path):
     """uninstall.remove_wrapper_script() must remove auraforge-agent alongside
     auraforge and auraforge-acp."""
-    from hermes_cli.uninstall import remove_wrapper_script
+    from auraforge_cli.uninstall import remove_wrapper_script
 
     # Simulate a auraforge-agent wrapper in the user-local location
     local_shim = tmp_path / ".local" / "bin" / "auraforge-agent"

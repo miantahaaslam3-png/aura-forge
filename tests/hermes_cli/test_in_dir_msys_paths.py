@@ -41,13 +41,13 @@ class TestInDirMsysResolution:
             assert _msys_to_windows_path("/c/Users/alice") == "/c/Users/alice"
 
     def test_main_call_site_uses_translation(self):
-        """Guard: the --in resolution in hermes_cli.main must route through
+        """Guard: the --in resolution in auraforge_cli.main must route through
         _msys_to_windows_path (a plain expanduser/abspath does not survive
         Git Bash). Source-level check keeps this honest without spawning
         the full CLI."""
         import inspect
 
-        import hermes_cli.main as main_mod
+        import auraforge_cli.main as main_mod
 
         src = inspect.getsource(main_mod)
         idx = src.find('in_dir = getattr(args, "in_dir", None)')

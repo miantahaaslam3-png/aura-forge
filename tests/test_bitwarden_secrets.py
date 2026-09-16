@@ -45,9 +45,9 @@ def hermes_home(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     # Some modules cache get_hermes_home; clear if needed.
-    import hermes_constants
-    if hasattr(hermes_constants, "_HERMES_HOME_CACHE"):
-        hermes_constants._HERMES_HOME_CACHE = None  # type: ignore[attr-defined]
+    import auraforge_constants
+    if hasattr(auraforge_constants, "_HERMES_HOME_CACHE"):
+        auraforge_constants._HERMES_HOME_CACHE = None  # type: ignore[attr-defined]
     return home
 
 
@@ -278,7 +278,7 @@ def test_env_loader_calls_bsm_when_enabled(tmp_path, monkeypatch):
 
     reg_module._reset_registry_for_tests()
 
-    from hermes_cli.env_loader import _apply_external_secret_sources
+    from auraforge_cli.env_loader import _apply_external_secret_sources
     _apply_external_secret_sources(home)
 
     assert called["n"] == 1

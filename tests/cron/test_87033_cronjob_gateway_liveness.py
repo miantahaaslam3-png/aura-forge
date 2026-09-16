@@ -33,8 +33,8 @@ def hermes_env(tmp_path, monkeypatch):
 
     import importlib
 
-    import hermes_constants
-    importlib.reload(hermes_constants)
+    import auraforge_constants
+    importlib.reload(auraforge_constants)
     import cron.jobs
     importlib.reload(cron.jobs)
     import cron.scheduler
@@ -189,13 +189,13 @@ class _LivenessPatches:
 
         self._stack.enter_context(
             patch(
-                "hermes_cli.cron._active_cron_provider_name",
+                "auraforge_cli.cron._active_cron_provider_name",
                 side_effect=_fake_provider_name,
             )
         )
         self._stack.enter_context(
             patch(
-                "hermes_cli.gateway.find_gateway_pids",
+                "auraforge_cli.gateway.find_gateway_pids",
                 return_value=list(self._pids),
             )
         )
@@ -240,24 +240,24 @@ class TestRuntimeLockFirstLiveness:
     def test_lock_inactive_falls_back_to_pid_scan(self):
         from unittest.mock import patch
 
-        import hermes_cli.cron as cron_cli
+        import auraforge_cli.cron as cron_cli
 
         with (
-            patch("hermes_cli.cron._active_cron_provider_name", return_value="builtin"),
+            patch("auraforge_cli.cron._active_cron_provider_name", return_value="builtin"),
             patch("gateway.status.is_gateway_runtime_lock_active", return_value=False),
-            patch("hermes_cli.gateway.find_gateway_pids", return_value=[424242]),
+            patch("auraforge_cli.gateway.find_gateway_pids", return_value=[424242]),
         ):
             assert cron_cli._builtin_gateway_liveness() is True
 
     def test_no_lock_no_pids_is_false(self):
         from unittest.mock import patch
 
-        import hermes_cli.cron as cron_cli
+        import auraforge_cli.cron as cron_cli
 
         with (
-            patch("hermes_cli.cron._active_cron_provider_name", return_value="builtin"),
+            patch("auraforge_cli.cron._active_cron_provider_name", return_value="builtin"),
             patch("gateway.status.is_gateway_runtime_lock_active", return_value=False),
-            patch("hermes_cli.gateway.find_gateway_pids", return_value=[]),
+            patch("auraforge_cli.gateway.find_gateway_pids", return_value=[]),
         ):
             assert cron_cli._builtin_gateway_liveness() is False
 
@@ -267,15 +267,15 @@ class TestRuntimeLockFirstLiveness:
         when both probes fail)."""
         from unittest.mock import patch
 
-        import hermes_cli.cron as cron_cli
+        import auraforge_cli.cron as cron_cli
 
         with (
-            patch("hermes_cli.cron._active_cron_provider_name", return_value="builtin"),
+            patch("auraforge_cli.cron._active_cron_provider_name", return_value="builtin"),
             patch(
                 "gateway.status.is_gateway_runtime_lock_active",
                 side_effect=OSError("lock probe failed"),
             ),
-            patch("hermes_cli.gateway.find_gateway_pids", return_value=[424242]),
+            patch("auraforge_cli.gateway.find_gateway_pids", return_value=[424242]),
         ):
             assert cron_cli._builtin_gateway_liveness() is True
 
@@ -294,12 +294,12 @@ class TestCronStatusLockFirst:
         import io
         from contextlib import redirect_stdout
 
-        import hermes_cli.cron as cron_cli
+        import auraforge_cli.cron as cron_cli
 
         out = io.StringIO()
         with (
-            patch("hermes_cli.cron._active_cron_provider_name", return_value="builtin"),
-            patch("hermes_cli.gateway.find_gateway_pids", return_value=list(pids)),
+            patch("auraforge_cli.cron._active_cron_provider_name", return_value="builtin"),
+            patch("auraforge_cli.gateway.find_gateway_pids", return_value=list(pids)),
             patch(
                 "gateway.status.is_gateway_runtime_lock_active",
                 return_value=lock_active,

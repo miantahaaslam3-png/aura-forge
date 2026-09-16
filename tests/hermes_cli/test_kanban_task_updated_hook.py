@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import kanban_db as kb
-from hermes_cli.plugins import VALID_HOOKS, get_plugin_manager
+from auraforge_cli import kanban_db as kb
+from auraforge_cli.plugins import VALID_HOOKS, get_plugin_manager
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def test_raising_callback_does_not_break_assign(kanban_home):
 
 
 def test_no_subscriber_short_circuits_task_updated(kanban_home, monkeypatch):
-    from hermes_cli import lifecycle
+    from auraforge_cli import lifecycle
 
     invoked: list[str] = []
     real_invoke = lifecycle.invoke_hook

@@ -735,8 +735,8 @@ async def do_action(body: dict):
 
 ```python
 from fastapi import APIRouter
-from hermes_state import SessionDB
-from hermes_cli.config import load_config
+from auraforge_state import SessionDB
+from auraforge_cli.config import load_config
 
 router = APIRouter()
 

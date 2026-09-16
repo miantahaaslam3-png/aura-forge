@@ -117,9 +117,9 @@ def test_load_force_reload_and_unload_remove_every_manager_registration(
     monkeypatch,
 ):
     """A real temporary plugin has one live registration after each reload."""
-    import hermes_cli.plugins as plugins_mod
+    import auraforge_cli.plugins as plugins_mod
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import PluginManager
+    from auraforge_cli.plugins import PluginManager
     from tools.registry import registry
 
     hermes_home = tmp_path / "auraforge"
@@ -213,7 +213,7 @@ def test_load_force_reload_and_unload_remove_every_manager_registration(
 def test_reverse_unload_restores_an_overridden_platform_registration():
     """Reverse teardown reveals an older entry before removing it."""
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     name = "ledger_override_platform"
     scope = platform_registry.current_scope_key()
@@ -262,7 +262,7 @@ def test_reverse_unload_restores_an_overridden_platform_registration():
 
 def test_targeted_unload_does_not_resurrect_an_older_tool_override():
     """The tool overlay follows the same arbitrary-order ownership contract."""
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
     from tools.registry import registry
 
     name = "ledger_out_of_order_tool"
@@ -305,7 +305,7 @@ def test_targeted_unload_does_not_resurrect_an_older_tool_override():
 
 def test_rejected_tool_registration_does_not_claim_global_fallback():
     """Effective fallback identity cannot masquerade as a successful write."""
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
     from tools.registry import registry
 
     name = "ledger_rejected_tool"
@@ -346,7 +346,7 @@ def test_rejected_tool_registration_does_not_claim_global_fallback():
 
 def test_plugin_context_cannot_shadow_same_toolset_global_with_core_callable():
     """Explicit context scope cannot launder an imported/core handler."""
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
     from tools.registry import registry
 
     name = "ledger_same_toolset_global"
@@ -381,7 +381,7 @@ def test_plugin_context_cannot_shadow_same_toolset_global_with_core_callable():
 
 def test_rejected_tool_registration_does_not_claim_local_predecessor():
     """A same-handler rejection cannot manufacture a replacement lease."""
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
     from tools.registry import registry
 
     name = "ledger_rejected_local_tool"
@@ -451,7 +451,7 @@ def test_shared_entrypoint_module_uses_the_active_profile_scope(tmp_path):
     """One pip module can serve A and B without becoming process-global."""
     import pytest
 
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
     from tools.registry import ToolRegistry
 
     registry = ToolRegistry()
@@ -551,7 +551,7 @@ def test_decorated_plugin_callable_keeps_its_defining_module_scope(tmp_path):
 
 
 def test_entrypoint_policy_uses_the_most_specific_module_prefix(tmp_path):
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
     from tools.registry import ToolRegistry
 
     registry = ToolRegistry()
@@ -590,7 +590,7 @@ def test_entrypoint_policy_uses_the_most_specific_module_prefix(tmp_path):
 def test_targeted_unload_does_not_resurrect_an_older_override():
     """Removing A under B tombstones A so B cannot restore it later."""
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     name = "ledger_out_of_order_platform"
     scope = platform_registry.current_scope_key()
@@ -635,7 +635,7 @@ def test_targeted_unload_does_not_resurrect_an_older_override():
 
 
 def test_manager_local_override_does_not_resurrect_after_targeted_unload():
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     manager = PluginManager()
     context_a = PluginContext(PluginManifest(name="local_a", key="local_a"), manager)
@@ -657,8 +657,8 @@ def test_provider_overlay_switches_profiles_and_reveals_fresh_global_fallback(
     """Provider consumers see A→B→A, and unload never pins a stale base."""
     from agent.image_gen_provider import ImageGenProvider
     import agent.image_gen_registry as image_registry
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     class Provider(ImageGenProvider):
         def __init__(self, marker):
@@ -684,7 +684,7 @@ def test_provider_overlay_switches_profiles_and_reveals_fresh_global_fallback(
     context_a = PluginContext(PluginManifest(name="provider_a", key="provider_a"), manager_a)
     context_b = PluginContext(PluginManifest(name="provider_b", key="provider_b"), manager_b)
     monkeypatch.setattr(
-        "hermes_cli.config.load_config_readonly",
+        "auraforge_cli.config.load_config_readonly",
         lambda: {"image_gen": {"provider": name}},
     )
 
@@ -727,7 +727,7 @@ def test_reused_provider_singleton_keeps_registration_generations_distinct():
         restore_registration,
         snapshot_registration,
     )
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     class ProbeProvider(ImageGenProvider):
         def __init__(self, marker):
@@ -786,7 +786,7 @@ def test_same_provider_singleton_can_have_two_live_owners():
         restore_registration,
         snapshot_registration,
     )
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     class SharedProvider(ImageGenProvider):
         @property
@@ -828,7 +828,7 @@ def test_provider_cleanup_uses_the_captured_normalized_name():
         restore_registration,
         snapshot_registration,
     )
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     class MutableProvider(ImageGenProvider):
         def __init__(self):
@@ -866,7 +866,7 @@ def test_registration_transaction_excludes_concurrent_disposal(monkeypatch):
     """A lease cannot be retired between another generation's write/acquire."""
     from agent.image_gen_provider import ImageGenProvider
     import agent.image_gen_registry as image_registry
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     class Provider(ImageGenProvider):
         def __init__(self, marker):
@@ -1010,7 +1010,7 @@ def test_deferred_platform_recursive_lookup_does_not_deadlock():
 def test_resolved_deferred_platform_restores_its_displaced_loader():
     """Deferred-to-concrete loading remains one replacement chain."""
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     name = "ledger_transfer"
     scope = platform_registry.current_scope_key()
@@ -1051,7 +1051,7 @@ def test_resolved_deferred_platform_restores_its_displaced_loader():
 def test_unload_cancels_a_deferred_platform_before_module_load():
     """Losing the in-flight race cannot publish registrations after unload."""
     from gateway.platform_registry import platform_registry
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     name = "ledger_cancel"
     scope = platform_registry.current_scope_key()
@@ -1114,7 +1114,7 @@ def test_unload_cancels_a_deferred_platform_before_module_load():
 def test_direct_plugin_platform_registration_infers_immutable_scope(tmp_path):
     """The documented direct registry API cannot leak into another profile."""
     from gateway.platform_registry import PlatformEntry, platform_registry
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
     from tools.registry import registry as tool_registry
 
     home_a = str((tmp_path / "direct-a").resolve())
@@ -1169,10 +1169,10 @@ def test_same_name_tool_and_platform_are_isolated_by_hermes_home(
     monkeypatch,
 ):
     """Real A→B→A profile switching keeps dispatch and adapters isolated."""
-    import hermes_cli.plugins as plugins_mod
+    import auraforge_cli.plugins as plugins_mod
     from gateway.platform_registry import platform_registry
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
-    from hermes_cli.plugins import PluginManager
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_cli.plugins import PluginManager
     from tools.registry import registry
 
     home_a = tmp_path / "profile-a"
@@ -1231,10 +1231,10 @@ def test_manager_discovery_uses_its_home_not_the_ambient_profile(
     monkeypatch,
 ):
     """A retained manager cannot scan another concurrently active profile."""
-    import hermes_cli.plugins as plugins_mod
+    import auraforge_cli.plugins as plugins_mod
     from gateway.platform_registry import platform_registry
-    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
-    from hermes_cli.plugins import PluginManager
+    from auraforge_constants import reset_hermes_home_override, set_hermes_home_override
+    from auraforge_cli.plugins import PluginManager
     from tools.registry import registry
 
     home_a = tmp_path / "retained-a"
@@ -1274,8 +1274,8 @@ def test_same_slug_profiles_allocate_distinct_modules_concurrently(
     monkeypatch,
 ):
     """Policy binding and import use one atomic profile-specific namespace."""
-    import hermes_cli.plugins as plugins_mod
-    from hermes_cli.plugins import PluginManager
+    import auraforge_cli.plugins as plugins_mod
+    from auraforge_cli.plugins import PluginManager
 
     home_a = tmp_path / "concurrent-a"
     home_b = tmp_path / "concurrent-b"
@@ -1303,7 +1303,7 @@ def test_spawned_supervised_task_is_cancelled_on_unload():
     """A plugin-spawned background task is tracked and cancelled on unload."""
     import asyncio
 
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     manager = PluginManager()
     manifest = PluginManifest(
@@ -1340,7 +1340,7 @@ def test_spawned_supervised_task_is_cancelled_on_unload():
 
 def test_on_unload_exception_does_not_block_other_teardown():
     """A raising on_unload callback is isolated; later cleanup still runs."""
-    from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
+    from auraforge_cli.plugins import PluginContext, PluginManager, PluginManifest
 
     manager = PluginManager()
     manifest = PluginManifest(

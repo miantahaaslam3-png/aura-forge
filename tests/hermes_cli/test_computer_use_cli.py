@@ -12,7 +12,7 @@ import pytest
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "hermes_cli.main", "computer-use", *args],
+        [sys.executable, "-m", "auraforge_cli.main", "computer-use", *args],
         capture_output=True,
         text=True,
         timeout=30,
@@ -21,7 +21,7 @@ def _run(*args: str) -> subprocess.CompletedProcess[str]:
 
 def _invoke(monkeypatch: pytest.MonkeyPatch, *args: str) -> int:
     """Run the in-process CLI and normalize its process-style exit status."""
-    cli_main = import_module("hermes_cli.main")
+    cli_main = import_module("auraforge_cli.main")
     monkeypatch.setattr(sys, "argv", ["auraforge", "computer-use", *args])
     monkeypatch.setattr(cli_main, "_prepare_agent_startup", lambda _args: None)
     try:
@@ -50,7 +50,7 @@ def test_computer_use_rejects_removed_browser_approve_command() -> None:
 def test_computer_use_status_returns_zero_for_compatible_driver(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
     from tools.computer_use import cua_backend
 
     driver = r"C:\Users\tester\.local\bin\cua-driver.exe"
@@ -86,7 +86,7 @@ def test_computer_use_status_returns_nonzero_for_incompatible_standard_driver(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
     from tools.computer_use import cua_backend
 
     driver = r"C:\Users\tester\.local\bin\cua-driver.exe"
@@ -111,7 +111,7 @@ def test_computer_use_status_returns_nonzero_for_incompatible_custom_driver(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
     from tools.computer_use import cua_backend
 
     driver = r"C:\custom\cmd.exe"
@@ -135,7 +135,7 @@ def test_computer_use_install_checks_resulting_runtime_contract(
     ready: bool,
     expected: int,
 ) -> None:
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
 
     install = Mock(return_value=True)
     monkeypatch.setattr(tools_config, "install_cua_driver", install)
@@ -152,7 +152,7 @@ def test_computer_use_install_checks_resulting_runtime_contract(
 def test_computer_use_install_returns_nonzero_for_unrepairable_custom_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from hermes_cli import tools_config
+    from auraforge_cli import tools_config
 
     driver = r"C:\custom\cmd.exe"
     monkeypatch.setenv("HERMES_CUA_DRIVER_CMD", driver)

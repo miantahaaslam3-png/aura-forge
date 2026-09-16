@@ -1,4 +1,4 @@
-"""Tests for the update check mechanism in hermes_cli.banner."""
+"""Tests for the update check mechanism in auraforge_cli.banner."""
 
 import json
 import os
@@ -14,8 +14,8 @@ import pytest
 
 def test_check_for_updates_uses_cache(tmp_path, monkeypatch):
     """When cache is fresh, check_for_updates should return cached value without calling git."""
-    from hermes_cli.banner import check_for_updates
-    from hermes_cli import __version__
+    from auraforge_cli.banner import check_for_updates
+    from auraforge_cli import __version__
 
     # Create a fake git repo and fresh cache
     repo_dir = tmp_path / "auraforge-agent"
@@ -26,7 +26,7 @@ def test_check_for_updates_uses_cache(tmp_path, monkeypatch):
     cache_file.write_text(json.dumps({"ts": time.time(), "behind": 3, "ver": __version__}))
 
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    with patch("hermes_cli.banner.subprocess.run") as mock_run:
+    with patch("auraforge_cli.banner.subprocess.run") as mock_run:
         result = check_for_updates()
 
     assert result == 3
@@ -39,7 +39,7 @@ def test_check_for_updates_uses_cache(tmp_path, monkeypatch):
 
 def test_prefetch_non_blocking():
     """prefetch_update_check() should return immediately without blocking."""
-    import hermes_cli.banner as banner
+    import auraforge_cli.banner as banner
 
     # Reset module state
     banner._update_result = None
@@ -66,7 +66,7 @@ def test_check_via_local_git_fetch_failure_returns_none(tmp_path, monkeypatch):
     the ref hasn't caught up), so returning None is the honest inconclusive
     result — and the caller must not cache it as "up to date".
     """
-    from hermes_cli import banner
+    from auraforge_cli import banner
 
     repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
@@ -110,7 +110,7 @@ def test_check_via_local_git_fetch_failure_keeps_positive_stale_count(tmp_path, 
     """A failed fetch must preserve sound evidence: if the stale origin/main
     ref already shows HEAD behind, that positive count is still an update
     signal and must be returned (review #92578)."""
-    from hermes_cli import banner
+    from auraforge_cli import banner
 
     repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
@@ -148,7 +148,7 @@ def test_check_via_local_git_fetch_failure_keeps_positive_stale_count(tmp_path, 
 
 def test_check_via_local_git_fetch_failure_rev_list_error_returns_none(tmp_path, monkeypatch):
     """If the stale rev-list itself fails, the check stays inconclusive (None)."""
-    from hermes_cli import banner
+    from auraforge_cli import banner
 
     repo_dir = tmp_path / "auraforge-agent"
     repo_dir.mkdir()
@@ -193,7 +193,7 @@ def test_check_for_updates_does_not_cache_none(tmp_path, monkeypatch):
     guard directly: call check_for_updates with a mocked _check_via_local_git
     that returns None, and confirm no cache file is created.
     """
-    import hermes_cli.banner as banner
+    import auraforge_cli.banner as banner
 
     cache_file = tmp_path / ".update_check"
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
@@ -207,10 +207,10 @@ def test_check_for_updates_does_not_cache_none(tmp_path, monkeypatch):
     # Mock the internal functions to force the local-git path returning None
     monkeypatch.setattr(banner, "_check_via_local_git", lambda rd: None)
     monkeypatch.setattr(
-        "hermes_cli.config.detect_install_method", lambda root: "git"
+        "auraforge_cli.config.detect_install_method", lambda root: "git"
     )
     monkeypatch.setattr(
-        "hermes_cli.config.get_project_root", lambda: repo_dir
+        "auraforge_cli.config.get_project_root", lambda: repo_dir
     )
 
     # Patch __file__ resolution by monkeypatching the module's Path calls.
@@ -231,7 +231,7 @@ def test_check_for_updates_does_not_cache_none(tmp_path, monkeypatch):
 
     def fake_resolve(self, *args, **kwargs):
         s = str(self)
-        if "banner.py" in s or s.endswith("hermes_cli"):
+        if "banner.py" in s or s.endswith("auraforge_cli"):
             # Return a path that has no .git, forcing the fallback
             return tmp_path / "no-git-here"
         return real_resolve(self, *args, **kwargs)

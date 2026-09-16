@@ -3,7 +3,7 @@ also tell the user how to find them.
 
 `auraforge update` keeps (does not overwrite) bundled skills the user edited and
 prints a ``~ N user-modified (kept)`` count. There are two independent update
-code paths in ``hermes_cli/main.py`` that print this notice (the git-pull path
+code paths in ``auraforge_cli/main.py`` that print this notice (the git-pull path
 in ``_cmd_update_impl`` and the unpack/install path). Both must point the user
 at ``auraforge skills list-modified`` so the count is actionable — otherwise,
 depending on which path a user hits, they may never learn the discovery command
@@ -17,8 +17,8 @@ keeps holding if the wording is reworded, as long as both sites stay in sync.
 import re
 from pathlib import Path
 
-import hermes_cli.main as main_mod
-import hermes_cli.update_cmd as update_mod
+import auraforge_cli.main as main_mod
+import auraforge_cli.update_cmd as update_mod
 
 
 _COUNT_RE = re.compile(r"user-modified \(kept\)")
@@ -26,7 +26,7 @@ _HINT_RE = re.compile(r"auraforge skills list-modified")
 
 
 def _source_lines() -> list[str]:
-    # The update pipeline was extracted to hermes_cli/update_cmd.py
+    # The update pipeline was extracted to auraforge_cli/update_cmd.py
     # (main.py decomposition); scan both homes of the notice.
     return [
         line

@@ -1,4 +1,4 @@
-"""Behavior contracts for hermes_cli.worktree_gc (attended reclaim).
+"""Behavior contracts for auraforge_cli.worktree_gc (attended reclaim).
 
 Each guard gets its own contract against a REAL git repo fixture (no mocks —
 the entire value of these tests is exercising actual git verdicts):
@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli import worktree_gc
+from auraforge_cli import worktree_gc
 
 
 def _git(args, cwd, env=None):
