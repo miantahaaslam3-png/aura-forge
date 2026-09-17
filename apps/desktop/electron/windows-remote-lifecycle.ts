@@ -37,7 +37,7 @@ async function probeWindowsRemote(ssh, explicitHermesPath = '') {
     `$explicit=${explicit}`,
     'if($explicit){Assert-NoReparse $explicit $false;$explicitPython=[IO.Path]::Combine([IO.Path]::GetDirectoryName($explicit), "python.exe");Assert-NoReparse $explicitPython $false}',
     '$hermesHome=$env:HERMES_HOME',
-    'if(-not $hermesHome){$hermesHome=Join-Path $env:LOCALAPPDATA "hermes"}',
+    'if(-not $hermesHome){$hermesHome=Join-Path $env:LOCALAPPDATA "aura-forge"}',
     'Assert-NoReparse $hermesHome $true',
     '$candidate=[IO.Path]::Combine($hermesHome, "hermes-agent\\venv\\Scripts\\hermes.exe")',
     '$candidatePython=[IO.Path]::Combine([IO.Path]::GetDirectoryName($candidate), "python.exe")',
@@ -252,7 +252,7 @@ function atomicWindowsSpawnCommand(runtime, reservation: any = {}) {
 
   const script = [
     '$ErrorActionPreference="Stop"',
-    `$home=${psLiteral(runtime.hermesHome)}`,
+    `$home=${psLiteral(runtime.auraforgeHome)}`,
     '$installRoot=$home',
     '$parent=Split-Path -Parent $home',
     'if((Split-Path -Leaf $parent) -ieq "profiles"){$installRoot=Split-Path -Parent $parent}',
@@ -346,7 +346,7 @@ function reusableWindowsLock(lock, state, profile, reuseToken, runtime) {
     reuseToken &&
     lock.tokenFingerprint === fingerprintToken(reuseToken) &&
     lock.hermesPath === runtime.hermesPath &&
-    lock.hermesHome === runtime.hermesHome
+    lock.hermesHome === runtime.auraforgeHome
   )
 }
 
@@ -564,7 +564,7 @@ async function connectWindowsRemote(deps) {
 
   assertBootstrapNotSuperseded(signal)
   const runtime = await probeWindowsRemote(ssh, remoteHermesPath)
-  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
   const inspection = await helper(ssh, runtime, 'inspect', [runtime.hermesPath])
 
   if (!inspection.supported) {
@@ -578,7 +578,7 @@ async function connectWindowsRemote(deps) {
   rememberLog(`[ssh-lifecycle] remote platform Windows/${runtime.arch}`)
   rememberLog(`[ssh-lifecycle] located hermes at ${runtime.hermesPath}`)
 
-  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
   const lock = await helper(ssh, runtime, 'read-lock', [ownershipId])
 
   if (validLock(lock, ownershipId)) {
@@ -593,7 +593,7 @@ async function connectWindowsRemote(deps) {
     const reusable = reusableWindowsLock(lock, state, profile, reuseToken, runtime)
 
     if (reusable) {
-      await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+      await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
       const localPort = await pickLocalPort()
       await forward(localPort, lock.port)
 
@@ -615,7 +615,7 @@ async function connectWindowsRemote(deps) {
             ownershipId,
             spawnNonce: lock.spawnNonce,
             creationTimeNs: lock.creationTimeNs,
-            hermesHome: runtime.hermesHome,
+            hermesHome: runtime.auraforgeHome,
             pythonPath: runtime.python
           }
         }
@@ -625,23 +625,23 @@ async function connectWindowsRemote(deps) {
         }
 
         await cancelForward(localPort, lock.port)
-        await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+        await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
         await cleanupOwned(ssh, runtime, ownershipId, lock)
       } catch (error) {
         await cancelForward(localPort, lock.port)
         throw error
       }
     } else {
-      await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+      await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
       await cleanupOwned(ssh, runtime, ownershipId, lock)
     }
   } else if (lock) {
-    await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+    await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
     await helper(ssh, runtime, 'remove-lock', [ownershipId])
   }
 
   assertBootstrapNotSuperseded(signal)
-  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+  await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
   const token = crypto.randomBytes(32).toString('hex')
   const spawnNonce = crypto.randomBytes(8).toString('hex')
   await helper(ssh, runtime, 'upload-token', [ownershipId, spawnNonce], token)
@@ -650,7 +650,7 @@ async function connectWindowsRemote(deps) {
   let spawned
 
   try {
-    await assertWindowsRemoteInstallUpdateClear(ssh, runtime.hermesHome)
+    await assertWindowsRemoteInstallUpdateClear(ssh, runtime.auraforgeHome)
     spawned = await atomicWindowsSpawn(
       ssh,
       runtime,
@@ -660,7 +660,7 @@ async function connectWindowsRemote(deps) {
         spawnNonce,
         profile,
         hermesPath: runtime.hermesPath,
-        hermesHome: runtime.hermesHome,
+        hermesHome: runtime.auraforgeHome,
         tokenFingerprint,
         startedAt
       }
@@ -701,7 +701,7 @@ async function connectWindowsRemote(deps) {
     port: 0,
     profile,
     hermesPath: runtime.hermesPath,
-    hermesHome: runtime.hermesHome,
+    hermesHome: runtime.auraforgeHome,
     tokenFingerprint,
     startedAt
   }
@@ -737,7 +737,7 @@ async function connectWindowsRemote(deps) {
       ownershipId,
       spawnNonce,
       creationTimeNs: spawned.creationTimeNs,
-      hermesHome: runtime.hermesHome,
+      hermesHome: runtime.auraforgeHome,
       pythonPath: runtime.python
     }
   } catch (error) {

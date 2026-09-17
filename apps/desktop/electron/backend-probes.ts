@@ -3,7 +3,7 @@
  *
  * Cheap "does this candidate backend actually work" checks used by
  * resolveHermesBackend (main.ts). The resolver walks a ladder of
- * candidates -- bootstrap marker, `hermes` on PATH, system Python with
+ * candidates -- bootstrap marker, `auraforge` on PATH, system Python with
  * auraforge_cli installed -- and historically returned the first candidate
  * whose binary existed on disk. That assumption breaks when a user has
  * a pre-installed Python 3.11-3.13 (so findSystemPython() returns a
@@ -107,7 +107,7 @@ function execProbeSync(
       throw err
     }
 
-    // One cold-cache / AV miss should not force hermes-setup --update (#61764).
+    // One cold-cache / AV miss should not force auraforge-setup --update (#61764).
     execFileSync(command, args, options)
   }
 }
@@ -119,7 +119,7 @@ function execProbeSync(
  *
  * @returns {string}
  */
-function hermesRuntimeImportProbe() {
+function auraforgeRuntimeImportProbe() {
   return 'import yaml; import dotenv; import auraforge_cli.config'
 }
 
@@ -147,7 +147,7 @@ function canImportHermesCli(pythonPath: string, opts: { env?: Record<string, str
   }
 
   try {
-    execProbeSync(pythonPath, ['-c', hermesRuntimeImportProbe()], {
+    execProbeSync(pythonPath, ['-c', auraforgeRuntimeImportProbe()], {
       env: { ...process.env, ...(opts.env || {}) },
       stdio: 'ignore',
       timeout: PROBE_TIMEOUT_MS,
@@ -161,18 +161,18 @@ function canImportHermesCli(pythonPath: string, opts: { env?: Record<string, str
 }
 
 /**
- * Return true iff `<hermesCommand> --version` exits 0.
+ * Return true iff `<auraforgeCommand> --version` exits 0.
  *
- * Used to gate the "existing `hermes` on PATH" rung. Without this, a
- * stale hermes.cmd shim left behind by an uninstalled pip install (or
- * a half-built venv whose `hermes` entry-point points at a deleted
+ * Used to gate the "existing `auraforge` on PATH" rung. Without this, a
+ * stale auraforge.cmd shim left behind by an uninstalled pip install (or
+ * a half-built venv whose `auraforge` entry-point points at a deleted
  * Python) survives findOnPath() and gets selected as the backend.
  *
  * We intentionally avoid invoking the command with the dashboard args
  * here -- `--version` is the cheapest "is this binary alive" smoke
  * test that every auraforge_cli entry-point has supported since 0.1.
  *
- * @param {string} hermesCommand - Resolved absolute path to a hermes
+ * @param {string} auraforgeCommand - Resolved absolute path to a auraforge
  *   executable (or an interpreter+script wrapper).
  * @param {boolean} [opts.shell] - Whether to run through a shell. For
  *   .cmd/.bat shims on Windows execFileSync needs shell:true to find
@@ -186,17 +186,17 @@ function canImportHermesCli(pythonPath: string, opts: { env?: Record<string, str
  * its immutable, matching Aura Forge package; it must never fall through to the
  * mutable install-script bootstrap path if a best-effort probe is slow.
  */
-function shouldTrustHermesOverride(hermesOverride?: string) {
-  return typeof hermesOverride === 'string' && hermesOverride.trim().length > 0
+function shouldTrustHermesOverride(auraforgeOverride?: string) {
+  return typeof auraforgeOverride === 'string' && auraforgeOverride.trim().length > 0
 }
 
-function verifyHermesCli(hermesCommand: string, opts?: { shell?: boolean }) {
-  if (!hermesCommand) {
+function verifyHermesCli(auraforgeCommand: string, opts?: { shell?: boolean }) {
+  if (!auraforgeCommand) {
     return false
   }
 
   try {
-    execProbeSync(hermesCommand, ['--version'], {
+    execProbeSync(auraforgeCommand, ['--version'], {
       stdio: 'ignore',
       timeout: PROBE_TIMEOUT_MS,
       shell: Boolean(opts?.shell),
@@ -213,7 +213,7 @@ export {
   canImportHermesCli,
   DEFAULT_PROBE_TIMEOUT_MS,
   execProbeSync,
-  hermesRuntimeImportProbe,
+  auraforgeRuntimeImportProbe,
   PROBE_TIMEOUT_MS,
   resolveProbeTimeoutMs,
   shouldTrustHermesOverride,

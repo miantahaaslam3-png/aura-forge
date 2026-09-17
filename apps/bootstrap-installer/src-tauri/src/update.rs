@@ -1001,9 +1001,9 @@ struct CmdResult {
 /// Path to the venv hermes shim under an install root, regardless of existence.
 fn venv_hermes(install_root: &Path) -> PathBuf {
     if cfg!(target_os = "windows") {
-        install_root.join("venv").join("Scripts").join("hermes.exe")
+        install_root.join("venv").join("Scripts").join("auraforge.exe")
     } else {
-        install_root.join("venv").join("bin").join("hermes")
+        install_root.join("venv").join("bin").join("auraforge")
     }
 }
 

@@ -1,14 +1,14 @@
 /**
- * windows-hermes-path.ts
+ * windows-auraforge-path.ts
  *
  * Pure, dependency-injected pieces of Windows `hermes` resolution pulled out
  * of main.ts's findOnPath(), handOffWindowsBootstrapRecovery(), and
- * unwrapWindowsVenvHermesCommand(). Each of the three functions here pins one
+ * unwrapWindowsVenvAuraforgeCommand(). Each of the three functions here pins one
  * of the Windows resolution bugs that caused desktop reinstall loops:
  *
  *   1. buildPathExtCandidates() — findOnPath() tried the empty extension
- *      FIRST, so an extensionless Git-Bash `hermes` shim shadowed the real
- *      hermes.cmd/hermes.exe; the shim then failed the --version probe and
+ *      FIRST, so an extensionless Git-Bash `auraforge` shim shadowed the real
+ *      auraforge.cmd/auraforge.exe; the shim then failed the --version probe and
  *      the desktop fell through to a spurious bootstrap/repair. The fix:
  *      PATHEXT extensions first, empty extension LAST.
  *   2. chooseUpdaterArgs() — handOffWindowsBootstrapRecovery() must separate
@@ -16,7 +16,7 @@
  *      can outlive a deleted venv, while the updater needs BOTH the venv Python
  *      and Aura Forge launcher. Marker-only or partial runtimes must use --repair;
  *      only a runnable pair can use --update.
- *   3. resolveVenvHermesCommand() — unwrapWindowsVenvHermesCommand() returned
+ *   3. resolveVenvAuraforgeCommand() — unwrapWindowsVenvAuraforgeCommand() returned
  *      the venv python with NO runtime probe (bypassing the caller's
  *      --version check too), so a venv broken mid-update (e.g. missing
  *      python-dotenv) was re-selected forever: Retry / "Repair install"
@@ -205,7 +205,7 @@ export interface ResolveVenvHermesCommandDeps {
  * python doesn't exist, or the import probe fails. Otherwise returns the
  * resolved backend descriptor.
  */
-export function resolveVenvHermesCommand(
+export function resolveVenvAuraforgeCommand(
   command: string,
   backendArgs: string[],
   deps: ResolveVenvHermesCommandDeps

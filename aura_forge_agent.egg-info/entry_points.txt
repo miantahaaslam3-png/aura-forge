@@ -1,0 +1,4 @@
+[console_scripts]
+auraforge = auraforge_cli.main:main
+auraforge-acp = acp_adapter.entry:main
+auraforge-agent = run_agent:main

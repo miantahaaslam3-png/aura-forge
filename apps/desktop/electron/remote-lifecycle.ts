@@ -596,7 +596,7 @@ async function pidIsOurDashboard(
       `hermes_home=os.path.expanduser(${shq(hermesHome)}) if ${shq(hermesHome)} else ""\n` +
       'expected_entries={expected}\n' +
       'if hermes_home:\n' +
-      ' expected_entries.add(os.path.join(hermes_home,"hermes-agent","venv","bin","hermes"))\n' +
+      ' expected_entries.add(os.path.join(auraforge_home,"aura-forge-agent","venv","bin","auraforge"))\n' +
       `expected_token=os.path.expanduser(${shq(ownershipId ? spawnTokenPath(ownershipId, spawnNonce) : '')})\n` +
       `expected_profile=${shq(profile)}\n` +
       `nonce=${shq(spawnNonce)}\n` +
@@ -794,7 +794,7 @@ pid=${pid}
 expected_creation=${py(lock.creationTime)}
 expected_path=os.path.expanduser(${py(lock.hermesPath)})
 hermes_home=os.path.expanduser(${py(lock.hermesHome)})
-expected_entries={expected_path,os.path.join(hermes_home,"hermes-agent","venv","bin","hermes")}
+expected_entries={expected_path,os.path.join(auraforge_home,"aura-forge-agent","venv","bin","auraforge")}
 expected_token=os.path.expanduser(${py(expectedToken)})
 expected_profile=${py(lock.profile)}
 nonce=${py(lock.spawnNonce)}

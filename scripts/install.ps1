@@ -2621,12 +2621,12 @@ function Install-Venv {
             } catch {
                 Write-Warn "Could not enumerate gateway scheduled tasks: $($_.Exception.Message)"
             }
-            # The launcher CLI (hermes.exe) plus its child tree.
-            & taskkill /F /T /IM hermes.exe /FI "PID ne $myPid" 2>$null | Out-Null
-            # taskkill /IM hermes.exe is NOT enough: the gateway/agent that a
+            # The launcher CLI (auraforge.exe) plus its child tree.
+            & taskkill /F /T /IM auraforge.exe /FI "PID ne $myPid" 2>$null | Out-Null
+            # taskkill /IM auraforge.exe is NOT enough: the gateway/agent that a
             # scheduled task or watchdog autostarts runs as
             # `pythonw.exe -m auraforge_cli.main gateway run` straight out of
-            # venv\Scripts\, so its image name is python/pythonw, not hermes.exe.
+            # venv\Scripts\, so its image name is python/pythonw, not auraforge.exe.
             # That process holds the venv's .pyd files open and re-triggers the
             # access-denied failure. Select only roots whose executable lives
             # under this venv, then stop each root's whole process tree. Some
@@ -2899,7 +2899,7 @@ function Install-Dependencies {
         # UV_PROJECT_ENVIRONMENT pins the sync target to our venv\.
         # Without it, modern uv (>=0.5) ignores VIRTUAL_ENV for `sync`
         # and creates a sibling .venv\ inside the repo -- leaving venv\
-        # empty and producing the broken state where `hermes.exe` exists
+        # empty and producing the broken state where `auraforge.exe` exists
         # in the wrong directory and imports fail with ModuleNotFoundError.
         # (Mirrors the same flag in scripts/install.sh::install_deps.)
         $env:UV_PROJECT_ENVIRONMENT = "$InstallDir\venv"
@@ -3018,7 +3018,7 @@ except Exception:
     # Baseline-import gate. Even if a tier reported success above, the
     # actual deps may have landed somewhere other than $InstallDir\venv\
     # (e.g. uv 0.5+ syncing into a sibling .venv\ when UV_PROJECT_ENVIRONMENT
-    # isn't set, leaving venv\ empty and hermes.exe broken with
+    # isn't set, leaving venv\ empty and auraforge.exe broken with
     # `ModuleNotFoundError: No module named 'dotenv'` on first run).
     # We probe via the venv's own python so a misdirected sync is caught
     # here, not 30 seconds later when the user runs `hermes`.
@@ -3064,7 +3064,7 @@ except Exception:
     }
 
     if (-not $NoVenv) {
-        # uv on Windows can register hermes.exe in dist-info/RECORD but fail to
+        # uv on Windows can register auraforge.exe in dist-info/RECORD but fail to
         # materialise the .exe (file lock during self-update, distlib edge case).
         # Catch it here so a fresh install/update does not finish with a broken
         # `hermes` command while hermes-agent.exe / hermes-acp.exe exist
@@ -3158,10 +3158,10 @@ function Install-HermesCommandLaunchers {
     # Expose ONLY the hermes launchers on PATH -- never the whole
     # venv\Scripts directory, which contains python.exe / pip.exe and
     # silently hijacks the `python` command in every terminal (#83797).
-    # Requiring hermes.exe before creating the destination keeps the PATH
+    # Requiring auraforge.exe before creating the destination keeps the PATH
     # stage from reporting success with an unusable command (PR #92092).
     $scriptsDir = Join-Path $Root "venv\Scripts"
-    $requiredSource = Join-Path $scriptsDir "hermes.exe"
+    $requiredSource = Join-Path $scriptsDir "auraforge.exe"
     if (-not (Test-Path -LiteralPath $requiredSource -PathType Leaf)) {
         throw "Cannot set up the hermes command: required launcher not found: $requiredSource"
     }
@@ -3193,8 +3193,8 @@ function Install-HermesCommandLaunchers {
     }
 
     # Verify either staged form before the caller mutates PATH.
-    $requiredExe = Join-Path $Destination "hermes.exe"
-    $requiredCmd = Join-Path $Destination "hermes.cmd"
+    $requiredExe = Join-Path $Destination "auraforge.exe"
+    $requiredCmd = Join-Path $Destination "auraforge.cmd"
     if (-not ((Test-Path -LiteralPath $requiredExe -PathType Leaf) -or
               (Test-Path -LiteralPath $requiredCmd -PathType Leaf))) {
         throw "Cannot set up the hermes command: launcher was not installed: $requiredExe"
@@ -4544,7 +4544,7 @@ function Start-GatewayIfConfigured {
 
     if (-not $hasMessaging) { return }
 
-    $hermesCmd = "$InstallDir\venv\Scripts\hermes.exe"
+    $hermesCmd = "$InstallDir\venv\Scripts\auraforge.exe"
     if (-not (Test-Path $hermesCmd)) {
         $hermesCmd = "hermes"
     }

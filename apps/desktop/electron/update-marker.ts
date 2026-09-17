@@ -9,7 +9,7 @@
  * Why: if the user relaunches the desktop mid-update — the window vanished with
  * no progress and looks crashed — a fresh instance must NOT spawn its own local
  * backend. That backend re-locks the venv shim, the updater's straggler cleanup
- * (`force_kill_other_hermes`, taskkill /IM hermes.exe) kills it, the launch
+ * (`force_kill_other_auraforge`, taskkill /IM auraforge.exe) kills it, the launch
  * fails with the 45s "backend didn't come up" timeout, and the user relaunches
  * into the same trap — an infinite respawn/kill loop. The desktop gates local
  * backend startup on this marker and parks until the update finishes.
@@ -29,8 +29,8 @@ import path from 'path'
 // recycled the pid onto an unrelated process), so the gate self-heals.
 export const UPDATE_MARKER_MAX_AGE_MS = 20 * 60 * 1000
 
-export function markerPath(hermesHome) {
-  return path.join(hermesHome, '.auraforge-update-in-progress')
+export function markerPath(auraforgeHome) {
+  return path.join(auraforgeHome, '.auraforge-update-in-progress')
 }
 
 // True only if a host process with this pid is currently alive. Signal 0 does
@@ -64,7 +64,7 @@ export function isPidAlive(pid, kill: typeof process.kill = process.kill.bind(pr
  * clock for tests.
  */
 export function readLiveUpdateMarker(
-  hermesHome,
+  auraforgeHome,
   {
     kill,
     now = Date.now,
@@ -75,7 +75,7 @@ export function readLiveUpdateMarker(
     kill?: typeof process.kill
   } = {}
 ) {
-  const file = markerPath(hermesHome)
+  const file = markerPath(auraforgeHome)
   let raw
 
   try {
@@ -107,7 +107,7 @@ export function readLiveUpdateMarker(
  * Write the update-in-progress marker *from the desktop* before handing off
  * to the detached updater.
  *
- * The Tauri-based hermes-setup.exe takes several seconds to initialise its
+ * The Tauri-based auraforge-setup.exe takes several seconds to initialise its
  * window and reach the Rust `run_update` entry point where it writes the
  * marker itself. During that gap the desktop's `app.quit()` teardown kills
  * the backend child, the renderer's WebSocket drops, and the renderer
@@ -127,7 +127,7 @@ export function readLiveUpdateMarker(
  * real PID, so `readLiveUpdateMarker` will self-heal once that PID exits.
  */
 export function writeUpdateMarker(
-  hermesHome,
+  auraforgeHome,
   pid,
   {
     kill,
@@ -141,9 +141,9 @@ export function writeUpdateMarker(
     startedAt?: number
   } = {}
 ) {
-  const file = markerPath(hermesHome)
+  const file = markerPath(auraforgeHome)
   const nowMs = now()
-  const owner = readLiveUpdateMarker(hermesHome, { kill, maxAgeMs, now: () => nowMs })
+  const owner = readLiveUpdateMarker(auraforgeHome, { kill, maxAgeMs, now: () => nowMs })
 
   const acquiredAt =
     typeof startedAt === 'number' && Number.isInteger(startedAt)
@@ -180,14 +180,14 @@ export function writeUpdateMarker(
  * `readLiveUpdateMarker`.
  */
 export function updateHandoffConflict(
-  hermesHome,
+  auraforgeHome,
   opts: {
     now?: () => number
     maxAgeMs?: number
     kill?: typeof process.kill
   } = {}
 ) {
-  const owner = readLiveUpdateMarker(hermesHome, opts)
+  const owner = readLiveUpdateMarker(auraforgeHome, opts)
 
   if (!owner) {
     return null

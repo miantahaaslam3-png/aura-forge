@@ -409,8 +409,8 @@ import {
   buildPathExtCandidates,
   chooseUpdaterArgs,
   getVenvSitePackagesEntries,
-  resolveVenvHermesCommand
-} from './windows-hermes-path'
+  resolveVenvAuraforgeCommand
+} from './windows-auraforge-path'
 import {
   connectWindowsRemote,
   detectRemotePlatform,
@@ -2280,8 +2280,8 @@ function isCommandScript(command) {
   return IS_WINDOWS && /\.(cmd|bat)$/i.test(command || '')
 }
 
-function unwrapWindowsVenvHermesCommand(command, backendArgs) {
-  return resolveVenvHermesCommand(command, backendArgs, {
+function unwrapWindowsVenvAuraforgeCommand(command, backendArgs) {
+  return resolveVenvAuraforgeCommand(command, backendArgs, {
     isWindows: IS_WINDOWS,
     isCommandScript,
     fileExists,
@@ -3198,8 +3198,8 @@ function repairMacUpdaterHelper(updater) {
 // `hermes.exe` holds open; on POSIX it's never mandatory-locked.
 function venvHermesShimPath(updateRoot) {
   return IS_WINDOWS
-    ? path.join(updateRoot, 'venv', 'Scripts', 'hermes.exe')
-    : path.join(updateRoot, 'venv', 'bin', 'hermes')
+    ? path.join(updateRoot, 'venv', 'Scripts', 'auraforge.exe')
+    : path.join(updateRoot, 'venv', 'bin', 'auraforge')
 }
 
 // Best-effort lock probe mirroring the Rust updater's is_locked(): a running
@@ -4007,7 +4007,7 @@ async function handOffWindowsBootstrapRecovery(reason) {
     : configuredBranch || DEFAULT_UPDATE_BRANCH
 
   const venvBin = path.join(updateRoot, 'venv', IS_WINDOWS ? 'Scripts' : 'bin')
-  const venvHermes = path.join(venvBin, IS_WINDOWS ? 'hermes.exe' : 'hermes')
+  const venvHermes = path.join(venvBin, IS_WINDOWS ? 'auraforge.exe' : 'auraforge')
   const venvPython = path.join(venvBin, IS_WINDOWS ? 'python.exe' : 'python')
 
   // The updater invokes the venv's Aura Forge launcher, which in turn requires the
@@ -4724,7 +4724,7 @@ function resolveHermesBackend(backendArgs) {
     }
 
     if (hermesCommand) {
-      const unwrapped = unwrapWindowsVenvHermesCommand(hermesCommand, backendArgs)
+      const unwrapped = unwrapWindowsVenvAuraforgeCommand(hermesCommand, backendArgs)
 
       if (unwrapped) {
         return unwrapped
@@ -4746,7 +4746,7 @@ function resolveHermesBackend(backendArgs) {
       if (shouldTrustHermesOverride(hermesOverride) || verifyHermesCli(hermesCommand, { shell: shellForProbe })) {
         // `unwrapped` above already answered "is this a Windows venv shim?" —
         // it was null (not a shim, or its import probe failed). Do NOT re-run
-        // unwrapWindowsVenvHermesCommand here: the second call repeats the
+        // unwrapWindowsVenvAuraforgeCommand here: the second call repeats the
         // same un-memoized import probe, costing up to another full probe
         // timeout on the boot path for an answer we already have.
         return {
