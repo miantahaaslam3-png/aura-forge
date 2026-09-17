@@ -1,10 +1,10 @@
-// Unit tests for the pure Windows `hermes` resolution helpers extracted from
+// Unit tests for the pure Windows `auraforge` resolution helpers extracted from
 // main.ts's findOnPath(), handOffWindowsBootstrapRecovery(), and
 // unwrapWindowsVenvAuraforgeCommand(). These pin the two Windows resolution bugs
 // that caused desktop reinstall loops:
 //   1. buildPathExtCandidates() — PATHEXT extensions must be tried BEFORE the
-//      empty extension, or an extensionless Git-Bash `hermes` shim shadows
-//      the real hermes.cmd/hermes.exe.
+//      empty extension, or an extensionless Git-Bash `auraforge` shim shadows
+//      the real auraforge.cmd/auraforge.exe.
 //   2. chooseUpdaterArgs() — must distinguish a runnable updater from stale
 //      install provenance. The bootstrap marker can outlive the venv, and a
 //      partial venv cannot run the updater; those states require --repair.
@@ -94,7 +94,7 @@ function makeDeps(overrides: Partial<Parameters<typeof resolveVenvAuraforgeComma
     getVenvPython: (venvRoot: string) => `${venvRoot}/Scripts/python.exe`,
     getVenvSitePackagesEntries: () => [],
     buildDesktopBackendEnv: () => ({ FAKE_ENV: '1' }),
-    hermesHome: '/fake/hermes-home',
+    auraforgeHome: '/fake/auraforge-home',
     resolvePath: (...segments: string[]) => segments.join('/').replace(/\/+/g, '/'),
     dirname: (p: string) => p.slice(0, p.lastIndexOf('/')) || '/',
     basename: (p: string) => p.slice(p.lastIndexOf('/') + 1),
@@ -106,16 +106,16 @@ function makeDeps(overrides: Partial<Parameters<typeof resolveVenvAuraforgeComma
 test('resolveVenvAuraforgeCommand: returns null off Windows', () => {
   const deps = makeDeps({ isWindows: false })
 
-  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/hermes.exe', [], deps), null)
+  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/auraforge.exe', [], deps), null)
 })
 
 test('resolveVenvAuraforgeCommand: returns null for a .cmd/.bat script command', () => {
   const deps = makeDeps({ isCommandScript: () => true })
 
-  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/hermes.cmd', [], deps), null)
+  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/auraforge.cmd', [], deps), null)
 })
 
-test('resolveVenvAuraforgeCommand: returns null when the basename is not hermes/hermes.exe', () => {
+test('resolveVenvAuraforgeCommand: returns null when the basename is not auraforge/auraforge.exe', () => {
   const deps = makeDeps()
 
   assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/python.exe', [], deps), null)
@@ -124,13 +124,13 @@ test('resolveVenvAuraforgeCommand: returns null when the basename is not hermes/
 test('resolveVenvAuraforgeCommand: returns null when the parent dir is not Scripts', () => {
   const deps = makeDeps()
 
-  assert.equal(resolveVenvAuraforgeCommand('/root/venv/bin/hermes.exe', [], deps), null)
+  assert.equal(resolveVenvAuraforgeCommand('/root/venv/bin/auraforge.exe', [], deps), null)
 })
 
 test('resolveVenvAuraforgeCommand: returns null when the venv python does not exist on disk', () => {
   const deps = makeDeps({ fileExists: () => false })
 
-  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/hermes.exe', [], deps), null)
+  assert.equal(resolveVenvAuraforgeCommand('/root/venv/Scripts/auraforge.exe', [], deps), null)
 })
 
 test('resolveVenvAuraforgeCommand: probes the venv python before trusting it (returns null on failed probe)', () => {
@@ -145,7 +145,7 @@ test('resolveVenvAuraforgeCommand: probes the venv python before trusting it (re
     }
   })
 
-  const result = resolveVenvAuraforgeCommand('/root/venv/Scripts/hermes.exe', ['serve'], deps)
+  const result = resolveVenvAuraforgeCommand('/root/venv/Scripts/auraforge.exe', ['serve'], deps)
 
   assert.equal(probed, true, 'must probe the venv interpreter; a broken venv must not be re-selected forever')
   assert.equal(result, null, 'a failed probe must fall through (return null) so the resolver reaches bootstrap')
@@ -153,7 +153,7 @@ test('resolveVenvAuraforgeCommand: probes the venv python before trusting it (re
 
 test('resolveVenvAuraforgeCommand: returns the resolved python backend descriptor when the probe passes', () => {
   const deps = makeDeps()
-  const result = resolveVenvAuraforgeCommand('/root/venv/Scripts/hermes.exe', ['serve', '--port', '0'], deps)
+  const result = resolveVenvAuraforgeCommand('/root/venv/Scripts/auraforge.exe', ['serve', '--port', '0'], deps)
 
   assert.ok(result, 'a passing probe must return a backend descriptor, not null')
   assert.equal(result.command, '/root/venv/Scripts/python.exe')
@@ -164,11 +164,11 @@ test('resolveVenvAuraforgeCommand: returns the resolved python backend descripto
   assert.deepEqual(result.env, { FAKE_ENV: '1' })
 })
 
-test('resolveVenvAuraforgeCommand: is case-insensitive on hermes.exe and the Scripts dir name', () => {
+test('resolveVenvAuraforgeCommand: is case-insensitive on auraforge.exe and the Scripts dir name', () => {
   const deps = makeDeps()
 
   assert.ok(resolveVenvAuraforgeCommand('/root/venv/Scripts/HERMES.EXE', [], deps))
-  assert.ok(resolveVenvAuraforgeCommand('/root/venv/SCRIPTS/hermes.exe', [], deps))
+  assert.ok(resolveVenvAuraforgeCommand('/root/venv/SCRIPTS/auraforge.exe', [], deps))
 })
 
 // ── getVenvSitePackagesEntries ─────────────────────────────────────────────
