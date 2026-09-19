@@ -1,4 +1,4 @@
-import { registryBackendScopeKey } from '@hermes/shared'
+import { registryBackendScopeKey } from '@auraforge/shared'
 import { useCallback, useEffect, useRef } from 'react'
 
 import type { GatewayEventPayload } from '@/lib/chat-messages'
@@ -13,7 +13,7 @@ import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { replayPendingApproval } from '@/store/prompts'
 import { setSessionProviderWait } from '@/store/provider-wait'
 import { setSessionDraftingTool } from '@/store/tool-drafting'
-import type { RpcEvent } from '@/types/hermes'
+import type { RpcEvent } from '@/types/auraforge'
 
 import { handleDesktopBridgeEvent } from './desktop-bridge'
 import { handleInputRequestEvent } from './input-requests'

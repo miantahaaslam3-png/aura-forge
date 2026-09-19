@@ -29,7 +29,7 @@ beforeAll(() => {
 
 const getGlobalModelOptions = vi.fn()
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getGlobalModelOptions: (...args: unknown[]) => getGlobalModelOptions(...args),
   setApiRequestProfile: vi.fn()
 }))

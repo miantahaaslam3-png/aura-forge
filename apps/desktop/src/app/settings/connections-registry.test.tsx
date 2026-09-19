@@ -55,7 +55,7 @@ beforeEach(() => {
   setLaunchMode.mockResolvedValue({ ok: true, registry: { ...registry, launchMode: 'last-used' } })
   setPrimary.mockResolvedValue({ ok: true, registry: { ...registry, primary: 'homelab' } })
   test.mockResolvedValue({ ok: true, reachable: true })
-  Object.defineProperty(window, 'hermesDesktop', {
+  Object.defineProperty(window, 'auraForgeDesktop', {
     configurable: true,
     value: { connections: { list, remove, save, setLaunchMode, setPrimary, test } }
   })

@@ -17,7 +17,7 @@ import {
   selectToolsetProvider,
   setEnvVar,
   startOAuthLogin
-} from '@/hermes'
+} from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { Check, Loader2, Save, Terminal } from '@/lib/icons'
 import { cn } from '@/lib/utils'
@@ -31,7 +31,7 @@ import type {
   ToolProviderStatus,
   ToolsetConfig,
   ToolsetModelsResponse
-} from '@/types/hermes'
+} from '@/types/auraforge'
 
 import { EnvVarActionsMenu, EnvVarActionsTrigger, EnvVarContextMenu } from './env-var-actions-menu'
 import { Pill } from './primitives'
@@ -653,9 +653,9 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
 
       const url = start.verification_url
 
-      if (window.hermesDesktop?.openExternal) {
+      if (window.auraForgeDesktop?.openExternal) {
         try {
-          await window.hermesDesktop.openExternal(url)
+          await window.auraForgeDesktop.openExternal(url)
         } catch {
           window.open(url, '_blank', 'noopener,noreferrer')
         }

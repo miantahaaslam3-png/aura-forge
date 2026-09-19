@@ -23,7 +23,7 @@ import {
   getMcpCatalog,
   getMcpOAuthFlow,
   getUsageAnalytics,
-  type HermesGateway,
+  type AuraForgeGateway,
   installMcpCatalogEntry,
   type McpCatalogEntry,
   type McpTestResult,
@@ -31,7 +31,7 @@ import {
   profileScopeKey,
   saveMcpServers,
   testMcpServer
-} from '@/hermes'
+} from '@/auraforge'
 import { type Translations, useI18n } from '@/i18n'
 import { compactNumber } from '@/lib/format'
 import { brandFor } from '@/lib/mcp-brands'
@@ -347,7 +347,7 @@ function scanServerBlocks(text: string): ServerBlock[] {
   return blocks
 }
 
-export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; profile?: ProfileScope }) {
+export function McpTab({ gateway, profile }: { gateway: AuraForgeGateway | null; profile?: ProfileScope }) {
   const { t } = useI18n()
   const m = t.settings.mcp
   const activeSessionId = useStore($activeSessionId)
@@ -613,7 +613,7 @@ export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; pr
         serverName,
         start: name => authMcpServer(name, profile ?? undefined),
         status: flowId => getMcpOAuthFlow(flowId, profile ?? undefined),
-        openExternal: url => window.hermesDesktop.openExternal(url)
+        openExternal: url => window.auraForgeDesktop.openExternal(url)
       })
 
       const result: McpTestResult = { ok: true, tools: flow.tools ?? [] }

@@ -22,7 +22,7 @@ import { ListRow, SectionHeading, SettingsContent } from './primitives'
 import { UninstallSection } from './uninstall-section'
 
 const RELEASE_NOTES_URL = 'https://github.com/miantahaaslam3-png/aura-forge/releases'
-const INSTALLER_URL = 'https://hermes-agent.nousresearch.com/'
+const INSTALLER_URL = 'https:./auraforge-agent.nousresearch.com/'
 
 function relativeTime(ms: number | undefined, a: Translations['settings']['about']) {
   if (!ms) {
@@ -119,7 +119,7 @@ export function AboutSettings() {
                     href={INSTALLER_URL}
                     onClick={event => {
                       event.preventDefault()
-                      void window.hermesDesktop?.openExternal?.(INSTALLER_URL)
+                      void window.auraForgeDesktop?.openExternal?.(INSTALLER_URL)
                     }}
                     rel="noreferrer"
                     target="_blank"
@@ -187,7 +187,7 @@ export function AboutSettings() {
                 href={RELEASE_NOTES_URL}
                 onClick={event => {
                   event.preventDefault()
-                  void window.hermesDesktop?.openExternal?.(RELEASE_NOTES_URL)
+                  void window.auraForgeDesktop?.openExternal?.(RELEASE_NOTES_URL)
                 }}
                 rel="noreferrer"
                 target="_blank"

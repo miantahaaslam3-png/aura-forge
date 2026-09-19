@@ -121,7 +121,7 @@ export interface Translations {
       loadingSessions: string
       retryingRemoteBackend: string
       startingDesktopConnection: string
-      startingHermesDesktop: string
+      startingAuraForgeDesktop: string
     }
     errors: {
       backgroundExited: string

@@ -24,7 +24,7 @@ vi.mock('@/store/gateway', () => ({
   ensureGatewayForProfile,
   openGatewayForProfile
 }))
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getProfiles: vi.fn(async () => ({ profiles: [] })),
   setApiRequestProfile: vi.fn()
 }))
@@ -123,7 +123,7 @@ describe('selectProfile startup preference (#79886)', () => {
     const getConnectionConfig = vi.fn(async () => ({ mode: 'local' }))
 
     ;(globalThis as { window?: unknown }).window = {
-      hermesDesktop: {
+      auraForgeDesktop: {
         getConnection,
         getConnectionConfig,
         profile: { remember: rememberProfile }
@@ -188,7 +188,7 @@ describe('selectProfile startup preference (#79886)', () => {
     const getConnectionConfig = vi.fn(async () => ({ mode: 'local' }))
 
     ;(globalThis as { window?: unknown }).window = {
-      hermesDesktop: {
+      auraForgeDesktop: {
         getConnection,
         getConnectionConfig,
         profile: { remember: rememberProfile }
@@ -209,7 +209,7 @@ describe('selectProfile startup preference (#79886)', () => {
     const getConnectionConfig = vi.fn(async () => ({ mode: 'ssh' }))
 
     ;(globalThis as { window?: unknown }).window = {
-      hermesDesktop: {
+      auraForgeDesktop: {
         getConnection,
         getConnectionConfig,
         profile: { remember: rememberProfile }

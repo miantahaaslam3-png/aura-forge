@@ -11,13 +11,13 @@ import type { HermesConnection } from '@/global'
 //  2. A registry-agent activation routes it to the agent's SOURCE connection
 //     (getConnectionFor), not the local pool — the post-#87600 shape.
 
-vi.mock('@/hermes', async importOriginal => {
+vi.mock('@/auraforge', async importOriginal => {
   const actual = await importOriginal<Record<string, unknown>>()
 
   return {
     ...actual,
     // Stub only the socket class so gateway activations don't dial real WS.
-    HermesGateway: class {
+    AuraForgeGateway: class {
       connectionState = 'closed'
       connect = async (_wsUrl: string): Promise<void> => {
         this.connectionState = 'open'
@@ -33,7 +33,7 @@ vi.mock('@/hermes', async importOriginal => {
 vi.mock('@/lib/query-client', () => ({ invalidateProfileScopedQueries: vi.fn() }))
 vi.mock('@/store/starmap', () => ({ resetStarmapGraph: vi.fn() }))
 
-const { pluginSocket, setApiRequestConnection, setApiRequestProfile } = await import('@/hermes')
+const { pluginSocket, setApiRequestConnection, setApiRequestProfile } = await import('@/auraforge')
 const { closeSecondaryGateways, configureGatewayRegistry, setPrimaryGateway } = await import('@/store/gateway')
 const { $activeGatewayProfile, ensureGatewayAgent, ensureGatewayProfile } = await import('@/store/profile')
 
@@ -57,7 +57,7 @@ beforeEach(() => {
   getConnectionFor = vi.fn(async ({ profile }: { connectionId?: null | string; profile?: null | string }) =>
     conn({ baseUrl: 'https://homelab.invalid', profile: profile ?? 'default' })
   )
-  Object.defineProperty(window, 'hermesDesktop', {
+  Object.defineProperty(window, 'auraForgeDesktop', {
     configurable: true,
     value: {
       getConnection,
@@ -76,7 +76,7 @@ afterEach(() => {
   $activeGatewayProfile.set('default')
   setApiRequestProfile(null)
   setApiRequestConnection(null)
-  Reflect.deleteProperty(window, 'hermesDesktop')
+  Reflect.deleteProperty(window, 'auraForgeDesktop')
   vi.restoreAllMocks()
 })
 

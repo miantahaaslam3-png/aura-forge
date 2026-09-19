@@ -101,7 +101,7 @@ export const reviewRepoCwd = (): null | string => $reviewScopeCwd.get()?.trim() 
 
 const repoCwd = reviewRepoCwd
 
-type ReviewBridge = NonNullable<NonNullable<NonNullable<Window['hermesDesktop']>['git']>['review']>
+type ReviewBridge = NonNullable<NonNullable<NonNullable<Window['auraForgeDesktop']>['git']>['review']>
 let reviewRefreshSeq = 0
 let reviewRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let shipInfoSeq = 0
@@ -535,7 +535,7 @@ export async function createOrOpenPr(): Promise<void> {
   const existing = $reviewShipInfo.get().pr
 
   if (existing?.url) {
-    void window.hermesDesktop?.openExternal?.(existing.url)
+    void window.auraForgeDesktop?.openExternal?.(existing.url)
 
     return
   }
@@ -544,7 +544,7 @@ export async function createOrOpenPr(): Promise<void> {
     const { url } = await ctx.review.createPr(ctx.cwd)
 
     if (url) {
-      void window.hermesDesktop?.openExternal?.(url)
+      void window.auraForgeDesktop?.openExternal?.(url)
     }
 
     // The session recorded its branch when it started; the checkout may have

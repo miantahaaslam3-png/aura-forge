@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ClientSessionState } from '@/app/types'
 import { createClientSessionState } from '@/lib/chat-runtime'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 const setUnreadRemote = vi.fn<(id: string, unread: boolean, profile?: null | string) => Promise<{ ok: boolean }>>(() =>
   Promise.resolve({ ok: true })
 )
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   // Opening a session now PATCHes its persisted unread flag (clearUnreadOnOpen
   // -> markSessionUnread); keep the REST mutation minimal for the suite.
   setApiRequestProfile: () => {},
@@ -608,7 +608,7 @@ describe('workspaceCwdForNewSession', () => {
     window.localStorage.removeItem('hermes.desktop.workspace-cwd')
     window.localStorage.removeItem('hermes.desktop.workspace-cwd.remote.http%3A%2F%2Fbackend-a.default')
     window.localStorage.removeItem('hermes.desktop.workspace-cwd.remote.http%3A%2F%2Fbackend-b.default')
-    delete (window as { hermesDesktop?: unknown }).hermesDesktop
+    delete (window as { auraForgeDesktop?: unknown }).auraForgeDesktop
   })
 
   it('does not publish a delayed configured default after ownership is lost', async () => {
@@ -620,7 +620,7 @@ describe('workspaceCwdForNewSession', () => {
 
     const sanitizeWorkspaceCwd = vi.fn(async (cwd: string) => ({ cwd }))
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = {
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = {
       sanitizeWorkspaceCwd,
       settings: { getDefaultProjectDir: vi.fn(() => settingsResult.promise) }
     }
@@ -640,7 +640,7 @@ describe('workspaceCwdForNewSession', () => {
   it('does not publish a delayed sanitized cwd after ownership is lost', async () => {
     const sanitized = deferred<{ cwd: string }>()
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = {
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = {
       sanitizeWorkspaceCwd: vi.fn(() => sanitized.promise),
       settings: {
         getDefaultProjectDir: vi.fn(async () => ({

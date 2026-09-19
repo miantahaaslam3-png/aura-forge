@@ -9,7 +9,7 @@ import {
   listAllProfileSessions,
   saveHermesConfig,
   setSessionArchived
-} from '@/hermes'
+} from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { pathLeaf } from '@/lib/display-path'
@@ -20,7 +20,7 @@ import { notify, notifyError } from '@/store/notifications'
 import { untombstoneSessions } from '@/store/projects'
 import { applyConfiguredDefaultProjectDir, ensureDefaultWorkspaceCwd, setSessions } from '@/store/session'
 import { forgetSessionUnread } from '@/store/session-unread'
-import type { HermesConfigRecord, SessionInfo } from '@/types/hermes'
+import type { HermesConfigRecord, SessionInfo } from '@/types/auraforge'
 
 import { EmptyState, ListRow, SectionHeading, SettingsContent, SettingsSkeleton, ToggleRow } from './primitives'
 import { useDeepLinkHighlight } from './use-deep-link-highlight'
@@ -196,7 +196,7 @@ function AutoArchiveSetting() {
   useEffect(() => {
     // Config REST is only reachable through the Electron bridge; skip in
     // non-Electron contexts (tests/storybook) rather than throwing.
-    if (!window.hermesDesktop) {
+    if (!window.auraForgeDesktop) {
       return
     }
 
@@ -299,11 +299,11 @@ function DefaultProjectDirSetting() {
 
   useEffect(() => {
     // The bridge is only present when running inside Electron. In a Vitest
-    // / Storybook / non-Electron context `window.hermesDesktop` is
+    // / Storybook / non-Electron context `window.auraForgeDesktop` is
     // undefined, so guard the WHOLE call chain rather than chaining
     // `?.settings.getDefaultProjectDir().then(...)` (the latter would
     // short-circuit to `undefined.then(...)` and throw at runtime).
-    const settings = window.hermesDesktop?.settings
+    const settings = window.auraForgeDesktop?.settings
 
     if (!settings) {
       return
@@ -327,7 +327,7 @@ function DefaultProjectDirSetting() {
   }, [])
 
   const choose = useCallback(async () => {
-    const settings = window.hermesDesktop?.settings
+    const settings = window.auraForgeDesktop?.settings
 
     if (!settings) {
       return
@@ -354,7 +354,7 @@ function DefaultProjectDirSetting() {
   }, [s])
 
   const clear = useCallback(async () => {
-    const settings = window.hermesDesktop?.settings
+    const settings = window.auraForgeDesktop?.settings
 
     if (!settings) {
       return

@@ -83,8 +83,8 @@ const fixtures: FixtureTurn[] = [
   ]),
   turn(3, 'tools', [
     {
-      args: { path: '/tmp/hermes-short-session-fixture.txt' },
-      argsText: '{"path":"/tmp/hermes-short-session-fixture.txt"}',
+      args: { path: '/tm./auraforge-short-session-fixture.txt' },
+      argsText: '{"path":"/tm./auraforge-short-session-fixture.txt"}',
       result: { content: 'deterministic fixture output', ok: true },
       toolCallId: 'short-session-tool-3',
       toolName: 'read_file',

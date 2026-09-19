@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getHermesConfigRecord: vi.fn(async () => ({})),
   saveHermesConfig: vi.fn(async () => undefined)
 }))

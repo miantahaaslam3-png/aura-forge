@@ -358,9 +358,9 @@ test('renderer crash-loop relaunch requires the sandbox breakpoint signature', (
 })
 
 test('buildNoSandboxRelaunchArgs appends a single --no-sandbox flag', () => {
-  assert.deepEqual(buildNoSandboxRelaunchArgs(['--foo', '--no-sandbox', 'hermes://x']), [
+  assert.deepEqual(buildNoSandboxRelaunchArgs(['--foo', '--no-sandbox', 'auraforge://x']), [
     '--foo',
-    'hermes://x',
+    'auraforge://x',
     '--no-sandbox'
   ])
 })

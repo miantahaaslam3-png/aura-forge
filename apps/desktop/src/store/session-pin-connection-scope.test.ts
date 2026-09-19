@@ -3,13 +3,13 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import type { HermesConnection } from '@/global'
 import { connectionScopeSuffix } from '@/lib/connection-scoped'
 import { readKey, storedStringArray, writeKey } from '@/lib/storage'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 const patch = vi.fn<(id: string, pinned: boolean, profile?: null | string) => Promise<{ ok: boolean }>>(() =>
   Promise.resolve({ ok: true })
 )
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   setApiRequestProfile: () => {},
   setSessionPinnedRemote: (id: string, pinned: boolean, profile?: null | string) => patch(id, pinned, profile)
 }))
@@ -37,7 +37,7 @@ const flush = () => Promise.resolve()
 
 beforeAll(() => {
   ;(globalThis as { window?: unknown }).window ??= {}
-  ;(window as unknown as { hermesDesktop: unknown }).hermesDesktop = {}
+  ;(window as unknown as { auraForgeDesktop: unknown }).auraForgeDesktop = {}
   watchSessionPins()
 })
 

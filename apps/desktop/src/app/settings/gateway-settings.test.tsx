@@ -24,7 +24,7 @@ const localConnection = {
 beforeEach(() => {
   getConnectionConfig.mockResolvedValue(localConnection)
   saveConnectionConfig.mockResolvedValue(localConnection)
-  Object.defineProperty(window, 'hermesDesktop', {
+  Object.defineProperty(window, 'auraForgeDesktop', {
     configurable: true,
     value: { getConnectionConfig, saveConnectionConfig }
   })

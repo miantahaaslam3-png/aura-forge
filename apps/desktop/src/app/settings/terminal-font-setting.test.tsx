@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn()
 }))
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   saveHermesConfig: (config: Record<string, unknown>) => mocks.save(config)
 }))
 

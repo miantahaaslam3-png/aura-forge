@@ -71,7 +71,7 @@ export function BootFailureOverlay() {
       return
     }
 
-    void window.hermesDesktop
+    void window.auraForgeDesktop
       ?.getRecentLogs()
       .then(res => setLogs(res.lines ?? []))
       .catch(() => undefined)
@@ -93,7 +93,7 @@ export function BootFailureOverlay() {
     let cancelled = false
 
     void (async () => {
-      const desktop = window.hermesDesktop
+      const desktop = window.auraForgeDesktop
 
       if (!desktop?.getConnectionConfig) {
         return
@@ -146,20 +146,20 @@ export function BootFailureOverlay() {
 
   const retry = async () => {
     setBusy('retry')
-    await window.hermesDesktop?.resetBootstrap().catch(() => undefined)
+    await window.auraForgeDesktop?.resetBootstrap().catch(() => undefined)
     window.location.reload()
   }
 
   const repair = async () => {
     setBusy('repair')
-    await window.hermesDesktop?.repairBootstrap().catch(() => undefined)
+    await window.auraForgeDesktop?.repairBootstrap().catch(() => undefined)
     window.location.reload()
   }
 
   const switchToLocalGateway = async () => {
     setBusy('local')
     // Soft apply: tears down the primary and re-dials in place (shell stays).
-    await window.hermesDesktop?.applyConnectionConfig({ mode: 'local' }).catch(() => undefined)
+    await window.auraForgeDesktop?.applyConnectionConfig({ mode: 'local' }).catch(() => undefined)
     setBusy(null)
   }
 
@@ -175,7 +175,7 @@ export function BootFailureOverlay() {
     setBusy('signin')
 
     try {
-      const desktop = window.hermesDesktop
+      const desktop = window.auraForgeDesktop
 
       await desktop?.oauthLogoutConnectionConfig?.(remoteReauth.url)
 
@@ -226,7 +226,7 @@ export function BootFailureOverlay() {
     }
   }
 
-  const openLogs = () => void window.hermesDesktop?.revealLogs().catch(() => undefined)
+  const openLogs = () => void window.auraForgeDesktop?.revealLogs().catch(() => undefined)
   const copy = t.boot.failure
 
   const label = signInLabel(remoteReauth, {

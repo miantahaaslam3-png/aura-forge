@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { TerminalBackendsResponse } from '@/types/hermes'
+import type { TerminalBackendsResponse } from '@/types/auraforge'
 
 const getTerminalBackends = vi.fn()
 const selectTerminalBackend = vi.fn()
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getTerminalBackends: () => getTerminalBackends(),
   selectTerminalBackend: (backend: string) => selectTerminalBackend(backend)
 }))

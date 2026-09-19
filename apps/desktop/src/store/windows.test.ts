@@ -10,8 +10,8 @@ import {
   openSessionInNewWindow
 } from './windows'
 
-const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
-const initialHermesDesktop = desktopWindow.hermesDesktop
+const desktopWindow = window as unknown as { auraForgeDesktop?: Window['auraForgeDesktop'] }
+const initialHermesDesktop = desktopWindow.auraForgeDesktop
 
 const notifyError = vi.fn()
 
@@ -20,15 +20,15 @@ vi.mock('./notifications', () => ({
 }))
 
 function installBridge(
-  openSessionWindow?: Window['hermesDesktop']['openSessionWindow'],
-  openWindow?: Window['hermesDesktop']['openWindow'],
-  openBrowserWindow?: Window['hermesDesktop']['openBrowserWindow']
+  openSessionWindow?: Window['auraForgeDesktop']['openSessionWindow'],
+  openWindow?: Window['auraForgeDesktop']['openWindow'],
+  openBrowserWindow?: Window['auraForgeDesktop']['openBrowserWindow']
 ) {
-  desktopWindow.hermesDesktop = {
+  desktopWindow.auraForgeDesktop = {
     ...(openSessionWindow ? { openSessionWindow } : {}),
     ...(openWindow ? { openWindow } : {}),
     ...(openBrowserWindow ? { openBrowserWindow } : {})
-  } as unknown as Window['hermesDesktop']
+  } as unknown as Window['auraForgeDesktop']
 }
 
 beforeEach(() => {
@@ -37,15 +37,15 @@ beforeEach(() => {
 
 afterEach(() => {
   if (initialHermesDesktop) {
-    desktopWindow.hermesDesktop = initialHermesDesktop
+    desktopWindow.auraForgeDesktop = initialHermesDesktop
   } else {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
   }
 })
 
 describe('canOpenSessionWindow', () => {
   it('is false when the desktop bridge is absent', () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
     expect(canOpenSessionWindow()).toBe(false)
   })
 
@@ -81,7 +81,7 @@ describe('openSessionInNewWindow', () => {
   })
 
   it('no-ops gracefully when the bridge is absent (web fallback)', async () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
 
     await openSessionInNewWindow('s1')
 
@@ -127,7 +127,7 @@ describe('openSessionInNewWindow', () => {
 
 describe('canOpenNewWindow', () => {
   it('is false when the desktop bridge is absent', () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
     expect(canOpenNewWindow()).toBe(false)
   })
 
@@ -144,7 +144,7 @@ describe('canOpenNewWindow', () => {
 
 describe('openNewWindow', () => {
   it('no-ops gracefully when the bridge is absent (web fallback)', async () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
 
     await openNewWindow()
 
@@ -180,7 +180,7 @@ describe('openNewWindow', () => {
 
 describe('canOpenBrowserWindow', () => {
   it('is false when the desktop bridge is absent', () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
     expect(canOpenBrowserWindow()).toBe(false)
   })
 
@@ -206,7 +206,7 @@ describe('openBrowserInNewWindow', () => {
   })
 
   it('returns false when the bridge is absent', async () => {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
 
     expect(await openBrowserInNewWindow('tab-1')).toBe(false)
     expect(notifyError).not.toHaveBeenCalled()

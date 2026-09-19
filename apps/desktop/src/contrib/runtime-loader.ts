@@ -3,8 +3,8 @@
  * build time. The pipeline every non-bundled plugin takes:
  *
  *   source (plain ESM js) -> [integrity check] -> bare-specifier rewrite
- *   (`@hermes/plugin-sdk` / `react*` -> live shim blobs, see sdk/runtime.ts)
- *   -> blob `import()` -> validate default HermesPlugin -> register(ctx)
+ *   (`@auraforge/plugin-sdk` / `react*` -> live shim blobs, see sdk/runtime.ts)
+ *   -> blob `import()` -> validate default AuraForgePlugin -> register(ctx)
  *
  * Loading the same plugin id again disposes the previous registrations first
  * (agent rewrites a plugin file -> clean reload). Failures toast + log; a
@@ -31,7 +31,7 @@
 import { installPluginSdk, sdkImportMap } from '@/sdk/runtime'
 import { notifyError } from '@/store/notifications'
 
-import { createPluginContext, type HermesPlugin } from './plugin'
+import { createPluginContext, type AuraForgePlugin } from './plugin'
 import { $pluginRecords, dropPlugin, pluginActive, type PluginKind, publishPlugin } from './plugins-store'
 
 interface LoadOptions {
@@ -56,7 +56,7 @@ const loaded = new Map<string, (() => void)[]>()
 // literal or comment (e.g. `notify('react')`) is never touched.
 const importSpecifierRe = () => /(from\s*|import\s*\(\s*|import\s+)(['"])([^'"]+)\2/g
 
-/** Rewrite ONLY mapped import specifiers (@hermes/plugin-sdk, react*) to their
+/** Rewrite ONLY mapped import specifiers (@auraforge/plugin-sdk, react*) to their
  *  live shim blob URLs — never occurrences inside strings/comments. */
 function rewriteSpecifiers(source: string): string {
   const map = sdkImportMap()
@@ -122,13 +122,13 @@ export async function loadRuntimePlugin(
     if (unsupported.length > 0) {
       throw new Error(
         `unsupported import${unsupported.length > 1 ? 's' : ''}: ${unsupported.join(', ')} — ` +
-          `runtime plugins may only import @hermes/plugin-sdk and react`
+          `runtime plugins may only import @auraforge/plugin-sdk and react`
       )
     }
 
     const url = URL.createObjectURL(new Blob([rewriteSpecifiers(source)], { type: 'text/javascript' }))
 
-    let mod: { default?: HermesPlugin }
+    let mod: { default?: AuraForgePlugin }
 
     try {
       mod = await import(/* @vite-ignore */ url)
@@ -139,11 +139,11 @@ export async function loadRuntimePlugin(
     const plugin = mod.default
 
     if (!plugin?.id || typeof plugin.register !== 'function') {
-      throw new Error(`${origin} has no valid default HermesPlugin export`)
+      throw new Error(`${origin} has no valid default AuraForgePlugin export`)
     }
 
     // A disk/runtime copy of a plugin that now ships BUNDLED (e.g. a
-    // standalone install of hermes-bots predating its adoption in-tree) must
+    // standalone install of auraforge-bots predating its adoption in-tree) must
     // not register a second time: contributions would double up and the two
     // copies would fight over storage. The bundled copy wins; the disk copy
     // is skipped — but VISIBLY: a silent skip left the stale folder
@@ -243,7 +243,7 @@ interface DiskRoot {
  *  backend's hermes_home — #66899). `agentPluginsRoot` is optional: older
  *  shells predate it and the unified-package half simply doesn't scan. */
 async function diskRoots(): Promise<DiskRoot[]> {
-  const desktop = window.hermesDesktop
+  const desktop = window.auraForgeDesktop
 
   if (!desktop) {
     return []
@@ -308,7 +308,7 @@ class PluginSourceOversizeError extends Error {}
  *  the preview read, which silently truncates at 512 KiB — there the read
  *  fails loudly instead of handing a partial file to the evaluator. */
 async function readPluginSourceText(file: string): Promise<string> {
-  const desktop = window.hermesDesktop!
+  const desktop = window.auraForgeDesktop!
 
   if (desktop.readPluginSource) {
     return (await desktop.readPluginSource(file)).text
@@ -382,7 +382,7 @@ async function loadDiskPlugin(entry: DiskPlugin): Promise<boolean> {
 }
 
 async function resolveDiskPluginEntry(
-  desktop: Window['hermesDesktop'],
+  desktop: Window['auraForgeDesktop'],
   folderPath: string,
   segments: readonly string[]
 ): Promise<string | null> {
@@ -413,7 +413,7 @@ async function resolveDiskPluginEntry(
 }
 
 async function scanDiskPlugins(): Promise<void> {
-  const desktop = window.hermesDesktop
+  const desktop = window.auraForgeDesktop
 
   // Re-entrancy guard: the 5s poll must not overlap a slow in-flight scan
   // (reads/loads can exceed the interval).
@@ -517,7 +517,7 @@ export const discoverRuntimePlugins = scanDiskPlugins
 /** Start the self-maintaining disk door: initial scan, per-file hot reload,
  *  fs-watched folder reconciliation (poll fallback on older shells). Idempotent. */
 export function watchRuntimePlugins(): void {
-  const desktop = window.hermesDesktop
+  const desktop = window.auraForgeDesktop
 
   if (watching || !desktop) {
     return

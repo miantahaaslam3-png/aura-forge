@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { $desktopOnboarding, type DesktopOnboardingState, type OnboardingContext } from '@/store/onboarding'
 import { makeOAuthProvider } from '@/test/oauth-provider'
-import type { OAuthProvider } from '@/types/hermes'
+import type { OAuthProvider } from '@/types/auraforge'
 
 import { Picker } from '.'
 

@@ -28,12 +28,12 @@ export function registerFsIpc({
   directoryExists,
   resolveGitBinary
 }: FsIpcDeps) {
-  ipcMain.handle('hermes:fs:readDir', async (_event, dirPath) => readDirForIpc(dirPath))
+  ipcMain.handle('auraforge:fs:readDir', async (_event, dirPath) => readDirForIpc(dirPath))
 
-  ipcMain.handle('hermes:fs:gitRoot', async (_event, startPath) => gitRootForIpc(startPath))
+  ipcMain.handle('auraforge:fs:gitRoot', async (_event, startPath) => gitRootForIpc(startPath))
 
   // Reveal a path in the OS file manager (Finder / Explorer / Files).
-  ipcMain.handle('hermes:fs:reveal', async (_event, targetPath) => {
+  ipcMain.handle('auraforge:fs:reveal', async (_event, targetPath) => {
     const target = String(targetPath || '').trim()
 
     if (!target) {
@@ -54,7 +54,7 @@ export function registerFsIpc({
   // path — the "Open plugins folder" Windows bug), this is for the plugins door,
   // which often doesn't exist on first use. `shell.openPath` returns '' on
   // success or an error string; both mkdir + openPath failures are surfaced.
-  ipcMain.handle('hermes:fs:openDir', async (_event, dirPath) => {
+  ipcMain.handle('auraforge:fs:openDir', async (_event, dirPath) => {
     const dir = String(dirPath || '').trim()
 
     if (!dir) {
@@ -96,22 +96,22 @@ export function registerFsIpc({
     return dir
   }
 
-  ipcMain.handle('hermes:fs:desktopPluginsRoot', async () => localPluginsRoot('desktop-plugins'))
+  ipcMain.handle('auraforge:fs:desktopPluginsRoot', async () => localPluginsRoot('desktop-plugins'))
 
   // The LOCAL logs root (`<HERMES_HOME>/logs`, profile-aware) — the error
   // card's "Open Logs" action reveals agent.log/gateway.log without the user
   // knowing where HERMES_HOME lives. Same Electron-local resolution as the
   // plugin roots: valid in every connection mode, created on demand.
-  ipcMain.handle('hermes:fs:logsRoot', async () => localPluginsRoot('logs'))
+  ipcMain.handle('auraforge:fs:logsRoot', async () => localPluginsRoot('logs'))
 
   // The LOCAL agent-plugin root (`<HERMES_HOME>/plugins`), same Electron-local
   // resolution as above. This is the desktop half of a UNIFIED plugin package:
   // an agent plugin may ship `desktop/plugin.js` alongside its Python code (the
   // same shape as `dashboard/manifest.json`), and the renderer's disk door scans
   // this root for it — one installable folder serving both SDKs.
-  ipcMain.handle('hermes:fs:agentPluginsRoot', async () => localPluginsRoot('plugins'))
+  ipcMain.handle('auraforge:fs:agentPluginsRoot', async () => localPluginsRoot('plugins'))
 
-  ipcMain.handle('hermes:plugin:probe', async (_event, payload) => {
+  ipcMain.handle('auraforge:plugin:probe', async (_event, payload) => {
     const identifier = String(payload?.identifier || payload?.repo || '').trim()
 
     if (!identifier) {
@@ -121,7 +121,7 @@ export function registerFsIpc({
     return probePluginRepo(resolveGitBinary(), identifier)
   })
 
-  ipcMain.handle('hermes:plugin:installDesktop', async (_event, payload) => {
+  ipcMain.handle('auraforge:plugin:installDesktop', async (_event, payload) => {
     const identifier = String(payload?.identifier || payload?.repo || '').trim()
 
     if (!identifier) {
@@ -136,7 +136,7 @@ export function registerFsIpc({
   // Rename a file/folder in place. The renderer passes the existing path + a new
   // base name; the destination is resolved in the SAME parent dir so a rename can
   // never move the item elsewhere or traverse out. Rejects on a name collision.
-  ipcMain.handle('hermes:fs:rename', async (_event, targetPath, newName) => {
+  ipcMain.handle('auraforge:fs:rename', async (_event, targetPath, newName) => {
     const src = String(targetPath || '').trim()
     const name = String(newName || '').trim()
 
@@ -163,7 +163,7 @@ export function registerFsIpc({
   // is hardened (resolveRequestedPathForIpc) and the parent must already exist —
   // this never creates directory trees or escapes the allowed roots, and content
   // is size-capped so it can't be abused as a bulk-write primitive.
-  ipcMain.handle('hermes:fs:writeText', async (_event, filePath, content) => {
+  ipcMain.handle('auraforge:fs:writeText', async (_event, filePath, content) => {
     const raw = String(filePath || '').trim()
 
     if (!raw) {
@@ -189,7 +189,7 @@ export function registerFsIpc({
 
   // Move a file/folder to the OS trash (recoverable) — the VS Code "Delete"
   // default. `shell.trashItem` routes to Finder/Explorer/Files trash per platform.
-  ipcMain.handle('hermes:fs:trash', async (_event, targetPath) => {
+  ipcMain.handle('auraforge:fs:trash', async (_event, targetPath) => {
     const target = String(targetPath || '').trim()
 
     if (!target) {

@@ -73,7 +73,7 @@ export const ja = defineLocale({
       loadingSessions: '最近のセッションを読み込み中',
       retryingRemoteBackend: 'リモート Aura Forge バックエンドに再接続中…',
       startingDesktopConnection: 'デスクトップ接続を開始中',
-      startingHermesDesktop: 'Aura Forge Desktop を起動中…'
+      startingAuraForgeDesktop: 'Aura Forge Desktop を起動中…'
     },
     errors: {
       backgroundExited: 'Aura Forge バックグラウンドプロセスが終了しました。',
@@ -812,7 +812,7 @@ export const ja = defineLocale({
         'このデスクトップシェルをリモートの Aura Forge バックエンドに接続します。ホスト型ゲートウェイは OAuth またはユーザー名とパスワードを使用します。自己ホスト型はセッショントークンを使用する場合があります。',
       remoteUrlTitle: 'リモート URL',
       remoteUrlDesc:
-        'リモートダッシュボードバックエンドのベース URL。/hermes などのパスプレフィックスもサポートしています。',
+        'リモートダッシュボードバックエンドのベース URL./auraforge などのパスプレフィックスもサポートしています。',
       probing: 'このゲートウェイの認証方法を確認中…',
       probeError: 'このゲートウェイにまだ到達できません。URL を確認してください。応答後に認証方法が表示されます。',
       signedIn: 'サインイン済み',
@@ -902,7 +902,7 @@ export const ja = defineLocale({
       sshErrHostKey:
         '前回の接続以降、ホスト鍵が変更されています。想定どおりか確認し、ssh-keygen -R <host> を実行してから再接続してください。',
       sshErrNotInstalled:
-        'リモートホストに Aura Forge がインストールされていません。リモートでインストールする（curl -fsSL https://hermes-agent.nousresearch.com/install.sh | sh）か、Aura Forge パスを設定してください。',
+        'リモートホストに Aura Forge がインストールされていません。リモートでインストールする（curl -fsSL https:./auraforge-agent.nousresearch.com/install.sh | sh）か、Aura Forge パスを設定してください。',
       sshErrPlatform:
         'サポートされていないリモートプラットフォームです。Aura Forge Desktop の SSH モードは Linux、macOS、Windows のリモートホストに対応しています。',
       sshErrTimeout: 'SSH 接続がタイムアウトしました。ホストが到達不能、またはスリープ中の可能性があります。',
@@ -1495,7 +1495,7 @@ export const ja = defineLocale({
       },
       MATRIX_HOMESERVER: { label: 'ホームサーバー URL', placeholder: 'https://matrix.org' },
       MATRIX_ACCESS_TOKEN: { label: 'アクセストークン' },
-      MATRIX_USER_ID: { label: 'ボットユーザー ID', placeholder: '@hermes:example.org' },
+      MATRIX_USER_ID: { label: 'ボットユーザー ID', placeholder: '@auraforge:example.org' },
       MATRIX_ALLOWED_USERS: {
         label: '許可する Matrix ユーザー ID',
         help: '推奨。@user:server 形式のカンマ区切りユーザー ID。'
@@ -1549,7 +1549,7 @@ export const ja = defineLocale({
       title: (profile: string) => `${profile} をリモートホストに接続`,
       description: 'このプロファイルのセッションは、このパソコンではなく指定したリモートの Aura Forge で実行されます。',
       urlLabel: 'リモートアドレス',
-      urlPlaceholder: 'https://hermes.example.com',
+      urlPlaceholder: 'https:./auraforge.example.com',
       urlInvalid: 'http:// または https:// で始まる完全なアドレスを入力してください',
       tokenLabel: 'アクセストークン',
       tokenPlaceholder: 'リモートのセッショントークンを貼り付け',
@@ -2318,7 +2318,7 @@ export const ja = defineLocale({
       'ゲートウェイ URL を入力してください。Aura Forge Desktop がトークンとブラウザーサインインのどちらが必要かを検出します。',
     remoteUrlTitle: 'ゲートウェイ URL',
     remoteUrlDesc: 'Aura Forge ゲートウェイのベース URL を使用します。リモートの場合は https:// を含めてください。',
-    remoteUrlPlaceholder: 'https://gateway.example.com/hermes',
+    remoteUrlPlaceholder: 'https://gateway.example.co./auraforge',
     probing: 'ゲートウェイ認証方式を検出中...',
     probeError: 'その Aura Forge ゲートウェイに到達できませんでした。',
     identityProvider: 'ID プロバイダー',

@@ -27,7 +27,7 @@ const startManualOnboarding = vi.fn()
 const startManualProviderOAuth = vi.fn()
 let profileSwitchHandler: (() => void) | null = null
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getGlobalModelInfo: (profile?: null | string) => getGlobalModelInfo(profile),
   getGlobalModelOptions: (opts?: unknown, profile?: null | string) => getGlobalModelOptions(opts, profile),
   getAuxiliaryModels: (profile?: null | string) => getAuxiliaryModels(profile),

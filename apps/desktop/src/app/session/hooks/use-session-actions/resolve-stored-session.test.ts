@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type * as HermesModule from '@/hermes'
-import { getSession } from '@/hermes'
+import type * as HermesModule from '@/auraforge'
+import { getSession } from '@/auraforge'
 import { $activeGatewayProfile, $profiles } from '@/store/profile'
 import { $cronSessions, $messagingSessions, $sessions } from '@/store/session'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 import { resolveSessionProfile, resolveStoredSession } from './utils'
 
-vi.mock('@/hermes', async importActual => ({
+vi.mock('@/auraforge', async importActual => ({
   ...(await importActual<typeof HermesModule>()),
   getSession: vi.fn()
 }))

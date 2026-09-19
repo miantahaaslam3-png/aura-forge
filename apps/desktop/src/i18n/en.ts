@@ -73,7 +73,7 @@ export const en: Translations = {
       loadingSessions: 'Loading recent sessions',
       retryingRemoteBackend: 'Reconnecting to the remote Aura Forge backend…',
       startingDesktopConnection: 'Starting desktop connection',
-      startingHermesDesktop: 'Starting Aura Forge Desktop…'
+      startingAuraForgeDesktop: 'Starting Aura Forge Desktop…'
     },
     errors: {
       backgroundExited: 'Aura Forge background process exited.',
@@ -886,7 +886,7 @@ export const en: Translations = {
       cloudAgentProvisioning: 'Provisioning…',
       cloudStatusLabel: status => `Status: ${status}`,
       remoteUrlTitle: 'Remote URL',
-      remoteUrlDesc: 'Base URL for the remote dashboard backend. Path prefixes are supported, for example /hermes.',
+      remoteUrlDesc: 'Base URL for the remote dashboard backend. Path prefixes are supported, for example./auraforge.',
       probing: 'Checking how this gateway authenticates…',
       probeError: 'Could not reach this gateway yet. Check the URL — the auth method will appear once it responds.',
       signedIn: 'Signed in',
@@ -972,7 +972,7 @@ export const en: Translations = {
       sshErrHostKey:
         'The host key has CHANGED since you last connected. Verify this is expected, then run ssh-keygen -R <host> and reconnect.',
       sshErrNotInstalled:
-        'Aura Forge is not installed on the remote host. Install it there (curl -fsSL https://hermes-agent.nousresearch.com/install.sh | sh) or set the Aura Forge path.',
+        'Aura Forge is not installed on the remote host. Install it there (curl -fsSL https:./auraforge-agent.nousresearch.com/install.sh | sh) or set the Aura Forge path.',
       sshErrPlatform:
         'Unsupported remote platform. Aura Forge Desktop SSH mode supports Linux, macOS, and Windows remote hosts.',
       sshErrTimeout: 'SSH connection timed out. The host may be unreachable or asleep.',
@@ -1737,7 +1737,7 @@ export const en: Translations = {
       },
       MATRIX_HOMESERVER: { label: 'Homeserver URL', placeholder: 'https://matrix.org' },
       MATRIX_ACCESS_TOKEN: { label: 'Access token' },
-      MATRIX_USER_ID: { label: 'Bot user ID', placeholder: '@hermes:example.org' },
+      MATRIX_USER_ID: { label: 'Bot user ID', placeholder: '@auraforge:example.org' },
       MATRIX_ALLOWED_USERS: {
         label: 'Allowed Matrix user IDs',
         help: 'Recommended. Comma-separated user IDs in @user:server format.'
@@ -1863,7 +1863,7 @@ export const en: Translations = {
       title: (profile: string) => `Connect ${profile} to a remote host`,
       description: 'Sessions in this profile will run on the remote Aura Forge you point it at, instead of this computer.',
       urlLabel: 'Remote address',
-      urlPlaceholder: 'https://hermes.example.com',
+      urlPlaceholder: 'https:./auraforge.example.com',
       urlInvalid: 'Enter a full address starting with http:// or https://',
       tokenLabel: 'Access token',
       tokenPlaceholder: 'Paste the remote session token',
@@ -2676,7 +2676,7 @@ export const en: Translations = {
     remoteSetupDesc: 'Enter your gateway URL. Aura Forge Desktop will detect whether it needs a token or browser sign-in.',
     remoteUrlTitle: 'Gateway URL',
     remoteUrlDesc: 'Use the base URL of the Aura Forge gateway, including https:// when remote.',
-    remoteUrlPlaceholder: 'https://gateway.example.com/hermes',
+    remoteUrlPlaceholder: 'https://gateway.example.co./auraforge',
     probing: 'Detecting gateway authentication...',
     probeError: 'Could not reach that Aura Forge gateway.',
     identityProvider: 'your identity provider',

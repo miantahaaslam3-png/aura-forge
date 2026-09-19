@@ -24,7 +24,7 @@ import {
   profileScopeKey,
   setSkillEnabled,
   setToolsetEnabled
-} from '@/hermes'
+} from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { isDesktopToolsetVisible } from '@/lib/desktop-toolsets'
 import { compactNumber } from '@/lib/format'
@@ -35,7 +35,7 @@ import { useStoreSelector } from '@/lib/use-session-slice'
 import { $gateway, activeGatewayConnectionId } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
-import type { SkillInfo, ToolsetInfo } from '@/types/hermes'
+import type { SkillInfo, ToolsetInfo } from '@/types/auraforge'
 
 import { useOnProfileSwitch } from '../hooks/use-on-profile-switch'
 import { useRefreshHotkey } from '../hooks/use-refresh-hotkey'
@@ -278,8 +278,8 @@ export function SkillsView({
   // one gateway is registered. Only then is the (heavier) union agent roster
   // fetched to feed the selector — single-connection setups keep the exact
   // legacy profiles list. Both feature-detected for older Electron mains.
-  const registryBridge = window.hermesDesktop?.connections
-  const rosterBridge = window.hermesDesktop?.getAgentRoster
+  const registryBridge = window.auraForgeDesktop?.connections
+  const rosterBridge = window.auraForgeDesktop?.getAgentRoster
 
   const { data: registryData } = useQuery({
     queryKey: ['capabilities-connections-registry'],

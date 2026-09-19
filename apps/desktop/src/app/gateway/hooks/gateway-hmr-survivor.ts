@@ -4,10 +4,10 @@
 // import.meta.hot → byte-for-byte unchanged live unmount.
 
 import type { HermesConnection } from '@/global'
-import type { HermesGateway } from '@/hermes'
+import type { AuraForgeGateway } from '@/auraforge'
 
 export interface GatewaySurvivor {
-  gateway: HermesGateway
+  gateway: AuraForgeGateway
   profile: string
   connection: HermesConnection | null
 }

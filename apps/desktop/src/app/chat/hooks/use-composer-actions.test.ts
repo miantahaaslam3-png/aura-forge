@@ -54,7 +54,7 @@ describe('partitionDroppedFiles', () => {
     // extractDroppedFiles emits a dropped directory as a path-only entry so it
     // stays a @folder: ref instead of hitting file.attach, which can't stage a
     // directory ("file not found on gateway and no data_url provided").
-    const folder = inAppRef('/Users/jeff/projects/hermes', { isDirectory: true })
+    const folder = inAppRef('/Users/jeff/project./auraforge', { isDirectory: true })
 
     const { inAppRefs, osDrops } = partitionDroppedFiles([folder])
 
@@ -118,14 +118,14 @@ describe('extractDroppedFiles', () => {
 
   const stubBridge = (transfer: DataTransfer & { _pathByFile: Map<File, string> }) => {
     vi.stubGlobal('window', {
-      hermesDesktop: {
+      auraForgeDesktop: {
         getPathForFile: (file: File) => transfer._pathByFile.get(file) ?? ''
       }
     })
   }
 
   it('emits a dropped directory as a path-only entry with isDirectory (no File to upload)', () => {
-    const transfer = stubTransfer([{ path: '/Users/jeff/projects/hermes', isDirectory: true }]) as DataTransfer & {
+    const transfer = stubTransfer([{ path: '/Users/jeff/project./auraforge', isDirectory: true }]) as DataTransfer & {
       _pathByFile: Map<File, string>
     }
 
@@ -135,7 +135,7 @@ describe('extractDroppedFiles', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0]?.isDirectory).toBe(true)
-    expect(result[0]?.path).toBe('/Users/jeff/projects/hermes')
+    expect(result[0]?.path).toBe('/Users/jeff/project./auraforge')
     // A directory carries no bytes — it must NOT ride the File/upload pipeline.
     expect(result[0]?.file).toBeUndefined()
     // And it partitions as an in-app ref (→ @folder:), never an OS upload drop.
@@ -204,7 +204,7 @@ describe('attachmentPreviewDataUrl', () => {
     const readFileDataUrl = vi.fn(async () => LOCAL_PREVIEW)
     const api = vi.fn()
 
-    vi.stubGlobal('window', { hermesDesktop: { api, readFileDataUrl } })
+    vi.stubGlobal('window', { auraForgeDesktop: { api, readFileDataUrl } })
     $connection.set({ mode: 'remote' } as never)
 
     await expect(attachmentPreviewDataUrl('/Users/me/Pictures/pic.png')).resolves.toBe(LOCAL_PREVIEW)
@@ -226,7 +226,7 @@ describe('attachmentPreviewDataUrl', () => {
       throw new Error(`unexpected path ${path}`)
     })
 
-    vi.stubGlobal('window', { hermesDesktop: { api, readFileDataUrl } })
+    vi.stubGlobal('window', { auraForgeDesktop: { api, readFileDataUrl } })
     $connection.set({ mode: 'remote' } as never)
 
     await expect(attachmentPreviewDataUrl('/home/gateway/shot.png')).resolves.toBe(REMOTE_PREVIEW)
@@ -241,7 +241,7 @@ describe('attachmentPreviewDataUrl', () => {
 
     const api = vi.fn(async () => ({ dataUrl: REMOTE_PREVIEW }))
 
-    vi.stubGlobal('window', { hermesDesktop: { api, readFileDataUrl } })
+    vi.stubGlobal('window', { auraForgeDesktop: { api, readFileDataUrl } })
     $connection.set({ mode: 'remote' } as never)
 
     await expect(attachmentPreviewDataUrl('/home/gateway/shot.png')).resolves.toBe(REMOTE_PREVIEW)
@@ -250,7 +250,7 @@ describe('attachmentPreviewDataUrl', () => {
 
 describe('useComposerActions native image drops', () => {
   afterEach(() => {
-    Reflect.deleteProperty(window, 'hermesDesktop')
+    Reflect.deleteProperty(window, 'auraForgeDesktop')
     vi.unstubAllGlobals()
     vi.clearAllMocks()
   })
@@ -278,7 +278,7 @@ describe('useComposerActions native image drops', () => {
 
     const add = vi.fn<(attachment: ComposerAttachment) => void>()
 
-    Object.defineProperty(window, 'hermesDesktop', {
+    Object.defineProperty(window, 'auraForgeDesktop', {
       configurable: true,
       value: {
         readFileDataUrl,
@@ -333,7 +333,7 @@ describe('attachImagePath thumbnail separation', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
-    delete (window as unknown as { hermesDesktop?: unknown }).hermesDesktop
+    delete (window as unknown as { auraForgeDesktop?: unknown }).auraForgeDesktop
     $composerAttachments.set([])
     $connection.set(null)
   })
@@ -343,9 +343,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     let resolveBitmap!: (bitmap: { close: () => void; height: number; width: number }) => void
 
@@ -408,9 +408,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     let resolveBitmap!: (bitmap: { close: () => void; height: number; width: number }) => void
 
@@ -477,9 +477,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     let resolveBitmap!: (bitmap: { close: () => void; height: number; width: number }) => void
 
@@ -544,9 +544,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     // Exercise the real downscale path: 4000×3000 bitmap → 512×384 canvas.
     const drawImage = vi.fn()
@@ -607,9 +607,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     vi.stubGlobal(
       'fetch',
@@ -651,9 +651,9 @@ describe('attachImagePath thumbnail separation', () => {
 
     ;(
       window as unknown as {
-        hermesDesktop: { readFileDataUrl: typeof readFileDataUrl }
+        auraForgeDesktop: { readFileDataUrl: typeof readFileDataUrl }
       }
-    ).hermesDesktop = { readFileDataUrl }
+    ).auraForgeDesktop = { readFileDataUrl }
 
     const { result } = renderHook(() =>
       useComposerActions({ activeSessionId: null, currentCwd: '', requestGateway: vi.fn() })

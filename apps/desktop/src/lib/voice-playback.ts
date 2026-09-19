@@ -1,6 +1,6 @@
-import { resolveGatewayWsUrl } from '@hermes/shared'
+import { resolveGatewayWsUrl } from '@auraforge/shared'
 
-import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/hermes'
+import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/auraforge'
 import {
   cutSentences,
   directTtsConfig,
@@ -106,7 +106,7 @@ export function stopVoicePlayback() {
 /** Exported for tests: the (connection, profile) routing contract below is
  *  exactly what broke in the desktop-remote voice report — keep it pinned. */
 export async function resolveSpeakStreamUrl(): Promise<null | string> {
-  const desktop = window.hermesDesktop
+  const desktop = window.auraForgeDesktop
 
   if (!desktop?.getConnection) {
     return null

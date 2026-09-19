@@ -642,7 +642,7 @@ if (IS_WINDOWS) {
   })
 }
 
-ipcMain.handle('hermes:get-remote-display-reason', () => REMOTE_DISPLAY_REASON)
+ipcMain.handle('auraforge:get-remote-display-reason', () => REMOTE_DISPLAY_REASON)
 
 // Keep the renderer's PROCESS priority normal while its windows are hidden —
 // a deprioritized renderer streams a live answer visibly slower once the
@@ -932,7 +932,7 @@ let rendererTitleBarTheme = null
 // tracks the window's effective appearance and ignores `backgroundColor` —
 // so a dark-themed app on a light-mode Mac flashes a white material on every
 // new window until the renderer covers it. The renderer reports its mode via
-// 'hermes:native-theme' ('dark' | 'light' | 'system'); we pin
+// 'auraforge:native-theme' ('dark' | 'light' | 'system'); we pin
 // nativeTheme.themeSource to it and persist the value so cold launches paint
 // correctly before the renderer has even loaded.
 const NATIVE_THEME_CONFIG_PATH = path.join(app.getPath('userData'), 'native-theme.json')
@@ -1420,7 +1420,7 @@ const POOL_IDLE_MS = Math.max(60_000, Number(process.env.HERMES_DESKTOP_POOL_IDL
 //
 // The window is intentionally MUCH wider than the 60s ping cadence:
 //   * 1 missed ping    = +60s of apparent silence
-//   * WSL2 IPC stall  = the renderer's `hermes:backend:touch` roundtrips
+//   * WSL2 IPC stall  = the renderer's `auraforge:backend:touch` roundtrips
 //                       through 9p; a single brief 9p hiccup can stretch a
 //                       ping to ~30s of observed silence (#95189: gateways
 //                       exited every ~2 min on WSL2 because the previous
@@ -1855,7 +1855,7 @@ function broadcastBootProgress() {
     return
   }
 
-  webContents.send('hermes:boot-progress', bootProgressState)
+  webContents.send('auraforge:boot-progress', bootProgressState)
 }
 
 // Bootstrap-event broadcast channel + state. The bootstrap runner emits a
@@ -1869,7 +1869,7 @@ function broadcastBootProgress() {
 //   - log:      bounded ring buffer of the last 200 log lines for the
 //               "Show details" affordance in the overlay
 //
-// The snapshot is queryable via the hermes:bootstrap:get IPC handler so a
+// The snapshot is queryable via the auraforge:bootstrap:get IPC handler so a
 // reloaded renderer (e.g. devtools reload during dev) recovers state.
 // Bootstrap log ring: bounded buffer so a long install (npm + playwright
 // downloads can emit thousands of lines) doesn't grow unbounded in memory
@@ -1961,7 +1961,7 @@ function broadcastBootstrapEvent(ev) {
     return
   }
 
-  webContents.send('hermes:bootstrap:event', ev)
+  webContents.send('auraforge:bootstrap:event', ev)
 }
 
 function getBootstrapState() {
@@ -2879,7 +2879,7 @@ function emitUpdateProgress(payload) {
   rememberLog(`[updates] ${merged.stage}: ${merged.message || merged.error || ''}`)
 
   for (const window of BrowserWindow.getAllWindows()) {
-    window.webContents.send('hermes:updates:progress', merged)
+    window.webContents.send('auraforge:updates:progress', merged)
   }
 }
 
@@ -4948,7 +4948,7 @@ async function ensureRuntime(backend) {
       bootstrapError.failedStage = bootstrapResult.failedStage || null
       // Latch the failure so subsequent startHermes() calls return this
       // same error without re-running install.ps1.  Cleared by the
-      // hermes:bootstrap:reset IPC (renderer's "Reload and retry").
+      // auraforge:bootstrap:reset IPC (renderer's "Reload and retry").
       bootstrapFailure = bootstrapError
       throw bootstrapError
     }
@@ -5498,7 +5498,7 @@ function getLinkTitleSession() {
     return linkTitleSession
   }
 
-  linkTitleSession = session.fromPartition('hermes:link-titles', { cache: false })
+  linkTitleSession = session.fromPartition('auraforge:link-titles', { cache: false })
   linkTitleSession.webRequest.onBeforeRequest((details, callback) => {
     callback({ cancel: RENDER_TITLE_BLOCKED_RESOURCES.has(details.resourceType) })
   })
@@ -6026,7 +6026,7 @@ function sendPreviewFileChanged(payload) {
     return
   }
 
-  webContents.send('hermes:preview-file-changed', payload)
+  webContents.send('auraforge:preview-file-changed', payload)
 }
 
 async function watchPreviewFile(rawUrl) {
@@ -6274,7 +6274,7 @@ function sendBackendExit(payload) {
     return
   }
 
-  webContents.send('hermes:backend-exit', payload)
+  webContents.send('auraforge:backend-exit', payload)
 }
 
 function sendClosePreviewRequested() {
@@ -6288,7 +6288,7 @@ function sendClosePreviewRequested() {
     return
   }
 
-  webContents.send('hermes:close-preview-requested')
+  webContents.send('auraforge:close-preview-requested')
 }
 
 /**
@@ -6354,7 +6354,7 @@ function sendPreviewNavCommand(command: 'back' | 'forward' | 'reload') {
     return
   }
 
-  webContents.send('hermes:preview-nav', command)
+  webContents.send('auraforge:preview-nav', command)
 }
 
 /**
@@ -6398,7 +6398,7 @@ function sendOpenFolderRequested() {
     return
   }
 
-  webContents.send('hermes:open-folder-requested')
+  webContents.send('auraforge:open-folder-requested')
 }
 
 // Tell the renderer the machine just woke. Sleep silently drops the
@@ -6415,7 +6415,7 @@ function sendPowerResume() {
     return
   }
 
-  webContents.send('hermes:power-resume')
+  webContents.send('auraforge:power-resume')
 }
 
 let powerResumeRegistered = false
@@ -6426,8 +6426,8 @@ let powerResumeRegistered = false
 let onBatteryPower: boolean | null = null
 
 // Renderer-side battery gating seeds from this and stays current via the
-// 'hermes:power-battery' push below.
-ipcMain.handle('hermes:power-battery:get', () => onBatteryPower === true)
+// 'auraforge:power-battery' push below.
+ipcMain.handle('auraforge:power-battery:get', () => onBatteryPower === true)
 
 function broadcastBatteryState(next: boolean) {
   if (onBatteryPower === next) {
@@ -6440,7 +6440,7 @@ function broadcastBatteryState(next: boolean) {
     const { webContents } = win
 
     if (webContents && !webContents.isDestroyed()) {
-      webContents.send('hermes:power-battery', next)
+      webContents.send('auraforge:power-battery', next)
     }
   }
 }
@@ -6497,7 +6497,7 @@ function sendOpenUpdatesRequested() {
     return
   }
 
-  webContents.send('hermes:open-updates')
+  webContents.send('auraforge:open-updates')
 
   if (!mainWindow.isVisible()) {
     mainWindow.show()
@@ -6526,7 +6526,7 @@ function sendWindowStateChanged(nextIsFullscreen?: boolean, target = mainWindow)
     state.isFullscreen = nextIsFullscreen
   }
 
-  webContents.send('hermes:window-state-changed', state)
+  webContents.send('auraforge:window-state-changed', state)
 }
 
 function buildApplicationMenu() {
@@ -6894,7 +6894,7 @@ function installContextMenuBridge(window: BrowserWindow) {
     const suggestions = Array.isArray(params.dictionarySuggestions) ? params.dictionarySuggestions : []
 
     if (params.isEditable && params.misspelledWord) {
-      window.webContents.send('hermes:context-menu-spellcheck', {
+      window.webContents.send('auraforge:context-menu-spellcheck', {
         misspelledWord: params.misspelledWord,
         suggestions
       })
@@ -9108,7 +9108,7 @@ function readDesktopConnectionsRegistry() {
     } catch {
       // Write failed (full disk, read-only userData). Keep the migrated
       // registry in memory so list/save keep working this session instead of
-      // hard-failing every hermes:connections:* call.
+      // hard-failing every auraforge:connections:* call.
       connectionRegistryCache = registry
       connectionRegistryCacheMtime = null
     }
@@ -10919,7 +10919,7 @@ function sendConnectionApplied() {
     return
   }
 
-  webContents.send('hermes:connection:applied')
+  webContents.send('auraforge:connection:applied')
 }
 
 // Registry lifecycle push: a connection was removed or materially edited, so
@@ -10932,7 +10932,7 @@ function broadcastConnectionsChanged(payload: { connectionId: string; reason: 'r
     const { webContents } = win
 
     if (webContents && !webContents.isDestroyed()) {
-      webContents.send('hermes:connections:changed', payload)
+      webContents.send('auraforge:connections:changed', payload)
     }
   }
 }
@@ -11379,7 +11379,7 @@ async function connectRegistryBackend(
       profile: profileKey,
       connectionId: source.id,
       // The remote process runs as this profile; the desktop-side profile key
-      // is only the routing label. hermes:api uses it to translate explicit
+      // is only the routing label. auraforge:api uses it to translate explicit
       // self-profile query filters into the backend's namespace.
       remoteProfile: sshConfig.remoteProfile || '',
       logs: hermesLog.slice(-80),
@@ -12916,7 +12916,7 @@ function notifyBrowserPopoutClosed(tabId) {
 
   for (const other of BrowserWindow.getAllWindows()) {
     if (!other.isDestroyed()) {
-      other.webContents.send('hermes:browser-popout:closed', tabId)
+      other.webContents.send('auraforge:browser-popout:closed', tabId)
     }
   }
 }
@@ -13100,8 +13100,8 @@ const wakeIndicatorController = createWakeIndicatorWindowController({
 // here so it can leave the app's bounds and stay visible while Aura Forge is
 // minimized (Codex-style task-completion glance). It carries no gateway
 // connection of its own — the main renderer is the single source of truth and
-// pushes pet state over IPC (hermes:pet-overlay:state); the overlay just renders
-// it. Control flows back (pop-in, composer submit) via hermes:pet-overlay:control.
+// pushes pet state over IPC (auraforge:pet-overlay:state); the overlay just renders
+// it. Control flows back (pop-in, composer submit) via auraforge:pet-overlay:control.
 let petOverlayWindow = null
 
 function petOverlayUrl() {
@@ -13141,7 +13141,7 @@ function spawnPetOverlayWindow(bounds) {
     // or it (a frameless, taskbar-skipping panel) becomes the app's switcher
     // anchor and the Aura Forge icon drops out of cmd/alt-tab — especially when the
     // main window is minimized. We flip this on only while the composer needs
-    // the keyboard (see hermes:pet-overlay:set-focusable).
+    // the keyboard (see auraforge:pet-overlay:set-focusable).
     focusable: false,
     show: false,
     // Fully transparent — the renderer paints only the sprite + bubble.
@@ -13198,7 +13198,7 @@ function spawnPetOverlayWindow(bounds) {
     // pop the pet back in so it doesn't stay hidden. Harmless echo when we're
     // the ones who closed it (popInPet already cleared the active flag).
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('hermes:pet-overlay:control', { type: 'pop-in' })
+      mainWindow.webContents.send('auraforge:pet-overlay:control', { type: 'pop-in' })
     }
   })
 
@@ -13434,7 +13434,7 @@ function startHudCursorFeed(win: BrowserWindow) {
     }
 
     last = key
-    win.webContents.send('hermes:hud:cursor', point)
+    win.webContents.send('auraforge:hud:cursor', point)
   }, HUD_CURSOR_POLL_MS)
 
   win.on('closed', () => clearInterval(timer))
@@ -13454,7 +13454,7 @@ function startHudGameOverlayFeed(win: BrowserWindow) {
 
   const push = (state: { active: boolean; app: string }) => {
     if (!win.isDestroyed()) {
-      win.webContents.send('hermes:hud:game-overlay', state)
+      win.webContents.send('auraforge:hud:game-overlay', state)
     }
   }
 
@@ -13551,7 +13551,7 @@ function broadcastHudState(open) {
 
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
-      win.webContents.send('hermes:hud:changed', payload)
+      win.webContents.send('auraforge:hud:changed', payload)
     }
   }
 }
@@ -13570,7 +13570,7 @@ function spawnHudWindow(sessionId, profile) {
     // window grows a few px every drag (worse at >100% DPI scaling). The
     // composer drag calls setPosition, which must move the window, not resize
     // it. Resizing is done by the renderer's edge/corner handles through
-    // `hermes:hud:set-bounds`, which flips resizable on for the call — the
+    // `auraforge:hud:set-bounds`, which flips resizable on for the call — the
     // same pattern the pet overlay uses for its wheel-scale.
     resizable: false,
     // macOS AppKit's constrainFrameRect clamps setBounds to the current
@@ -13609,7 +13609,7 @@ function spawnHudWindow(sessionId, profile) {
   win.setHiddenInMissionControl?.(true)
 
   // Linux intentionally starts on ONE virtual desktop. During a renderer
-  // grab, hermes:hud:workspace-transfer temporarily makes the X11 window
+  // grab, auraforge:hud:workspace-transfer temporarily makes the X11 window
   // sticky; releasing it assigns the HUD to KDE's then-current desktop.
 
   // Streaming into a window that is ALWAYS blurred (the user is in another
@@ -13709,7 +13709,7 @@ function openHudWindow(sessionId, profile) {
     // conversation in the HUD", and a plain focus leaves the wrong one there.
     if (sessionId && sessionId !== hudSessionId) {
       hudSessionId = sessionId
-      hudWindow.webContents.send('hermes:hud:goto', sessionId)
+      hudWindow.webContents.send('auraforge:hud:goto', sessionId)
       // Keep every window's idea of where the HUD is pointed in step, so the
       // toggle keeps reading "switch" vs "dismiss" correctly.
       broadcastHudState(true)
@@ -13868,7 +13868,7 @@ function spawnQuickEntryWindow() {
   // renderer already reported a live gateway.
   win.webContents.on('did-finish-load', () => {
     if (!win.isDestroyed() && quickEntryLastState) {
-      win.webContents.send('hermes:quick-entry:state', quickEntryLastState)
+      win.webContents.send('auraforge:quick-entry:state', quickEntryLastState)
     }
   })
 
@@ -13910,7 +13910,7 @@ function showQuickEntryWindow() {
   quickEntryWindow.show()
   quickEntryWindow.focus()
   // Re-summoned: tell the renderer to clear any stale draft and refocus.
-  quickEntryWindow.webContents.send('hermes:quick-entry:shown')
+  quickEntryWindow.webContents.send('auraforge:quick-entry:shown')
 }
 
 function hideQuickEntryWindow() {
@@ -14215,7 +14215,7 @@ function createWindow() {
   })
 }
 
-ipcMain.handle('hermes:connection', async (_event, profile) => {
+ipcMain.handle('auraforge:connection', async (_event, profile) => {
   // Coalesce concurrent renderer dials for one profile scope (#90812): the
   // renderer-side reconnect lock is per-window, so two windows waking at once
   // both land here. The claim key mirrors ensureBackend()'s own profile
@@ -14231,11 +14231,11 @@ ipcMain.handle('hermes:connection', async (_event, profile) => {
 // local kind delegates to ensureBackend when the v1 route is local, and
 // forces a genuinely-local child when the v1 global mode is remote (the
 // registry 'local' entry always means this machine).
-ipcMain.handle('hermes:connection:for', async (_event, payload) => {
+ipcMain.handle('auraforge:connection:for', async (_event, payload) => {
   const { connectionId, profile } = payload && typeof payload === 'object' ? (payload as any) : ({} as any)
   const registry = readDesktopConnectionsRegistry()
   const id = String(connectionId || '').trim() || registry.primary
-  // Same single-owner claim as 'hermes:connection', keyed by the composite
+  // Same single-owner claim as 'auraforge:connection', keyed by the composite
   // (connectionId, profile) scope (#90812): concurrent registry dials for one
   // scope share the first spawn instead of bootstrapping duplicate remotes.
   const connection = await backendDialClaims.run(backendScopeKey(id, profile), () => ensureRegistryBackend(id, profile))
@@ -14246,7 +14246,7 @@ ipcMain.handle('hermes:connection:for', async (_event, payload) => {
 const windowConnectionRoutes = new WindowConnectionRouteRegistry()
 const windowConnectionRouteOwners = new Set<number>()
 
-ipcMain.on('hermes:connection:active-route', (event, route) => {
+ipcMain.on('auraforge:connection:active-route', (event, route) => {
   const id = event.sender.id
   const previous = windowConnectionRoutes.get(id)
   const next = windowConnectionRoutes.set(id, route)
@@ -14276,7 +14276,7 @@ ipcMain.on('hermes:connection:active-route', (event, route) => {
 // to confirm the cached PRIMARY backend is still reachable; if a remote one is
 // not, we drop the cache so the next getConnection() rebuilds it. Local backends
 // self-heal via their child 'exit' handler, so we never touch them here.
-ipcMain.handle('hermes:connection:revalidate', async () => {
+ipcMain.handle('auraforge:connection:revalidate', async () => {
   const connectionPromise = backendConnectionState.getPromise()
 
   if (!connectionPromise) {
@@ -14375,15 +14375,15 @@ function revalidateSuspectPoolAfterResume() {
   )
 }
 
-ipcMain.handle('hermes:backend:touch', async (_event, profile) => {
+ipcMain.handle('auraforge:backend:touch', async (_event, profile) => {
   touchPoolBackend(profile)
 
   return { ok: true }
 })
-ipcMain.handle('hermes:gateway:ws-url', async (_event, profile) => {
+ipcMain.handle('auraforge:gateway:ws-url', async (_event, profile) => {
   return gatewayWsUrlIpcResult(() => freshGatewayWsUrl(profile))
 })
-ipcMain.handle('hermes:window:openSession', async (_event, sessionId, opts) => {
+ipcMain.handle('auraforge:window:openSession', async (_event, sessionId, opts) => {
   if (typeof sessionId !== 'string' || !sessionId.trim()) {
     return { ok: false, error: 'invalid-session-id' }
   }
@@ -14392,12 +14392,12 @@ ipcMain.handle('hermes:window:openSession', async (_event, sessionId, opts) => {
 
   return { ok: true }
 })
-ipcMain.handle('hermes:window:openInstance', async () => {
+ipcMain.handle('auraforge:window:openInstance', async () => {
   createInstanceWindow()
 
   return { ok: true }
 })
-ipcMain.handle('hermes:window:openBrowser', async (_event, tabId) => {
+ipcMain.handle('auraforge:window:openBrowser', async (_event, tabId) => {
   if (typeof tabId !== 'string' || !tabId.trim()) {
     return { ok: false, error: 'invalid-tab-id' }
   }
@@ -14417,7 +14417,7 @@ ipcMain.handle('hermes:window:openBrowser', async (_event, tabId) => {
 // hoping a `hermes` exists on the user's interactive PATH. Resolution only —
 // never ensureRuntime(), which would kick off a first-run install from a menu
 // click; an unresolved runtime is reported instead.
-ipcMain.handle('hermes:window:openInTerminal', async (_event, sessionId, opts) => {
+ipcMain.handle('auraforge:window:openInTerminal', async (_event, sessionId, opts) => {
   if (typeof sessionId !== 'string' || !sessionId.trim()) {
     return { ok: false, error: 'invalid-session-id' }
   }
@@ -14470,22 +14470,22 @@ ipcMain.handle('hermes:window:openInTerminal', async (_event, sessionId, opts) =
     return { ok: false, error: error.message }
   }
 })
-ipcMain.handle('hermes:wake-indicator:get', () => wakeIndicatorController.getState())
-ipcMain.on('hermes:wake-indicator:set', (_event, state) => {
+ipcMain.handle('auraforge:wake-indicator:get', () => wakeIndicatorController.getState())
+ipcMain.on('auraforge:wake-indicator:set', (_event, state) => {
   wakeIndicatorController.setState(state)
 })
 
 // --- Text size (zoom) -------------------------------------------------------
 // The settings UI drives the same clamped zoom scale as the Ctrl/Cmd
 // shortcuts and the View menu. Reads and writes target the asking window.
-ipcMain.handle('hermes:zoom:get', event => {
+ipcMain.handle('auraforge:zoom:get', event => {
   const window = BrowserWindow.fromWebContents(event.sender)
 
   const level = window && !window.isDestroyed() ? window.webContents.getZoomLevel() : DEFAULT_ZOOM_LEVEL
 
   return { level, percent: zoomLevelToPercent(level) }
 })
-ipcMain.on('hermes:zoom:set-percent', (event, percent) => {
+ipcMain.on('auraforge:zoom:set-percent', (event, percent) => {
   const window = BrowserWindow.fromWebContents(event.sender)
 
   if (!window || window.isDestroyed()) {
@@ -14516,7 +14516,7 @@ const hudIpc = registerHudIpc({
   }
 })
 
-ipcMain.handle('hermes:bootstrap:reset', async () => {
+ipcMain.handle('auraforge:bootstrap:reset', async () => {
   // Renderer's "Reload and retry" path. Clear the latched failure and
   // reset connection state so the next startHermes() call restarts the
   // full backend flow (including a fresh runBootstrap pass).
@@ -14556,7 +14556,7 @@ ipcMain.handle('hermes:bootstrap:reset', async () => {
 
   return { ok: true }
 })
-ipcMain.handle('hermes:bootstrap:repair', async () => {
+ipcMain.handle('auraforge:bootstrap:repair', async () => {
   // Forceful repair: force the next startHermes() through the full installer
   // (refreshing a broken/partial venv) and clear any latched failure + live
   // connection. The renderer reloads afterwards to re-drive the boot flow.
@@ -14608,13 +14608,13 @@ ipcMain.handle('hermes:bootstrap:repair', async () => {
 
   return { ok: true }
 })
-ipcMain.handle('hermes:bootstrap:continue-local', async () => {
+ipcMain.handle('auraforge:bootstrap:continue-local', async () => {
   rememberLog('[bootstrap] local install selected by renderer; continuing first-launch bootstrap')
   continueFirstRunLocalBootstrap()
 
   return { ok: true }
 })
-ipcMain.handle('hermes:bootstrap:cancel', async () => {
+ipcMain.handle('auraforge:bootstrap:cancel', async () => {
   // Renderer's Cancel button during first-launch install. Abort the running
   // install script (SIGTERM via the runner's abortSignal). runBootstrap
   // resolves with { cancelled: true }, which surfaces the recovery overlay.
@@ -14630,12 +14630,12 @@ ipcMain.handle('hermes:bootstrap:cancel', async () => {
 
   return { ok: false, cancelled: false }
 })
-ipcMain.handle('hermes:boot-progress:get', async () => bootProgressState)
-ipcMain.handle('hermes:bootstrap:get', async () => getBootstrapState())
-ipcMain.handle('hermes:connection-config:get', async (_event, profile) =>
+ipcMain.handle('auraforge:boot-progress:get', async () => bootProgressState)
+ipcMain.handle('auraforge:bootstrap:get', async () => getBootstrapState())
+ipcMain.handle('auraforge:connection-config:get', async (_event, profile) =>
   sanitizeDesktopConnectionConfig(readDesktopConnectionConfig(), profile)
 )
-ipcMain.handle('hermes:plugin-profile-routes', async (_event, rawProfileNames) => {
+ipcMain.handle('auraforge:plugin-profile-routes', async (_event, rawProfileNames) => {
   const fallbackProfileNames = Array.isArray(rawProfileNames)
     ? rawProfileNames
         .filter(name => typeof name === 'string')
@@ -14703,8 +14703,8 @@ ipcMain.handle('hermes:plugin-profile-routes', async (_event, rawProfileNames) =
 
   return buildRegistryProfileRoutes({ agents, sources: registry.connections })
 })
-ipcMain.handle('hermes:ssh-config:hosts', async () => ({ hosts: collectSshConfigHosts() }))
-ipcMain.handle('hermes:ssh-config:resolve', async (_event, host) => {
+ipcMain.handle('auraforge:ssh-config:hosts', async () => ({ hosts: collectSshConfigHosts() }))
+ipcMain.handle('auraforge:ssh-config:resolve', async (_event, host) => {
   const value = String(host || '').trim()
 
   if (!value) {
@@ -14747,25 +14747,25 @@ ipcMain.handle('hermes:ssh-config:resolve', async (_event, host) => {
     })
   })
 })
-ipcMain.handle('hermes:connection-config:test', async (_event, payload) => testDesktopConnectionConfig(payload))
+ipcMain.handle('auraforge:connection-config:test', async (_event, payload) => testDesktopConnectionConfig(payload))
 
 // ── Opt-in keychain encryption for stored secrets ───────────────────────────
 // get returns the current policy without touching safeStorage; set flips it
 // and re-encodes every stored secret (see applySecretStorageEncryption).
-ipcMain.handle('hermes:secret-storage:get', async () => ({ on: secretStoragePolicy().on }))
-ipcMain.handle('hermes:secret-storage:set', async (_event: any, on: any) => applySecretStorageEncryption(on === true))
+ipcMain.handle('auraforge:secret-storage:get', async () => ({ on: secretStoragePolicy().on }))
+ipcMain.handle('auraforge:secret-storage:set', async (_event: any, on: any) => applySecretStorageEncryption(on === true))
 
 // ── v2 connection registry IPC (multi-source) ───────────────────────────────
 // Storage-level CRUD for named agent sources. Routing/pooling consumption of
 // the registry lands separately; these handlers only manage the persisted
 // list, so they are safe to ship ahead of the switchover.
-ipcMain.handle('hermes:connections:list', async () => sanitizeConnectionsRegistry())
-ipcMain.handle('hermes:connections:save', async (_event, payload) => {
+ipcMain.handle('auraforge:connections:list', async () => sanitizeConnectionsRegistry())
+ipcMain.handle('auraforge:connections:save', async (_event, payload) => {
   const saved = await saveRegistryConnection(payload)
 
   return { ok: true, connection: saved, registry: sanitizeConnectionsRegistry() }
 })
-ipcMain.handle('hermes:connections:remove', async (_event, id) => {
+ipcMain.handle('auraforge:connections:remove', async (_event, id) => {
   const key = String(id || '')
   managedConnectionUpdateGate.assertCanMutate(key)
   const registry = removeConnection(readDesktopConnectionsRegistry(), key)
@@ -14780,27 +14780,27 @@ ipcMain.handle('hermes:connections:remove', async (_event, id) => {
 
   return { ok: true, registry: sanitizeConnectionsRegistry(registry) }
 })
-ipcMain.handle('hermes:connections:set-primary', async (_event, id) => {
+ipcMain.handle('auraforge:connections:set-primary', async (_event, id) => {
   assertCanMutateManagedPrimaryRouting()
   const registry = setPrimaryConnection(readDesktopConnectionsRegistry(), String(id || ''))
   writeDesktopConnectionsRegistry(registry)
 
   return { ok: true, registry: sanitizeConnectionsRegistry(registry) }
 })
-ipcMain.handle('hermes:connections:set-launch-mode', async (_event, mode) => {
+ipcMain.handle('auraforge:connections:set-launch-mode', async (_event, mode) => {
   assertCanMutateManagedPrimaryRouting()
   const registry = setConnectionLaunchMode(readDesktopConnectionsRegistry(), String(mode || ''))
   writeDesktopConnectionsRegistry(registry)
 
   return { ok: true, registry: sanitizeConnectionsRegistry(registry) }
 })
-ipcMain.handle('hermes:connections:set-last-used', async (_event, id) => {
+ipcMain.handle('auraforge:connections:set-last-used', async (_event, id) => {
   const registry = setLastUsedConnection(readDesktopConnectionsRegistry(), String(id || ''))
   writeDesktopConnectionsRegistry(registry)
 
   return { ok: true, registry: sanitizeConnectionsRegistry(registry) }
 })
-ipcMain.handle('hermes:connections:test', async (_event, id) => {
+ipcMain.handle('auraforge:connections:test', async (_event, id) => {
   const registry = readDesktopConnectionsRegistry()
   const entry = registry.connections.find(c => c.id === String(id || ''))
 
@@ -15146,7 +15146,7 @@ async function enumerateRegistryAgentSources(registry = readDesktopConnectionsRe
   )
 }
 
-ipcMain.handle('hermes:agents:roster', async () => {
+ipcMain.handle('auraforge:agents:roster', async () => {
   const registry = readDesktopConnectionsRegistry()
   const enumerations = await enumerateRegistryAgentSources(registry)
 
@@ -15170,7 +15170,7 @@ ipcMain.handle('hermes:agents:roster', async () => {
 })
 
 // Registry-scoped fresh WS URL: the (connectionId, profile) analogue of
-// hermes:gateway:ws-url. Same single-use-ticket discipline for OAuth sources.
+// auraforge:gateway:ws-url. Same single-use-ticket discipline for OAuth sources.
 const registryGatewayWsUrlHandler = createRegistryGatewayWsUrlHandler({
   ensureBackend: ensureRegistryBackend,
   mintTicket: mintGatewayWsTicket,
@@ -15178,7 +15178,7 @@ const registryGatewayWsUrlHandler = createRegistryGatewayWsUrlHandler({
   rememberHeaders: rememberRemoteWsHeaders
 })
 
-ipcMain.handle('hermes:gateway:ws-url-for', async (_event, payload) => {
+ipcMain.handle('auraforge:gateway:ws-url-for', async (_event, payload) => {
   return gatewayWsUrlIpcResult(() => registryGatewayWsUrlHandler(payload))
 })
 
@@ -15230,14 +15230,14 @@ async function requestManagedSshUpdate(rawId) {
   return operation
 }
 
-ipcMain.handle('hermes:connections:update-managed', async (_event, rawId) => requestManagedSshUpdate(rawId))
+ipcMain.handle('auraforge:connections:update-managed', async (_event, rawId) => requestManagedSshUpdate(rawId))
 
 // Fan out `hermes update` to every eligible registered connection at once.
 // Cloud entries are excluded (platform-managed); each dispatch reports
 // independently so one dead LAN box can't wedge the batch. Local reuses the
 // app's own update pipeline; Desktop-managed SSH uses the transactional
 // drain/update/restore lifecycle; URL remotes POST their backend updater.
-ipcMain.handle('hermes:connections:update-all', async (_event, payload) => {
+ipcMain.handle('auraforge:connections:update-all', async (_event, payload) => {
   const registry = readDesktopConnectionsRegistry()
 
   // Optional renderer-side exclusions: the everything-update flow dispatches
@@ -15324,7 +15324,7 @@ async function getJsonForBackend(descriptor, path, opts: any = {}) {
 }
 
 // Any-method REST call against a resolved backend descriptor — the descriptor
-// analogue of the hermes:api handler's own auth split: OAuth backends prefer a
+// analogue of the auraforge:api handler's own auth split: OAuth backends prefer a
 // native bearer (cookieless RFC 8252 flow) and fall back to the OAuth cookie
 // partition; token/local descriptors use the static session-token header.
 async function fetchJsonForBackend(
@@ -15370,8 +15370,8 @@ async function fetchJsonForBackend(
   })
 }
 
-ipcMain.handle('hermes:connection-config:probe', async (_event, rawUrl) => probeRemoteAuthMode(rawUrl))
-ipcMain.handle('hermes:connection-config:oauth-login', async (_event, rawUrl) => {
+ipcMain.handle('auraforge:connection-config:probe', async (_event, rawUrl) => probeRemoteAuthMode(rawUrl))
+ipcMain.handle('auraforge:connection-config:oauth-login', async (_event, rawUrl) => {
   // Capability-gated login (RFC 8252). Probe the gateway's public /api/status
   // for supported auth_flows and /api/auth/providers for provider capabilities:
   //   - all providers support password → always use the embedded login window
@@ -15434,7 +15434,7 @@ ipcMain.handle('hermes:connection-config:oauth-login', async (_event, rawUrl) =>
 
   return { ok: true, baseUrl, connected }
 })
-ipcMain.handle('hermes:connection-config:oauth-logout', async (_event, rawUrl) => {
+ipcMain.handle('auraforge:connection-config:oauth-logout', async (_event, rawUrl) => {
   const baseUrl = normalizeRemoteBaseUrl(rawUrl)
   await clearOauthSession(baseUrl)
 
@@ -15453,39 +15453,39 @@ ipcMain.handle('hermes:connection-config:oauth-logout', async (_event, rawUrl) =
 // --- Aura Forge Cloud (cloud-auto-discovery Phase 3) ---
 // One portal login in the OAuth partition powers both discovery and the silent
 // per-agent cascade. See the discovery/cascade helpers above.
-ipcMain.handle('hermes:cloud:status', async () => ({
+ipcMain.handle('auraforge:cloud:status', async () => ({
   portalBaseUrl: resolvePortalBaseUrl(),
   signedIn: await hasLivePortalSession()
 }))
-ipcMain.handle('hermes:cloud:login', async () => {
+ipcMain.handle('auraforge:cloud:login', async () => {
   await openPortalLoginWindow()
 
   return { ok: true, signedIn: await hasLivePortalSession() }
 })
-ipcMain.handle('hermes:cloud:logout', async () => {
+ipcMain.handle('auraforge:cloud:logout', async () => {
   await clearOauthSession(resolvePortalBaseUrl())
 
   return { ok: true, signedIn: await hasLivePortalSession() }
 })
-ipcMain.handle('hermes:cloud:discover', async (_event, org) => {
+ipcMain.handle('auraforge:cloud:discover', async (_event, org) => {
   // Returns { agents } or { needsOrgSelection: true, orgs }. `org` (optional)
   // scopes discovery to a chosen org for multi-org users.
   return discoverCloudAgents(typeof org === 'string' && org ? org : undefined)
 })
-ipcMain.handle('hermes:cloud:agent-sign-in', async (_event, dashboardUrl) => {
+ipcMain.handle('auraforge:cloud:agent-sign-in', async (_event, dashboardUrl) => {
   // Silent per-agent sign-in via the shared portal session. Returns the agent's
   // gateway baseUrl + whether its session cookie landed; the renderer then
   // saves a cloud-mode connection pointed at this dashboardUrl.
   return cloudAgentSilentSignIn(dashboardUrl)
 })
-ipcMain.handle('hermes:connection-config:save', async (_event, payload) => {
+ipcMain.handle('auraforge:connection-config:save', async (_event, payload) => {
   assertCanMutateManagedPrimaryRouting()
   const config = coerceDesktopConnectionConfig(payload)
   writeDesktopConnectionConfig(config)
 
   return sanitizeDesktopConnectionConfig(config, payload?.profile)
 })
-ipcMain.handle('hermes:connection-config:apply', async (_event, payload) => {
+ipcMain.handle('auraforge:connection-config:apply', async (_event, payload) => {
   assertCanMutateManagedPrimaryRouting()
   const previousConfig = readDesktopConnectionConfig()
   const previousRegistry = readDesktopConnectionsRegistry()
@@ -15533,15 +15533,15 @@ ipcMain.handle('hermes:connection-config:apply', async (_event, payload) => {
   return sanitizeDesktopConnectionConfig(config, payload?.profile)
 })
 
-ipcMain.handle('hermes:profile:get', async () => ({ profile: readActiveDesktopProfile() }))
-// Persistence-only sibling of hermes:profile:set: records the profile the
+ipcMain.handle('auraforge:profile:get', async () => ({ profile: readActiveDesktopProfile() }))
+// Persistence-only sibling of auraforge:profile:set: records the profile the
 // Desktop should boot into next launch WITHOUT tearing down the backend or
 // reloading the window — the rail's live workspace switch already re-homed
 // the gateway (#79886).
-ipcMain.handle('hermes:profile:remember', async (_event, name) => ({
+ipcMain.handle('auraforge:profile:remember', async (_event, name) => ({
   profile: writeActiveDesktopProfile(name)
 }))
-ipcMain.handle('hermes:profile:set', async (_event, name) => {
+ipcMain.handle('auraforge:profile:set', async (_event, name) => {
   assertCanMutateManagedPrimaryRouting()
   const next = writeActiveDesktopProfile(name)
 
@@ -15554,11 +15554,11 @@ ipcMain.handle('hermes:profile:set', async (_event, name) => {
   return { profile: next }
 })
 
-ipcMain.on('hermes:previewShortcutActive', (_event, active) => {
+ipcMain.on('auraforge:previewShortcutActive', (_event, active) => {
   previewShortcutActive = Boolean(active)
 })
 
-ipcMain.handle('hermes:requestMicrophoneAccess', async () => {
+ipcMain.handle('auraforge:requestMicrophoneAccess', async () => {
   if (!IS_MAC || typeof systemPreferences.askForMediaAccess !== 'function') {
     return true
   }
@@ -15570,7 +15570,7 @@ ipcMain.handle('hermes:requestMicrophoneAccess', async () => {
 // Metadata only (app, title, bounds) — never pixels. On macOS, other apps'
 // window titles are gated behind the Screen Recording permission; pass titles
 // through only when it is ALREADY granted, and never prompt for it here.
-ipcMain.handle('hermes:window:readBelow', async event => {
+ipcMain.handle('auraforge:window:readBelow', async event => {
   const win = BrowserWindow.fromWebContents(event.sender)
 
   if (!win || win.isDestroyed()) {
@@ -16083,7 +16083,7 @@ async function handleHermesApiRequest(request) {
   return response
 }
 
-ipcMain.handle('hermes:api', async (_event, request) => {
+ipcMain.handle('auraforge:api', async (_event, request) => {
   // Hold the deletion gate for BOTH profile deletes and renames: a concurrent
   // renderer reconnect entering ensureBackend() mid-mutation would otherwise
   // respawn the old-name backend and recreate its HERMES_HOME (#45474).
@@ -16120,9 +16120,9 @@ const claimedAmbientCue = createEventDeduper()
 
 // A window asks "do I own this ambient cue (turn-end sound / spoken reply)?".
 // The first caller within the window gets true; peers get false and stay quiet.
-ipcMain.handle('hermes:ambient:claim', (_event, key) => !claimedAmbientCue(String(key ?? '')))
+ipcMain.handle('auraforge:ambient:claim', (_event, key) => !claimedAmbientCue(String(key ?? '')))
 
-ipcMain.handle('hermes:notify', (_event, payload) => {
+ipcMain.handle('auraforge:notify', (_event, payload) => {
   if (!Notification.isSupported()) {
     return false
   }
@@ -16156,13 +16156,13 @@ ipcMain.handle('hermes:notify', (_event, payload) => {
     focusWindow(mainWindow)
 
     if (payload?.sessionId) {
-      mainWindow.webContents.send('hermes:focus-session', payload.sessionId)
+      mainWindow.webContents.send('auraforge:focus-session', payload.sessionId)
     }
 
     // Plugin / session-less activation — serializable path (+ optional notifyId
-    // for renderer callbacks). Same vocabulary as hermes://index-network/….
+    // for renderer callbacks). Same vocabulary as auraforge://index-network/….
     if (payload?.activate || payload?.notifyId) {
-      mainWindow.webContents.send('hermes:notification-activate', {
+      mainWindow.webContents.send('auraforge:notification-activate', {
         activate: payload?.activate,
         notifyId: payload?.notifyId,
         tag: payload?.tag
@@ -16182,13 +16182,13 @@ ipcMain.handle('hermes:notify', (_event, payload) => {
 
     // Approvals keep the existing session-scoped channel.
     if (payload?.sessionId && !payload?.notifyId && !payload?.activate) {
-      mainWindow.webContents.send('hermes:notification-action', { sessionId: payload.sessionId, actionId: action.id })
+      mainWindow.webContents.send('auraforge:notification-action', { sessionId: payload.sessionId, actionId: action.id })
 
       return
     }
 
     focusWindow(mainWindow)
-    mainWindow.webContents.send('hermes:notification-activate', {
+    mainWindow.webContents.send('auraforge:notification-activate', {
       actionId: action.id,
       activate: action.activate || payload?.activate,
       notifyId: payload?.notifyId,
@@ -16230,14 +16230,14 @@ function persistDataUrlReadMaxMb(maxMb) {
   return next
 }
 
-ipcMain.handle('hermes:data-url-read-max:get', () => ({
+ipcMain.handle('auraforge:data-url-read-max:get', () => ({
   maxMb: dataUrlReadMaxMb,
   // Keep the default bytes constant visible for tests / diagnostics.
   defaultMaxMb: DATA_URL_READ_DEFAULT_MAX_MB,
   maxBytes: dataUrlReadMaxBytesFromMb(dataUrlReadMaxMb)
 }))
 
-ipcMain.handle('hermes:data-url-read-max:set', (_event, maxMb) => {
+ipcMain.handle('auraforge:data-url-read-max:set', (_event, maxMb) => {
   const next = persistDataUrlReadMaxMb(maxMb)
 
   return {
@@ -16247,7 +16247,7 @@ ipcMain.handle('hermes:data-url-read-max:set', (_event, maxMb) => {
   }
 })
 
-ipcMain.handle('hermes:readFileDataUrl', async (_event, filePath) => {
+ipcMain.handle('auraforge:readFileDataUrl', async (_event, filePath) => {
   return readFileDataUrlForIpc(filePath, {
     maxBytes: dataUrlReadMaxBytesFromMb(dataUrlReadMaxMb),
     mimeType: mimeTypeForPath(resolveRequestedPathForIpc(filePath, { purpose: 'File preview' })),
@@ -16259,7 +16259,7 @@ ipcMain.handle('hermes:readFileDataUrl', async (_event, filePath) => {
 // Keep a finite cap so Electron + base64 memory stays bounded while archives
 // can exceed the default 16 MiB preview ceiling (and still fit the gateway
 // WebSocket frame limit after base64 expansion).
-ipcMain.handle('hermes:readFileDataUrlForAttach', async (_event, filePath) => {
+ipcMain.handle('auraforge:readFileDataUrlForAttach', async (_event, filePath) => {
   return readFileDataUrlForIpc(filePath, {
     maxBytes: ATTACHMENT_UPLOAD_DEFAULT_MAX_BYTES,
     mimeType: mimeTypeForPath(resolveRequestedPathForIpc(filePath, { purpose: 'Attachment upload' })),
@@ -16267,7 +16267,7 @@ ipcMain.handle('hermes:readFileDataUrlForAttach', async (_event, filePath) => {
   })
 })
 
-ipcMain.handle('hermes:readFileText', async (_event, filePath) => {
+ipcMain.handle('auraforge:readFileText', async (_event, filePath) => {
   const { resolvedPath, stat } = await resolveReadableFileForIpc(filePath, {
     maxBytes: TEXT_PREVIEW_SOURCE_MAX_BYTES,
     purpose: 'Text preview'
@@ -16296,13 +16296,13 @@ ipcMain.handle('hermes:readFileText', async (_event, filePath) => {
 })
 
 // Runtime desktop plugins load their FULL source through this door.
-// `hermes:readFileText` is the *preview* read and silently truncates at
+// `auraforge:readFileText` is the *preview* read and silently truncates at
 // TEXT_PREVIEW_MAX_BYTES (512 KiB) — for a plugin that means evaluating half a
 // file. Dedicated generous cap, full read, and a hard EFBIG (via maxBytes)
 // instead of truncation when the source exceeds it.
 const PLUGIN_SOURCE_MAX_BYTES = 16 * 1024 * 1024
 
-ipcMain.handle('hermes:readPluginSource', async (_event: unknown, filePath: unknown) => {
+ipcMain.handle('auraforge:readPluginSource', async (_event: unknown, filePath: unknown) => {
   const { resolvedPath, stat } = await resolveReadableFileForIpc(filePath, {
     maxBytes: PLUGIN_SOURCE_MAX_BYTES,
     purpose: 'Plugin source'
@@ -16316,7 +16316,7 @@ ipcMain.handle('hermes:readPluginSource', async (_event: unknown, filePath: unkn
   }
 })
 
-ipcMain.handle('hermes:selectPaths', async (_event, options: any = {}) => {
+ipcMain.handle('auraforge:selectPaths', async (_event, options: any = {}) => {
   const properties = options?.directories ? ['openDirectory'] : ['openFile']
 
   if (options?.multiple !== false) {
@@ -16353,7 +16353,7 @@ ipcMain.handle('hermes:selectPaths', async (_event, options: any = {}) => {
   return result.filePaths
 })
 
-ipcMain.handle('hermes:writeClipboard', (_event, text) => {
+ipcMain.handle('auraforge:writeClipboard', (_event, text) => {
   clipboard.writeText(String(text || ''))
 
   return true
@@ -16361,7 +16361,7 @@ ipcMain.handle('hermes:writeClipboard', (_event, text) => {
 
 // Native save-location picker (profile export etc.) — the write itself happens
 // elsewhere (the backend, for profile archives); this only picks the path.
-ipcMain.handle('hermes:selectSavePath', async (_event, options: any = {}) => {
+ipcMain.handle('auraforge:selectSavePath', async (_event, options: any = {}) => {
   const result = await dialog.showSaveDialog(mainWindow, {
     title: options?.title || 'Save',
     defaultPath: options?.defaultPath ? String(options.defaultPath) : undefined,
@@ -16379,15 +16379,15 @@ ipcMain.handle('hermes:selectSavePath', async (_event, options: any = {}) => {
 // navigator.clipboard.readText() throws "Document is not focused" whenever a
 // portaled overlay has focus, and there's no way to route a read through the
 // canvas. The main process has no such gate.
-ipcMain.handle('hermes:readClipboard', () => clipboard.readText())
+ipcMain.handle('auraforge:readClipboard', () => clipboard.readText())
 
-ipcMain.handle('hermes:saveGatewayFile', (_event, payload) => saveGatewayFile(payload))
+ipcMain.handle('auraforge:saveGatewayFile', (_event, payload) => saveGatewayFile(payload))
 
-ipcMain.handle('hermes:saveImageFromUrl', (_event, url) => saveImageFromUrl(String(url || '')))
+ipcMain.handle('auraforge:saveImageFromUrl', (_event, url) => saveImageFromUrl(String(url || '')))
 
 // The custom context menu's edit verbs. They act on the SENDER's focused
 // element, so the renderer restores focus to the editable before invoking.
-ipcMain.handle('hermes:context-menu:edit', (event, command) => {
+ipcMain.handle('auraforge:context-menu:edit', (event, command) => {
   const contents = event.sender
 
   if (command === 'copy') {
@@ -16403,7 +16403,7 @@ ipcMain.handle('hermes:context-menu:edit', (event, command) => {
 
 // Copy the image under the sender's LAST context-menu gesture. Chromium only
 // exposes image bytes through copyImageAt, and only main saw the coordinates.
-ipcMain.handle('hermes:context-menu:copy-image', event => {
+ipcMain.handle('auraforge:context-menu:copy-image', event => {
   const point = lastContextMenuPoint.get(event.sender.id)
 
   if (point) {
@@ -16411,7 +16411,7 @@ ipcMain.handle('hermes:context-menu:copy-image', event => {
   }
 })
 
-ipcMain.handle('hermes:context-menu:spellcheck', (event, action) => {
+ipcMain.handle('auraforge:context-menu:spellcheck', (event, action) => {
   const kind = action?.kind
   const word = String(action?.word || '')
 
@@ -16428,7 +16428,7 @@ ipcMain.handle('hermes:context-menu:spellcheck', (event, action) => {
 
 // Guest dictionary add: the webview TAG exposes replaceMisspelling but no
 // session API, so the renderer names the guest by webContents id.
-ipcMain.handle('hermes:context-menu:guest-add-word', (_event, payload) => {
+ipcMain.handle('auraforge:context-menu:guest-add-word', (_event, payload) => {
   const word = String(payload?.word || '')
   const guest = electronWebContents.fromId(Number(payload?.webContentsId))
 
@@ -16437,7 +16437,7 @@ ipcMain.handle('hermes:context-menu:guest-add-word', (_event, payload) => {
   }
 })
 
-ipcMain.handle('hermes:saveImageBuffer', async (_event, payload) => {
+ipcMain.handle('auraforge:saveImageBuffer', async (_event, payload) => {
   const data = payload?.data
 
   if (!data) {
@@ -16449,7 +16449,7 @@ ipcMain.handle('hermes:saveImageBuffer', async (_event, payload) => {
   return writeComposerImage(buffer, payload?.ext || '.png')
 })
 
-ipcMain.handle('hermes:saveClipboardImage', async () => {
+ipcMain.handle('auraforge:saveClipboardImage', async () => {
   const image = clipboard.readImage()
 
   if (image && !image.isEmpty()) {
@@ -16470,15 +16470,15 @@ ipcMain.handle('hermes:saveClipboardImage', async () => {
   return ''
 })
 
-ipcMain.handle('hermes:normalizePreviewTarget', (_event, target, baseDir) =>
+ipcMain.handle('auraforge:normalizePreviewTarget', (_event, target, baseDir) =>
   normalizePreviewTarget(String(target || ''), baseDir ? String(baseDir) : '')
 )
 
-ipcMain.handle('hermes:watchPreviewFile', (_event, url) => watchPreviewFile(String(url || '')))
+ipcMain.handle('auraforge:watchPreviewFile', (_event, url) => watchPreviewFile(String(url || '')))
 
-ipcMain.handle('hermes:watchDirectory', (_event, dir) => watchDirectory(String(dir || '')))
+ipcMain.handle('auraforge:watchDirectory', (_event, dir) => watchDirectory(String(dir || '')))
 
-ipcMain.handle('hermes:stopPreviewFileWatch', (_event, id) => stopPreviewFileWatch(String(id || '')))
+ipcMain.handle('auraforge:stopPreviewFileWatch', (_event, id) => stopPreviewFileWatch(String(id || '')))
 
 // Each renderer reports the turns it has in flight; the quit guard reads the
 // merged picture. Keyed by webContents id so a closed window stops counting.
@@ -16493,7 +16493,7 @@ function updateStreamThrottleFromActiveWork() {
   streamThrottle.update(mergeActiveWork(activeWorkByWebContents.values()).count > 0)
 }
 
-ipcMain.on('hermes:active-work', (event, payload) => {
+ipcMain.on('auraforge:active-work', (event, payload) => {
   const id = event.sender.id
 
   if (!activeWorkByWebContents.has(id)) {
@@ -16507,7 +16507,7 @@ ipcMain.on('hermes:active-work', (event, payload) => {
   updateStreamThrottleFromActiveWork()
 })
 
-ipcMain.on('hermes:titlebar-theme', (_event, payload) => {
+ipcMain.on('auraforge:titlebar-theme', (_event, payload) => {
   if (!payload || !isHexColor(payload.background) || !isHexColor(payload.foreground)) {
     return
   }
@@ -16526,7 +16526,7 @@ ipcMain.on('hermes:titlebar-theme', (_event, payload) => {
 })
 
 // Pin the native appearance to the app theme (see NATIVE_THEME_CONFIG_PATH).
-ipcMain.on('hermes:native-theme', (_event, mode) => {
+ipcMain.on('auraforge:native-theme', (_event, mode) => {
   if (!THEME_SOURCES.has(mode)) {
     return
   }
@@ -16579,11 +16579,11 @@ app.on('will-quit', () => {
 // Answered synchronously so preload can publish the verdict before the
 // renderer's first script — see the note there on why it cannot decide this
 // itself. Registered at module scope, which runs long before any window.
-ipcMain.on('hermes:translucency:support', event => {
+ipcMain.on('auraforge:translucency:support', event => {
   event.returnValue = { glass: GLASS_SUPPORTED, translucency: TRANSLUCENCY_SUPPORTED }
 })
 
-ipcMain.on('hermes:translucency', (_event, payload) => {
+ipcMain.on('auraforge:translucency', (_event, payload) => {
   const next = normalizeTranslucency(payload, GLASS_SUPPORTED)
   const previous = translucencyState
 
@@ -16638,7 +16638,7 @@ function readPersistedKeepAwake() {
   }
 }
 
-ipcMain.on('hermes:keep-awake', (_event, on) => {
+ipcMain.on('auraforge:keep-awake', (_event, on) => {
   const enabled = Boolean(on)
   keepAwake.set(enabled)
 
@@ -16655,7 +16655,7 @@ ipcMain.on('hermes:keep-awake', (_event, on) => {
 // accelerator — so both handlers return the state that ACTUALLY resulted,
 // including `registered: false` + `error: 'taken'` when another app owns the
 // chord. See electron/quick-entry.ts + store/quick-entry.
-ipcMain.handle('hermes:quick-entry:settings:get', async () => {
+ipcMain.handle('auraforge:quick-entry:settings:get', async () => {
   const settings = readQuickEntrySettings()
   const state = quickEntryShortcut.current()
 
@@ -16669,7 +16669,7 @@ ipcMain.handle('hermes:quick-entry:settings:get', async () => {
   }
 })
 
-ipcMain.handle('hermes:quick-entry:settings:set', async (_event, patch) => {
+ipcMain.handle('auraforge:quick-entry:settings:set', async (_event, patch) => {
   const current = readQuickEntrySettings()
 
   const next = sanitizeQuickEntrySettings({
@@ -16686,7 +16686,7 @@ ipcMain.handle('hermes:quick-entry:settings:set', async (_event, patch) => {
 // owns the one prompt-submit path, and forwarding keeps it that way. The
 // payload is `{ target, text }` — target routing (current chat / a picked
 // session / new) is the renderer's job too.
-ipcMain.on('hermes:quick-entry:submit', (_event, payload) => {
+ipcMain.on('auraforge:quick-entry:submit', (_event, payload) => {
   hideQuickEntryWindow()
 
   const text = typeof payload?.text === 'string' ? payload.text.trim() : ''
@@ -16703,7 +16703,7 @@ ipcMain.on('hermes:quick-entry:submit', (_event, payload) => {
 
   // Deliberately does NOT raise/focus the main window — the user asked to fire
   // a prompt from wherever they were, not to be yanked into the app.
-  mainWindow.webContents.send('hermes:quick-entry:submit', {
+  mainWindow.webContents.send('auraforge:quick-entry:submit', {
     target: typeof payload?.target === 'string' && payload.target ? payload.target : 'current',
     text
   })
@@ -16712,15 +16712,15 @@ ipcMain.on('hermes:quick-entry:submit', (_event, payload) => {
 // Primary renderer → main → quick window: gateway connection state + the
 // recent-session list for the target picker. Cached so a quick window spawned
 // AFTER the last push still boots from truth instead of "disconnected".
-ipcMain.on('hermes:quick-entry:state', (_event, payload) => {
+ipcMain.on('auraforge:quick-entry:state', (_event, payload) => {
   quickEntryLastState = payload ?? null
 
   if (quickEntryWindow && !quickEntryWindow.isDestroyed()) {
-    quickEntryWindow.webContents.send('hermes:quick-entry:state', payload)
+    quickEntryWindow.webContents.send('auraforge:quick-entry:state', payload)
   }
 })
 
-ipcMain.on('hermes:quick-entry:dismiss', () => hideQuickEntryWindow())
+ipcMain.on('auraforge:quick-entry:dismiss', () => hideQuickEntryWindow())
 
 // Disable F12 DevTools: maintained in the main process so a cold launch
 // restores it before any window is shown (applied on ready). The renderer
@@ -16735,7 +16735,7 @@ function readPersistedDisableF12() {
   }
 }
 
-ipcMain.on('hermes:devtools:disable-f12', (_event, on) => {
+ipcMain.on('auraforge:devtools:disable-f12', (_event, on) => {
   f12Blocked = Boolean(on)
 
   try {
@@ -16746,7 +16746,7 @@ ipcMain.on('hermes:devtools:disable-f12', (_event, on) => {
   }
 })
 
-ipcMain.handle('hermes:openExternal', (_event, url) => {
+ipcMain.handle('auraforge:openExternal', (_event, url) => {
   if (!openExternalUrl(url)) {
     throw new Error('Invalid external URL')
   }
@@ -16754,7 +16754,7 @@ ipcMain.handle('hermes:openExternal', (_event, url) => {
 
 // ── Find-in-page (Ctrl/Cmd+F) ─────────────────────────────────────────────
 // The desktop supports multiple BrowserWindows (one primary plus any
-// per-session secondary windows spawned via `hermes:window:openSession`).
+// per-session secondary windows spawned via `auraforge:window:openSession`).
 // Find must run against the requesting window, not a global — otherwise
 // Cmd+F pressed in a secondary session window would search the primary
 // and the match counter would report matches the user can't see. Resolve
@@ -16781,7 +16781,7 @@ function ensureFoundInPageForwarder(sender: Electron.WebContents): void {
   })
 }
 
-ipcMain.handle('hermes:find-in-page', async (event, query, options) => {
+ipcMain.handle('auraforge:find-in-page', async (event, query, options) => {
   const win = BrowserWindow.fromWebContents(event.sender)
 
   if (!win || win.isDestroyed()) {
@@ -16796,7 +16796,7 @@ ipcMain.handle('hermes:find-in-page', async (event, query, options) => {
   return { count: 0 }
 })
 
-ipcMain.handle('hermes:stop-find-in-page', event => {
+ipcMain.handle('auraforge:stop-find-in-page', event => {
   const win = BrowserWindow.fromWebContents(event.sender)
 
   if (!win || win.isDestroyed()) {
@@ -16808,9 +16808,9 @@ ipcMain.handle('hermes:stop-find-in-page', event => {
 
 // The renderer can't know whether a loopback URL is reachable — only main
 // knows which transport backs this gateway. Ask before loading one.
-ipcMain.handle('hermes:preview:reach', async (event, url) => reachablePreviewUrl(event.sender.id, String(url || '')))
+ipcMain.handle('auraforge:preview:reach', async (event, url) => reachablePreviewUrl(event.sender.id, String(url || '')))
 
-ipcMain.handle('hermes:openPreviewInBrowser', async (_event, url) => {
+ipcMain.handle('auraforge:openPreviewInBrowser', async (_event, url) => {
   if (!(await openPreviewInBrowser(url))) {
     throw new Error('Invalid preview URL')
   }
@@ -16820,15 +16820,15 @@ ipcMain.handle('hermes:openPreviewInBrowser', async (_event, url) => {
 // settings mount and seeds the value into the picker; writing back persists
 // it via writeDefaultProjectDir so resolveHermesCwd picks it up on the next
 // session spawn (no app restart needed).
-ipcMain.handle('hermes:setting:defaultProjectDir:get', async () => ({
+ipcMain.handle('auraforge:setting:defaultProjectDir:get', async () => ({
   dir: readDefaultProjectDir(),
   defaultLabel: app.getPath('home'),
   resolvedCwd: resolveHermesCwd()
 }))
 
-ipcMain.handle('hermes:workspace:sanitize', async (_event, cwd) => sanitizeWorkspaceCwd(cwd))
+ipcMain.handle('auraforge:workspace:sanitize', async (_event, cwd) => sanitizeWorkspaceCwd(cwd))
 
-ipcMain.handle('hermes:setting:defaultProjectDir:set', async (_event, dir) => {
+ipcMain.handle('auraforge:setting:defaultProjectDir:set', async (_event, dir) => {
   const next = typeof dir === 'string' && dir.trim() ? dir.trim() : null
 
   if (next) {
@@ -16844,7 +16844,7 @@ ipcMain.handle('hermes:setting:defaultProjectDir:set', async (_event, dir) => {
   return { dir: next }
 })
 
-ipcMain.handle('hermes:setting:defaultProjectDir:pick', async () => {
+ipcMain.handle('auraforge:setting:defaultProjectDir:pick', async () => {
   const result = await dialog.showOpenDialog({
     title: 'Choose default project directory',
     properties: ['openDirectory', 'createDirectory'],
@@ -16858,11 +16858,11 @@ ipcMain.handle('hermes:setting:defaultProjectDir:pick', async () => {
   return { canceled: false, dir: result.filePaths[0] }
 })
 
-ipcMain.handle('hermes:fetchLinkTitle', (_event, url) => fetchLinkTitle(url))
+ipcMain.handle('auraforge:fetchLinkTitle', (_event, url) => fetchLinkTitle(url))
 
-ipcMain.handle('hermes:resolveFavicon', (_event, url) => resolveFaviconCached(url))
+ipcMain.handle('auraforge:resolveFavicon', (_event, url) => resolveFaviconCached(url))
 
-ipcMain.handle('hermes:logs:reveal', async () => {
+ipcMain.handle('auraforge:logs:reveal', async () => {
   try {
     await fs.promises.mkdir(path.dirname(DESKTOP_LOG_PATH), { recursive: true })
 
@@ -16878,14 +16878,14 @@ ipcMain.handle('hermes:logs:reveal', async () => {
   }
 })
 
-ipcMain.handle('hermes:logs:recent', async () => ({ path: DESKTOP_LOG_PATH, lines: hermesLog.slice(-200) }))
+ipcMain.handle('auraforge:logs:recent', async () => ({ path: DESKTOP_LOG_PATH, lines: hermesLog.slice(-200) }))
 
 // Renderer error-boundary catches (#79428 defect B): the component stack only
 // exists in renderer memory, so the boundary posts it here and we persist it
 // via the desktop.log pipeline. `on`, not `handle` — the sender may be mid-
 // crash and must not await. Flush immediately: a crashing window can be gone
 // before the debounced flush timer fires.
-ipcMain.on('hermes:logs:renderer-error', (_event, report) => {
+ipcMain.on('auraforge:logs:renderer-error', (_event, report) => {
   const { label, boundary, message, componentStack } = report && typeof report === 'object' ? report : {}
   rememberLog(formatRendererBoundaryReport(label, boundary, message, componentStack))
   flushDesktopLogBufferSync()
@@ -16904,7 +16904,7 @@ registerFsIpc({
 // Git-driven features (worktrees, review pane, repo scan) — see git-ipc.ts.
 registerGitIpc({ resolveGitBinary, resolveGhBinary })
 
-// Embedded terminal PTY host (hermes:terminal:*) — see terminal-ipc.ts.
+// Embedded terminal PTY host (auraforge:terminal:*) — see terminal-ipc.ts.
 const terminalIpc = registerTerminalIpc({
   isWindows: IS_WINDOWS,
   findOnPath,
@@ -16916,7 +16916,7 @@ const terminalIpc = registerTerminalIpc({
 
 const disposeTerminalSession = terminalIpc.disposeTerminalSession
 
-ipcMain.handle('hermes:updates:check', async () =>
+ipcMain.handle('auraforge:updates:check', async () =>
   checkUpdates().catch(error => ({
     supported: true,
     branch: readDesktopUpdateConfig().branch,
@@ -16926,7 +16926,7 @@ ipcMain.handle('hermes:updates:check', async () =>
   }))
 )
 
-ipcMain.handle('hermes:updates:apply', async (_event, payload) =>
+ipcMain.handle('auraforge:updates:apply', async (_event, payload) =>
   applyUpdates(payload || {}).catch(error => ({
     ok: false,
     error: 'apply-failed',
@@ -16934,9 +16934,9 @@ ipcMain.handle('hermes:updates:apply', async (_event, payload) =>
   }))
 )
 
-ipcMain.handle('hermes:updates:branch:get', async () => readDesktopUpdateConfig())
+ipcMain.handle('auraforge:updates:branch:get', async () => readDesktopUpdateConfig())
 
-ipcMain.handle('hermes:updates:branch:set', async (_event, name) => {
+ipcMain.handle('auraforge:updates:branch:set', async (_event, name) => {
   const branch = typeof name === 'string' && name.trim() ? name.trim() : DEFAULT_UPDATE_BRANCH
   writeDesktopUpdateConfig({ branch })
 
@@ -16998,7 +16998,7 @@ function showAboutPanelFresh() {
   })
 }
 
-ipcMain.handle('hermes:version', async () => {
+ipcMain.handle('auraforge:version', async () => {
   const skew = await detectRendererSkew()
 
   return {
@@ -17220,8 +17220,8 @@ async function runDesktopUninstall(mode) {
   return { ok: true, mode, willRemoveAppBundle: Boolean(removeBundle), scriptPath }
 }
 
-ipcMain.handle('hermes:uninstall:summary', async () => getUninstallSummary())
-ipcMain.handle('hermes:uninstall:run', async (_event, payload) => {
+ipcMain.handle('auraforge:uninstall:summary', async () => getUninstallSummary())
+ipcMain.handle('auraforge:uninstall:run', async (_event, payload) => {
   const mode = payload && typeof payload === 'object' ? payload.mode : payload
 
   return runDesktopUninstall(String(mode || ''))
@@ -17229,17 +17229,17 @@ ipcMain.handle('hermes:uninstall:run', async (_event, payload) => {
 
 // Download a VS Code Marketplace extension and return the raw color-theme JSON
 // it contributes. No theme code is executed — we only read JSON from the .vsix.
-ipcMain.handle('hermes:vscode-theme:fetch', async (_event, id) => fetchMarketplaceThemes(String(id || '')))
+ipcMain.handle('auraforge:vscode-theme:fetch', async (_event, id) => fetchMarketplaceThemes(String(id || '')))
 
 // Search the Marketplace for color-theme extensions (empty query = top installs).
-ipcMain.handle('hermes:vscode-theme:search', async (_event, query) => searchMarketplaceThemes(String(query || ''), 20))
+ipcMain.handle('auraforge:vscode-theme:search', async (_event, query) => searchMarketplaceThemes(String(query || ''), 20))
 
 // ---------------------------------------------------------------------------
-// hermes:// deep links (e.g. hermes://blueprint/morning-brief?time=08:00,
-// hermes://mcp/install?name=NAME&config=B64 — the vendor "Add to Aura Forge"
-// button, or hermes://plugin/install?repo=owner/repo). Dev
+// auraforge:// deep links (e.g. auraforge://blueprint/morning-brief?time=08:00,
+// auraforge://mcp/install?name=NAME&config=B64 — the vendor "Add to Aura Forge"
+// button, or auraforge://plugin/install?repo=owner/repo). Dev
 // (`HERMES_DESKTOP_DEV_SERVER`) registers hermes-dev:// instead — bare
-// Electron or a stale OS handler often owns hermes:// on dev machines.
+// Electron or a stale OS handler often owns auraforge:// on dev machines.
 // Parsing is generic ({kind, name, params}); the renderer routes per kind
 // and anything install-shaped requires explicit user confirmation there.
 // A docs/dashboard "Send to App" button opens this URL; we route it into the
@@ -17283,7 +17283,7 @@ function handleDeepLink(url) {
     return
   }
 
-  // hermes://blueprint/<key>?slot=val  -> host="blueprint", path="/<key>"
+  // auraforge://blueprint/<key>?slot=val  -> host="blueprint", path="/<key>"
   const kind = parsed.hostname || ''
   const name = decodeURIComponent((parsed.pathname || '').replace(/^\//, ''))
   const params = {}
@@ -17304,7 +17304,7 @@ function handleDeepLink(url) {
     }
 
     mainWindow.focus()
-    mainWindow.webContents.send('hermes:deep-link', payload)
+    mainWindow.webContents.send('auraforge:deep-link', payload)
     rememberLog(`[deeplink] delivered ${kind}/${name}`)
   } catch (err) {
     rememberLog(`[deeplink] delivery failed: ${err.message}`)
@@ -17313,7 +17313,7 @@ function handleDeepLink(url) {
 
 // Renderer calls this (via IPC) once it has mounted its deep-link listener, so
 // a link that arrived during boot/install is flushed exactly once.
-ipcMain.handle('hermes:deep-link-ready', () => {
+ipcMain.handle('auraforge:deep-link-ready', () => {
   _rendererReadyForDeepLink = true
 
   if (_pendingDeepLink) {
@@ -17347,7 +17347,7 @@ function registerDeepLinkProtocol() {
 }
 
 // Single-instance lock: deep links on a running app (Win/Linux) arrive as a
-// second-instance argv. Without the lock a second `hermes://` launch spawns a
+// second-instance argv. Without the lock a second `auraforge://` launch spawns a
 // whole new app instead of routing into the running one.
 const _gotSingleInstanceLock = app.requestSingleInstanceLock()
 const isPrimaryInstance = _gotSingleInstanceLock
@@ -17463,7 +17463,7 @@ app.whenReady().then(() => {
   void resumeManagedSshRecoveries()
   createWindow()
 
-  // Win/Linux cold start: the launching hermes:// URL is in our own argv.
+  // Win/Linux cold start: the launching auraforge:// URL is in our own argv.
   const _coldStartLink = _extractDeepLink(process.argv)
 
   if (_coldStartLink) {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { HermesGitWorktree } from '@/global'
 import { makeCwdSession } from '@/test/session-info'
-import type { ProjectInfo, SessionInfo } from '@/types/hermes'
+import type { ProjectInfo, SessionInfo } from '@/types/auraforge'
 
 import {
   baseName,
@@ -31,7 +31,7 @@ const lane = (over: Partial<SidebarSessionGroup> & Pick<SidebarSessionGroup, 'id
 
 describe('baseName', () => {
   it('returns the final path segment, ignoring trailing slashes and separators', () => {
-    expect(baseName('/www/hermes-agent/')).toBe('hermes-agent')
+    expect(baseName('/ww./auraforge-agent/')).toBe('hermes-agent')
     expect(baseName('C:\\repos\\app')).toBe('app')
     expect(baseName('')).toBeUndefined()
   })
@@ -747,7 +747,7 @@ describe('overlayLiveLanes', () => {
     // place under `::branch::main` / label "main", miss that lane by id+label,
     // and CREATE a second main lane with the same sessions — dual lanes in the
     // project drill-in (e.g. main + codex-research-guardian).
-    const root = '/home/hermes/hermes-workspace/codex-research-guardian'
+    const root = '/hom./auraforge/hermes-workspace/codex-research-guardian'
     const a = makeCwdSession(root, { id: 's1' }) // empty git_branch / git_repo_root
     const b = makeCwdSession(root, { id: 's2' })
 

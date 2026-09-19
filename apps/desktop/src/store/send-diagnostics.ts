@@ -65,7 +65,7 @@ interface ShareNousResponse {
  *  IPC (browser dashboard, older shells) just omits the file. */
 async function collectLocalExtras(): Promise<Record<string, string>> {
   try {
-    const logs = await window.hermesDesktop?.getRecentLogs?.()
+    const logs = await window.auraForgeDesktop?.getRecentLogs?.()
     const lines = Array.isArray(logs?.lines) ? logs.lines : []
 
     return lines.length ? { 'desktop.log': lines.join('\n') } : {}

@@ -1,5 +1,5 @@
 /**
- * @hermes/plugin-sdk — THE plugin language. The vscode-module model: plugin
+ * @auraforge/plugin-sdk — THE plugin language. The vscode-module model: plugin
  * authors import exactly one module and get everything — they never touch
  * `@/…` internals (lint-fenced) and never need codebase access.
  *
@@ -41,7 +41,7 @@ import {
 import { onGatewayEvent } from '@/contrib/events'
 import { registry } from '@/contrib/registry'
 import type { WorkspaceMode } from '@/contrib/types'
-import { deleteProfile, getLogs, getStatus, hermesApi, type HermesGateway } from '@/hermes'
+import { deleteProfile, getLogs, getStatus, auraForgeApi, type AuraForgeGateway } from '@/auraforge'
 import {
   $gateway,
   activeGatewayConnectionId,
@@ -96,7 +96,7 @@ import {
   sessionTileDelegate
 } from '@/store/session-states'
 import { runGatewayRestart } from '@/store/system-actions'
-import type { PaginatedSessions, UsageStats } from '@/types/hermes'
+import type { PaginatedSessions, UsageStats } from '@/types/auraforge'
 
 import { planPluginOpenSession } from './plugin-open-session-plan'
 
@@ -241,7 +241,7 @@ async function requestPluginProfile<T>(
     return requestGatewayForAgent<T>(route.connectionId, route.profile, method, params)
   }
 
-  const getAgentRoster = window.hermesDesktop?.getAgentRoster
+  const getAgentRoster = window.auraForgeDesktop?.getAgentRoster
 
   if (!getAgentRoster) {
     return requestGatewayForProfile<T>(route, method, params)
@@ -269,7 +269,7 @@ async function requestPluginProfile<T>(
  *  no longer authority to touch that backend, even when its labels still look
  *  identical. */
 async function pluginRouteStillRegistered(route: PluginProfileRoute): Promise<boolean> {
-  const getProfileRoutes = window.hermesDesktop?.getProfileRoutes
+  const getProfileRoutes = window.auraForgeDesktop?.getProfileRoutes
 
   if (!getProfileRoutes) {
     return false
@@ -512,7 +512,7 @@ function waitForFocusedSessionHydration({
 
 // Wait for a profile switch, but never longer than the wake budget.
 //
-// ensureGatewayProfile awaits the store's dial, and HermesGateway.connect() has
+// ensureGatewayProfile awaits the store's dial, and AuraForgeGateway.connect() has
 // no dial timeout of its own: a backend that accepts the socket and then never
 // completes the handshake leaves this promise pending for the life of the
 // window. That is not merely a slow open. waitForFocusedSessionHydration arms
@@ -756,7 +756,7 @@ export const host = {
   /** The registered connection list (labels, kinds, primary) — token bytes
    *  never included. Rejects on Desktop builds without the registry. */
   connections: async () => {
-    const bridge = window.hermesDesktop?.connections
+    const bridge = window.auraForgeDesktop?.connections
 
     if (!bridge) {
       throw new Error('This Desktop build has no connection registry. Update Aura Forge Desktop.')
@@ -773,7 +773,7 @@ export const host = {
    *  duplicates. Sources that are unreachable (or ssh connect-on-demand)
    *  appear in `sources` with an error instead of failing the call. */
   agents: async () => {
-    const roster = window.hermesDesktop?.getAgentRoster
+    const roster = window.auraForgeDesktop?.getAgentRoster
 
     if (!roster) {
       throw new Error('This Desktop build cannot enumerate multi-source agents. Update Aura Forge Desktop.')
@@ -1225,7 +1225,7 @@ export const host = {
   /** Credential-free routes across every current registry source. Identity is
    *  the (connectionId, profile) pair; endpoint/auth details stay in Electron. */
   profileRoutes: async () => {
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
     const getProfileRoutes = desktop?.getProfileRoutes
 
     if (!getProfileRoutes) {
@@ -1314,7 +1314,7 @@ export const host = {
       profile
     })
 
-    return hermesApi<PaginatedSessions>({
+    return auraForgeApi<PaginatedSessions>({
       ...(route ? { connectionId: route.connectionId } : {}),
       path: `/api/profiles/sessions?${query.toString()}`,
       timeoutMs: 60_000
@@ -1338,7 +1338,7 @@ export const host = {
       throw new Error('Persisted session updates require a profile and session id')
     }
 
-    return hermesApi<{ ok: boolean; hidden: boolean }>({
+    return auraForgeApi<{ ok: boolean; hidden: boolean }>({
       ...(route ? { connectionId: route.connectionId } : {}),
       path: `/api/sessions/${encodeURIComponent(options.sessionId)}`,
       method: 'PATCH',
@@ -1360,10 +1360,10 @@ export const host = {
 
   /** The LIVE gateway instance for the active profile (null before the first
    *  socket opens). Most plugins want `host.request`; this exists for SDK
-   *  components that take a `HermesGateway` prop directly (e.g. `McpTab`),
+   *  components that take a `AuraForgeGateway` prop directly (e.g. `McpTab`),
    *  which need the instance, not just a JSON-RPC door. Re-read per use — the
    *  active instance changes on a profile swap. */
-  getGateway: (): HermesGateway | null => $gateway.get()
+  getGateway: (): AuraForgeGateway | null => $gateway.get()
 }
 
 // -- react bridge -------------------------------------------------------------
@@ -1538,7 +1538,7 @@ export { Textarea } from '@/components/ui/textarea'
 export { Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 export type { GatewayEventListener } from '@/contrib/events'
 export type {
-  HermesPlugin,
+  AuraForgePlugin,
   PluginContext,
   PluginContribution,
   PluginNativeNotificationInput,
@@ -1559,7 +1559,7 @@ export { Contribute, type ContributeProps } from '@/contrib/react/contribute'
 export type { Contribution } from '@/contrib/types'
 /** The live gateway instance type — for typing the `gateway` prop `McpTab`
  *  takes; obtain the instance from `host.getGateway()`. */
-export type { HermesGateway } from '@/hermes'
+export type { AuraForgeGateway } from '@/auraforge'
 /** Grab-to-pan for overflow containers (boards, timelines, wide tables) —
  *  the shared scrub primitive; don't hand-roll drag-to-scroll. */
 export { type GrabScroll, useGrabScroll } from '@/hooks/use-grab-scroll'
@@ -1603,7 +1603,7 @@ export {
   type SurfaceModelSwitchConfirmOptions
 } from '@/lib/guarded-model-switch'
 export { triggerHaptic as haptic } from '@/lib/haptics'
-export type { HermesOpenTarget } from '@/lib/hermes-open-target'
+export type { AuraForgeOpenTarget } from '@/lib/auraforge-open-target'
 /** The app's lucide icon set (RefreshCw, LayoutDashboard, Activity, …). */
 export * as icons from '@/lib/icons'
 export { type KeybindContribution, KEYBINDS_AREA } from '@/lib/keybinds/actions'
@@ -1700,7 +1700,7 @@ export { requestTheme } from '@/themes/request'
 export { retintTheme, themeHue } from '@/themes/retint'
 export type { DesktopTheme, DesktopThemeColors } from '@/themes/types'
 export { THEMES_AREA } from '@/themes/user-themes'
-export type { RpcEvent, StatusResponse } from '@/types/hermes'
+export type { RpcEvent, StatusResponse } from '@/types/auraforge'
 /** Subscribe a component to a `host.state` atom. */
 export { useStore as useValue } from '@nanostores/react'
 /** The app's data-fetching layer. Plugins share the ONE QueryClient mounted at

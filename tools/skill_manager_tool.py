@@ -173,6 +173,7 @@ import yaml
 
 # All skills live in ~/.auraforge/skills/ (single source of truth)
 HERMES_HOME = get_hermes_home()
+AURA_FORGE_HOME = HERMES_HOME
 SKILLS_DIR = HERMES_HOME / "skills"
 _SKILLS_DIR_AT_IMPORT = SKILLS_DIR
 

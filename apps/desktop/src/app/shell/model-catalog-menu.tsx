@@ -18,7 +18,7 @@ import {
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { usePointerQuiet } from '@/components/ui/keyboard-first'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { HermesGateway } from '@/hermes'
+import type { AuraForgeGateway } from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
@@ -36,7 +36,7 @@ import {
 } from '@/store/model-visibility'
 import { $collapsedProviders, toggleCollapsedProvider } from '@/store/provider-collapse'
 import { $defaultReasoningEffort } from '@/store/session'
-import type { ModelOptionProvider, ModelOptionsResponse } from '@/types/hermes'
+import type { ModelOptionProvider, ModelOptionsResponse } from '@/types/auraforge'
 
 import { type FastControl, ModelEditSubmenu, resolveFastControl } from './model-edit-submenu'
 
@@ -92,7 +92,7 @@ interface ModelCatalogMenuProps {
   controller: ModelMenuController
   /** Rows appended under the catalog (Refresh Models, Edit Models, …). */
   footer?: ReactNode
-  gateway?: HermesGateway
+  gateway?: AuraForgeGateway
   /** Owner-routed RPC for catalog reads. Preferred over `gateway.request` so
    *  a tile's menu queries the session owner's backend, not chrome's. */
   request?: <T>(method: string, params?: Record<string, unknown>) => Promise<T>

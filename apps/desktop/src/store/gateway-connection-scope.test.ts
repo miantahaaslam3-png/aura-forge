@@ -16,9 +16,9 @@ const gatewayMocks = vi.hoisted(() => ({
   setConnection: vi.fn()
 }))
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   setApiRequestConnection: vi.fn(),
-  HermesGateway: class {
+  AuraForgeGateway: class {
     connectionState = 'closed'
     wsUrl = ''
     connect = async (wsUrl: string): Promise<void> => {
@@ -52,10 +52,10 @@ const {
   setPrimaryGatewayConnectionId
 } = await import('./gateway')
 
-const { setApiRequestConnection } = await import('@/hermes')
+const { setApiRequestConnection } = await import('@/auraforge')
 
 function installDesktop(): void {
-  ;(window as unknown as { hermesDesktop: unknown }).hermesDesktop = {
+  ;(window as unknown as { auraForgeDesktop: unknown }).auraForgeDesktop = {
     getConnection: vi.fn(async () => ({
       authMode: 'token',
       profile: 'default',
@@ -87,7 +87,7 @@ beforeEach(() => {
 afterEach(() => {
   closeSecondaryGateways()
   vi.clearAllMocks()
-  delete (window as unknown as { hermesDesktop?: unknown }).hermesDesktop
+  delete (window as unknown as { auraForgeDesktop?: unknown }).auraForgeDesktop
 })
 
 describe('primary gateway registry scope', () => {

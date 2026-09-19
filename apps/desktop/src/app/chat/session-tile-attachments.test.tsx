@@ -28,8 +28,8 @@ vi.mock('@/i18n', () => ({
   })
 }))
 
-vi.mock('@/hermes', () => ({
-  HermesGateway: class {},
+vi.mock('@/auraforge', () => ({
+  AuraForgeGateway: class {},
   PROMPT_SUBMIT_REQUEST_TIMEOUT_MS: 1_000,
   setApiRequestProfile: vi.fn(),
   transcribeAudio: vi.fn()
@@ -115,14 +115,14 @@ describe('session tile attachment occurrence ownership', () => {
       }
     })
     installDelegate()
-    Object.defineProperty(window, 'hermesDesktop', {
+    Object.defineProperty(window, 'auraForgeDesktop', {
       configurable: true,
       value: { readFileDataUrl: vi.fn(async () => FULL_SOURCE) }
     })
   })
 
   afterEach(() => {
-    Reflect.deleteProperty(window, 'hermesDesktop')
+    Reflect.deleteProperty(window, 'auraForgeDesktop')
     $connection.set(null)
     $sessions.set([])
     $sessionStates.set({})

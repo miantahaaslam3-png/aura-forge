@@ -26,13 +26,13 @@ function failBoot() {
 }
 
 function stubDesktop(config: Record<string, unknown>, overrides: Record<string, unknown> = {}) {
-  const original = window.hermesDesktop
-  Object.defineProperty(window, 'hermesDesktop', {
+  const original = window.auraForgeDesktop
+  Object.defineProperty(window, 'auraForgeDesktop', {
     configurable: true,
     value: { getRecentLogs: async () => ({ lines: [] }), getConnectionConfig: async () => config, ...overrides }
   })
 
-  return () => Object.defineProperty(window, 'hermesDesktop', { configurable: true, value: original })
+  return () => Object.defineProperty(window, 'auraForgeDesktop', { configurable: true, value: original })
 }
 
 const remoteToken = {

@@ -14,14 +14,14 @@ import type {
   DesktopUpdateStatus,
   DesktopVersionInfo
 } from '@/global'
-import { checkHermesUpdate, getActionStatus, updateHermes } from '@/hermes'
+import { checkHermesUpdate, getActionStatus, updateHermes } from '@/auraforge'
 import { translateNow } from '@/i18n'
 import { persistString, storedString } from '@/lib/storage'
 import { $connectionsRegistry, refreshConnectionsRegistry } from '@/store/connections'
 import { reconnectGateway } from '@/store/gateway-reconnect'
 import { dismissNotification, notify } from '@/store/notifications'
 import { $connection } from '@/store/session'
-import type { BackendUpdateCheckResponse } from '@/types/hermes'
+import type { BackendUpdateCheckResponse } from '@/types/auraforge'
 
 export interface UpdateApplyState {
   applying: boolean
@@ -79,7 +79,7 @@ const UPDATE_TOAST_ID = 'desktop-update-available'
 // a day, so a "don't show this exact sha again" guard re-popped the toast on
 // every new commit. We instead suppress the toast for a cooldown window that
 // (re)starts whenever the user closes it.
-const UPDATE_TOAST_SNOOZE_KEY = 'hermes:update-toast-snooze-until'
+const UPDATE_TOAST_SNOOZE_KEY = 'auraforge:update-toast-snooze-until'
 const UPDATE_TOAST_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 function snoozeUpdateToast(): void {
@@ -108,7 +108,7 @@ const SKEW_TOAST_ID = 'backend-contract-skew'
 // right after they closed it. Mirror the update toast: persist a cooldown when
 // the user dismisses it. It still reminds again after the window if the backend
 // is still behind, and clears immediately once the backend catches up.
-const SKEW_TOAST_SNOOZE_KEY = 'hermes:backend-skew-toast-snooze-until'
+const SKEW_TOAST_SNOOZE_KEY = 'auraforge:backend-skew-toast-snooze-until'
 const SKEW_TOAST_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 function snoozeSkewToast(): void {
@@ -126,7 +126,7 @@ const INSTALL_METHOD_TOAST_ID = 'install-method-not-supported'
 // re-derived from every session.info (session.create/resume/activate all
 // route through applyRuntimeInfo), so without a snooze it would re-pop on
 // every session switch even right after the user dismissed it.
-const INSTALL_METHOD_TOAST_SNOOZE_KEY = 'hermes:install-method-toast-snooze-until'
+const INSTALL_METHOD_TOAST_SNOOZE_KEY = 'auraforge:install-method-toast-snooze-until'
 const INSTALL_METHOD_TOAST_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 function snoozeInstallMethodToast(): void {
@@ -332,7 +332,7 @@ export async function refreshDesktopVersion(): Promise<DesktopVersionInfo | null
   // mid-reload, or the bridge not yet ready on first paint) would surface
   // as an unhandled promise rejection in the renderer. Swallow it.
   try {
-    const next = await window.hermesDesktop?.getVersion?.()
+    const next = await window.auraForgeDesktop?.getVersion?.()
 
     if (next) {
       $desktopVersion.set(next)
@@ -393,7 +393,7 @@ export async function checkBackendUpdates(): Promise<DesktopUpdateStatus | null>
 }
 
 export async function checkUpdates(): Promise<DesktopUpdateStatus | null> {
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.auraForgeDesktop?.updates
 
   if (!bridge || $updateChecking.get()) {
     return $updateStatus.get()
@@ -428,7 +428,7 @@ export async function checkUpdates(): Promise<DesktopUpdateStatus | null> {
 }
 
 export async function applyUpdates(opts: DesktopUpdateApplyOptions = {}): Promise<DesktopUpdateApplyResult> {
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.auraForgeDesktop?.updates
 
   if (!bridge) {
     return { ok: false, error: 'unavailable', message: 'Desktop bridge unavailable.' }
@@ -869,7 +869,7 @@ async function runEverythingUpdate(): Promise<void> {
     // 2. Fan out to every OTHER eligible registered connection. The active
     //    backend was just updated (excluded), and the local runtime updates
     //    with the client in step 3 (excluded). No registry/bridge → skip.
-    const bridge = window.hermesDesktop?.connections
+    const bridge = window.auraForgeDesktop?.connections
     const registry = $connectionsRegistry.get() ?? (await refreshConnectionsRegistry().catch(() => null))
     const excludeIds = ['local']
     const activeConnectionId = $connection.get()?.connectionId
@@ -959,7 +959,7 @@ export function startUpdatePoller(): void {
     return
   }
 
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.auraForgeDesktop?.updates
 
   if (!bridge) {
     return

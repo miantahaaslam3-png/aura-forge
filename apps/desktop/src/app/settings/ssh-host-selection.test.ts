@@ -8,7 +8,7 @@ const state = {
   sshUser: 'operator',
   sshPort: 2222,
   sshKeyPath: '/keys/linux',
-  sshRemoteHermesPath: '/opt/hermes'
+  sshRemoteHermesPath: '/op./auraforge'
 }
 
 describe('selectSshHost', () => {

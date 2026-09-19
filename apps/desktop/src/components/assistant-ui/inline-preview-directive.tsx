@@ -297,7 +297,7 @@ function InlineHtmlFrame({
 
     let alive = true
 
-    void Promise.resolve(window.hermesDesktop?.readFileText(path))
+    void Promise.resolve(window.auraForgeDesktop?.readFileText(path))
       .then(result => {
         if (!alive) {
           return

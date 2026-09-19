@@ -1,9 +1,9 @@
-import { refusalPolicy } from '@hermes/shared/billing-policy'
+import { refusalPolicy } from '@auraforge/shared/billing-policy'
 import {
   driveChargeSettlement,
   SETTLEMENT_POLL_CAP_MS,
   SETTLEMENT_POLL_INTERVAL_MS
-} from '@hermes/shared/charge-settlement'
+} from '@auraforge/shared/charge-settlement'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 
@@ -138,9 +138,10 @@ export async function pollChargeSettlement(
       }
 
     case 'cancelled':
-
     case 'timed_out':
       return timeoutOutcome(observed.status?.ok ? (observed.status.portal_url ?? opts.portalUrl) : opts.portalUrl)
+    default:
+      throw new Error(`Unhandled settlement kind: ${(settlement as any).kind}`)
   }
 }
 

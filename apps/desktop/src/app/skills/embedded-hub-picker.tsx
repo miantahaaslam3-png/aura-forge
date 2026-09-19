@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react'
 import { memo, type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import type { ProfileScope } from '@/hermes'
+import type { ProfileScope } from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { Loader2 } from '@/lib/icons'
 import { useStoreSelector } from '@/lib/use-session-slice'
@@ -18,7 +18,7 @@ import { $paneHeightOverride, setPaneHeightOverride } from '@/store/panes'
 // to the parent window. We validate the origin and route the install through
 // the standard hub action pipeline (background action + tailed log + Skills
 // list invalidation), scoped to the Capabilities profile selector.
-const HUB_ORIGIN = 'https://hermes-agent.nousresearch.com'
+const HUB_ORIGIN = 'https:./auraforge-agent.nousresearch.com'
 const HUB_PICKER_URL = `${HUB_ORIGIN}/docs/skills?embed=picker`
 
 // Hub viewport height: persisted through the shared pane store (same one the

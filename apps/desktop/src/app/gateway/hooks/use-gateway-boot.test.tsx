@@ -53,7 +53,7 @@ vi.mock(import('@/store/notifications'), async importOriginal => ({
 }))
 
 // End-to-end-ish repro of the "remote VPS → stuck on CONNECTING, no Settings"
-// bug that drives the REAL useGatewayBoot hook + REAL HermesGateway through a
+// bug that drives the REAL useGatewayBoot hook + REAL AuraForgeGateway through a
 // fake WebSocket we fully control. No Docker / no real port: from the desktop's
 // point of view a "remote VPS" is just a WebSocket that opens once and later
 // refuses to reopen, so that is exactly (and only) what we fake.
@@ -290,7 +290,7 @@ beforeEach(() => {
   powerResume = null
   vi.mocked(notifyError).mockReset()
   ;(globalThis as { WebSocket: unknown }).WebSocket = FakeWebSocket
-  ;(window as { hermesDesktop?: unknown }).hermesDesktop = fakeDesktop()
+  ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = fakeDesktop()
   $gatewayState.set('idle')
   $busy.set(false)
   $awaitingResponse.set(false)
@@ -333,7 +333,7 @@ afterEach(() => {
   endGatewaySwitch()
   vi.useRealTimers()
   ;(globalThis as { WebSocket: unknown }).WebSocket = originalWebSocket
-  delete (window as { hermesDesktop?: unknown }).hermesDesktop
+  delete (window as { auraForgeDesktop?: unknown }).auraForgeDesktop
   window.localStorage.removeItem('hermes.desktop.workspace-cwd')
   $currentCwd.set('')
   $busy.set(false)
@@ -372,7 +372,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
           rejectConn = reject
         })
     )
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -409,7 +409,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
   it('a stale failed Settings switch cannot publish failure or disarm the newer switch owner', async () => {
     const desktop = fakeDesktop()
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -469,7 +469,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
 
     let rejectStale: (error: Error) => void = () => undefined
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
     render(<Harness />)
     await flushAsync()
 
@@ -611,7 +611,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       return coderConn.wsUrl
     })
     desktop.connections = { list: vi.fn(async () => registryConnections), setLastUsed }
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     const beforeConnectionSwitch = vi.fn()
     render(<Harness beforeConnectionSwitch={beforeConnectionSwitch} />)
@@ -698,7 +698,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       list: vi.fn(async () => registryConnections),
       setLastUsed: vi.fn(async (id: string) => ({ ok: true, registry: { ...registryConnections, lastUsed: id } }))
     }
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -840,7 +840,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       return sanitizeRead === 1 ? staleSanitize.promise : Promise.resolve({ cwd })
     })
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     const refreshHermesConfig = async (_force = false, shouldPublish?: () => boolean) => {
       if (!shouldPublish) {
@@ -911,7 +911,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       profile,
       wsUrl: `wss://${connectionId}.example.com/api/ws?token=r`
     }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -966,7 +966,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
 
       throw new Error(`unexpected api call: ${path}`)
     })
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1079,7 +1079,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       // drop hangs indefinitely.
       return callCount === 1 ? originalGetConnection(profile) : new Promise(() => undefined)
     })
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1118,7 +1118,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       // itself stays fast so this isolates the revalidate call specifically.
       return new Promise(() => undefined)
     })
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1163,7 +1163,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       connectionId,
       profile
     }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1213,7 +1213,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
     // here too, same as attemptReconnect() and softSwitch().
     const desktop = fakeDesktop()
     desktop.getConnection = vi.fn(() => new Promise(() => undefined))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1246,7 +1246,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       // Initial boot succeeds; the switch triggered below hangs indefinitely.
       return callCount === 1 ? originalGetConnection(profile) : new Promise(() => undefined)
     })
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1326,7 +1326,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
   it('manual reconnect revalidates, re-resolves, re-mints, and re-dials the dropped socket', async () => {
     const desktop = fakeDesktop()
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1355,7 +1355,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
   it('power resume force-redials a half-open primary socket that still reports OPEN', async () => {
     const desktop = fakeDesktop()
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1391,7 +1391,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       emitBootProgress: (payload: Record<string, unknown>) => void
     }
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1456,7 +1456,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       setDefaultProjectDir: vi.fn(async () => undefined)
     }
     desktop.sanitizeWorkspaceCwd = vi.fn(async (cwd: string) => ({ cwd }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     // Record the cwd at the exact moment the gateway opens its WebSocket: if
     // the seed moved back post-connect, this would still be '' here and the
@@ -1483,7 +1483,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
   it('FIX: primary sleep/wake reconnect dials the window backend, not the active secondary profile', async () => {
     const desktop = fakeDesktop()
 
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1546,7 +1546,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       running: false,
       timestamp: Date.now()
     }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1580,7 +1580,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       running: false,
       timestamp: Date.now()
     }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()
@@ -1615,7 +1615,7 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
       running: false,
       timestamp: Date.now()
     }))
-    ;(window as { hermesDesktop?: unknown }).hermesDesktop = desktop
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
 
     render(<Harness />)
     await flushAsync()

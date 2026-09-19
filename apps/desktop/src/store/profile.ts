@@ -1,8 +1,8 @@
-import { LOCAL_CONNECTION_ID } from '@hermes/shared'
+import { LOCAL_CONNECTION_ID } from '@auraforge/shared'
 import { atom, batch, computed } from 'nanostores'
 
 import type { HermesConnection } from '@/global'
-import { getProfiles, hermesApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/hermes'
+import { getProfiles, auraForgeApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/auraforge'
 import { invalidateProfileScopedQueries } from '@/lib/query-client'
 import {
   arraysEqual,
@@ -28,7 +28,7 @@ import { notifyRemoteOverrideAuthFailure } from '@/store/profile-remote-override
 import { setConnection } from '@/store/session'
 import type { SessionOwnerRoute } from '@/store/session-request-router'
 import { resetStarmapGraph } from '@/store/starmap'
-import type { ProfileInfo } from '@/types/hermes'
+import type { ProfileInfo } from '@/types/auraforge'
 
 // Canonical key for a profile: trimmed, empty → "default". Used everywhere we
 // compare a session's owning profile against the live gateway's profile.
@@ -200,7 +200,7 @@ export async function refreshActiveProfile(): Promise<void> {
   const epoch = profileListEpoch
 
   try {
-    const res = await hermesApi<ActiveProfileResponse>({
+    const res = await auraForgeApi<ActiveProfileResponse>({
       path: '/api/profiles/active',
       timeoutMs: STARTUP_REQUEST_TIMEOUT_MS
     })
@@ -231,7 +231,7 @@ export async function switchProfile(name: string): Promise<void> {
   }
 
   setActiveProfile(name)
-  await window.hermesDesktop.profile.set(name)
+  await window.auraForgeDesktop.profile.set(name)
 }
 
 // ── Swap-minimal gateway routing ──────────────────────────────────────────
@@ -452,7 +452,7 @@ const DESCRIPTOR_LOOKUP_TIMEOUT_MS = 20_000
 // clicks (#89622) — reverted in #89785. Do not reintroduce fail-closed
 // switching at this seam.
 async function resolveConnectionForProfile(profile: string): Promise<HermesConnection | null> {
-  const getConnection = window.hermesDesktop?.getConnection
+  const getConnection = window.auraForgeDesktop?.getConnection
 
   if (!getConnection) {
     return null
@@ -550,7 +550,7 @@ export async function ensureGatewayProfile(profile: string | null | undefined): 
 // resolveConnectionForProfile: a failed lookup resolves null and keeps the
 // previous descriptor.
 async function resolveConnectionForAgent(connectionId: string, profile: string): Promise<HermesConnection | null> {
-  const getConnectionFor = window.hermesDesktop?.getConnectionFor
+  const getConnectionFor = window.auraForgeDesktop?.getConnectionFor
 
   if (!getConnectionFor) {
     return null
@@ -804,7 +804,7 @@ export function selectProfile(name: string): void {
   void Promise.all([activateOnCurrentSource(target), shouldRememberStartupProfile])
     .then(([, shouldRemember]) => {
       if (shouldRemember) {
-        return window.hermesDesktop?.profile?.remember(target)
+        return window.auraForgeDesktop?.profile?.remember(target)
       }
 
       return undefined
@@ -822,7 +822,7 @@ export function selectProfile(name: string): void {
 // Conversely, `ssh`, `remote`, and `cloud` here are per-profile overrides and
 // must never replace the local Desktop startup profile.
 async function isLocalDesktopProfile(target: string): Promise<boolean> {
-  const getConnectionConfig = window.hermesDesktop?.getConnectionConfig
+  const getConnectionConfig = window.auraForgeDesktop?.getConnectionConfig
 
   if (!getConnectionConfig) {
     return true
@@ -973,5 +973,5 @@ export function touchActiveGatewayBackend(): void {
   // Always ping: the main process no-ops for non-pool (primary) backends, so we
   // don't need to know which profile is primary from here.
   const target = normalizeProfileKey($activeGatewayProfile.get())
-  void window.hermesDesktop?.touchBackend?.(target).catch(() => undefined)
+  void window.auraForgeDesktop?.touchBackend?.(target).catch(() => undefined)
 }

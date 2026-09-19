@@ -61,10 +61,10 @@ vi.mock('@/lib/desktop-git', async importOriginal => ({
   desktopGit: vi.fn()
 }))
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getHermesConfig: vi.fn(),
   getProfiles: vi.fn(),
-  hermesApi: vi.fn(),
+  auraForgeApi: vi.fn(),
   setApiRequestProfile: vi.fn(),
   STARTUP_REQUEST_TIMEOUT_MS: 1000
 }))
@@ -81,7 +81,7 @@ const gatewayAtom = gw.$gateway
 const git = await import('@/lib/desktop-git')
 const desktopGit = vi.mocked(git.desktopGit)
 
-const hermes = await import('@/hermes')
+const hermes = await import('@/auraforge')
 const getHermesConfig = vi.mocked(hermes.getHermesConfig)
 const notifications = await import('@/store/notifications')
 const notify = vi.mocked(notifications.notify)

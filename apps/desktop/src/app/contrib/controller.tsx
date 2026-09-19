@@ -345,7 +345,7 @@ registry.registerMany([
       id: 'keybinds.panel',
       label: 'Keyboard shortcuts',
       keywords: ['keybinds', 'shortcuts', 'hotkeys', 'keyboard'],
-      run: () => window.dispatchEvent(new CustomEvent('hermes:open-keybinds'))
+      run: () => window.dispatchEvent(new CustomEvent('auraforge:open-keybinds'))
     } satisfies PaletteContribution
   },
   // Profile sharing: bundle the active profile (config, skills, theme, layout)

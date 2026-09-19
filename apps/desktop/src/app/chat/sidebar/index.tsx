@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Tip, TipKeybindLabel } from '@/components/ui/tooltip'
 import { useContributions } from '@/contrib/react/use-contributions'
-import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/hermes'
+import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { comboTokens } from '@/lib/keybinds/combo'
 import { resolveProfileColor } from '@/lib/profile-color'
@@ -462,10 +462,10 @@ export function ChatSidebar({
       timeout = setTimeout(() => setNewSessionKbdFlash(false), 140)
     }
 
-    window.addEventListener('hermes:new-session-shortcut', onShortcut)
+    window.addEventListener('auraforge:new-session-shortcut', onShortcut)
 
     return () => {
-      window.removeEventListener('hermes:new-session-shortcut', onShortcut)
+      window.removeEventListener('auraforge:new-session-shortcut', onShortcut)
       clearTimeout(timeout)
     }
   }, [])

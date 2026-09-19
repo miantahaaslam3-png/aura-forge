@@ -28,7 +28,7 @@ vi.mock('@/store/gateway', () => ({
   ensureGatewayForProfile,
   openGatewayForProfile
 }))
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getProfiles: vi.fn(async () => ({ profiles: [] })),
   setApiRequestProfile: vi.fn()
 }))
@@ -57,7 +57,7 @@ beforeEach(() => {
   $gateway.set({ id: 'live-socket' })
   $activeGatewayProfile.set('default')
   $connection.set(localConn())
-  vi.stubGlobal('window', { hermesDesktop: { getConnection, getConnectionFor } })
+  vi.stubGlobal('window', { auraForgeDesktop: { getConnection, getConnectionFor } })
 })
 
 afterEach(() => {

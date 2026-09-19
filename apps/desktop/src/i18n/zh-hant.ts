@@ -73,7 +73,7 @@ export const zhHant = defineLocale({
       loadingSessions: '正在載入最近工作階段',
       retryingRemoteBackend: '正在重新連線遠端 Aura Forge 後端…',
       startingDesktopConnection: '正在啟動桌面連線',
-      startingHermesDesktop: '正在啟動 Aura Forge Desktop…'
+      startingAuraForgeDesktop: '正在啟動 Aura Forge Desktop…'
     },
     errors: {
       backgroundExited: 'Aura Forge 背景程序已結束。',
@@ -790,7 +790,7 @@ export const zhHant = defineLocale({
       remoteDesc:
         '將此桌面殼層連線至遠端 Aura Forge 後端。託管閘道使用 OAuth 或帳號密碼；自託管閘道也可使用工作階段 Token。',
       remoteUrlTitle: '遠端 URL',
-      remoteUrlDesc: '遠端儀表板後端的基礎 URL。支援路徑前綴，例如 /hermes。',
+      remoteUrlDesc: '遠端儀表板後端的基礎 URL。支援路徑前綴，例如./auraforge。',
       probing: '正在檢查此閘道的驗證方式…',
       probeError: '暫時無法連線此閘道。請檢查 URL；閘道回應後將顯示驗證方式。',
       signedIn: '已登入',
@@ -874,7 +874,7 @@ export const zhHant = defineLocale({
         'SSH 驗證失敗。請將金鑰載入 ssh-agent（ssh-add），或在 ~/.ssh/config 中設定 IdentityFile——Aura Forge 以非互動方式執行 ssh。',
       sshErrHostKey: '自上次連線以來主機金鑰已變更。請確認這是預期的，然後執行 ssh-keygen -R <host> 並重新連線。',
       sshErrNotInstalled:
-        '遠端主機上未安裝 Aura Forge。請在遠端安裝（curl -fsSL https://hermes-agent.nousresearch.com/install.sh | sh）或設定 Aura Forge 路徑。',
+        '遠端主機上未安裝 Aura Forge。請在遠端安裝（curl -fsSL https:./auraforge-agent.nousresearch.com/install.sh | sh）或設定 Aura Forge 路徑。',
       sshErrPlatform: '不支援的遠端平台。Aura Forge Desktop 的 SSH 模式支援 Linux、macOS 和 Windows 遠端主機。',
       sshErrTimeout: 'SSH 連線逾時。主機可能無法存取或處於睡眠狀態。',
       sshErrUpdateRequired: '使用 Desktop SSH 連線前，請更新遠端主機上的 Aura Forge。',
@@ -1440,7 +1440,7 @@ export const zhHant = defineLocale({
       MATTERMOST_ALLOWED_USERS: { label: '允許的使用者 ID', help: '建議設定。逗號分隔的 Mattermost 使用者 ID。' },
       MATRIX_HOMESERVER: { label: 'Homeserver URL', placeholder: 'https://matrix.org' },
       MATRIX_ACCESS_TOKEN: { label: '存取 Token' },
-      MATRIX_USER_ID: { label: 'Bot 使用者 ID', placeholder: '@hermes:example.org' },
+      MATRIX_USER_ID: { label: 'Bot 使用者 ID', placeholder: '@auraforge:example.org' },
       MATRIX_ALLOWED_USERS: {
         label: '允許的 Matrix 使用者 ID',
         help: '建議設定。@user:server 格式的逗號分隔使用者 ID。'
@@ -1491,7 +1491,7 @@ export const zhHant = defineLocale({
       title: (profile: string) => `將 ${profile} 連線至遠端主機`,
       description: '此設定檔中的工作階段將在你指定的遠端 Aura Forge 上執行，而不是這台電腦。',
       urlLabel: '遠端位址',
-      urlPlaceholder: 'https://hermes.example.com',
+      urlPlaceholder: 'https:./auraforge.example.com',
       urlInvalid: '請輸入以 http:// 或 https:// 開頭的完整位址',
       tokenLabel: '存取權杖',
       tokenPlaceholder: '貼上遠端工作階段權杖',
@@ -2238,7 +2238,7 @@ export const zhHant = defineLocale({
     remoteSetupDesc: '輸入閘道 URL。Aura Forge Desktop 會偵測需要權杖還是瀏覽器登入。',
     remoteUrlTitle: '閘道 URL',
     remoteUrlDesc: '使用 Aura Forge 閘道的基礎 URL；遠端位址請包含 https://。',
-    remoteUrlPlaceholder: 'https://gateway.example.com/hermes',
+    remoteUrlPlaceholder: 'https://gateway.example.co./auraforge',
     probing: '正在偵測閘道驗證方式...',
     probeError: '無法連線到該 Aura Forge 閘道。',
     identityProvider: '您的身分提供者',

@@ -105,7 +105,7 @@ vi.mock('./use-profile-rail-refresh-on-active', () => ({
   useProfileRailRefreshOnActive: () => undefined
 }))
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getProfileSoul: vi.fn().mockResolvedValue({ content: '' }),
   updateProfileSoul: vi.fn()
 }))
@@ -197,7 +197,7 @@ async function renderFleet() {
 beforeEach(() => {
   getAgentRoster.mockResolvedValue(roster)
   selectConnection.mockResolvedValue(undefined)
-  ;(window as { hermesDesktop?: unknown }).hermesDesktop = { getAgentRoster }
+  ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = { getAgentRoster }
 })
 
 afterEach(() => {
@@ -209,7 +209,7 @@ afterEach(() => {
   activeConnectionId.set(null)
   profileScope.set('default')
   profiles.set([{ is_default: true, name: 'default' }])
-  delete (window as { hermesDesktop?: unknown }).hermesDesktop
+  delete (window as { auraForgeDesktop?: unknown }).auraForgeDesktop
 })
 
 describe('ProfileRail fleet mode', () => {

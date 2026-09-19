@@ -1,6 +1,6 @@
-import { JsonRpcGatewayClient } from '@hermes/shared'
+import { JsonRpcGatewayClient } from '@auraforge/shared'
 
-import type { HermesApiRequest } from '@/global'
+import type { AuraForgeApiRequest } from '@/global'
 
 // Desktop startup fires a burst of read-only data calls (config, profiles,
 // model info/options, cron) the moment the backend passes readiness. On a
@@ -25,7 +25,7 @@ const DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS = 30_000
 // ever fires when the turn itself would have been abandoned server-side.
 export const PROMPT_SUBMIT_REQUEST_TIMEOUT_MS = 1_800_000
 
-export class HermesGateway extends JsonRpcGatewayClient {
+export class AuraForgeGateway extends JsonRpcGatewayClient {
   constructor() {
     super({
       closedErrorMessage: 'Aura Forge gateway connection closed',
@@ -79,7 +79,7 @@ export function setApiRequestConnection(connectionId: null | string): void {
 // Registry connection scope for a REST request. A registered remote gateway
 // owns its own state.db — cron jobs and their run sessions live THERE — so
 // requests for gateway-owned data must carry the connection id for the main
-// process to route them to that host (hermes:api's registry branch). Null
+// process to route them to that host (auraforge:api's registry branch). Null
 // resolves to no tag, keeping single-source users byte-identical; explicit
 // 'local' must remain tagged when the legacy primary points elsewhere.
 export function connectionScoped(): { connectionId?: string } {
@@ -95,8 +95,8 @@ export function connectionScoped(): { connectionId?: string } {
  *  pin — `'local'` included — so a pin always overrides the ambient tag spread
  *  underneath it. (It used to omit the key for 'local', which made the pin
  *  unable to beat the ambient tag; helpers then had to bypass this wrapper.) */
-export function hermesApi<T>(request: HermesApiRequest): Promise<T> {
-  return window.hermesDesktop.api<T>({ ...connectionScoped(), ...request })
+export function auraForgeApi<T>(request: AuraForgeApiRequest): Promise<T> {
+  return window.auraForgeDesktop.api<T>({ ...connectionScoped(), ...request })
 }
 
 // ── Capability scope: (connection, profile) routing for the Capabilities

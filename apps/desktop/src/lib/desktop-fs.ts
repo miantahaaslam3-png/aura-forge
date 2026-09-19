@@ -1,4 +1,4 @@
-import { hermesApi } from '@/api/client'
+import { auraForgeApi } from '@/api/client'
 import type {
   HermesConnection,
   HermesReadDirResult,
@@ -56,7 +56,7 @@ function fsPath(endpoint: string, filePath: string) {
 }
 
 function bridge() {
-  const desktop = window.hermesDesktop
+  const desktop = window.auraForgeDesktop
 
   if (!desktop) {
     throw new Error('Aura Forge Desktop bridge is unavailable')
@@ -66,7 +66,7 @@ function bridge() {
 }
 
 function remoteFsApi<T>(path: string, body?: Record<string, unknown>): Promise<T> {
-  return hermesApi<T>(
+  return auraForgeApi<T>(
     body ? { body, method: 'POST', path, profile: desktopFsProfile() } : { path, profile: desktopFsProfile() }
   )
 }
@@ -124,7 +124,7 @@ export async function readDesktopFileDataUrl(path: string): Promise<string> {
  */
 export async function readDesktopFileDataUrlLocalFirst(path: string): Promise<string> {
   try {
-    const local = await window.hermesDesktop?.readFileDataUrl?.(path)
+    const local = await window.auraForgeDesktop?.readFileDataUrl?.(path)
 
     if (local) {
       return local

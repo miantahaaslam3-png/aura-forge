@@ -2,20 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { $activeGatewayProfile } from '@/store/profile'
 import { $sessions } from '@/store/session'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 import { $hudActive, $hudSession, openHud, resetHudLayout } from './hud'
 
-const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
-const initialHermesDesktop = desktopWindow.hermesDesktop
+const desktopWindow = window as unknown as { auraForgeDesktop?: Window['auraForgeDesktop'] }
+const initialHermesDesktop = desktopWindow.auraForgeDesktop
 
 const open = vi.fn().mockResolvedValue({ ok: true })
 const resetLayout = vi.fn().mockResolvedValue({ ok: true })
 
 function installBridge() {
-  desktopWindow.hermesDesktop = {
+  desktopWindow.auraForgeDesktop = {
     hud: { open, resetLayout }
-  } as unknown as Window['hermesDesktop']
+  } as unknown as Window['auraForgeDesktop']
 }
 
 function session(overrides: Partial<SessionInfo>): SessionInfo {
@@ -34,9 +34,9 @@ beforeEach(() => {
 
 afterEach(() => {
   if (initialHermesDesktop) {
-    desktopWindow.hermesDesktop = initialHermesDesktop
+    desktopWindow.auraForgeDesktop = initialHermesDesktop
   } else {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
   }
 })
 

@@ -1,4 +1,4 @@
-import type { BillingBlock } from '@hermes/shared'
+import type { BillingBlock } from '@auraforge/shared'
 
 import { burstVibeHearts } from '@/components/chat/vibe-hearts'
 import { translateNow } from '@/i18n'

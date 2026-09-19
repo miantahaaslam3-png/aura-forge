@@ -5,13 +5,13 @@
  * apps/shared so the renderer and the main process cannot drift; this module
  * adds only what needs a BrowserWindow to mean anything.
  *
- * The import is relative rather than `@hermes/shared/translucency`: the
+ * The import is relative rather than `@auraforge/shared/translucency`: the
  * electron bundle is built by esbuild with no tsconfig path resolution (see
  * scripts/bundle-electron-main.mjs), so a bare specifier would typecheck and
  * then fail to bundle.
  */
 
-import { glassActive, type TranslucencyState, windowOpacityFor } from '../../shared/src/translucency'
+import { glassActive, type TranslucencyState, windowOpacityFor } from '../../auraforge-shared/src/translucency'
 
 export {
   backgroundMaterialFor,
@@ -47,7 +47,7 @@ export {
   WINDOWS_BACKGROUND_MATERIALS,
   WINDOWS_GLASS_MIN_BUILD,
   type WindowsBackgroundMaterial
-} from '../../shared/src/translucency'
+} from '../../auraforge-shared/src/translucency'
 
 /**
  * BrowserWindow constructor options for a chat window's backing, given the

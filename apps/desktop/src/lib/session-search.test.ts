@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 import { sessionMatchesSearch } from './session-search'
 
 function makeSession(overrides: Partial<SessionInfo> = {}): SessionInfo {
   return {
     archived: false,
-    cwd: '/home/user/projects/hermes-agent',
+    cwd: '/home/user/project./auraforge-agent',
     ended_at: null,
     id: '20260603_090200_abcd12',
     input_tokens: 0,

@@ -1,9 +1,9 @@
-import { isGatewayReauthRequired, JsonRpcGatewayError, resolveGatewayWsUrl } from '@hermes/shared'
+import { isGatewayReauthRequired, JsonRpcGatewayError, resolveGatewayWsUrl } from '@auraforge/shared'
 import { useEffect, useRef } from 'react'
 
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { HermesConnection } from '@/global'
-import { HermesGateway } from '@/hermes'
+import { AuraForgeGateway } from '@/auraforge'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { decideLivenessForceClose, LIVENESS_REPROBE_DELAY_MS } from '@/lib/gateway-liveness-policy'
@@ -77,7 +77,7 @@ import {
   resetTileRuntimeBindings
 } from '@/store/session-states'
 import { windowProfileOverride } from '@/store/windows'
-import type { RpcEvent } from '@/types/hermes'
+import type { RpcEvent } from '@/types/auraforge'
 
 import { stashGatewaySurvivor, survivorIsStale, takeGatewaySurvivor } from './gateway-hmr-survivor'
 
@@ -139,9 +139,9 @@ interface GatewayBootOptions {
   beforeConnectionSwitch: () => void
   handleGatewayEvent: (event: RpcEvent) => void
   onConnectionReady: (
-    connection: Awaited<ReturnType<NonNullable<typeof window.hermesDesktop>['getConnection']>> | null
+    connection: Awaited<ReturnType<NonNullable<typeof window.auraForgeDesktop>['getConnection']>> | null
   ) => void
-  onGatewayReady: (gateway: HermesGateway | null) => void
+  onGatewayReady: (gateway: AuraForgeGateway | null) => void
   refreshHermesConfig: (force?: boolean, shouldPublish?: () => boolean) => Promise<void>
   refreshSessions: (shouldPublish?: () => boolean) => Promise<void>
 }
@@ -174,7 +174,7 @@ export function useGatewayBoot({
 
   useEffect(() => {
     let cancelled = false
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
 
     const publish = (next: HermesConnection | null) => {
       callbacksRef.current.onConnectionReady(next)
@@ -734,7 +734,7 @@ export function useGatewayBoot({
       }
     }
 
-    const gateway = adoptedFromHmr ? survivor!.gateway : new HermesGateway()
+    const gateway = adoptedFromHmr ? survivor!.gateway : new AuraForgeGateway()
 
     callbacksRef.current.onGatewayReady(gateway)
     setPrimaryGateway(gateway, survivor?.profile ?? normalizeProfileKey($activeGatewayProfile.get()))

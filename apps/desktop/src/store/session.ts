@@ -1,4 +1,4 @@
-import type { ConnectionState } from '@hermes/shared'
+import type { ConnectionState } from '@auraforge/shared'
 import { atom, computed } from 'nanostores'
 
 import { lastVisibleMessageIsUser } from '@/app/chat/thread-loading'
@@ -8,7 +8,7 @@ import type { ChatMessage } from '@/lib/chat-messages'
 import { activeConnectionScopeSuffix, rescopeConnectionScopedStores } from '@/lib/connection-scoped'
 import { persistBoolean, persistString, readJson, storedBoolean, storedString, writeJson } from '@/lib/storage'
 import { syncCronModelImpactConnection } from '@/store/cron-model-impact-scope'
-import type { SessionInfo, UsageStats } from '@/types/hermes'
+import type { SessionInfo, UsageStats } from '@/types/auraforge'
 
 import type { SessionOwnerRoute, SessionOwnerScope } from './session-request-router'
 import { clearUnreadOnOpen } from './session-unread-remote'
@@ -229,7 +229,7 @@ export type NewChatWorkspaceTarget = null | string | undefined
 export const getConfiguredDefaultProjectDir = (): string => configuredDefaultProjectDir
 
 export async function syncConfiguredDefaultProjectDir(shouldPublish: () => boolean = () => true): Promise<string> {
-  const settings = window.hermesDesktop?.settings?.getDefaultProjectDir
+  const settings = window.auraForgeDesktop?.settings?.getDefaultProjectDir
 
   if (!settings) {
     if (shouldPublish()) {
@@ -252,7 +252,7 @@ export async function syncConfiguredDefaultProjectDir(shouldPublish: () => boole
  *  packaged, optional Settings override). Clears stale install-dir paths that
  *  PR #37586's localStorage stickiness can preserve across the #37536 fix. */
 export async function ensureDefaultWorkspaceCwd(shouldPublish: () => boolean = () => true): Promise<void> {
-  const sanitize = window.hermesDesktop?.sanitizeWorkspaceCwd
+  const sanitize = window.auraForgeDesktop?.sanitizeWorkspaceCwd
 
   if (!sanitize || !shouldPublish()) {
     return

@@ -180,7 +180,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   useEffect(() => {
     let cancelled = false
 
-    void window.hermesDesktop
+    void window.auraForgeDesktop
       ?.getSecretStorageEncryption?.()
       .then(res => {
         if (!cancelled && res) {
@@ -200,7 +200,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     setKeychainEncryptionState(on)
 
     try {
-      const res = await window.hermesDesktop.setSecretStorageEncryption(on)
+      const res = await window.auraForgeDesktop.setSecretStorageEncryption(on)
 
       setKeychainEncryptionState(res?.on === true)
     } catch (err) {
@@ -258,7 +258,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
 
   useEffect(() => {
     let cancelled = false
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
 
     if (!desktop?.getConnectionConfig) {
       setLoading(false)
@@ -316,7 +316,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
       return
     }
 
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
 
     if (!desktop?.probeConnectionConfig) {
       return
@@ -419,12 +419,12 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   }, [state.sshHost, sshHostSuggestions])
 
   useEffect(() => {
-    if (state.mode !== 'ssh' || !window.hermesDesktop?.sshConfigHosts) {
+    if (state.mode !== 'ssh' || !window.auraForgeDesktop?.sshConfigHosts) {
       return
     }
 
     let cancelled = false
-    void window.hermesDesktop
+    void window.auraForgeDesktop
       .sshConfigHosts()
       .then(result => {
         if (!cancelled) {
@@ -504,8 +504,8 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
 
     try {
       const next = apply
-        ? await window.hermesDesktop.applyConnectionConfig(payload(allowPlainTextToken))
-        : await window.hermesDesktop.saveConnectionConfig(payload(allowPlainTextToken))
+        ? await window.auraForgeDesktop.applyConnectionConfig(payload(allowPlainTextToken))
+        : await window.auraForgeDesktop.saveConnectionConfig(payload(allowPlainTextToken))
 
       if (seq !== saveSeq.current) {
         return
@@ -596,7 +596,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     try {
       // Save (don't apply/restart) so the login window has a URL to use and the
       // oauth mode is persisted, without yet flipping the live connection.
-      const saved = await window.hermesDesktop.saveConnectionConfig({
+      const saved = await window.auraForgeDesktop.saveConnectionConfig({
         mode: state.mode,
         remoteAuthMode: 'oauth',
         remoteUrl: trimmedUrl
@@ -608,14 +608,14 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
 
       acceptSavedConfig(saved)
 
-      const result = await window.hermesDesktop.oauthLoginConnectionConfig(trimmedUrl)
+      const result = await window.auraForgeDesktop.oauthLoginConnectionConfig(trimmedUrl)
 
       if (seq !== signingSeq.current) {
         return
       }
 
       if (result.connected) {
-        const refreshed = await window.hermesDesktop.getConnectionConfig(null)
+        const refreshed = await window.auraForgeDesktop.getConnectionConfig(null)
         acceptSavedConfig(refreshed)
         notify({ kind: 'success', title: g.signedIn, message: g.connectedTo(providerLabel) })
       } else {
@@ -645,8 +645,8 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     setSigningIn(true)
 
     try {
-      await window.hermesDesktop.oauthLogoutConnectionConfig(trimmedUrl)
-      const refreshed = await window.hermesDesktop.getConnectionConfig(null)
+      await window.auraForgeDesktop.oauthLogoutConnectionConfig(trimmedUrl)
+      const refreshed = await window.auraForgeDesktop.getConnectionConfig(null)
 
       if (seq !== signingSeq.current) {
         return
@@ -672,7 +672,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   // `org` scopes discovery for multi-org users; when discovery comes back with
   // needsOrgSelection we surface the org list and show a picker instead.
   const discoverCloud = async (org?: string) => {
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
     const seq = contextSeq.current
 
     if (!desktop?.cloud) {
@@ -756,7 +756,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
       return
     }
 
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
 
     if (!desktop?.cloud) {
       return
@@ -802,7 +802,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   }, [state.mode])
 
   const cloudSignIn = async () => {
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
     const seq = ++signingSeq.current
 
     if (!desktop?.cloud) {
@@ -835,7 +835,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   }
 
   const cloudSignOut = async () => {
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
     const seq = ++signingSeq.current
 
     if (!desktop?.cloud) {
@@ -878,7 +878,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
       return
     }
 
-    const desktop = window.hermesDesktop
+    const desktop = window.auraForgeDesktop
 
     if (!desktop?.cloud) {
       return
@@ -938,14 +938,14 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   }
 
   const resolveSshHost = async (host: string) => {
-    if (!host || !window.hermesDesktop?.sshResolveHost) {
+    if (!host || !window.auraForgeDesktop?.sshResolveHost) {
       return
     }
 
     const seq = ++sshResolveSeq.current
 
     try {
-      const resolved = await window.hermesDesktop.sshResolveHost(host)
+      const resolved = await window.auraForgeDesktop.sshResolveHost(host)
 
       if (seq !== sshResolveSeq.current) {
         return
@@ -983,7 +983,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     setLastTest(null)
 
     try {
-      const result = await window.hermesDesktop.testConnectionConfig(payload())
+      const result = await window.auraForgeDesktop.testConnectionConfig(payload())
 
       if (seq !== sshTestSeq.current) {
         return
@@ -1035,7 +1035,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     setLastTest(null)
 
     try {
-      const result = await window.hermesDesktop.testConnectionConfig({
+      const result = await window.auraForgeDesktop.testConnectionConfig({
         mode: 'remote',
         remoteAuthMode: authMode,
         remoteToken: authMode === 'token' ? remoteToken.trim() || undefined : undefined,
@@ -1071,7 +1071,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
     )
   }
 
-  if (!window.hermesDesktop?.getConnectionConfig) {
+  if (!window.auraForgeDesktop?.getConnectionConfig) {
     return <EmptyState description={g.unavailableDesc} title={g.unavailableTitle} />
   }
 
@@ -1295,7 +1295,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
                 className={cn('h-8', CONTROL_TEXT)}
                 disabled={state.envOverride}
                 onChange={event => setState(current => ({ ...current, remoteUrl: event.target.value }))}
-                placeholder="https://gateway.example.com/hermes"
+                placeholder="https://gateway.example.co./auraforge"
                 value={state.remoteUrl}
               />
             }
@@ -1551,7 +1551,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
           />
           <ListRow
             action={
-              <Button onClick={() => void window.hermesDesktop?.revealLogs()} size="sm" variant="textStrong">
+              <Button onClick={() => void window.auraForgeDesktop?.revealLogs()} size="sm" variant="textStrong">
                 <FileText />
                 {g.openLogs}
               </Button>

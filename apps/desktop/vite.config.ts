@@ -188,8 +188,10 @@ export default defineConfig(({ command }) => ({
       '@/debug/dev-only': debugEntry(command, process.env as Record<string, string>),
       '@': path.resolve(__dirname, './src'),
       '@hermes/plugin-sdk': path.resolve(__dirname, './src/sdk/index.ts'),
-      '@hermes/shared/billing': path.resolve(__dirname, '../shared/src/billing-types.ts'),
-      '@hermes/shared': path.resolve(__dirname, '../shared/src'),
+      '@auraforge/shared/billing': path.resolve(__dirname, '../auraforge-shared/src/billing-types.ts'),
+      '@auraforge/shared': path.resolve(__dirname, '../auraforge-shared/src'),
+      '@auraforge/plugin-sdk': path.resolve(__dirname, './src/sdk/index.ts'),
+      '@auraforge/shared/skin': path.resolve(__dirname, '../auraforge-shared/src/skin.ts'),
       // The tour tool's preview surface injects driver.js's prebuilt IIFE into
       // the pane's guest page as raw source; the package's exports map doesn't
       // expose that dist file (nor ./package.json), so resolve the main entry

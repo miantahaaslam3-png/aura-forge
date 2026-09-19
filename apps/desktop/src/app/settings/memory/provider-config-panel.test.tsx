@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MemoryProviderConfig } from '@/types/hermes'
+import type { MemoryProviderConfig } from '@/types/auraforge'
 
 const getMemoryProviderConfig = vi.fn()
 const saveMemoryProviderConfig = vi.fn()
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   getMemoryProviderConfig: (provider: string) => getMemoryProviderConfig(provider),
   saveMemoryProviderConfig: (provider: string, values: unknown) => saveMemoryProviderConfig(provider, values)
 }))
@@ -26,7 +26,7 @@ function honchoSchema(): MemoryProviderConfig {
   return {
     name: 'honcho',
     label: 'Honcho',
-    docs_url: 'https://docs.honcho.dev/v3/guides/integrations/hermes',
+    docs_url: 'https://docs.honcho.dev/v3/guides/integration./auraforge',
     fields: [
       {
         key: 'apiKey',

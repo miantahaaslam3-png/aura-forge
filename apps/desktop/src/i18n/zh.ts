@@ -73,7 +73,7 @@ export const zh: Translations = {
       loadingSessions: '正在加载最近会话',
       retryingRemoteBackend: '正在重新连接远程 Aura Forge 后端…',
       startingDesktopConnection: '正在启动桌面连接',
-      startingHermesDesktop: '正在启动 Aura Forge 桌面版…'
+      startingAuraForgeDesktop: '正在启动 Aura Forge 桌面版…'
     },
     errors: {
       backgroundExited: 'Aura Forge 后台进程已退出。',
@@ -1084,7 +1084,7 @@ export const zh: Translations = {
       cloudAgentProvisioning: '正在配置…',
       cloudStatusLabel: status => `状态：${status}`,
       remoteUrlTitle: '远程 URL',
-      remoteUrlDesc: '远程 dashboard 后端的基础 URL。支持路径前缀，例如 /hermes。',
+      remoteUrlDesc: '远程 dashboard 后端的基础 URL。支持路径前缀，例如./auraforge。',
       probing: '正在检查此网关的认证方式…',
       probeError: '暂时无法访问此网关。请检查 URL；网关响应后会显示认证方式。',
       signedIn: '已登录',
@@ -1168,7 +1168,7 @@ export const zh: Translations = {
         'SSH 认证失败。请将密钥加载到 ssh-agent（ssh-add），或在 ~/.ssh/config 中设置 IdentityFile——Aura Forge 以非交互方式运行 ssh。',
       sshErrHostKey: '自上次连接以来主机密钥已更改。请确认这是预期的，然后运行 ssh-keygen -R <host> 并重新连接。',
       sshErrNotInstalled:
-        '远程主机上未安装 Aura Forge。请在远程安装（curl -fsSL https://hermes-agent.nousresearch.com/install.sh | sh）或设置 Aura Forge 路径。',
+        '远程主机上未安装 Aura Forge。请在远程安装（curl -fsSL https:./auraforge-agent.nousresearch.com/install.sh | sh）或设置 Aura Forge 路径。',
       sshErrPlatform: '不支持的远程平台。Aura Forge Desktop 的 SSH 模式支持 Linux、macOS 和 Windows 远程主机。',
       sshErrTimeout: 'SSH 连接超时。主机可能无法访问或处于休眠状态。',
       sshErrUpdateRequired: '使用 Desktop SSH 连接前，请更新远程主机上的 Aura Forge。',
@@ -1905,7 +1905,7 @@ export const zh: Translations = {
       MATTERMOST_ALLOWED_USERS: { label: '允许的用户 ID', help: '推荐。逗号分隔的 Mattermost 用户 ID。' },
       MATRIX_HOMESERVER: { label: 'Homeserver URL', placeholder: 'https://matrix.org' },
       MATRIX_ACCESS_TOKEN: { label: '访问令牌' },
-      MATRIX_USER_ID: { label: 'Bot 用户 ID', placeholder: '@hermes:example.org' },
+      MATRIX_USER_ID: { label: 'Bot 用户 ID', placeholder: '@auraforge:example.org' },
       MATRIX_ALLOWED_USERS: { label: '允许的 Matrix 用户 ID', help: '推荐。@user:server 格式的逗号分隔用户 ID。' },
       SIGNAL_HTTP_URL: {
         label: 'Signal 桥接 URL',
@@ -2047,7 +2047,7 @@ export const zh: Translations = {
       title: (profile: string) => `将 ${profile} 连接到远程主机`,
       description: '此配置档案中的会话将在你指定的远程 Aura Forge 上运行，而不是这台电脑。',
       urlLabel: '远程地址',
-      urlPlaceholder: 'https://hermes.example.com',
+      urlPlaceholder: 'https:./auraforge.example.com',
       urlInvalid: '请输入以 http:// 或 https:// 开头的完整地址',
       tokenLabel: '访问令牌',
       tokenPlaceholder: '粘贴远程会话令牌',
@@ -2848,7 +2848,7 @@ export const zh: Translations = {
     remoteSetupDesc: '输入网关 URL。Aura Forge Desktop 会检测需要令牌还是浏览器登录。',
     remoteUrlTitle: '网关 URL',
     remoteUrlDesc: '使用 Aura Forge 网关的基础 URL；远程地址请包含 https://。',
-    remoteUrlPlaceholder: 'https://gateway.example.com/hermes',
+    remoteUrlPlaceholder: 'https://gateway.example.co./auraforge',
     probing: '正在检测网关认证方式...',
     probeError: '无法连接到该 Aura Forge 网关。',
     identityProvider: '你的身份提供方',

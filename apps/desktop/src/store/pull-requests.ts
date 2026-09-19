@@ -1,7 +1,7 @@
 import { atom } from 'nanostores'
 
 import type { HermesBranchPullRequest } from '@/global'
-import { scanSessionPullRequests, type SessionInfo } from '@/hermes'
+import { scanSessionPullRequests, type SessionInfo } from '@/auraforge'
 import { desktopGit } from '@/lib/desktop-git'
 import { Codecs, persistentAtom } from '@/lib/persisted'
 

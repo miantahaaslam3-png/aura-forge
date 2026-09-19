@@ -1,5 +1,5 @@
-import type { GatewayWsUrlResult } from '@hermes/shared'
-import type { TranslucencyState } from '@hermes/shared/translucency'
+import type { GatewayWsUrlResult } from '@auraforge/shared'
+import type { TranslucencyState } from '@auraforge/shared/translucency'
 
 import type { WakeIndicatorState } from './lib/wake-indicator'
 import type {
@@ -14,7 +14,7 @@ export {}
 
 declare global {
   interface Window {
-    hermesDesktop: {
+    auraForgeDesktop: {
       // Resolve a backend connection. Omit `profile` (or pass the primary) for
       // the window's backend; pass a named profile to lazily spawn/reuse that
       // profile's backend from the pool.
@@ -214,8 +214,8 @@ declare global {
         // clear the preference.
         set: (name: string | null) => Promise<DesktopActiveProfile>
       }
-      api: <T>(request: HermesApiRequest) => Promise<T>
-      notify: (payload: HermesNotification) => Promise<boolean>
+      api: <T>(request: AuraForgeApiRequest) => Promise<T>
+      notify: (payload: AuraForgeNotification) => Promise<boolean>
       requestMicrophoneAccess: () => Promise<boolean>
       /** read_window_below tool: metadata for the OS window directly underneath this one (never pixels). */
       readWindowBelow?: () => Promise<{
@@ -1170,7 +1170,7 @@ export type DesktopBootstrapEvent =
       docsUrl: string
     }
 
-export interface HermesApiRequest {
+export interface AuraForgeApiRequest {
   path: string
   method?: string
   body?: unknown
@@ -1191,7 +1191,7 @@ export interface HermesApiRequest {
   connectionId?: string | null
 }
 
-export interface HermesNotification {
+export interface AuraForgeNotification {
   title?: string
   body?: string
   silent?: boolean

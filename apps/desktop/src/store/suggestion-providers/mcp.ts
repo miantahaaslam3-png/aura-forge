@@ -6,7 +6,7 @@ import {
   getMcpOAuthFlow,
   listMcpServers,
   removeMcpServer
-} from '@/hermes'
+} from '@/auraforge'
 import { translateNow } from '@/i18n'
 import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
 import { MCP_DIRECTORY } from '@/lib/mcp-directory'
@@ -200,7 +200,7 @@ async function connect(known: SuggestibleServer, sessionId: string | null, cance
         status: getMcpOAuthFlow,
         cancelled,
         cancel: cancelMcpOAuthFlow,
-        openExternal: url => window.hermesDesktop.openExternal(url)
+        openExternal: url => window.auraForgeDesktop.openExternal(url)
       })
     } catch (error) {
       // Decline/failure means "no server" — roll back the config write

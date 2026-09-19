@@ -33,12 +33,12 @@ import {
   windowIsActivelyViewed
 } from './use-background-sync'
 
-vi.mock('@/hermes', async importOriginal => ({
+vi.mock('@/auraforge', async importOriginal => ({
   ...(await importOriginal()),
   getLatestSessionMessages: vi.fn()
 }))
 
-const { getLatestSessionMessages } = await import('@/hermes')
+const { getLatestSessionMessages } = await import('@/auraforge')
 
 const ACTIVE_RUNTIME_ID = 'runtime-active'
 const ACTIVE_STORED_ID = 'stored-active'

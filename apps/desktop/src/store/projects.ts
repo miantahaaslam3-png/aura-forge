@@ -6,7 +6,7 @@ import {
   type SidebarProjectTree
 } from '@/app/chat/sidebar/projects/workspace-groups'
 import type { HermesGitBaseBranch, HermesGitBranch } from '@/global'
-import { getHermesConfig, hermesApi, type HermesGateway } from '@/hermes'
+import { getHermesConfig, auraForgeApi, type AuraForgeGateway } from '@/auraforge'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd, isDesktopFsRemoteMode, selectDesktopPaths, writeDesktopFileText } from '@/lib/desktop-fs'
 import { desktopGit } from '@/lib/desktop-git'
@@ -30,7 +30,7 @@ import {
   setSessions,
   workspaceCwdForNewSession
 } from '@/store/session'
-import type { ProjectInfo, ProjectsPayload } from '@/types/hermes'
+import type { ProjectInfo, ProjectsPayload } from '@/types/auraforge'
 
 // First-class, per-profile Projects (named, multi-folder workspaces). State is
 // served by the live gateway's `projects.*` JSON-RPC methods, which wrap the
@@ -365,7 +365,7 @@ function projectParams(
 }
 
 async function gatewayRequestOn<T>(
-  gateway: HermesGateway,
+  gateway: AuraForgeGateway,
   method: string,
   params: Record<string, unknown> = {}
 ): Promise<T> {
@@ -379,7 +379,7 @@ function isRetryableProjectTreeReadError(error: unknown): boolean {
 }
 
 interface ActiveProjectsContext {
-  gateway: HermesGateway
+  gateway: AuraForgeGateway
   profile: string
 }
 
@@ -552,7 +552,7 @@ async function refreshProjectTreeAcrossProfiles(): Promise<void> {
   $projectTreeLoading.set(true)
 
   try {
-    const res = await hermesApi<ProjectTreePayload>({
+    const res = await auraForgeApi<ProjectTreePayload>({
       path: `/api/profiles/projects/tree?preview_limit=${PROJECT_TREE_PREVIEW_LIMIT}`,
       timeoutMs: PROJECT_TREE_REQUEST_TIMEOUT_MS
     })
@@ -679,8 +679,8 @@ interface RepoScanState {
   runningSignature?: string
 }
 
-const repoScanStates = new WeakMap<HermesGateway, RepoScanState>()
-const scanningGatewayGenerations = new WeakMap<HermesGateway, number>()
+const repoScanStates = new WeakMap<AuraForgeGateway, RepoScanState>()
+const scanningGatewayGenerations = new WeakMap<AuraForgeGateway, number>()
 
 function syncReposScanning(): void {
   const gateway = activeGateway()
@@ -1352,14 +1352,14 @@ export async function removeWorktreePath(
 // Reveal a project/worktree path in the OS file manager (git-GUI standard).
 export async function revealPath(path: null | string): Promise<void> {
   if (path) {
-    await window.hermesDesktop?.revealPath?.(path)
+    await window.auraForgeDesktop?.revealPath?.(path)
   }
 }
 
 // Copy a path to the clipboard (git-GUI standard).
 export async function copyPath(path: null | string): Promise<void> {
   if (path) {
-    await window.hermesDesktop?.writeClipboard?.(path)
+    await window.auraForgeDesktop?.writeClipboard?.(path)
   }
 }
 

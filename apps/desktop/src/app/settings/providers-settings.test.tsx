@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ConfirmHost } from '@/components/confirm-host'
 import { $confirmRequest } from '@/store/confirm'
-import type { EnvVarInfo, OAuthProvider } from '@/types/hermes'
+import type { EnvVarInfo, OAuthProvider } from '@/types/auraforge'
 
 const listOAuthProviders = vi.fn()
 const disconnectOAuthProvider = vi.fn()
@@ -13,7 +13,7 @@ const startManualProviderOAuth = vi.fn()
 const startManualLocalEndpoint = vi.fn()
 const onboarding = atom({ manual: false })
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   disconnectOAuthProvider: (providerId: string) => disconnectOAuthProvider(providerId),
   getEnvVars: () => getEnvVars(),
   listOAuthProviders: () => listOAuthProviders()

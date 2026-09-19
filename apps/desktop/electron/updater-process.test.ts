@@ -295,11 +295,11 @@ test('collectRelaunchArgs drops Electron internals, keeps user/launcher args', (
     '--inspect=9229',
     '--remote-debugging-port=9222',
     '--no-sandbox',
-    'hermes://open/session/abc',
+    'auraforge://open/session/abc',
     '--profile=work'
   ]
 
-  assert.deepEqual(collectRelaunchArgs(argv), ['--no-sandbox', 'hermes://open/session/abc', '--profile=work'])
+  assert.deepEqual(collectRelaunchArgs(argv), ['--no-sandbox', 'auraforge://open/session/abc', '--profile=work'])
   assert.deepEqual(collectRelaunchArgs(undefined), [])
 })
 

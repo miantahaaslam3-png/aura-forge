@@ -13,12 +13,12 @@
  * authored.
  */
 
-import type { HermesPlugin, PaletteContribution } from '@hermes/plugin-sdk'
-import { $accentOverride, PALETTE_AREA, setAccentOverride, STATUSBAR_AREAS } from '@hermes/plugin-sdk'
+import type { AuraForgePlugin, PaletteContribution } from '@auraforge/plugin-sdk'
+import { $accentOverride, PALETTE_AREA, setAccentOverride, STATUSBAR_AREAS } from '@auraforge/plugin-sdk'
 
 import { AccentPickerTrigger } from './picker'
 
-const plugin: HermesPlugin = {
+const plugin: AuraForgePlugin = {
   id: 'accent',
   name: 'Accent Picker',
   description:

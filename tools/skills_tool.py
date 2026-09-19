@@ -141,6 +141,7 @@ def _skills_scan_signature(dirs_to_scan, disabled) -> tuple:
 # This is the single source of truth -- agent edits, hub installs, and bundled
 # skills all coexist here without polluting the git repo.
 HERMES_HOME = get_hermes_home()
+AURA_FORGE_HOME = HERMES_HOME
 SKILLS_DIR = HERMES_HOME / "skills"
 _SKILLS_DIR_AT_IMPORT = SKILLS_DIR
 

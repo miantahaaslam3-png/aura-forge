@@ -1,4 +1,4 @@
-import type { McpTestResult } from '@/hermes'
+import type { McpTestResult } from '@/auraforge'
 
 // ---------------------------------------------------------------------------
 // Shared MCP probe cache. Extracted from mcp-tab.tsx so the MCP page and the

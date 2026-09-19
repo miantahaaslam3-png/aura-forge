@@ -6,9 +6,9 @@ import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { modelSearchText } from '@/lib/model-search-text'
 import { currentPickerSelection } from '@/lib/model-status-label'
 import { normalize } from '@/lib/text'
-import type { ModelOptionProvider, ModelPricing } from '@/types/hermes'
+import type { ModelOptionProvider, ModelPricing } from '@/types/auraforge'
 
-import type { HermesGateway } from '../hermes'
+import type { AuraForgeGateway } from '../auraforge'
 import { cn } from '../lib/utils'
 import { startManualOnboarding } from '../store/onboarding'
 
@@ -22,7 +22,7 @@ import { Skeleton } from './ui/skeleton'
 interface ModelPickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  gw?: HermesGateway
+  gw?: AuraForgeGateway
   sessionId?: string | null
   currentModel: string
   currentProvider: string

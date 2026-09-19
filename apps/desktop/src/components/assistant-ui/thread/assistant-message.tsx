@@ -520,7 +520,7 @@ const ErrorRecoveryActions: FC = () => {
 
   const openLogs = useCallback(async () => {
     try {
-      const root = await window.hermesDesktop?.logsRoot?.()
+      const root = await window.auraForgeDesktop?.logsRoot?.()
 
       if (!root) {
         notifyError(new Error('logs root unavailable'), copy.errorOpenLogsFailed)
@@ -528,7 +528,7 @@ const ErrorRecoveryActions: FC = () => {
         return
       }
 
-      const result = await window.hermesDesktop?.openDir?.(root)
+      const result = await window.auraForgeDesktop?.openDir?.(root)
 
       if (result && !result.ok) {
         notifyError(new Error(result.error || 'open failed'), copy.errorOpenLogsFailed)
@@ -559,7 +559,7 @@ const ErrorRecoveryActions: FC = () => {
         </ActionBarPrimitive.Reload>
       )}
       {showSwitchProvider && inRouter && <SwitchProviderAction label={copy.errorSwitchProvider} />}
-      {window.hermesDesktop?.logsRoot && (
+      {window.auraForgeDesktop?.logsRoot && (
         <button className="aui-error-action" onClick={() => void openLogs()} type="button">
           {remoteConnection ? copy.errorOpenDesktopLogs : copy.errorOpenLogs}
         </button>

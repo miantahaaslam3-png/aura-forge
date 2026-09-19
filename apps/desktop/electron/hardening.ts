@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// Relative, not `@hermes/shared`: the electron bundle is built by esbuild with
+// Relative, not `@auraforge/shared`: the electron bundle is built by esbuild with
 // no tsconfig path resolution (see scripts/bundle-electron-main.mjs), so a bare
 // specifier would typecheck and then fail to bundle.
 import {
@@ -11,7 +11,7 @@ import {
   DATA_URL_READ_DEFAULT_MAX_MB,
   DATA_URL_READ_MAX_MAX_MB,
   DATA_URL_READ_MIN_MAX_MB
-} from '../../shared/src/data-url-read-max'
+} from '../../auraforge-shared/src/data-url-read-max'
 
 const DEFAULT_FETCH_TIMEOUT_MS = 30_000
 // Remote file.attach sends one base64 JSON-RPC frame. Cap the dedicated attach

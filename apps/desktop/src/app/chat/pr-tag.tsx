@@ -16,7 +16,7 @@ const PR_STYLE: Record<string, { className: string; icon: string }> = {
 
 export function openPullRequest(pr: HermesBranchPullRequest): void {
   if (pr.url) {
-    void window.hermesDesktop?.openExternal?.(pr.url)
+    void window.auraForgeDesktop?.openExternal?.(pr.url)
   }
 }
 

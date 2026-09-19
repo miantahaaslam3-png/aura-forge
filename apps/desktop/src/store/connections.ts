@@ -106,7 +106,7 @@ export function setConnectionsRegistry(registry: DesktopConnectionsRegistry): vo
 
 /** Refresh the renderer cache from Electron's local registry. No backend is contacted. */
 export async function refreshConnectionsRegistry(): Promise<DesktopConnectionsRegistry | null> {
-  const bridge = window.hermesDesktop?.connections
+  const bridge = window.auraForgeDesktop?.connections
 
   if (!bridge) {
     return null
@@ -119,7 +119,7 @@ export async function refreshConnectionsRegistry(): Promise<DesktopConnectionsRe
 }
 
 async function rememberConnection(connectionId: string): Promise<void> {
-  const setLastUsed = window.hermesDesktop?.connections?.setLastUsed
+  const setLastUsed = window.auraForgeDesktop?.connections?.setLastUsed
 
   if (!setLastUsed) {
     return

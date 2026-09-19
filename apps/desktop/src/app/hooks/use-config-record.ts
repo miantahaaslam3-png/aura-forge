@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getHermesConfigRecord, type ProfileScope, profileScopeKey } from '@/hermes'
+import { getHermesConfigRecord, type ProfileScope, profileScopeKey } from '@/auraforge'
 import { queryClient, writeCache } from '@/lib/query-client'
-import type { HermesConfigRecord } from '@/types/hermes'
+import type { HermesConfigRecord } from '@/types/auraforge'
 
 // One shared cache for the whole profile config record (`GET /api/config`).
 // Every settings surface (MCP, model, config) reads and writes through this key

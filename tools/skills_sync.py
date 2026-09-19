@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 
 HERMES_HOME = get_hermes_home()
+AURA_FORGE_HOME = HERMES_HOME
 SKILLS_DIR = HERMES_HOME / "skills"
 MANIFEST_FILE = SKILLS_DIR / ".bundled_manifest"
 

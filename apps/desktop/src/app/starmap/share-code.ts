@@ -1,5 +1,5 @@
 import { type BitReader, type BitWriter, createLoadout, Dict, idxOf, indexBits, LoadoutError } from '@/lib/loadout'
-import type { StarmapEdge, StarmapGraph, StarmapNode } from '@/types/hermes'
+import type { StarmapEdge, StarmapGraph, StarmapNode } from '@/types/auraforge'
 
 // ── Star-map share code ───────────────────────────────────────────────────────
 //

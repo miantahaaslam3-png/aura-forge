@@ -16,7 +16,7 @@
  * itself here as the delegate so tile UI stays dependency-light.
  */
 
-import { LOCAL_CONNECTION_ID, registryBackendScopeKey } from '@hermes/shared'
+import { LOCAL_CONNECTION_ID, registryBackendScopeKey } from '@auraforge/shared'
 import { atom, computed } from 'nanostores'
 
 import type { ClientSessionState } from '@/app/types'
@@ -33,7 +33,7 @@ import { $workspaceMode, resolveRememberedActivePane, workspaceScopeKey } from '
 import type { WorkspaceMode } from '@/contrib/types'
 import { stableArray } from '@/lib/stable-array'
 import { readJson, writeJson } from '@/lib/storage'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/auraforge'
 
 import { $activeGatewayProfile, normalizeProfileKey } from './profile'
 import { clearAllProviderWaits, clearSessionProviderWait } from './provider-wait'
@@ -1786,7 +1786,7 @@ export const $focusedStoredSessionId = computed(
 
     // The interaction tracker can point at sidebar CHROME while a chat still
     // holds the main zone's active tab — clicking a Bots-pane roster row moves
-    // it to the sidebar group, whose active pane ('hermes-bots:pane') is not a
+    // it to the sidebar group, whose active pane ('auraforge-bots:pane') is not a
     // session tile. In sessions mode the primary selection answers, exactly as
     // always. In Bot Mode that fallback alone publishes a NULL "focused"
     // edge: bot chats open as TILES and never set $selectedStoredSessionId,

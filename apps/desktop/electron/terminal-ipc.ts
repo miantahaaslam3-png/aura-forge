@@ -1,5 +1,5 @@
 // The embedded terminal's PTY host: shell resolution, env scrubbing, session
-// registry, and the hermes:terminal:* IPC surface. Extracted from main.ts; the
+// registry, and the auraforge:terminal:* IPC surface. Extracted from main.ts; the
 // factory owns the session map and returns the dispose helpers main.ts needs
 // for SSH teardown. findOnPath / logging / connection routing stay injected.
 import { execFile } from 'node:child_process'
@@ -169,7 +169,7 @@ export function registerTerminalIpc({
   }
 
   function terminalChannel(id, suffix) {
-    return `hermes:terminal:${id}:${suffix}`
+    return `auraforge:terminal:${id}:${suffix}`
   }
 
   // Best-effort read of a live PTY child's current working directory so a
@@ -283,7 +283,7 @@ export function registerTerminalIpc({
     }
   }
 
-  ipcMain.handle('hermes:terminal:start', async (event, payload = {}) => {
+  ipcMain.handle('auraforge:terminal:start', async (event, payload = {}) => {
     ensureNodePtySpawnHelper()
 
     const id = crypto.randomUUID()
@@ -336,7 +336,7 @@ export function registerTerminalIpc({
     return { cwd: remote ? null : cwd, id, shell: remote ? 'ssh' : name }
   })
 
-  ipcMain.handle('hermes:terminal:write', (_event, id, data) => {
+  ipcMain.handle('auraforge:terminal:write', (_event, id, data) => {
     const sessionInfo = terminalSessions.get(String(id || ''))
 
     if (!sessionInfo) {
@@ -348,7 +348,7 @@ export function registerTerminalIpc({
     return true
   })
 
-  ipcMain.handle('hermes:terminal:resize', (_event, id, size = {}) => {
+  ipcMain.handle('auraforge:terminal:resize', (_event, id, size = {}) => {
     const sessionInfo = terminalSessions.get(String(id || ''))
 
     if (!sessionInfo) {
@@ -362,7 +362,7 @@ export function registerTerminalIpc({
 
     return true
   })
-  ipcMain.handle('hermes:terminal:cwd', async (_event, id) => {
+  ipcMain.handle('auraforge:terminal:cwd', async (_event, id) => {
     const sessionInfo = terminalSessions.get(String(id || ''))
 
     if (!sessionInfo) {
@@ -372,7 +372,7 @@ export function registerTerminalIpc({
     return sessionInfo.sshScope !== undefined ? null : readProcessCwd(sessionInfo.pty.pid)
   })
 
-  ipcMain.handle('hermes:terminal:dispose', (_event, id) => disposeTerminalSession(String(id || '')))
+  ipcMain.handle('auraforge:terminal:dispose', (_event, id) => disposeTerminalSession(String(id || '')))
 
   return { disposeTerminalSession, disposeTerminalSessionsForSshScope, disposeAllTerminalSessions }
 }

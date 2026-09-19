@@ -968,7 +968,7 @@ test('coerceDesktopConnectionConfig routes token persistence through resolvePers
 test('connection-config save and apply IPC handlers route payloads through coerceDesktopConnectionConfig', () => {
   const source = readMain()
 
-  for (const channel of ['hermes:connection-config:save', 'hermes:connection-config:apply']) {
+  for (const channel of ['auraforge:connection-config:save', 'auraforge:connection-config:apply']) {
     const handlerStart = source.indexOf(`ipcMain.handle('${channel}'`)
     assert.notEqual(handlerStart, -1, `${channel} handler must exist`)
     const handlerBody = source.slice(handlerStart, handlerStart + 400)

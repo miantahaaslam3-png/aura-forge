@@ -63,7 +63,7 @@ const checkHermesUpdateSpy = vi.fn()
 const updateHermesSpy = vi.fn()
 const getActionStatusSpy = vi.fn()
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/auraforge', () => ({
   checkHermesUpdate: (...args: unknown[]) => checkHermesUpdateSpy(...args),
   updateHermes: (...args: unknown[]) => updateHermesSpy(...args),
   getActionStatus: (...args: unknown[]) => getActionStatusSpy(...args)
@@ -342,7 +342,7 @@ describe('requestActiveUpdate', () => {
     $backendUpdateStatus.set(null)
     $updateOverlayOpen.set(false)
     ;(globalThis as unknown as { window: unknown }).window = {
-      hermesDesktop: { updates: { apply: applyClientMock, check: checkClientMock } }
+      auraForgeDesktop: { updates: { apply: applyClientMock, check: checkClientMock } }
     }
     vi.useRealTimers()
   })
@@ -445,7 +445,7 @@ describe('applyEverythingUpdate', () => {
     $updateOverlayOpen.set(false)
     $mockConnectionsRegistry.set(null)
     ;(globalThis as unknown as { window: unknown }).window = {
-      hermesDesktop: {
+      auraForgeDesktop: {
         updates: { apply: applyClientMock, check: checkClientMock },
         connections: { updateAll: updateAllMock }
       }
@@ -609,7 +609,7 @@ describe('client nudge after a backend update', () => {
     $mockConnectionsRegistry.set(null)
     setRemote(true)
     ;(globalThis as unknown as { window: unknown }).window = {
-      hermesDesktop: { updates: { apply: applyClientMock, check: checkClientMock } }
+      auraForgeDesktop: { updates: { apply: applyClientMock, check: checkClientMock } }
     }
     vi.useRealTimers()
   })
@@ -672,7 +672,7 @@ describe('applyUpdates terminal state', () => {
     resetUpdateApplyState()
     $updateOverlayOpen.set(true)
     ;(globalThis as unknown as { window: unknown }).window = {
-      hermesDesktop: { updates: { apply: applyMock } }
+      auraForgeDesktop: { updates: { apply: applyMock } }
     }
     vi.useRealTimers()
   })
@@ -1210,7 +1210,7 @@ describe('startUpdatePoller', () => {
     })
     $updateStatus.set(null)
     ;(globalThis as unknown as { window: unknown }).window = {
-      hermesDesktop: { updates: { check: checkMock, onProgress: onProgressMock } },
+      auraForgeDesktop: { updates: { check: checkMock, onProgress: onProgressMock } },
       addEventListener: vi.fn((event: string, handler: Function) => {
         listeners[event] = handler
       }),

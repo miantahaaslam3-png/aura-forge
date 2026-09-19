@@ -17,8 +17,8 @@ import { __resetNativeNotifyBaselineForTests, markNativeNotifyBaseline } from '.
 import { $approvalRequest, setApprovalRequest } from './prompts'
 import { $activeSessionId, setActiveSessionId } from './session'
 
-const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
-const initialHermesDesktop = desktopWindow.hermesDesktop
+const desktopWindow = window as unknown as { auraForgeDesktop?: Window['auraForgeDesktop'] }
+const initialHermesDesktop = desktopWindow.auraForgeDesktop
 
 const notify = vi.fn().mockResolvedValue(true)
 
@@ -39,7 +39,7 @@ function freshSession(): string {
 
 beforeEach(() => {
   notify.mockClear()
-  desktopWindow.hermesDesktop = { notify } as unknown as Window['hermesDesktop']
+  desktopWindow.auraForgeDesktop = { notify } as unknown as Window['auraForgeDesktop']
   setNativeNotifyEnabled(true)
 
   for (const kind of NATIVE_NOTIFICATION_KINDS) {
@@ -55,9 +55,9 @@ afterEach(() => {
   clearPluginNotifyHandlers()
 
   if (initialHermesDesktop) {
-    desktopWindow.hermesDesktop = initialHermesDesktop
+    desktopWindow.auraForgeDesktop = initialHermesDesktop
   } else {
-    delete desktopWindow.hermesDesktop
+    delete desktopWindow.auraForgeDesktop
   }
 })
 
@@ -231,10 +231,10 @@ describe('dispatchPluginNativeNotification', () => {
     // Unique tag (throttle is per plugin id); activate still uses the plugin deep link.
     dispatchPluginNativeNotification('index-network-alerts', {
       actions: [
-        { id: 'open', label: 'Open', activate: 'hermes://index-network/intent/1' },
+        { id: 'open', label: 'Open', activate: 'auraforge://index-network/intent/1' },
         { id: 'dismiss', label: 'Dismiss', onAction: () => undefined }
       ],
-      activate: 'hermes://index-network/intent/1',
+      activate: 'auraforge://index-network/intent/1',
       body: 'New match',
       icon: '/tmp/index-network.png',
       title: 'Opportunity'
@@ -261,7 +261,7 @@ describe('dispatchPluginNativeNotification', () => {
     const onAction = vi.fn()
 
     dispatchPluginNativeNotification('handlers-plugin', {
-      activate: 'hermes://index-network/intent/1',
+      activate: 'auraforge://index-network/intent/1',
       onActivate,
       actions: [{ id: 'dismiss', label: 'Dismiss', onAction }],
       title: 'Opportunity'
