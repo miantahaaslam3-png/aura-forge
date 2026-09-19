@@ -922,8 +922,8 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
           {
             detail: updateVersionLabel,
             icon: Download,
-            id: 'cc-update-hermes',
-            keywords: ['update', 'upgrade', 'hermes', 'version', 'system', 'restart'],
+            id: 'cc-update-auraforge',
+            keywords: ['update', 'upgrade', 'auraforge', 'version', 'system', 'restart'],
             label: cc.updateHermes,
             run: () => requestActiveUpdate()
           },
