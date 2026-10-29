@@ -11,7 +11,7 @@ const translucencySupport = ipcRenderer.sendSync('auraforge:translucency:support
 const hudWindowing = ipcRenderer.sendSync('auraforge:hud:windowing')
 const hudNativeDrag = hudWindowing?.nativeDrag === true
 
-contextBridge.exposeInMainWorld('hermesDesktop', {
+contextBridge.exposeInMainWorld('auraForgeDesktop', {
   glassSupported: translucencySupport?.glass === true,
   translucencySupported: translucencySupport?.translucency === true,
   getConnection: profile => ipcRenderer.invoke('auraforge:connection', profile),
