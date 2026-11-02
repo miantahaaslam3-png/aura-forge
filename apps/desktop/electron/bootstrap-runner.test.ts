@@ -96,6 +96,27 @@ test('fresh bootstrap args include the packaged commit pin', () => {
   )
 })
 
+test('packaged pin args carry the bundled source archive when the build ships one', () => {
+  const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
+  const archive = 'C:\\Program Files\\AuraForge\\resources\\agent-source.zip'
+
+  assert.deepEqual(buildPinArgs(installStamp, { sourceArchive: archive }), [
+    '-Commit',
+    installStamp.commit,
+    '-Branch',
+    'main',
+    '-SourceArchive',
+    archive
+  ])
+})
+
+test('pin args omit the source archive when the build did not ship one', () => {
+  const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
+
+  assert.ok(!buildPinArgs(installStamp).includes('-SourceArchive'))
+  assert.ok(!buildPinArgs(installStamp, { sourceArchive: null }).includes('-SourceArchive'))
+})
+
 test('existing-checkout bootstrap args keep branch but skip the packaged commit pin', () => {
   const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
 

@@ -791,7 +791,7 @@ function spawnBash(scriptPath, args, { emit, stageName, abortSignal, hermesHome 
 // a repair/update path and must not let an old packaged app detach the checkout
 // back to the commit baked into that app. All-zero fallback stamps are never
 // passed as -Commit/--commit — only the branch is used (#50823 / #50864 review).
-function buildPinArgs(installStamp, { pinCommit = true } = {}) {
+function buildPinArgs(installStamp, { pinCommit = true, sourceArchive = null } = {}) {
   const args = []
 
   if (pinCommit && installStamp && isPinnedCommit(installStamp.commit)) {
@@ -802,7 +802,41 @@ function buildPinArgs(installStamp, { pinCommit = true } = {}) {
     args.push('-Branch', installStamp.branch)
   }
 
+  // Offline source archive shipped inside the installer. Passing it makes the
+  // repository stage extract this instead of cloning, so first launch does not
+  // depend on github.com being reachable at a usable speed.
+  if (sourceArchive) {
+    args.push('-SourceArchive', sourceArchive)
+  }
+
   return args
+}
+
+/**
+ * The repo source archive that ships in the packaged app
+ * (electron-builder extraResources → `agent-source.zip`), or null.
+ *
+ * This exists because the repository stage is the one first-launch step that
+ * cannot be made resilient with retries/mirrors: the source tree is ~188 MB,
+ * and on a network that throttles github.com to a few KB/s and resets the
+ * connection, neither `git clone` nor the ZIP fallback can finish (the real
+ * failure: "Failed to download repository (tried git clone SSH, HTTPS, and
+ * ZIP)" after 10 minutes). Extracting a bundled tree makes the install
+ * deterministic and lets the agent's dependencies come from PyPI, which is
+ * usually not the throttled leg.
+ */
+function resolveSourceArchive() {
+  if (typeof process.resourcesPath !== 'string' || !process.resourcesPath) {
+    return null
+  }
+
+  const candidate = path.join(process.resourcesPath, 'agent-source.zip')
+
+  try {
+    return fs.statSync(candidate).isFile() ? candidate : null
+  } catch {
+    return null
+  }
 }
 
 function buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit = true }) {
@@ -819,12 +853,12 @@ function buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit = t
   return args
 }
 
-async function fetchManifest({ scriptPath, installerKind, emit, hermesHome, activeRoot, installStamp, pinCommit }) {
+async function fetchManifest({ scriptPath, installerKind, emit, hermesHome, activeRoot, installStamp, pinCommit, sourceArchive }) {
   const isPosix = installerKind === 'posix'
 
   const args = isPosix
     ? ['--manifest', ...buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit })]
-    : ['-Manifest', ...buildPinArgs(installStamp, { pinCommit })]
+    : ['-Manifest', ...buildPinArgs(installStamp, { pinCommit, sourceArchive })]
 
   const result = await (isPosix ? spawnBash : spawnPowerShell)(scriptPath, args, {
     emit,
@@ -890,7 +924,8 @@ async function runStage({
   activeRoot,
   abortSignal,
   installStamp,
-  pinCommit
+  pinCommit,
+  sourceArchive
 }) {
   const startedAt = Date.now()
   emit({ type: 'stage', name: stage.name, state: 'running' })
@@ -905,7 +940,13 @@ async function runStage({
         '--json',
         ...buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit })
       ]
-    : ['-Stage', stage.name, '-NonInteractive', '-Json', ...buildPinArgs(installStamp, { pinCommit })]
+    : [
+        '-Stage',
+        stage.name,
+        '-NonInteractive',
+        '-Json',
+        ...buildPinArgs(installStamp, { pinCommit, sourceArchive })
+      ]
 
   const result = await (isPosix ? spawnBash : spawnPowerShell)(scriptPath, args, {
     emit,
@@ -1045,6 +1086,13 @@ async function runBootstrap(opts) {
   try {
     const existingCheckout = hasExistingGitCheckout(activeRoot)
     const pinCommit = !existingCheckout
+    // Bundled repo tree, when this build shipped one. Resolved once so every
+    // stage invocation sees the same answer.
+    const sourceArchive = resolveSourceArchive()
+
+    if (sourceArchive) {
+      emit({ type: 'log', line: `[bootstrap] using bundled source archive at ${sourceArchive}` })
+    }
 
     if (existingCheckout && installStamp && installStamp.commit) {
       emit({
@@ -1067,7 +1115,8 @@ async function runBootstrap(opts) {
       hermesHome,
       activeRoot,
       installStamp,
-      pinCommit
+      pinCommit,
+      sourceArchive
     })
 
     emit({
@@ -1096,7 +1145,8 @@ async function runBootstrap(opts) {
         activeRoot,
         abortSignal,
         installStamp,
-        pinCommit
+        pinCommit,
+        sourceArchive
       })
 
       if (ev.state === 'failed') {

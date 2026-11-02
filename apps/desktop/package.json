@@ -282,7 +282,13 @@
         "nsis",
         "msi"
       ],
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "extraResources": [
+        {
+          "from": "build/agent-source.zip",
+          "to": "agent-source.zip"
+        }
+      ]
     },
     "linux": {
       "category": "Development",

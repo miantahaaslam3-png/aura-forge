@@ -30,6 +30,19 @@ param(
     # existing tree pass -ForceCommit.
     [switch]$ForceCommit,
     [string]$Tag = "",
+    # Offline source archive: a zip of the repository tree at the release
+    # commit, shipped inside the desktop installer's resources.
+    #
+    # Why it exists: some networks throttle github.com / codeload to a few
+    # KB/s and then reset the connection, so neither `git clone` (188 MB of
+    # source) nor the archive download can finish -- setup dies in the
+    # repository stage with "Failed to download repository" after 10 minutes.
+    # With this set, the repository stage extracts the bundled tree instead of
+    # touching the network at all, then records a local commit so the tree is
+    # clean and the later update path (fetch + reset --hard) still works.
+    #
+    #   powershell -File install.ps1 -SourceArchive C:\path\agent-source.zip
+    [string]$SourceArchive = "",
     [string]$AuraForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
     [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }),
 
@@ -2103,10 +2116,156 @@ function Install-SystemPackages {
 # Installation
 # ============================================================================
 
+# Extracts the source archive shipped with the desktop installer into
+# $InstallDir and records a local git commit for it.
+#
+# Returns $true when the tree is in place, $false to fall back to the network
+# path. Never throws: a broken archive must not turn a recoverable install into
+# a hard failure when cloning might still work.
+#
+# The commit is deliberately local: `git archive` carries no history, so there
+# is no upstream commit object to attach to. `auraforge update` does
+# `git fetch origin <branch>` then `git reset --hard origin/<branch>`, which
+# replaces this commit wholesale -- so a synthetic root commit is safe, and the
+# tree is clean (nothing for the updater's dirty-tree guard to trip on).
+function Install-RepositoryFromArchive {
+    param(
+        [Parameter(Mandatory=$true)][string]$ArchivePath,
+        [Parameter(Mandatory=$true)][string]$TargetDir
+    )
+
+    $resolved = $ArchivePath
+    if (-not [System.IO.Path]::IsPathRooted($resolved)) {
+        $resolved = Join-Path (Get-Location).Path $resolved
+    }
+
+    if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+        Write-Warn "Source archive not found at $resolved -- falling back to git clone"
+        return $false
+    }
+
+    Write-Info "Installing from bundled source archive (no network): $resolved"
+
+    if (Test-Path -LiteralPath $TargetDir) {
+        Remove-Item -LiteralPath $TargetDir -Recurse -Force -ErrorAction Stop
+    }
+    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
+
+    try {
+        # Extract straight into the install root. Expand-Archive is per-entry
+        # slow (~minutes for this 11k-file archive on PowerShell 5.1) and
+        # extracting to %TEMP% first would add a second 188 MB copy pass across
+        # volumes, so use the .NET API against the final destination.
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($resolved, $TargetDir)
+
+        # `git archive` writes the tree at the zip root; a hand-made zip may add
+        # a single wrapper directory. Hoist that case so paths stay identical.
+        $rootEntries = @(Get-ChildItem -LiteralPath $TargetDir -Force)
+        if ($rootEntries.Count -eq 1 -and $rootEntries[0].PSIsContainer) {
+            $wrapper = $rootEntries[0].FullName
+            foreach ($child in @(Get-ChildItem -LiteralPath $wrapper -Force)) {
+                Move-Item -LiteralPath $child.FullName -Destination $TargetDir -Force
+            }
+            Remove-Item -LiteralPath $wrapper -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        if (-not (Test-Path -LiteralPath (Join-Path $TargetDir "auraforge_cli"))) {
+            Write-Warn "Source archive does not look like an Aura Forge checkout -- falling back to git clone"
+            Remove-Item -LiteralPath $TargetDir -Recurse -Force -ErrorAction SilentlyContinue
+
+            return $false
+        }
+
+        # git writes informational lines to stderr ("hint: Using 'master' as the
+        # name for the initial branch", "From <url>", progress meters). The
+        # script runs under $ErrorActionPreference = "Stop", so a plain
+        # `git ... 2>&1 | Out-Null` promotes that hint into a terminating
+        # NativeCommandError and the whole archive path aborts before the
+        # commit. Route every git call through the relaxed-EAP helper and read
+        # $LASTEXITCODE explicitly.
+        function Invoke-GitQuiet {
+            param([string[]]$GitArgs)
+
+            Invoke-NativeWithRelaxedErrorAction {
+                & git -c windows.appendAtomically=false -c core.fsync=none -c gc.auto=0 @GitArgs 2>&1 | Out-Null
+            }
+
+            return $LASTEXITCODE
+        }
+
+        Push-Location $TargetDir
+        try {
+            # Name the branch up front: `auraforge update` resolves the current
+            # branch and then resets to origin/<branch>, so the seeded checkout
+            # must not be on git's compile-time default ("master").
+            $initCode = Invoke-GitQuiet -GitArgs @("init", "--initial-branch=$Branch")
+            if ($initCode -ne 0) {
+                # git < 2.28 has no --initial-branch.
+                $initCode = Invoke-GitQuiet -GitArgs @("init")
+                if ($initCode -ne 0) {
+                    throw "git init failed (exit $initCode)"
+                }
+                Invoke-GitQuiet -GitArgs @("symbolic-ref", "HEAD", "refs/heads/$Branch") | Out-Null
+            }
+
+            Invoke-GitQuiet -GitArgs @("config", "windows.appendAtomically", "false") | Out-Null
+            Invoke-GitQuiet -GitArgs @("config", "core.autocrlf", "false") | Out-Null
+            Invoke-GitQuiet -GitArgs @("remote", "add", "origin", $RepoUrlHttps) | Out-Null
+
+            # Stage everything, then commit. On Windows this is the slow part
+            # (~11k files); it is still far faster than a 188 MB clone over a
+            # connection that resets mid-transfer.
+            $addCode = Invoke-GitQuiet -GitArgs @("add", "-A")
+            if ($addCode -ne 0) {
+                throw "git add failed (exit $addCode)"
+            }
+
+            $label = if ($Commit) { $Commit } elseif ($Tag) { $Tag } else { $Branch }
+            $message = "Aura Forge $label (bundled source archive)"
+            $commitCode = Invoke-GitQuiet -GitArgs @(
+                "-c", "user.name=Aura Forge",
+                "-c", "user.email=installer@auraforge.local",
+                "-c", "commit.gpgsign=false",
+                "commit", "--no-verify", "-m", $message
+            )
+            if ($commitCode -ne 0) {
+                throw "git commit failed (exit $commitCode)"
+            }
+
+            $head = (& git -c windows.appendAtomically=false rev-parse --short HEAD 2>$null)
+            Write-Success "Source archive installed at $TargetDir (local commit $head, branch $Branch)"
+
+            # Remember which archive seeded this checkout. A later install run
+            # (the retry after a failed venv/dependencies stage) compares this
+            # hash against its own archive and can then skip the network
+            # entirely. Kept inside .git so it never shows up as a working-tree
+            # change for the update path to stash or reset away.
+            try {
+                $marker = Join-Path (Join-Path $TargetDir ".git") "auraforge-source-archive"
+                $hash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
+                Set-Content -LiteralPath $marker -Value $hash -Encoding ascii -NoNewline
+            } catch {
+                Write-Warn "Could not record the source archive fingerprint: $_"
+            }
+        } finally {
+            Pop-Location
+        }
+
+        return $true
+    } catch {
+        Write-Warn "Source archive install failed ($_); falling back to git clone"
+        Remove-Item -LiteralPath $TargetDir -Recurse -Force -ErrorAction SilentlyContinue
+
+        return $false
+    }
+}
+
 function Install-Repository {
     Write-Info "Installing to $InstallDir..."
 
     $didUpdate = $false
+    $usedSourceArchive = $false
 
     if (Test-Path $InstallDir) {
         # Test-Path "$InstallDir\.git" returns True when .git is a file OR a
@@ -2148,7 +2307,76 @@ function Install-Repository {
             Pop-Location
         }
 
-        if ($repoValid) {
+        # Bundled-archive fast path.  When this installer carries a source
+        # archive and the checkout was seeded from that same archive, there is
+        # nothing to fetch -- and on a network that throttles github.com to a
+        # few KB/s, that fetch is not a slow step but a 10-minute one that ends
+        # in a connection reset.  That is exactly the retry path a user hits
+        # after a later stage (venv, dependencies, node-deps) failed, so it must
+        # never depend on the network.
+        $archiveSeeded = $false
+        if ($repoValid -and $SourceArchive) {
+            $archiveResolved = $SourceArchive
+            if (-not [System.IO.Path]::IsPathRooted($archiveResolved)) {
+                $archiveResolved = Join-Path (Get-Location).Path $archiveResolved
+            }
+
+            $archiveMarker = Join-Path $InstallDir ".git\auraforge-source-archive"
+            if ((Test-Path -LiteralPath $archiveResolved -PathType Leaf) -and (Test-Path -LiteralPath $archiveMarker)) {
+                $recordedHash = ""
+                try {
+                    $recordedHash = ((Get-Content -LiteralPath $archiveMarker -Raw) -as [string]).Trim()
+                } catch { }
+
+                $currentHash = ""
+                try {
+                    $currentHash = (Get-FileHash -LiteralPath $archiveResolved -Algorithm SHA256).Hash
+                } catch { }
+
+                if ($recordedHash -and ($recordedHash -eq $currentHash)) {
+                    Write-Info "Repository already installed from this bundled source archive -- skipping download."
+                    $archiveSeeded = $true
+                } elseif ($currentHash) {
+                    # A different build's archive: its tree is the release this
+                    # installer is for, so re-seed instead of fetching. Same
+                    # contract as the divergence path below (`reset --hard
+                    # origin/<branch>`): this is a managed checkout.
+                    Write-Info "Bundled source archive changed -- re-seeding the checkout from it (no network)..."
+                    # Move the old tree aside first: Install-RepositoryFromArchive
+                    # clears the target, and an in-place delete of a directory
+                    # holding a live .git can fail on Windows while git/AV still
+                    # holds handles.
+                    $previousDir = "$InstallDir.previous-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+                    $movedAside = $false
+                    foreach ($attempt in 1..5) {
+                        try {
+                            Move-Item -LiteralPath $InstallDir -Destination $previousDir -ErrorAction Stop
+                            $movedAside = $true
+                            break
+                        } catch {
+                            Start-Sleep -Seconds 2
+                        }
+                    }
+                    if ($movedAside) {
+                        if (Install-RepositoryFromArchive -ArchivePath $archiveResolved -TargetDir $InstallDir) {
+                            Remove-Item -LiteralPath $previousDir -Recurse -Force -ErrorAction SilentlyContinue
+                            $archiveSeeded = $true
+                        } else {
+                            # Put the old tree back rather than leaving the user
+                            # with nothing at InstallDir.
+                            if (-not (Test-Path -LiteralPath $InstallDir)) {
+                                Move-Item -LiteralPath $previousDir -Destination $InstallDir -ErrorAction SilentlyContinue
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($repoValid -and $archiveSeeded) {
+            $didUpdate = $true
+            $usedSourceArchive = $true
+        } elseif ($repoValid) {
             Write-Info "Existing installation found, updating..."
             Push-Location $InstallDir
             # Wrap the entire fetch+checkout block in EAP=Continue so git's
@@ -2383,6 +2611,17 @@ function Install-Repository {
 
     if (-not $didUpdate) {
         $cloneSuccess = $false
+        $usedSourceArchive = $false
+
+        # Offline path first: when the installer shipped a source archive, use
+        # it and never touch the network. Only for a fresh install -- the update
+        # path above keeps using git so an existing checkout stays a real clone.
+        if ($SourceArchive) {
+            if (Install-RepositoryFromArchive -ArchivePath $SourceArchive -TargetDir $InstallDir) {
+                $cloneSuccess = $true
+                $usedSourceArchive = $true
+            }
+        }
 
         # Fix Windows git "copy-fd: write returned: Invalid argument" error.
         # Git for Windows can fail on atomic file operations (hook templates,
@@ -2395,13 +2634,15 @@ function Install-Repository {
         git config --global windows.appendAtomically false 2>$null
 
         # Try SSH first, then HTTPS, with -c flag for atomic write fix
-        Write-Info "Trying SSH clone..."
-        $env:GIT_SSH_COMMAND = "ssh -o BatchMode=yes -o ConnectTimeout=5"
-        try {
-            Invoke-NativeWithRelaxedErrorAction { git -c windows.appendAtomically=false clone --progress --depth 1 --branch $Branch $RepoUrlSsh $InstallDir }
-            if ($LASTEXITCODE -eq 0) { $cloneSuccess = $true }
-        } catch { }
-        $env:GIT_SSH_COMMAND = $null
+        if (-not $cloneSuccess) {
+            Write-Info "Trying SSH clone..."
+            $env:GIT_SSH_COMMAND = "ssh -o BatchMode=yes -o ConnectTimeout=5"
+            try {
+                Invoke-NativeWithRelaxedErrorAction { git -c windows.appendAtomically=false clone --progress --depth 1 --branch $Branch $RepoUrlSsh $InstallDir }
+                if ($LASTEXITCODE -eq 0) { $cloneSuccess = $true }
+            } catch { }
+            $env:GIT_SSH_COMMAND = $null
+        }
 
         if (-not $cloneSuccess) {
             if (Test-Path $InstallDir) { Remove-Item -Recurse -Force $InstallDir -ErrorAction SilentlyContinue }
@@ -2523,8 +2764,10 @@ function Install-Repository {
     # Post-clone pin: when a clone (or ZIP-fallback init) just landed us on
     # $Branch's tip, honour the higher-precedence $Commit / $Tag by checking
     # the exact ref out as a detached HEAD.  Skipped for the in-place update
-    # path (above) since that already routed via the same precedence.
-    if (-not $didUpdate) {
+    # path (above) since that already routed via the same precedence, and for
+    # the bundled-archive path: its tree IS the release commit, and the fetch
+    # below would need the very network the archive exists to avoid.
+    if (-not $didUpdate -and -not $usedSourceArchive) {
         # Same EAP=Continue wrap as the update path -- git fetch's 'From <url>'
         # info line goes to stderr and would terminate the script under the
         # global EAP=Stop otherwise.  We check $LASTEXITCODE for real errors.
