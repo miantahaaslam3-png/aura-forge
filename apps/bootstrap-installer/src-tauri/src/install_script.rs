@@ -249,6 +249,14 @@ fn truncate_ref(s: &str) -> &str {
 /// (#67193).
 const UTF8_BOM: &[u8] = &[0xEF, 0xBB, 0xBF];
 
+/// GitHub slug the installer downloads its script from (same repo
+/// install.ps1's `$RepoUrlHttps` clones).
+const REPO_SLUG: &str = "miantahaaslam3-png/aura-forge";
+
+/// A real install script is ~240 KB; anything smaller is an error page or an
+/// empty body and must never be cached and executed.
+const MIN_SCRIPT_BYTES: usize = 1024;
+
 /// Prepare bytes for the on-disk bootstrap cache.
 ///
 /// `.ps1` files get a UTF-8 BOM (unless one is already present). `.sh` files
@@ -322,12 +330,20 @@ fn upgrade_cached_script(kind: ScriptKind, cached: &Path, emit_log: &impl Fn(&st
 /// black-holed connection (captive portal, hung proxy, silently dropped
 /// packets) never errors — the whole bootstrap would hang here instead of
 /// falling back to the cached script.
+///
+/// Each mirror is tried in turn. A single host is the failure this exists to
+/// survive: on a locked-down network raw.githubusercontent.com answers reads
+/// with `ECONNRESET`, so a fresh machine (no cached script to fall back to)
+/// could not be set up at all. jsDelivr serves the identical immutable ref
+/// from a different CDN, and github.com/raw is a third entry point.
 async fn download(kind: ScriptKind, commit_or_ref: &str, dest_path: &Path) -> Result<()> {
-    let url = format!(
-        "https://raw.githubusercontent.com/miantahaaslam3-png/aura-forge/{}/scripts/{}",
-        commit_or_ref,
-        kind.filename()
-    );
+    let urls = script_urls(commit_or_ref, kind.filename());
+    if urls.is_empty() {
+        return Err(anyhow!(
+            "Cannot download {}: empty install ref",
+            kind.filename()
+        ));
+    }
 
     if let Some(parent) = dest_path.parent() {
         std::fs::create_dir_all(parent).with_context(|| {
@@ -343,12 +359,98 @@ async fn download(kind: ScriptKind, commit_or_ref: &str, dest_path: &Path) -> Re
         format!("{ext}.tmp")
     });
 
-    let response = reqwest::Client::builder()
+    let client = reqwest::Client::builder()
         .connect_timeout(std::time::Duration::from_secs(10))
         .timeout(std::time::Duration::from_secs(60))
         .build()
-        .context("building download client")?
-        .get(&url)
+        .context("building download client")?;
+
+    let mut failures: Vec<String> = Vec::new();
+
+    for url in urls {
+        match fetch_script(&client, kind, &url).await {
+            Ok(bytes) => {
+                let mut file = tokio::fs::File::create(&tmp_path)
+                    .await
+                    .with_context(|| format!("creating temp file {}", tmp_path.display()))?;
+                file.write_all(&bytes)
+                    .await
+                    .with_context(|| format!("writing temp file {}", tmp_path.display()))?;
+                file.flush().await.context("flushing temp file")?;
+                drop(file);
+
+                tokio::fs::rename(&tmp_path, dest_path)
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "renaming {} → {}",
+                            tmp_path.display(),
+                            dest_path.display()
+                        )
+                    })?;
+
+                return Ok(());
+            }
+            Err(err) => {
+                let _ = tokio::fs::remove_file(&tmp_path).await;
+                let message = err.to_string();
+                failures.push(format!("{url}: {message}"));
+
+                // A 404 means this ref does not exist on GitHub at all — the
+                // other mirrors resolve the same ref, so keep going but don't
+                // bother re-reporting it as a transport problem.
+                if message.contains("HTTP 404") {
+                    continue;
+                }
+            }
+        }
+    }
+
+    let short_ref: String = commit_or_ref.chars().take(12).collect();
+    Err(anyhow!(
+        "Failed to download {} for {}: {}",
+        kind.filename(),
+        short_ref,
+        failures.join("; ")
+    ))
+}
+
+/// Mirror URLs to try, in order, for the install script at `commit_or_ref`.
+/// Pure so the ordering is testable without touching the network.
+fn script_urls(commit_or_ref: &str, filename: &str) -> Vec<String> {
+    let pin = commit_or_ref.trim();
+    if pin.is_empty() {
+        return Vec::new();
+    }
+    vec![
+        format!("https://raw.githubusercontent.com/{REPO_SLUG}/{pin}/scripts/{filename}"),
+        format!("https://cdn.jsdelivr.net/gh/{REPO_SLUG}@{pin}/scripts/{filename}"),
+        format!("https://github.com/{REPO_SLUG}/raw/{pin}/scripts/{filename}"),
+    ]
+}
+
+/// `Some(reason)` when these bytes are clearly not the install script, so an
+/// error page is never cached and then executed as PowerShell.
+fn body_rejection(bytes: &[u8]) -> Option<String> {
+    if bytes.len() < MIN_SCRIPT_BYTES {
+        return Some(format!("body too small ({} bytes)", bytes.len()));
+    }
+
+    let body = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
+    let head: String = String::from_utf8_lossy(&body[..body.len().min(64)])
+        .trim_start()
+        .to_ascii_lowercase();
+
+    if head.starts_with("<!doctype") || head.starts_with("<html") {
+        return Some("served an HTML page instead of the installer".to_string());
+    }
+
+    None
+}
+
+async fn fetch_script(client: &reqwest::Client, kind: ScriptKind, url: &str) -> Result<Vec<u8>> {
+    let response = client
+        .get(url)
         .header("User-Agent", "hermes-setup/0.0.1")
         .send()
         .await
@@ -356,10 +458,8 @@ async fn download(kind: ScriptKind, commit_or_ref: &str, dest_path: &Path) -> Re
 
     if !response.status().is_success() {
         return Err(anyhow!(
-            "Failed to download {}: HTTP {} from {}",
-            kind.filename(),
-            response.status(),
-            url
+            "HTTP {} from {url}",
+            response.status().as_u16()
         ));
     }
 
@@ -367,28 +467,12 @@ async fn download(kind: ScriptKind, commit_or_ref: &str, dest_path: &Path) -> Re
         .bytes()
         .await
         .with_context(|| format!("reading body of {url}"))?;
-    let bytes = prepare_cached_script_bytes(kind, &bytes);
 
-    let mut file = tokio::fs::File::create(&tmp_path)
-        .await
-        .with_context(|| format!("creating temp file {}", tmp_path.display()))?;
-    file.write_all(&bytes)
-        .await
-        .with_context(|| format!("writing temp file {}", tmp_path.display()))?;
-    file.flush().await.context("flushing temp file")?;
-    drop(file);
+    if let Some(reason) = body_rejection(&bytes) {
+        return Err(anyhow!("{reason} ({url})"));
+    }
 
-    tokio::fs::rename(&tmp_path, dest_path)
-        .await
-        .with_context(|| {
-            format!(
-                "renaming {} → {}",
-                tmp_path.display(),
-                dest_path.display()
-            )
-        })?;
-
-    Ok(())
+    Ok(prepare_cached_script_bytes(kind, &bytes))
 }
 
 #[cfg(test)]
@@ -409,6 +493,75 @@ mod tests {
         assert_eq!(sanitize_ref("bb/gui"), "bb_gui");
         assert_eq!(sanitize_ref("main"), "main");
         assert_eq!(sanitize_ref("release/1.2.3"), "release_1.2.3");
+    }
+
+    #[test]
+    fn script_urls_are_ordered_and_host_independent() {
+        let sha = "a".repeat(40);
+        let urls = script_urls(&sha, "install.ps1");
+
+        assert_eq!(urls.len(), 3, "raw + jsDelivr + github.com/raw");
+        assert!(urls[0].starts_with("https://raw.githubusercontent.com/"));
+
+        for url in &urls {
+            assert!(url.contains(&sha), "keeps the immutable ref: {url}");
+            assert!(url.ends_with("/scripts/install.ps1"), "points at the script: {url}");
+        }
+
+        // Different hosts is the point: one CDN blocked is what broke setup.
+        let hosts: Vec<String> = urls
+            .iter()
+            .map(|url| {
+                url.trim_start_matches("https://")
+                    .split('/')
+                    .next()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+        let unique: std::collections::HashSet<_> = hosts.iter().collect();
+        assert_eq!(unique.len(), urls.len(), "hosts must differ: {hosts:?}");
+    }
+
+    #[test]
+    fn script_urls_reject_an_empty_ref() {
+        assert!(script_urls("", "install.ps1").is_empty());
+        assert!(script_urls("   ", "install.ps1").is_empty());
+    }
+
+    #[test]
+    fn script_urls_trim_the_ref() {
+        let sha = "b".repeat(40);
+        let urls = script_urls(&format!("  {sha}\n"), "install.sh");
+
+        assert_eq!(urls.len(), 3);
+        for url in &urls {
+            assert!(url.contains(&sha), "ref kept intact: {url}");
+            assert!(!url.contains(char::is_whitespace), "no stray whitespace: {url}");
+        }
+    }
+
+    #[test]
+    fn body_rejection_flags_error_pages_and_truncated_bodies() {
+        let script = format!("Write-Host '{}'\n", "x".repeat(2048));
+
+        assert!(body_rejection(script.as_bytes()).is_none());
+        assert!(body_rejection(b"Not Found").is_some(), "short bodies are rejected");
+        assert!(
+            body_rejection(format!("<!DOCTYPE html><html>{}</html>", "x".repeat(2048)).as_bytes())
+                .is_some(),
+            "HTML error pages are rejected"
+        );
+        assert!(
+            body_rejection(format!("<html><body>{}</body></html>", "x".repeat(2048)).as_bytes())
+                .is_some(),
+            "HTML without a doctype is rejected"
+        );
+
+        // A BOM-prefixed real script is still valid.
+        let mut with_bom = UTF8_BOM.to_vec();
+        with_bom.extend_from_slice(script.as_bytes());
+        assert!(body_rejection(&with_bom).is_none());
     }
 
     #[test]
