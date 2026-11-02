@@ -227,91 +227,207 @@ function cachedScriptPath(hermesHome, commit) {
   return path.join(bootstrapCacheDir(hermesHome), `install-${commit}.${process.platform === 'win32' ? 'ps1' : 'sh'}`)
 }
 
-function downloadInstallScript(ref, destPath) {
-  // Fetch from GitHub raw at the install ref. Normal production builds pass a
-  // pinned SHA (immutable). Non-git fallback builds pass an unpinned branch
-  // ref so local builds can still bootstrap without pretending the all-zero
-  // placeholder is a real GitHub commit.
-  const scriptName = installScriptName()
-  const url = `https://raw.githubusercontent.com/miantahaaslam3-png/aura-forge/${ref}/scripts/${scriptName}`
+// GitHub slug the desktop bootstraps from (same repo scripts/install.ps1's
+// $RepoUrlHttps clones). One constant so the mirror list can't drift from it.
+const INSTALL_REPO_SLUG = 'miantahaaslam3-png/aura-forge'
 
+// A real install script is >100 KB; anything smaller is an error page / empty
+// body that must not be cached and then executed.
+const INSTALL_SCRIPT_MIN_BYTES = 1024
+// Idle socket budget for one attempt. A first-launch fetch that hangs for ten
+// minutes and then dies with ECONNRESET leaves the user staring at a frozen
+// "starting" screen, so every attempt is bounded instead.
+const INSTALL_SCRIPT_IDLE_TIMEOUT_MS = 20_000
+// Hard ceiling for one attempt (a server that trickles bytes forever).
+const INSTALL_SCRIPT_ATTEMPT_DEADLINE_MS = 90_000
+const INSTALL_SCRIPT_ATTEMPTS_PER_URL = 2
+const INSTALL_SCRIPT_MAX_REDIRECTS = 3
+
+/**
+ * URLs to try, in order, for install.ps1 / install.sh at `ref`.
+ *
+ * raw.githubusercontent.com is canonical, but it is also the host that gets
+ * reset/blocked on locked-down networks — a real first-launch failure showed a
+ * 10-minute hang followed by `read ECONNRESET`, with no fallback to try.
+ * jsDelivr serves the identical immutable ref from a different CDN, and
+ * github.com/raw is a third independent path (it 302s to raw). Pure so the
+ * ordering can be tested without touching the network.
+ */
+export function installScriptDownloadUrls(ref, scriptName = installScriptName()) {
+  const pin = String(ref || '').trim()
+
+  if (!pin) {
+    return []
+  }
+
+  return [
+    `https://raw.githubusercontent.com/${INSTALL_REPO_SLUG}/${pin}/scripts/${scriptName}`,
+    `https://cdn.jsdelivr.net/gh/${INSTALL_REPO_SLUG}@${pin}/scripts/${scriptName}`,
+    `https://github.com/${INSTALL_REPO_SLUG}/raw/${pin}/scripts/${scriptName}`
+  ]
+}
+
+function scriptBodyIsHtml(head) {
+  const start = String(head || '')
+    .replace(/^\uFEFF/, '')
+    .trimStart()
+    .slice(0, 64)
+    .toLowerCase()
+
+  return start.startsWith('<!doctype') || start.startsWith('<html')
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * One bounded attempt at `url`, following up to INSTALL_SCRIPT_MAX_REDIRECTS
+ * and rejecting an HTML/error body so it is never cached as the installer.
+ */
+function downloadOnce({ url, tmpPath, scriptName }) {
   return new Promise((resolve, reject) => {
-    fs.mkdirSync(path.dirname(destPath), { recursive: true })
-    const tmpPath = destPath + '.tmp'
-    const out = fs.createWriteStream(tmpPath)
-    https
-      .get(url, res => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-          // GitHub raw shouldn't redirect for a SHA URL, but follow once
-          // defensively.
-          out.close()
-          fs.unlinkSync(tmpPath)
-          https
-            .get(res.headers.location, res2 => {
-              if (res2.statusCode !== 200) {
-                reject(
-                  new Error(
-                    `Failed to download ${scriptName}: HTTP ${res2.statusCode} from redirect ${res.headers.location}`
-                  )
-                )
+    let settled = false
+    let deadline = null
 
-                return
-              }
+    const finish = (err: unknown, value?: unknown) => {
+      if (settled) {
+        return
+      }
 
-              const out2 = fs.createWriteStream(tmpPath)
-              res2.pipe(out2)
-              out2.on('finish', () => {
-                out2.close()
-                fs.renameSync(tmpPath, destPath)
-                resolve(destPath)
-              })
-              out2.on('error', reject)
-            })
-            .on('error', reject)
+      settled = true
 
-          return
-        }
+      if (deadline) {
+        clearTimeout(deadline)
+      }
 
-        if (res.statusCode !== 200) {
-          out.close()
+      err ? reject(err) : resolve(value)
+    }
 
-          try {
-            fs.unlinkSync(tmpPath)
-          } catch {
-            void 0
+    const request = (target, redirectsLeft) => {
+      const req = https.get(target, { timeout: INSTALL_SCRIPT_IDLE_TIMEOUT_MS }, res => {
+        const status = res.statusCode ?? 0
+
+        if (status >= 300 && status < 400 && res.headers.location) {
+          res.resume()
+
+          if (redirectsLeft <= 0) {
+            finish(new Error(`HTTP ${status} redirect loop from ${target}`))
+
+            return
           }
 
-          reject(new Error(`Failed to download ${scriptName}: HTTP ${res.statusCode} from ${url}`))
+          request(new URL(res.headers.location, target).toString(), redirectsLeft - 1)
 
           return
         }
 
-        res.pipe(out)
-        out.on('finish', () => {
-          out.close()
-          fs.renameSync(tmpPath, destPath)
-          resolve(destPath)
+        if (status !== 200) {
+          res.resume()
+          finish(new Error(`HTTP ${status} from ${target}`))
+
+          return
+        }
+
+        const out = fs.createWriteStream(tmpPath)
+        let bytes = 0
+        let head = ''
+
+        res.on('data', chunk => {
+          bytes += chunk.length
+
+          if (head.length < 128) {
+            head += chunk.slice(0, 128).toString('utf8')
+          }
         })
-        out.on('error', err => {
-          try {
-            fs.unlinkSync(tmpPath)
-          } catch {
-            void 0
-          }
 
-          reject(err)
+        res.on('aborted', () => finish(new Error(`response aborted after ${bytes} bytes from ${target}`)))
+        res.on('error', err => finish(err))
+        out.on('error', err => finish(err))
+        res.pipe(out)
+
+        out.on('finish', () => {
+          out.close(() => {
+            if (scriptBodyIsHtml(head)) {
+              finish(new Error(`served an HTML page instead of ${scriptName} (${target})`))
+
+              return
+            }
+
+            if (bytes < INSTALL_SCRIPT_MIN_BYTES) {
+              finish(new Error(`body too small (${bytes} bytes) for ${scriptName} (${target})`))
+
+              return
+            }
+
+            finish(null, tmpPath)
+          })
         })
       })
-      .on('error', err => {
+
+      req.setTimeout(INSTALL_SCRIPT_IDLE_TIMEOUT_MS, () => {
+        req.destroy(new Error(`timed out after ${INSTALL_SCRIPT_IDLE_TIMEOUT_MS}ms (${target})`))
+      })
+
+      req.on('error', err => finish(err))
+    }
+
+    fs.mkdirSync(path.dirname(tmpPath), { recursive: true })
+
+    deadline = setTimeout(() => {
+      finish(new Error(`attempt exceeded ${INSTALL_SCRIPT_ATTEMPT_DEADLINE_MS}ms (${url})`))
+    }, INSTALL_SCRIPT_ATTEMPT_DEADLINE_MS)
+
+    request(url, INSTALL_SCRIPT_MAX_REDIRECTS)
+  })
+}
+
+async function downloadInstallScript(ref, destPath) {
+  // Normal production builds pass a pinned SHA (immutable). Non-git fallback
+  // builds pass an unpinned branch ref so local builds can still bootstrap
+  // without pretending the all-zero placeholder is a real GitHub commit.
+  const scriptName = installScriptName()
+  const urls = installScriptDownloadUrls(ref, scriptName)
+  const tmpPath = `${destPath}.tmp`
+
+  if (urls.length === 0) {
+    throw new Error(`Cannot download ${scriptName}: empty install ref`)
+  }
+
+  const failures = []
+
+  for (const url of urls) {
+    for (let attempt = 1; attempt <= INSTALL_SCRIPT_ATTEMPTS_PER_URL; attempt += 1) {
+      try {
+        await downloadOnce({ url, tmpPath, scriptName })
+        fs.renameSync(tmpPath, destPath)
+
+        return destPath
+      } catch (err) {
+        failures.push(`${url} (attempt ${attempt}): ${err?.message || err}`)
+
         try {
           fs.unlinkSync(tmpPath)
         } catch {
           void 0
         }
 
-        reject(err)
-      })
-  })
+        // A 404 means this ref genuinely isn't on this host — retrying the
+        // same URL can't help, so move straight to the next mirror.
+        if (/\bHTTP 404\b/.test(String(err?.message || ''))) {
+          break
+        }
+
+        if (attempt < INSTALL_SCRIPT_ATTEMPTS_PER_URL) {
+          await delay(1000 * attempt)
+        }
+      }
+    }
+  }
+
+  throw new Error(
+    `Failed to download ${scriptName} for ${String(ref).slice(0, 12)}: ${failures.join('; ')}`
+  )
 }
 
 async function resolveInstallScript({

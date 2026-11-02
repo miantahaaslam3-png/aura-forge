@@ -12,6 +12,7 @@ import {
   hasExistingGitCheckout,
   installedAgentInstallScript,
   installRefForStamp,
+  installScriptDownloadUrls,
   isPinnedCommit,
   resolveInstallScript,
   resolveMarkerPinnedCommit,
@@ -55,7 +56,7 @@ test('installedAgentInstallScript resolves the installer in the agent checkout',
   try {
     assert.equal(installedAgentInstallScript(home), null, 'absent before the checkout exists')
 
-    const scriptsDir = path.join(home, 'hermes-agent', 'scripts')
+    const scriptsDir = path.join(home, 'aura-forge-agent', 'scripts')
     fs.mkdirSync(scriptsDir, { recursive: true })
     const scriptPath = path.join(scriptsDir, SCRIPT_NAME)
     fs.writeFileSync(scriptPath, '#!/bin/sh\necho hi\n')
@@ -154,6 +155,43 @@ test('resolveMarkerPinnedCommit prefers real HEAD over fallback stamp zeros', ()
   )
 })
 
+test('installScriptDownloadUrls offers independent mirrors for the same pinned ref', () => {
+  const commit = 'a'.repeat(40)
+  const urls = installScriptDownloadUrls(commit, SCRIPT_NAME)
+
+  assert.equal(urls.length, 3, 'raw + jsDelivr + github.com/raw')
+  assert.match(urls[0], /^https:\/\/raw\.githubusercontent\.com\//, 'raw is tried first')
+
+  for (const url of urls) {
+    assert.ok(url.includes(commit), `keeps the immutable ref: ${url}`)
+    assert.ok(url.endsWith(`/scripts/${SCRIPT_NAME}`), `points at the script: ${url}`)
+  }
+
+  // A different host per rung is the whole point -- two URLs on one CDN would
+  // fail together the way raw.githubusercontent.com did on a locked-down net.
+  const hosts = urls.map(url => new URL(url).host)
+
+  assert.equal(new Set(hosts).size, urls.length, `hosts must differ: ${hosts.join(', ')}`)
+})
+
+test('installScriptDownloadUrls refuses to build a URL for an empty ref', () => {
+  assert.deepEqual(installScriptDownloadUrls('', SCRIPT_NAME), [])
+  assert.deepEqual(installScriptDownloadUrls('   ', SCRIPT_NAME), [])
+  assert.deepEqual(installScriptDownloadUrls(null, SCRIPT_NAME), [])
+})
+
+test('installScriptDownloadUrls trims a ref before interpolating it', () => {
+  const commit = 'b'.repeat(40)
+  const urls = installScriptDownloadUrls(`  ${commit}\n`, SCRIPT_NAME)
+
+  assert.ok(urls.length > 0)
+
+  for (const url of urls) {
+    assert.ok(url.includes(commit), `keeps the ref intact: ${url}`)
+    assert.ok(!/\s/.test(url), `no stray whitespace in ${url}`)
+  }
+})
+
 test('resolveInstallScript downloads fallback stamps by branch instead of zero commit', async () => {
   const home = mkTmpHome()
 
@@ -219,7 +257,7 @@ test('resolveInstallScript falls back to the installed agent checkout on a 404',
   try {
     const commit = 'a'.repeat(40)
     // Seed the installed agent checkout so the fallback has something to resolve.
-    const scriptsDir = path.join(home, 'hermes-agent', 'scripts')
+    const scriptsDir = path.join(home, 'aura-forge-agent', 'scripts')
     fs.mkdirSync(scriptsDir, { recursive: true })
     const installed = path.join(scriptsDir, SCRIPT_NAME)
     fs.writeFileSync(installed, '#!/bin/sh\necho fallback\n')
