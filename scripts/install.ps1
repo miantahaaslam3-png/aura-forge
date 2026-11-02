@@ -4044,7 +4044,7 @@ function Install-Desktop {
     # produces the unpacked binary at apps/desktop/release/<os>-unpacked/.
     #
     # The Tauri bootstrap installer's launch_hermes_desktop command
-    # resolves apps/desktop/release/win-unpacked/Hermes.exe directly,
+    # resolves apps/desktop/release/win-unpacked/AuraForge.exe directly,
     # so an "unpacked" build (electron-builder --dir) is enough -- we
     # don't need to produce an NSIS/MSI artifact here.
 
@@ -4278,8 +4278,12 @@ function Install-Desktop {
     Pop-Location
 
     # 3. Sanity-check the produced binary. Probe both arches so this works
-    # on x64 and arm64 build machines.
+    # on x64 and arm64 build machines. electron-builder names the binary after
+    # package.json's `executableName` (AuraForge.exe); the legacy Hermes.exe
+    # name is kept as a fallback so an older checkout still resolves.
     $exeCandidates = @(
+        "$desktopDir\release\win-unpacked\AuraForge.exe",
+        "$desktopDir\release\win-arm64-unpacked\AuraForge.exe",
         "$desktopDir\release\win-unpacked\Hermes.exe",
         "$desktopDir\release\win-arm64-unpacked\Hermes.exe"
     )
