@@ -83,6 +83,33 @@ fn main() {
     println!("cargo:rerun-if-env-changed=HERMES_BUILD_PIN_BRANCH");
 
     // -----------------------------------------------------------------
+    // Optional bundled agent source archive.
+    //
+    // First launch installs the agent from a git checkout (~188 MB of
+    // source). On networks that throttle github.com to a few KB/s and reset
+    // mid-transfer that clone can never finish, so a release build may embed
+    // a `git archive` snapshot of the release tree here and hand it to
+    // install.ps1 as -SourceArchive: the repository stage then never touches
+    // the network.
+    //
+    // The archive is a build artifact, never committed (see .gitignore), so
+    // the cfg is emitted only when the packaging step produced one. Ordinary
+    // `cargo build` / CI builds stay exactly as before.
+    // -----------------------------------------------------------------
+    let archive = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("agent-source.zip");
+    println!("cargo:rerun-if-changed={}", archive.display());
+    if archive.is_file() {
+        println!("cargo:rustc-cfg=agent_source_archive");
+        println!("cargo:rustc-check-cfg=cfg(agent_source_archive)");
+        println!(
+            "cargo:warning=hermes-bootstrap: embedding bundled agent source archive ({} bytes)",
+            std::fs::metadata(&archive).map(|m| m.len()).unwrap_or(0)
+        );
+    }
+
+    // -----------------------------------------------------------------
     // Tauri windows manifest. See hermes-setup.manifest for rationale —
     // declares level="asInvoker" so Windows's installer-detection
     // heuristic doesn't refuse to launch us without UAC elevation.

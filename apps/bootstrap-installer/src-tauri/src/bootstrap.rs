@@ -514,7 +514,21 @@ async fn run_bootstrap(
     // the manifest comes back missing the desktop stage and we never run
     // it. The per-stage call below also passes -IncludeDesktop to keep
     // the contracts identical.
-    let manifest_args = build_pin_args(&script);
+    let mut manifest_args = build_pin_args(&script);
+
+    // Bundled source archive, when this build shipped one (see build.rs).
+    // Passing it makes install.ps1's repository stage extract the embedded
+    // tree instead of cloning, so first launch does not depend on
+    // github.com being reachable at a usable speed.
+    if let Some(archive) = bundled_agent_source_archive() {
+        emit_log(&format!(
+            "[bootstrap] using bundled source archive at {}",
+            archive.display()
+        ));
+        manifest_args.push("-SourceArchive".to_string());
+        manifest_args.push(archive.display().to_string());
+    }
+
     let mut manifest_args_full = vec!["-Manifest".to_string()];
     manifest_args_full.extend(manifest_args.clone());
     if args.include_desktop {
@@ -935,6 +949,46 @@ fn build_pin_args(script: &install_script::ResolvedScript) -> Vec<String> {
         out.push(b.clone());
     }
     out
+}
+
+/// The repo source archive embedded at build time, written once to a temp file.
+///
+/// install.ps1 needs a path, not bytes, so the first call materializes the
+/// archive next to the OS temp dir and later calls reuse it. The file name
+/// carries the archive length, which changes whenever the packaged tree
+/// changes, so a stale file from a previous build is never reused.
+///
+/// Returns None when this build did not embed an archive (the default), in
+/// which case install.ps1's clone/ZIP path runs as before.
+#[cfg(agent_source_archive)]
+fn bundled_agent_source_archive() -> Option<PathBuf> {
+    const BYTES: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/agent-source.zip"));
+
+    let path = std::env::temp_dir().join(format!("aura-forge-agent-source-{}.zip", BYTES.len()));
+
+    if std::fs::metadata(&path)
+        .map(|meta| meta.len() == BYTES.len() as u64)
+        .unwrap_or(false)
+    {
+        return Some(path);
+    }
+
+    match std::fs::write(&path, BYTES) {
+        Ok(()) => Some(path),
+        Err(err) => {
+            tracing::warn!(
+                path = %path.display(),
+                error = %err,
+                "could not materialize the bundled agent source archive; falling back to the network path"
+            );
+            None
+        }
+    }
+}
+
+#[cfg(not(agent_source_archive))]
+fn bundled_agent_source_archive() -> Option<PathBuf> {
+    None
 }
 
 fn emit_event(app: &AppHandle, event: BootstrapEvent) {
