@@ -363,10 +363,15 @@ $script:LastResolver = 'none'
 $script:NormalizedProfilePaths = Set-LongProfileEnvVars
 
 # Re-derive the install paths now that the env vars behind their defaults are
-# long. An explicitly passed -HermesHome / -InstallDir is normalized in place
+# long. An explicitly passed -AuraForgeHome / -InstallDir is normalized in place
 # rather than replaced, so a caller's choice is never overwritten by a default.
 # $PSBoundParameters is only meaningful at script scope, so this stays inline.
-if ($PSBoundParameters.ContainsKey('HermesHome')) {
+#
+# The key must match the PARAMETER name: this used to test 'HermesHome', which
+# stopped existing when the parameter was renamed, so every explicit
+# -AuraForgeHome was silently discarded and the stage protocol installed into
+# the default profile.
+if ($PSBoundParameters.ContainsKey('AuraForgeHome')) {
     $AuraForgeHome = ConvertTo-LongPath $AuraForgeHome
 } else {
     $AuraForgeHome = ConvertTo-LongPath $(
