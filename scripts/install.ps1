@@ -4123,19 +4123,45 @@ function Install-BrowserUseCli {
     }
 
     Write-Info "Installing Browser Use CLI (default browser backend)..."
+
+    # Wall-clock ceiling, same shape and rationale as the npm legs in
+    # Install-NodeDeps: `uv tool install` has no bound of its own beyond
+    # per-request HTTP timeouts, so on a network that trickles PyPI at a few
+    # KB/s this single OPTIONAL step can hold the bootstrap for hours after
+    # every required stage has already succeeded -- the desktop app sits behind
+    # a spinner the whole time. Hitting the ceiling is a warning, not a failure:
+    # tools/browser_use_cli.py also resolves the CLI through uvx at first use,
+    # so browser automation keeps working and the user can install it later.
+    $browserUseTimeoutSec = 600
+
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
         # UV_TOOL_BIN_DIR keeps the binary inside Aura Forge' managed bin dir,
         # where the browser tool resolves it -- no reliance on the user PATH.
-        $env:UV_TOOL_BIN_DIR = $managedBin
-        $env:UV_NO_CONFIG = "1"
-        & $script:UvCmd tool install browser-use 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Success "Browser Use CLI installed"
+        # Set inside the job so the child process inherits it.
+        $job = Start-Job -ScriptBlock {
+            param($Uv, $Bin)
+            $env:UV_TOOL_BIN_DIR = $Bin
+            $env:UV_NO_CONFIG = "1"
+            & $Uv tool install browser-use 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { "ok" } else { "exit $LASTEXITCODE" }
+        } -ArgumentList $script:UvCmd, $managedBin
+
+        if (Wait-Job $job -Timeout $browserUseTimeoutSec) {
+            $jobOut = ((Receive-Job $job -ErrorAction SilentlyContinue | Out-String) -replace '\s+$', '')
+            Remove-Job $job -Force -ErrorAction SilentlyContinue
+            if (($jobOut -eq "ok") -or (Test-Path $managedBu)) {
+                Write-Success "Browser Use CLI installed"
+            } else {
+                Write-Warn "Browser Use CLI install failed ($jobOut) -- browser automation falls back to built-in tools."
+                Write-Info "Install later with: uv tool install browser-use  (or via 'hermes tools')"
+            }
         } else {
-            Write-Warn "Browser Use CLI install failed (exit $LASTEXITCODE) -- browser automation falls back to built-in tools."
-            Write-Info "Install later with: uv tool install browser-use  (or via 'hermes tools')"
+            Stop-Job $job -ErrorAction SilentlyContinue
+            Remove-Job $job -Force -ErrorAction SilentlyContinue
+            Write-Warn "Browser Use CLI install timed out after $([math]::Round($browserUseTimeoutSec / 60)) minutes -- skipping it for now."
+            Write-Info "Browser automation still works through the built-in tools; add the CLI later with 'hermes tools'."
         }
     } catch {
         Write-Warn "Browser Use CLI install failed: $_"
