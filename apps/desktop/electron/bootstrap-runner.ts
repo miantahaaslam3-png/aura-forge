@@ -791,7 +791,7 @@ function spawnBash(scriptPath, args, { emit, stageName, abortSignal, hermesHome 
 // a repair/update path and must not let an old packaged app detach the checkout
 // back to the commit baked into that app. All-zero fallback stamps are never
 // passed as -Commit/--commit — only the branch is used (#50823 / #50864 review).
-function buildPinArgs(installStamp, { pinCommit = true, sourceArchive = null } = {}) {
+function buildPinArgs(installStamp, { pinCommit = true, sourceArchive = null, wheelhouse = null } = {}) {
   const args = []
 
   if (pinCommit && installStamp && isPinnedCommit(installStamp.commit)) {
@@ -807,6 +807,13 @@ function buildPinArgs(installStamp, { pinCommit = true, sourceArchive = null } =
   // depend on github.com being reachable at a usable speed.
   if (sourceArchive) {
     args.push('-SourceArchive', sourceArchive)
+  }
+
+  // Offline wheelhouse shipped inside the installer. Passing it makes the
+  // dependency stage resolve from local wheels, so first launch does not
+  // depend on pypi.org being reachable at a usable speed either.
+  if (wheelhouse) {
+    args.push('-Wheelhouse', wheelhouse)
   }
 
   return args
@@ -839,6 +846,30 @@ function resolveSourceArchive() {
   }
 }
 
+/**
+ * The offline Python wheelhouse that ships in the packaged app
+ * (electron-builder extraResources → `agent-wheels.zip`), or null.
+ *
+ * The repository stage is not the only throttled leg: `uv sync --locked` still
+ * pulls ~180 wheels from pypi.org, and on a network that throttles Fastly/PyPI
+ * to ~10 KB/s that stage runs for hours (measured: `openai` 1.1 MB took 9
+ * minutes). Passing this to install.ps1 makes the dependency stage resolve from
+ * local files only, so no socket is opened during install.
+ */
+function resolveWheelhouse() {
+  if (typeof process.resourcesPath !== 'string' || !process.resourcesPath) {
+    return null
+  }
+
+  const candidate = path.join(process.resourcesPath, 'agent-wheels.zip')
+
+  try {
+    return fs.statSync(candidate).isFile() ? candidate : null
+  } catch {
+    return null
+  }
+}
+
 function buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit = true }) {
   const args = ['--dir', activeRoot, '--hermes-home', hermesHome]
 
@@ -853,12 +884,12 @@ function buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit = t
   return args
 }
 
-async function fetchManifest({ scriptPath, installerKind, emit, hermesHome, activeRoot, installStamp, pinCommit, sourceArchive }) {
+async function fetchManifest({ scriptPath, installerKind, emit, hermesHome, activeRoot, installStamp, pinCommit, sourceArchive, wheelhouse }) {
   const isPosix = installerKind === 'posix'
 
   const args = isPosix
     ? ['--manifest', ...buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit })]
-    : ['-Manifest', ...buildPinArgs(installStamp, { pinCommit, sourceArchive })]
+    : ['-Manifest', ...buildPinArgs(installStamp, { pinCommit, sourceArchive, wheelhouse })]
 
   const result = await (isPosix ? spawnBash : spawnPowerShell)(scriptPath, args, {
     emit,
@@ -925,7 +956,8 @@ async function runStage({
   abortSignal,
   installStamp,
   pinCommit,
-  sourceArchive
+  sourceArchive,
+  wheelhouse
 }) {
   const startedAt = Date.now()
   emit({ type: 'stage', name: stage.name, state: 'running' })
@@ -945,7 +977,7 @@ async function runStage({
         stage.name,
         '-NonInteractive',
         '-Json',
-        ...buildPinArgs(installStamp, { pinCommit, sourceArchive })
+        ...buildPinArgs(installStamp, { pinCommit, sourceArchive, wheelhouse })
       ]
 
   const result = await (isPosix ? spawnBash : spawnPowerShell)(scriptPath, args, {
@@ -1089,9 +1121,15 @@ async function runBootstrap(opts) {
     // Bundled repo tree, when this build shipped one. Resolved once so every
     // stage invocation sees the same answer.
     const sourceArchive = resolveSourceArchive()
+    // Bundled offline wheelhouse, same idea for the dependency stage.
+    const wheelhouse = resolveWheelhouse()
 
     if (sourceArchive) {
       emit({ type: 'log', line: `[bootstrap] using bundled source archive at ${sourceArchive}` })
+    }
+
+    if (wheelhouse) {
+      emit({ type: 'log', line: `[bootstrap] using bundled Python wheelhouse at ${wheelhouse}` })
     }
 
     if (existingCheckout && installStamp && installStamp.commit) {
@@ -1116,7 +1154,8 @@ async function runBootstrap(opts) {
       activeRoot,
       installStamp,
       pinCommit,
-      sourceArchive
+      sourceArchive,
+      wheelhouse
     })
 
     emit({
@@ -1146,7 +1185,8 @@ async function runBootstrap(opts) {
         abortSignal,
         installStamp,
         pinCommit,
-        sourceArchive
+        sourceArchive,
+        wheelhouse
       })
 
       if (ev.state === 'failed') {

@@ -110,6 +110,28 @@ fn main() {
     }
 
     // -----------------------------------------------------------------
+    // Optional bundled Python wheelhouse.
+    //
+    // The repository stage is only half the network problem: `uv sync` then
+    // pulls ~180 wheels from pypi.org, which some networks throttle to a few
+    // KB/s. When the packaging step left a wheelhouse behind, embed it and
+    // hand install.ps1 -Wheelhouse so the dependency stage installs offline.
+    // Same opt-in shape as above -- absent file, unchanged build.
+    // -----------------------------------------------------------------
+    let wheels = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("agent-wheels.zip");
+    println!("cargo:rerun-if-changed={}", wheels.display());
+    if wheels.is_file() {
+        println!("cargo:rustc-cfg=agent_wheelhouse");
+        println!("cargo:rustc-check-cfg=cfg(agent_wheelhouse)");
+        println!(
+            "cargo:warning=hermes-bootstrap: embedding bundled Python wheelhouse ({} bytes)",
+            std::fs::metadata(&wheels).map(|m| m.len()).unwrap_or(0)
+        );
+    }
+
+    // -----------------------------------------------------------------
     // Tauri windows manifest. See hermes-setup.manifest for rationale —
     // declares level="asInvoker" so Windows's installer-detection
     // heuristic doesn't refuse to launch us without UAC elevation.

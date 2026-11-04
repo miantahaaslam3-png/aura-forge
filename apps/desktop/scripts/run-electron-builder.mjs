@@ -10,6 +10,8 @@ import { spawnSync } from "node:child_process"
 import { createRequire } from "node:module"
 import { fileURLToPath } from "node:url"
 
+import { ensureAgentWheelhouse } from "./agent-wheelhouse.mjs"
+
 const require = createRequire(import.meta.url)
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -113,6 +115,9 @@ args.push(...process.argv.slice(2))
 
 if (process.platform === "win32") {
   ensureAgentSourceArchive()
+  // Reuse-or-build the offline Python wheelhouse (cached on uv.lock's hash).
+  // A null result just means the installer falls back to PyPI.
+  ensureAgentWheelhouse({ desktopRoot, repoRoot })
 }
 
 const result = spawnSync(process.execPath, [electronBuilderCli(), ...args], {

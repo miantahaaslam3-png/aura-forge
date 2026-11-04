@@ -287,6 +287,10 @@
         {
           "from": "build/agent-source.zip",
           "to": "agent-source.zip"
+        },
+        {
+          "from": "build/agent-wheels.zip",
+          "to": "agent-wheels.zip"
         }
       ]
     },

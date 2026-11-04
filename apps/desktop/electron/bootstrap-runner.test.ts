@@ -117,6 +117,30 @@ test('pin args omit the source archive when the build did not ship one', () => {
   assert.ok(!buildPinArgs(installStamp, { sourceArchive: null }).includes('-SourceArchive'))
 })
 
+test('packaged pin args carry the bundled wheelhouse when the build ships one', () => {
+  const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
+  const archive = 'C:\\Program Files\\AuraForge\\resources\\agent-source.zip'
+  const wheels = 'C:\\Program Files\\AuraForge\\resources\\agent-wheels.zip'
+
+  assert.deepEqual(buildPinArgs(installStamp, { sourceArchive: archive, wheelhouse: wheels }), [
+    '-Commit',
+    installStamp.commit,
+    '-Branch',
+    'main',
+    '-SourceArchive',
+    archive,
+    '-Wheelhouse',
+    wheels
+  ])
+})
+
+test('pin args omit the wheelhouse when the build did not ship one', () => {
+  const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
+
+  assert.ok(!buildPinArgs(installStamp).includes('-Wheelhouse'))
+  assert.ok(!buildPinArgs(installStamp, { wheelhouse: null }).includes('-Wheelhouse'))
+})
+
 test('existing-checkout bootstrap args keep branch but skip the packaged commit pin', () => {
   const installStamp = { commit: 'a'.repeat(40), branch: 'main' }
 

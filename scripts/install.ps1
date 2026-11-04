@@ -43,6 +43,18 @@ param(
     #
     #   powershell -File install.ps1 -SourceArchive C:\path\agent-source.zip
     [string]$SourceArchive = "",
+    # Offline wheelhouse: every CPython 3.11 win_amd64 wheel the lockfile needs,
+    # shipped inside the desktop installer (as a directory or a .zip).
+    #
+    # Why it exists: the repository stage is only half the network problem.
+    # `uv sync --locked` still pulls ~180 wheels from pypi.org, and on a network
+    # that throttles Fastly/PyPI to ~10 KB/s that stage runs for hours (measured
+    # on a real machine: openai 1.1 MB took 9 minutes, pywin32 9.1 MB never
+    # finished). With this set, the dependency stage resolves entirely from
+    # local files and `uv` never opens a socket.
+    #
+    #   powershell -File install.ps1 -Wheelhouse C:\path\agent-wheels.zip
+    [string]$Wheelhouse = "",
     [string]$AuraForgeHome = $(if ($env:AURA_FORGE_HOME) { $env:AURA_FORGE_HOME } else { "$env:LOCALAPPDATA\aura-forge" }),
     [string]$InstallDir = $(if ($env:AURA_FORGE_HOME) { "$env:AURA_FORGE_HOME\aura-forge-agent" } else { "$env:LOCALAPPDATA\aura-forge\aura-forge-agent" }),
 
@@ -2261,6 +2273,84 @@ function Install-RepositoryFromArchive {
     }
 }
 
+# ---------------------------------------------------------------------------
+# Offline wheelhouse (see the -Wheelhouse parameter for why this exists).
+#
+# Accepts either a directory of .whl files (dev/CI) or the bundled .zip. The zip
+# is expanded once into $AuraForgeHome\wheelhouse and fingerprinted with its
+# SHA-256, so a retry after a later stage failed reuses the expansion instead of
+# paying for the extraction again.
+#
+# Returns the wheel directory, or "" when there is nothing usable -- callers
+# then fall through to the network tiers exactly as before. Never throws: a
+# broken wheelhouse must not turn a recoverable install into a hard failure.
+# ---------------------------------------------------------------------------
+function Resolve-Wheelhouse {
+    param([string]$Path)
+
+    if (-not $Path) { return "" }
+
+    $resolved = $Path
+    if (-not [System.IO.Path]::IsPathRooted($resolved)) {
+        $resolved = Join-Path (Get-Location).Path $resolved
+    }
+
+    if (Test-Path -LiteralPath $resolved -PathType Container) {
+        return $resolved
+    }
+
+    if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+        Write-Warn "Wheelhouse not found at $resolved -- falling back to PyPI"
+        return ""
+    }
+
+    $target = Join-Path $AuraForgeHome "wheelhouse"
+    $marker = Join-Path $target ".auraforge-wheelhouse"
+
+    try {
+        $hash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
+        if ((Test-Path -LiteralPath $marker) -and
+            ((Get-Content -LiteralPath $marker -Raw -ErrorAction SilentlyContinue) -eq $hash)) {
+            Write-Info "Reusing extracted wheelhouse at $target"
+            return $target
+        }
+
+        Write-Info "Extracting bundled wheelhouse (no network): $resolved"
+        if (Test-Path -LiteralPath $target) {
+            Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction Stop
+        }
+        New-Item -ItemType Directory -Force -Path $target | Out-Null
+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($resolved, $target)
+
+        # Wheels are written at the zip root, but a hand-made archive may wrap
+        # them in a single directory. Hoist that case so `--find-links` sees them.
+        $rootEntries = @(Get-ChildItem -LiteralPath $target -Force)
+        if ($rootEntries.Count -eq 1 -and $rootEntries[0].PSIsContainer) {
+            $wrapper = $rootEntries[0].FullName
+            foreach ($child in @(Get-ChildItem -LiteralPath $wrapper -Force)) {
+                Move-Item -LiteralPath $child.FullName -Destination $target -Force
+            }
+            Remove-Item -LiteralPath $wrapper -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        $wheelCount = @(Get-ChildItem -LiteralPath $target -Filter *.whl -File).Count
+        if ($wheelCount -eq 0) {
+            Write-Warn "Bundled wheelhouse contained no .whl files -- falling back to PyPI"
+            Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+            return ""
+        }
+
+        Set-Content -LiteralPath $marker -Value $hash -Encoding ascii -NoNewline
+        Write-Info "Wheelhouse ready: $wheelCount wheels at $target"
+        return $target
+    } catch {
+        Write-Warn "Could not prepare the bundled wheelhouse ($_); falling back to PyPI"
+        return ""
+    }
+}
+
 function Install-Repository {
     Write-Info "Installing to $InstallDir..."
 
@@ -3129,7 +3219,37 @@ function Install-Dependencies {
     # previous venv is restored before the error propagates, and the parked
     # tree is deleted only after the imports prove the replacement usable.
     try {
-    if (Test-Path "uv.lock") {
+    # Offline wheelhouse (bundled by the desktop installer). When present the
+    # install resolves entirely from local .whl files: no index lookup, no
+    # socket. On a network that throttles PyPI this is the difference between
+    # a few minutes and never.
+    #
+    # Deliberately `uv pip install` and NOT `uv sync --locked --no-index`.
+    # `sync` validates the *universal* lock (every Python version and platform
+    # the project supports), so with an index disabled it fails on splits for
+    # interpreters we did not ship wheels for -- e.g. "anthropic was not found
+    # in the provided package locations" for `python_full_version == '3.13.*'`
+    # -- even though the 3.11 win_amd64 install is complete. `pip install`
+    # resolves only for the interpreter in the venv, which is exactly one ABI.
+    # Versions are pinned by which wheels the wheelhouse contains.
+    $wheelDir = Resolve-Wheelhouse -Path $Wheelhouse
+    $skipPipFallback = $false
+    $installed = $false
+
+    if ($wheelDir) {
+        Write-Info "Trying tier: bundled wheelhouse (no network) ..."
+        Invoke-NativeWithRelaxedErrorAction { & $UvCmd pip install -e ".[all]" --no-index --find-links $wheelDir }
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "Main package installed (bundled wheelhouse, no network)"
+            $script:InstalledTier = "bundled wheelhouse"
+            $skipPipFallback = $true
+            $installed = $true
+        } else {
+            Write-Warn "Offline wheelhouse install failed (missing wheel for this platform), falling back to PyPI..."
+        }
+    }
+
+    if (-not $skipPipFallback -and (Test-Path "uv.lock")) {
         Write-Info "Trying tier: hash-verified (uv.lock) ..."
         # Critical flag choice: `--extra all`, NOT `--all-extras`.
         #   --all-extras = every [project.optional-dependencies] key,
@@ -3157,7 +3277,7 @@ function Install-Dependencies {
             Write-Warn "uv.lock sync failed (lockfile may be stale or pypi.org unreachable), falling back to PyPI resolve..."
             $skipPipFallback = $false
         }
-    } else {
+    } elseif (-not $skipPipFallback) {
         Write-Info "uv.lock not found -- falling back to PyPI resolve (no hash verification)"
         $skipPipFallback = $false
     }
@@ -3218,7 +3338,7 @@ except Exception:
         @{ Name = "core only (no extras)"; Spec = "." }
     )
     $installed = $skipPipFallback
-    if (-not $skipPipFallback) {
+    if (-not $installed) {
         foreach ($tier in $installTiers) {
         Write-Info "Trying tier: $($tier.Name) ..."
         Invoke-NativeWithRelaxedErrorAction { & $UvCmd pip install -e $tier.Spec }

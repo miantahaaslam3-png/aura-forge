@@ -529,6 +529,18 @@ async fn run_bootstrap(
         manifest_args.push(archive.display().to_string());
     }
 
+    // Bundled offline wheelhouse, when this build shipped one. Same idea for
+    // the dependency stage: `uv sync` resolves from local .whl files instead of
+    // pulling ~180 wheels from a throttled pypi.org.
+    if let Some(wheels) = bundled_agent_wheelhouse() {
+        emit_log(&format!(
+            "[bootstrap] using bundled Python wheelhouse at {}",
+            wheels.display()
+        ));
+        manifest_args.push("-Wheelhouse".to_string());
+        manifest_args.push(wheels.display().to_string());
+    }
+
     let mut manifest_args_full = vec!["-Manifest".to_string()];
     manifest_args_full.extend(manifest_args.clone());
     if args.include_desktop {
@@ -988,6 +1000,43 @@ fn bundled_agent_source_archive() -> Option<PathBuf> {
 
 #[cfg(not(agent_source_archive))]
 fn bundled_agent_source_archive() -> Option<PathBuf> {
+    None
+}
+
+/// The offline Python wheelhouse embedded at build time, written once to a temp
+/// file (same contract as `bundled_agent_source_archive`).
+///
+/// `uv sync --locked` still pulls ~180 wheels from pypi.org, which on a network
+/// that throttles PyPI to ~10 KB/s takes hours. install.ps1 -Wheelhouse makes
+/// that stage resolve from local files, so no socket is opened during install.
+#[cfg(agent_wheelhouse)]
+fn bundled_agent_wheelhouse() -> Option<PathBuf> {
+    const BYTES: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/agent-wheels.zip"));
+
+    let path = std::env::temp_dir().join(format!("aura-forge-agent-wheels-{}.zip", BYTES.len()));
+
+    if std::fs::metadata(&path)
+        .map(|meta| meta.len() == BYTES.len() as u64)
+        .unwrap_or(false)
+    {
+        return Some(path);
+    }
+
+    match std::fs::write(&path, BYTES) {
+        Ok(()) => Some(path),
+        Err(err) => {
+            tracing::warn!(
+                path = %path.display(),
+                error = %err,
+                "could not materialize the bundled wheelhouse; falling back to PyPI"
+            );
+            None
+        }
+    }
+}
+
+#[cfg(not(agent_wheelhouse))]
+fn bundled_agent_wheelhouse() -> Option<PathBuf> {
     None
 }
 
