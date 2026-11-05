@@ -62,7 +62,7 @@ import {
   shouldTrustHermesOverride,
   verifyHermesCli
 } from './backend-probes'
-import { waitForDashboardPortAnnouncement } from './backend-ready'
+import { resolveLocalReadyTimeoutMs, waitForDashboardPortAnnouncement } from './backend-ready'
 import { isPidAliveWindows, waitForBackendRelease } from './backend-release-gate'
 import {
   isHostKeyChangedBootFailure,
@@ -6213,12 +6213,13 @@ async function buildReadinessHealthProbe(baseUrl, authMode, token) {
   return { probeHealth: fetchPublicJson, probeIsCredentialed: false }
 }
 
-async function waitForHermes(baseUrl, token, signal?, authMode?, headers = {}) {
+async function waitForHermes(baseUrl, token, signal?, authMode?, headers = {}, options: { timeoutMs?: number } = {}) {
   const { probeHealth, probeIsCredentialed } = await buildReadinessHealthProbe(baseUrl, authMode, token)
 
   return waitForHermesReady(baseUrl, {
     token,
     signal,
+    timeoutMs: options.timeoutMs,
     fetchPublicJson,
     fetchJson: probeIsCredentialed
       ? (url, _token, options = {}) => probeHealth(url, requestOptionsWithHeaders(options, headers))
@@ -6226,6 +6227,18 @@ async function waitForHermes(baseUrl, token, signal?, authMode?, headers = {}) {
     probeHealth: (url, options = {}) => probeHealth(url, requestOptionsWithHeaders(options, headers)),
     probeIsCredentialed
   })
+}
+
+// Readiness budget for a local backend spawn. A fresh install's FIRST boot is
+// the coldest one the machine will ever do — the venv was created seconds ago,
+// so every import compiles bytecode for the first time while real-time AV
+// inspects the new .pyc files. The 45s default is sized for a warm tree and
+// lands too close to that cold spawn, so `resolveLocalReadyTimeoutMs` widens it
+// only for the boot that immediately follows an install (same reasoning as the
+// cold-start port-announcement budget, #50209). Every later boot keeps the
+// default so a genuinely stuck backend still fails fast.
+function localBackendReadyBudgetMs() {
+  return resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: bootstrapState.completedAt })
 }
 
 function getWindowButtonPosition(win = mainWindow) {
@@ -12597,7 +12610,12 @@ async function startHermes() {
 
     const baseUrl = `http://127.0.0.1:${port}`
     await advanceBootProgress('backend.wait', 'Waiting for Aura Forge backend to become ready', 90)
-    await Promise.race([waitForHermes(baseUrl, token), backendStartFailed])
+    // The first boot after an install gets the cold-tree budget; every later
+    // boot keeps the 45s default so a genuinely stuck backend still fails fast.
+    await Promise.race([
+      waitForHermes(baseUrl, token, undefined, undefined, {}, { timeoutMs: localBackendReadyBudgetMs() }),
+      backendStartFailed
+    ])
     backendReady = true
     backendStartFailure = null
 

@@ -203,10 +203,52 @@ function waitForDashboardPortAnnouncement(
   return waitForDashboardPort(child, timeoutMs, describeOutputTail)
 }
 
+// A fresh install's FIRST local boot is the coldest one the machine will ever
+// do: the venv was created seconds ago, so every import compiles bytecode for
+// the first time while real-time AV inspects the new `.pyc` files. The standard
+// 45s readiness ceiling is sized for a warm tree and lands too close to that
+// cold spawn — a post-install boot measured ~28s, and any extra stall turned a
+// healthy install into "backend did not become ready", killing the child the
+// user had just waited minutes for. Same reasoning as the cold-start
+// port-announcement budget above (#50209).
+const FIRST_LOCAL_BOOT_READY_TIMEOUT_MS = 180_000
+// How long after an install completes still counts as "first boot". Retries
+// inside this window reuse a tree that is by then warm, so the wider budget is
+// harmless there.
+const FIRST_BOOT_GRACE_MS = 30 * 60_000
+
+/**
+ * Readiness budget for a local backend spawn: extended only while this process
+ * is running the boot that immediately followed a first-run install. Absent /
+ * stale `bootstrapCompletedAt` (or no install in this process) returns
+ * undefined so the caller keeps the standard 45s default — a genuinely stuck
+ * backend must still fail fast on every later boot.
+ */
+function resolveLocalReadyTimeoutMs(
+  options: { bootstrapCompletedAt?: null | number; now?: number } = {}
+): number | undefined {
+  const completedAt = Number(options.bootstrapCompletedAt) || 0
+
+  if (!completedAt) {
+    return undefined
+  }
+
+  const now = options.now ?? Date.now()
+
+  if (now - completedAt >= FIRST_BOOT_GRACE_MS) {
+    return undefined
+  }
+
+  return FIRST_LOCAL_BOOT_READY_TIMEOUT_MS
+}
+
 export {
   DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
+  FIRST_BOOT_GRACE_MS,
+  FIRST_LOCAL_BOOT_READY_TIMEOUT_MS,
   MIN_PORT_ANNOUNCE_TIMEOUT_MS,
   readDashboardReadyFile,
+  resolveLocalReadyTimeoutMs,
   resolvePortAnnounceTimeoutMs,
   waitForDashboardPort,
   waitForDashboardPortAnnouncement,

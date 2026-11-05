@@ -21,8 +21,11 @@ import { test } from 'vitest'
 
 import {
   DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
+  FIRST_BOOT_GRACE_MS,
+  FIRST_LOCAL_BOOT_READY_TIMEOUT_MS,
   MIN_PORT_ANNOUNCE_TIMEOUT_MS,
   readDashboardReadyFile,
+  resolveLocalReadyTimeoutMs,
   resolvePortAnnounceTimeoutMs,
   waitForDashboardPort,
   waitForDashboardPortAnnouncement,
@@ -79,6 +82,39 @@ test('falls back to the default for malformed / non-positive overrides', () => {
       `override ${JSON.stringify(bad)} should fall through to the default`
     )
   }
+})
+
+// ---------------------------------------------------------------------------
+// resolveLocalReadyTimeoutMs
+// ---------------------------------------------------------------------------
+
+test('the boot right after an install gets the cold-tree readiness budget', () => {
+  const now = 1_700_000_000_000
+  const timeout = resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - 10_000, now })
+
+  assert.equal(timeout, FIRST_LOCAL_BOOT_READY_TIMEOUT_MS)
+  // Must genuinely extend the warm-start ceiling, otherwise a cold first spawn
+  // (measured ~28s on the reporting machine) still races the deadline.
+  assert.ok(
+    FIRST_LOCAL_BOOT_READY_TIMEOUT_MS > DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
+    'first-boot readiness budget must exceed the warm-start default'
+  )
+})
+
+test('later boots keep the default readiness budget (fail fast on a stuck backend)', () => {
+  const now = 1_700_000_000_000
+
+  assert.equal(resolveLocalReadyTimeoutMs({ now }), undefined)
+  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: null, now }), undefined)
+  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: 0, now }), undefined)
+})
+
+test('the extended budget expires once the first-boot window closes', () => {
+  const now = 1_700_000_000_000
+
+  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS + 1, now }), FIRST_LOCAL_BOOT_READY_TIMEOUT_MS)
+  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS, now }), undefined)
+  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS - 1, now }), undefined)
 })
 
 // ---------------------------------------------------------------------------

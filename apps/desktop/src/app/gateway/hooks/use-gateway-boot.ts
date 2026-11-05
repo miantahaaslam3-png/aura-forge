@@ -1,10 +1,11 @@
 import { isGatewayReauthRequired, JsonRpcGatewayError, resolveGatewayWsUrl } from '@auraforge/shared'
 import { useEffect, useRef } from 'react'
 
+import { AuraForgeGateway } from '@/auraforge'
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { HermesConnection } from '@/global'
-import { AuraForgeGateway } from '@/auraforge'
 import { translateNow } from '@/i18n'
+import { shouldKeepWaitingForBackendBoot } from '@/lib/backend-boot-wait'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { decideLivenessForceClose, LIVENESS_REPROBE_DELAY_MS } from '@/lib/gateway-liveness-policy'
 import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
@@ -123,6 +124,14 @@ const BOOT_RETRY_BASE_DELAY_MS = 2_000
 // latched — the UI stays "reconnecting" until the app is restarted even
 // though the gateway is reachable again. gateway.connect() already has its
 // own connect timeout.
+
+// Budget for the boot path's cache warm-up work — the pre-connect workspace
+// seed, the profile read that precedes the session fetch, and the two helper
+// IPC reads in the backend wait loop. None of it is required for the app to be
+// usable, so none of it may hold the full-screen CONNECTING mask: a wedged
+// IPC/REST round-trip must fall through to the shell instead of parking the app
+// on a mask with no error and no way out.
+const BOOT_WARMUP_TIMEOUT_MS = 20_000
 
 /** Registry identity whose runtimes died with the primary connection. */
 export function primaryRuntimeConnectionId(connection: Pick<HermesConnection, 'connectionId' | 'mode'>): null | string {
@@ -976,13 +985,17 @@ export function useGatewayBoot({
         // round-trip must not hang "Starting Aura Forge…" forever. Initial boot
         // rides out a full backend cold spawn, so it gets the shared 45s
         // backend-boot budget, not the 20s reconnect budget.
-        // Aura Forge fix: while the first-launch bootstrap (install.ps1) is
-        // running, getConnection legitimately never resolves until the install
-        // finishes — a clone can take 10+ minutes. Wait it out instead of
-        // timing out at 45s and popping the failure overlay, which then
-        // tempted the user into Retry/Repair and cancelled a healthy install.
+        // Aura Forge fix: a first launch legitimately spends minutes in the
+        // installer (install.ps1), and then roughly half a minute more spawning
+        // the freshly-installed backend. Both windows must be waited out
+        // quietly instead of failing into the recovery overlay — the old loop
+        // only tolerated the INSTALLER, so the post-install spawn landed on the
+        // 45s ceiling and surfaced a bogus "backend timed out" that needed a
+        // full app restart. `shouldKeepWaitingForBackendBoot` owns that policy;
+        // a real failure from main still reaches the overlay/retry classifier.
         let conn
-        const BOOTSTRAP_WAIT_DEADLINE = Date.now() + 30 * 60_000
+        const BOOT_WAIT_DEADLINE = Date.now() + 30 * 60_000
+
         for (;;) {
           try {
             conn = await withTimeout(
@@ -990,15 +1003,40 @@ export function useGatewayBoot({
               BACKEND_BOOT_WAIT_TIMEOUT_MS,
               'Timed out connecting to Aura Forge backend'
             )
+
             break
           } catch (err) {
-            const bootState = await desktop.getBootstrapState?.().catch(() => null)
-            if (bootState?.active && Date.now() < BOOTSTRAP_WAIT_DEADLINE) {
-              // Installer still working — keep waiting quietly.
-              await new Promise(resolve => setTimeout(resolve, 3000))
-              continue
+            if (cancelled) {
+              return
             }
-            throw err
+
+            // Both helper reads are bounded as well: the decision below is only
+            // as good as our ability to ask, and a hung IPC reply must not
+            // become another way to sit on CONNECTING forever.
+            const [bootState, progress] = await Promise.all([
+              withTimeout(
+                desktop.getBootstrapState?.() ?? Promise.resolve(null),
+                BOOT_WARMUP_TIMEOUT_MS,
+                'Timed out reading the bootstrap state'
+              ).catch(() => null),
+              withTimeout(desktop.getBootProgress(), BOOT_WARMUP_TIMEOUT_MS, 'Timed out reading the boot progress').catch(
+                () => null
+              )
+            ])
+
+            if (
+              !shouldKeepWaitingForBackendBoot({
+                bootstrapActive: bootState?.active === true,
+                deadline: BOOT_WAIT_DEADLINE,
+                error: err,
+                now: Date.now(),
+                progress
+              })
+            ) {
+              throw err
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 3000))
           }
         }
 
@@ -1019,10 +1057,14 @@ export function useGatewayBoot({
         // and ensureDefaultWorkspaceCwd's live-session guard passes. The
         // post-connect seed could lose that race on a slow start (#71873). A
         // resumed session's own cwd still supersedes this once its runtime
-        // arrives. Non-fatal: the remembered cwd is a fine fallback and the
-        // post-connect pass retries the sync.
+        // arrives. Non-fatal AND bounded: the remembered cwd is a fine fallback,
+        // and a wedged settings/sanitize round-trip must not hold CONNECTING.
         try {
-          await ensureDefaultWorkspaceCwd()
+          await withTimeout(
+            ensureDefaultWorkspaceCwd(),
+            BOOT_WARMUP_TIMEOUT_MS,
+            'Timed out seeding the default workspace'
+          )
         } catch (err) {
           console.warn('Failed to seed default workspace cwd pre-connect', err)
         }
@@ -1046,43 +1088,49 @@ export function useGatewayBoot({
           return
         }
 
-        // Profile adoption must land first: refreshSessions scopes its fetch by
-        // $profileScope ← $activeGatewayProfile. The remaining three fetches
-        // (cwd seed, config, sessions) are independent REST calls — running
-        // them serially added their sum to time-to-populated-sidebar when only
-        // the max is needed.
-        await adoptPrimaryProfile()
-
-        setDesktopBootStep({
-          phase: 'renderer.config',
-          message: translateNow('boot.steps.loadingSettings'),
-          progress: 97
-        })
-
-        await Promise.all([
-          // The pre-connect seed already applied the configured default; this
-          // post-connect pass covers the remote backend default. Non-fatal: a
-          // failed sync must not abort boot (the remembered cwd remains).
-          seedDefaultCwd().catch(err => console.warn('Failed to sync default workspace cwd post-connect', err)),
-          callbacksRef.current.refreshHermesConfig(),
-          // Session-list population is never boot-fatal. The gateway WS is
-          // already open by this point — a failed sidebar fetch (transient
-          // blip, or an endpoint the fallback couldn't cover) must leave the
-          // app usable with an empty sidebar (the reconnect/turn refreshes
-          // retry it), not brick boot behind the "Aura Forge couldn't start"
-          // overlay. Matches the reconnect + softSwitch call sites.
-          callbacksRef.current.refreshSessions().catch(() => {
-            setSessionsLoading(false)
-          })
-        ])
+        // Profile adoption must land before the session fetch (refreshSessions
+        // scopes by $profileScope ← $activeGatewayProfile) and before consumers
+        // keyed on `boot.phase === 'renderer.ready'`. It is one IPC round-trip,
+        // so bound it: falling through with the already-resolved default scope
+        // beats masking the whole app on a wedged main process.
+        await withTimeout(
+          adoptPrimaryProfile(),
+          BOOT_WARMUP_TIMEOUT_MS,
+          'Timed out resolving the gateway profile'
+        ).catch(error => console.warn('Failed to adopt the primary gateway profile', error))
 
         if (cancelled) {
           return
         }
 
+        // The socket is OPEN and the profile is adopted — the backend is usable,
+        // so the full-screen CONNECTING mask has done its job and must come
+        // down NOW. Everything below is cache warming (workspace seed, settings,
+        // sidebar). It used to be awaited, which meant a slow or wedged REST
+        // read held the mask indefinitely with no error and no affordance — the
+        // after-install "stuck on connect…" report. Warm-ups are best-effort and
+        // never fatal: the reconnect/turn paths retry them.
         completeDesktopBoot()
         bootCompleted = true
         bootRetryAttempt = 0
+
+        void Promise.all([
+          // The pre-connect seed already applied the configured default; this
+          // post-connect pass covers the remote backend default. Non-fatal: a
+          // failed sync must not abort boot (the remembered cwd remains).
+          seedDefaultCwd().catch(err => console.warn('Failed to sync default workspace cwd post-connect', err)),
+          callbacksRef.current.refreshHermesConfig().catch(error => {
+            console.warn('Failed to load settings during boot', error)
+          }),
+          // Session-list population is never boot-fatal. The gateway WS is
+          // already open — a failed sidebar fetch (transient blip, or an
+          // endpoint the fallback couldn't cover) must leave the app usable
+          // with an empty sidebar (the reconnect/turn refreshes retry it), not
+          // brick boot behind the "Aura Forge couldn't start" overlay.
+          callbacksRef.current.refreshSessions().catch(() => {
+            setSessionsLoading(false)
+          })
+        ])
       } catch (err) {
         if (!cancelled) {
           const message = err instanceof Error ? err.message : String(err)

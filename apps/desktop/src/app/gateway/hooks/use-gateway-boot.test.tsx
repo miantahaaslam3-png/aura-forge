@@ -1783,4 +1783,133 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
     })
     expect($gatewayState.get()).toBe('open')
   })
+
+  it('first launch: the installer is done but the fresh backend is still starting — waiting continues past the 45s budget', async () => {
+    // The reported post-install failure: main finishes install.ps1, flips
+    // bootstrapState.active to false, then spends ~30s spawning the new backend.
+    // That window landed on the renderer's 45s ceiling, so boot surfaced
+    // "Timed out connecting to Aura Forge backend" and the user had to restart.
+    // Main's boot-progress phases are the authoritative "still booting" signal.
+    const desktop = fakeDesktop() as ReturnType<typeof fakeDesktop> & {
+      getBootstrapState?: () => Promise<{ active: boolean }>
+    }
+
+    const pending = deferred<typeof primaryConn>()
+    let ready = false
+
+    desktop.getConnection = vi.fn(() => (ready ? Promise.resolve(primaryConn) : pending.promise))
+    desktop.getBootstrapState = vi.fn(async () => ({ active: false }))
+    desktop.getBootProgress = vi.fn(async () => ({
+      error: null,
+      fakeMode: false,
+      message: 'Waiting for Aura Forge backend to become ready',
+      phase: 'backend.wait',
+      progress: 90,
+      retryable: false,
+      running: true,
+      timestamp: Date.now()
+    }))
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
+
+    render(<Harness />)
+    await flushAsync()
+
+    // Past the renderer's own budget while main is mid-boot: stay on the boot
+    // surface quietly instead of failing.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(46_000)
+    })
+
+    expect($desktopBoot.get().error).toBeNull()
+    expect($gatewayState.get()).not.toBe('open')
+
+    // The backend comes up: the retried attempt connects and boot completes.
+    ready = true
+    pending.resolve(primaryConn)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_100)
+    })
+
+    expect($gatewayState.get()).toBe('open')
+    expect($desktopBoot.get().error).toBeNull()
+    expect($desktopBoot.get().phase).toBe('renderer.ready')
+  })
+
+  it('first launch: the installer is still running — the boot wait keeps going', async () => {
+    const desktop = fakeDesktop() as ReturnType<typeof fakeDesktop> & {
+      getBootstrapState?: () => Promise<{ active: boolean }>
+    }
+
+    const pending = deferred<typeof primaryConn>()
+    let ready = false
+
+    desktop.getConnection = vi.fn(() => (ready ? Promise.resolve(primaryConn) : pending.promise))
+    desktop.getBootstrapState = vi.fn(async () => ({ active: true }))
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
+
+    render(<Harness />)
+    await flushAsync()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(140_000)
+    })
+
+    expect($desktopBoot.get().error).toBeNull()
+    expect(desktop.getConnection.mock.calls.length).toBeGreaterThan(2)
+
+    ready = true
+    pending.resolve(primaryConn)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_100)
+    })
+
+    expect($gatewayState.get()).toBe('open')
+    expect($desktopBoot.get().error).toBeNull()
+  })
+
+  it('a mid-boot phase that stopped reporting for the stall budget fails into the recovery overlay', async () => {
+    const desktop = fakeDesktop() as ReturnType<typeof fakeDesktop> & {
+      getBootstrapState?: () => Promise<{ active: boolean }>
+    }
+
+    desktop.getConnection = vi.fn(() => new Promise(() => undefined))
+    desktop.getBootstrapState = vi.fn(async () => ({ active: false }))
+    desktop.getBootProgress = vi.fn(async () => ({
+      error: null,
+      fakeMode: false,
+      message: 'Waiting for Aura Forge backend to become ready',
+      phase: 'backend.wait',
+      progress: 90,
+      retryable: false,
+      running: true,
+      timestamp: Date.now() - 11 * 60_000
+    }))
+    ;(window as { auraForgeDesktop?: unknown }).auraForgeDesktop = desktop
+
+    render(<Harness />)
+    await flushAsync()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(46_000)
+    })
+
+    // No forward progress for 11 minutes: stop masking the app, offer recovery.
+    expect($desktopBoot.get().error).toBeTruthy()
+  })
+
+  it('the CONNECTING mask drops the moment the socket opens, even if a boot-time REST refresh never settles', async () => {
+    // The after-install "endless connect…" report: the WS was open and usable,
+    // but boot() awaited its cache warm-ups, so the full-screen mask stayed up
+    // with no error and no way out until the app was restarted.
+    const refreshSessions = vi.fn(() => new Promise<void>(() => undefined))
+
+    render(<Harness refreshSessions={refreshSessions} />)
+    await flushAsync()
+
+    expect(refreshSessions).toHaveBeenCalled()
+    expect($gatewayState.get()).toBe('open')
+    expect($desktopBoot.get().error).toBeNull()
+    expect($desktopBoot.get().visible).toBe(false)
+    expect($desktopBoot.get().phase).toBe('renderer.ready')
+  })
 })
