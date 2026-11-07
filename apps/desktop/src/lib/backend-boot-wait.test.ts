@@ -22,7 +22,10 @@ describe('shouldKeepWaitingForBackendBoot', () => {
   it('keeps waiting while the first-launch installer is still running', () => {
     expect(
       shouldKeepWaitingForBackendBoot(
-        input({ bootstrapActive: true, progress: { error: null, phase: 'bootstrap.install', running: true, timestamp: NOW - 1_000 } })
+        input({
+          bootstrapActive: true,
+          progress: { error: null, phase: 'bootstrap.install', running: true, timestamp: NOW - 1_000 }
+        })
       )
     ).toBe(true)
   })
@@ -30,34 +33,59 @@ describe('shouldKeepWaitingForBackendBoot', () => {
   it('keeps waiting through the backend spawn that follows the installer', () => {
     // The reported first-launch race: the installer is done, the fresh backend
     // is still starting, and the renderer budget expires in that window.
-    expect(shouldKeepWaitingForBackendBoot(input({ progress: { error: null, phase: 'backend.wait', running: true, timestamp: NOW - 1_000 } }))).toBe(
-      true
-    )
-    expect(shouldKeepWaitingForBackendBoot(input({ progress: { error: null, phase: 'backend.spawn', running: true, timestamp: NOW } }))).toBe(true)
+    expect(
+      shouldKeepWaitingForBackendBoot(
+        input({ progress: { error: null, phase: 'backend.wait', running: true, timestamp: NOW - 1_000 } })
+      )
+    ).toBe(true)
+    expect(
+      shouldKeepWaitingForBackendBoot(
+        input({ progress: { error: null, phase: 'backend.spawn', running: true, timestamp: NOW } })
+      )
+    ).toBe(true)
   })
 
   it('surfaces a real rejection from main instead of retrying it', () => {
-    expect(shouldKeepWaitingForBackendBoot(input({ error: new Error('Aura Forge backend did not become ready: timeout') }))).toBe(false)
+    expect(
+      shouldKeepWaitingForBackendBoot(input({ error: new Error('Aura Forge backend did not become ready: timeout') }))
+    ).toBe(false)
   })
 
   it('stops once main reports a boot failure', () => {
     expect(
       shouldKeepWaitingForBackendBoot(
-        input({ progress: { error: 'backend exited before ready', phase: 'backend.error', running: false, timestamp: NOW } })
+        input({
+          progress: { error: 'backend exited before ready', phase: 'backend.error', running: false, timestamp: NOW }
+        })
       )
     ).toBe(false)
   })
 
   it('stops when nothing is booting (idle / init phase)', () => {
-    expect(shouldKeepWaitingForBackendBoot(input({ progress: { error: null, phase: 'idle', running: false, timestamp: NOW } }))).toBe(false)
-    expect(shouldKeepWaitingForBackendBoot(input({ progress: { error: null, phase: 'init', running: true, timestamp: NOW } }))).toBe(false)
+    expect(
+      shouldKeepWaitingForBackendBoot(
+        input({ progress: { error: null, phase: 'idle', running: false, timestamp: NOW } })
+      )
+    ).toBe(false)
+    expect(
+      shouldKeepWaitingForBackendBoot(
+        input({ progress: { error: null, phase: 'init', running: true, timestamp: NOW } })
+      )
+    ).toBe(false)
     expect(shouldKeepWaitingForBackendBoot(input({ progress: null }))).toBe(false)
   })
 
   it('stops when the boot stopped reporting progress for the stall budget', () => {
     expect(
       shouldKeepWaitingForBackendBoot(
-        input({ progress: { error: null, phase: 'backend.wait', running: true, timestamp: NOW - BACKEND_BOOT_STALL_BUDGET_MS - 1 } })
+        input({
+          progress: {
+            error: null,
+            phase: 'backend.wait',
+            running: true,
+            timestamp: NOW - BACKEND_BOOT_STALL_BUDGET_MS - 1
+          }
+        })
       )
     ).toBe(false)
   })

@@ -210,10 +210,10 @@ function verifyHermesCli(auraforgeCommand: string, opts?: { shell?: boolean }) {
 }
 
 export {
+  auraforgeRuntimeImportProbe,
   canImportHermesCli,
   DEFAULT_PROBE_TIMEOUT_MS,
   execProbeSync,
-  auraforgeRuntimeImportProbe,
   PROBE_TIMEOUT_MS,
   resolveProbeTimeoutMs,
   shouldTrustHermesOverride,

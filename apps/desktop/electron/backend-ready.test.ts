@@ -112,7 +112,10 @@ test('later boots keep the default readiness budget (fail fast on a stuck backen
 test('the extended budget expires once the first-boot window closes', () => {
   const now = 1_700_000_000_000
 
-  assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS + 1, now }), FIRST_LOCAL_BOOT_READY_TIMEOUT_MS)
+  assert.equal(
+    resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS + 1, now }),
+    FIRST_LOCAL_BOOT_READY_TIMEOUT_MS
+  )
   assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS, now }), undefined)
   assert.equal(resolveLocalReadyTimeoutMs({ bootstrapCompletedAt: now - FIRST_BOOT_GRACE_MS - 1, now }), undefined)
 })

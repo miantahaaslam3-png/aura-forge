@@ -12,9 +12,9 @@
 import './kanban.css'
 
 import {
+  type AuraForgePlugin,
   cn,
   Codicon,
-  type AuraForgePlugin,
   host,
   type KeybindContribution,
   KEYBINDS_AREA,

@@ -1,5 +1,5 @@
-import type { HermesGitWorktree } from '@/global'
 import type { ProjectInfo, SessionInfo } from '@/auraforge'
+import type { HermesGitWorktree } from '@/global'
 import { normalize } from '@/lib/text'
 
 import { rankSessions } from '../order'

@@ -1,8 +1,8 @@
 import { LOCAL_CONNECTION_ID } from '@auraforge/shared'
 import { atom, batch, computed } from 'nanostores'
 
+import { auraForgeApi, getProfiles, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/auraforge'
 import type { HermesConnection } from '@/global'
-import { getProfiles, auraForgeApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/auraforge'
 import { invalidateProfileScopedQueries } from '@/lib/query-client'
 import {
   arraysEqual,

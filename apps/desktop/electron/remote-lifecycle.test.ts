@@ -94,7 +94,11 @@ function fakeSsh(rules: any[] = []) {
       // Existing lifecycle fixtures predate the install-wide relaunch gate.
       // Their default remote has no update marker; focused marker tests below
       // use explicit SSH doubles to exercise live/uncertain transitions.
-      if (cmd.includes('.auraforge-update-in-progress') && !cmd.includes('marker_clear()') && !/setsid|nohup/.test(cmd)) {
+      if (
+        cmd.includes('.auraforge-update-in-progress') &&
+        !cmd.includes('marker_clear()') &&
+        !/setsid|nohup/.test(cmd)
+      ) {
         return 'CLEAR'
       }
 

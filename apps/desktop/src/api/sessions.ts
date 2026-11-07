@@ -10,7 +10,7 @@ import type {
   SessionSearchResponse
 } from '@/types/auraforge'
 
-import { capabilityScoped, getApiRequestConnection, auraForgeApi, type ProfileScope, profileScoped } from './client'
+import { auraForgeApi, capabilityScoped, getApiRequestConnection, type ProfileScope, profileScoped } from './client'
 
 const SESSION_LIST_REQUEST_TIMEOUT_MS = 60_000
 

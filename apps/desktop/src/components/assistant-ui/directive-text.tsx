@@ -414,7 +414,9 @@ const DirectiveImage: FC<{ id: string; label: string }> = ({ id, label }) => {
     // Remote gateway: the image lives on the gateway's disk, not ours — fetch
     // it over the authenticated API. Local: read it straight off this disk.
     const load =
-      window.auraForgeDesktop && isRemoteGateway() ? gatewayMediaDataUrl(id) : window.auraForgeDesktop?.readFileDataUrl(id)
+      window.auraForgeDesktop && isRemoteGateway()
+        ? gatewayMediaDataUrl(id)
+        : window.auraForgeDesktop?.readFileDataUrl(id)
 
     void Promise.resolve(load)
       .then(url => alive && url && setSrc(url))

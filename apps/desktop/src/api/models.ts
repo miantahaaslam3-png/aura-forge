@@ -8,7 +8,7 @@ import type {
   ModelOptionsResponse
 } from '@/types/auraforge'
 
-import { capabilityScoped, auraForgeApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
+import { auraForgeApi, capabilityScoped, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
 
 export function getGlobalModelInfo(profile?: null | string): Promise<ModelInfoResponse> {
   return auraForgeApi<ModelInfoResponse>({

@@ -425,9 +425,7 @@ async function downloadInstallScript(ref, destPath) {
     }
   }
 
-  throw new Error(
-    `Failed to download ${scriptName} for ${String(ref).slice(0, 12)}: ${failures.join('; ')}`
-  )
+  throw new Error(`Failed to download ${scriptName} for ${String(ref).slice(0, 12)}: ${failures.join('; ')}`)
 }
 
 async function resolveInstallScript({
@@ -884,7 +882,17 @@ function buildPosixPinArgs({ installStamp, activeRoot, hermesHome, pinCommit = t
   return args
 }
 
-async function fetchManifest({ scriptPath, installerKind, emit, hermesHome, activeRoot, installStamp, pinCommit, sourceArchive, wheelhouse }) {
+async function fetchManifest({
+  scriptPath,
+  installerKind,
+  emit,
+  hermesHome,
+  activeRoot,
+  installStamp,
+  pinCommit,
+  sourceArchive,
+  wheelhouse
+}) {
   const isPosix = installerKind === 'posix'
 
   const args = isPosix

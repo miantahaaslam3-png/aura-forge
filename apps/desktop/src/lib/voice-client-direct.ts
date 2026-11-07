@@ -1,5 +1,5 @@
 import { profileScoped } from '@/api/client'
-import { getApiRequestConnection, getApiRequestProfile, auraForgeApi } from '@/auraforge'
+import { auraForgeApi, getApiRequestConnection, getApiRequestProfile } from '@/auraforge'
 
 /**
  * Client-direct voice: call the active profile's STT/TTS providers straight

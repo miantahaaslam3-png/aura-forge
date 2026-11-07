@@ -1,3 +1,4 @@
+import { auraForgeApi } from '@/auraforge'
 import type {
   HermesGitBaseBranch,
   HermesGitBranch,
@@ -7,7 +8,6 @@ import type {
   HermesReviewList,
   HermesReviewShipInfo
 } from '@/global'
-import { auraForgeApi } from '@/auraforge'
 
 import { desktopFsProfile, isDesktopFsRemoteMode } from './desktop-fs'
 

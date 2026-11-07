@@ -8,7 +8,7 @@ import type {
 } from '@/types/auraforge'
 import type { ActionResponse } from '@/types/auraforge'
 
-import { capabilityScoped, auraForgeApi, type ProfileScope, profileScoped } from './client'
+import { auraForgeApi, capabilityScoped, type ProfileScope, profileScoped } from './client'
 
 export function getSkills(profile?: ProfileScope): Promise<SkillInfo[]> {
   return window.auraForgeDesktop.api<SkillInfo[]>({
