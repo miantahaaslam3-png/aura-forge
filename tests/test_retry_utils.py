@@ -208,3 +208,106 @@ class TestParseRetryAfterSeconds:
                 raise RuntimeError("boom")
 
         assert parse_retry_after_seconds(Explosive()) is None
+
+
+# ---------------------------------------------------------------------------
+# Default retry schedule (opencode parity) — gaps, retry-after, status text
+# ---------------------------------------------------------------------------
+
+
+class TestRetrySchedule:
+    def test_gap_doubles_then_settles_at_the_cap(self):
+        """2s, 4s, 8s, then the 10s ceiling for every later attempt."""
+        from agent.retry_utils import retry_gap_seconds
+
+        gaps = [retry_gap_seconds(attempt, jitter_ratio=0.0) for attempt in range(1, 11)]
+
+        assert gaps[:3] == [2.0, 4.0, 8.0]
+        assert gaps[3:] == [10.0] * 7
+
+    def test_gap_is_jittered_within_ratio_bounds(self):
+        """Jitter decorrelates concurrent sessions but never leaves ±20%."""
+        from agent.retry_utils import RETRY_JITTER_RATIO, retry_gap_seconds
+
+        launcher = 1.0 - RETRY_JITTER_RATIO
+        ceiling = 1.0 + RETRY_JITTER_RATIO
+        for attempt, nominal in ((1, 2.0), (2, 4.0), (3, 8.0), (4, 10.0), (11, 10.0)):
+            samples = [retry_gap_seconds(attempt) for _ in range(200)]
+            assert all(nominal * launcher <= s <= nominal * ceiling for s in samples)
+            # A constant would defeat the point of jitter.
+            assert len(set(samples)) > 1
+
+    def test_huge_attempt_stays_at_the_cap(self):
+        from agent.retry_utils import retry_gap_seconds
+
+        assert retry_gap_seconds(10_000) <= 10.0 * (1 + 0.2)
+
+    def test_retry_after_is_a_floor_not_a_replacement(self):
+        """A short provider ask never shortens the schedule's own gap."""
+        from agent.retry_utils import retry_delay_seconds
+
+        assert retry_delay_seconds(1, retry_after=30.0) == 30.0
+        assert retry_delay_seconds(1, retry_after=0.5, jitter_ratio=0.0) == 2.0
+        assert (
+            retry_delay_seconds(4, retry_after=3.0, jitter_ratio=0.0) == 10.0
+        ), "attempt 4's own gap (10s) is longer than the provider's ask"
+
+    def test_retry_after_is_capped(self):
+        """A buggy upstream asking for hours cannot stall the turn for hours."""
+        from agent.retry_utils import RETRY_AFTER_MAX_SECONDS, retry_delay_seconds
+
+        assert retry_delay_seconds(1, retry_after=10**9) == RETRY_AFTER_MAX_SECONDS
+
+    def test_unusable_retry_after_falls_back_to_the_schedule(self):
+        from agent.retry_utils import retry_delay_seconds
+
+        for value in (None, "not-a-number", -5, 0, False, object()):
+            assert retry_delay_seconds(1, retry_after=value, jitter_ratio=0.0) == 2.0
+
+
+class TestRetryStatusText:
+    def test_carries_attempt_countdown_and_error(self):
+        from agent.retry_utils import retry_status_text
+
+        text = retry_status_text(
+            attempt=2,
+            max_attempts=10,
+            seconds=8.4,
+            error="Error code: 429 - rate limit exceeded",
+        )
+
+        assert text.startswith("⏳ Retrying in 8s (attempt 2/10)")
+        assert "429" in text and "rate limit" in text
+
+    def test_rounds_down_partial_seconds_so_it_never_overstates(self):
+        from agent.retry_utils import retry_status_text
+
+        assert "Retrying in 0s" in retry_status_text(attempt=1, max_attempts=3, seconds=0.4)
+
+    def test_omits_missing_error_and_keeps_policy_note(self):
+        from agent.retry_utils import retry_status_text
+
+        text = retry_status_text(
+            attempt=4,
+            max_attempts=8,
+            seconds=30,
+            note="(Z.AI Coding overload adaptive long backoff)",
+        )
+
+        assert text.endswith("(Z.AI Coding overload adaptive long backoff)")
+        assert "—" not in text
+
+    def test_collapses_whitespace_and_truncates_long_errors(self):
+        from agent.retry_utils import retry_status_text
+
+        text = retry_status_text(
+            attempt=1,
+            max_attempts=10,
+            seconds=2,
+            error="  500   internal\n\nerror   " + "x" * 1000,
+        )
+
+        assert "500 internal error" in text
+        detail = text.split("— ", 1)[1]
+        assert len(detail) <= 160
+        assert detail.endswith("…")

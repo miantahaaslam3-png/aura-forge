@@ -41,6 +41,7 @@ from agent.model_metadata import (
     query_ollama_num_ctx,
 )
 from agent.process_bootstrap import _install_safe_stdio
+from agent.retry_utils import DEFAULT_API_MAX_RETRIES
 from agent.subdirectory_hints import SubdirectoryHintTracker
 from agent.think_scrubber import StreamingThinkScrubber
 from agent.tool_guardrails import (
@@ -2083,14 +2084,19 @@ def init_agent(
         _platform_hints_cfg = {}
     agent._platform_hint_overrides = _platform_hints_cfg
 
-    # App-level API retry count (wraps each model API call).  Default 3,
-    # overridable via agent.api_max_retries in config.yaml.  See #11616.
+    # App-level API retry count (wraps each model API call).  Default 10 to
+    # match opencode's retry schedule: ten attempts on a 2s→10s capped backoff
+    # (~84s total) recover a transient provider blip inside the turn instead of
+    # surfacing an error.  Overridable via agent.api_max_retries in config.yaml.
+    # See #11616.
     try:
-        _raw_api_retries = _agent_section.get("api_max_retries", 3)
+        _raw_api_retries = _agent_section.get(
+            "api_max_retries", DEFAULT_API_MAX_RETRIES
+        )
         _api_retries = int(_raw_api_retries)
         _api_retries = max(_api_retries, 1)  # 1 = no retry (single attempt)
     except (TypeError, ValueError):
-        _api_retries = 3
+        _api_retries = DEFAULT_API_MAX_RETRIES
     agent._api_max_retries = _api_retries
 
     # Initialize context compressor for automatic context management

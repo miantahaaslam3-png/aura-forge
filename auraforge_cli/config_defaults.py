@@ -128,11 +128,14 @@ DEFAULT_CONFIG = {
         # provider timeouts, 5xx, etc.) before the agent surfaces the
         # failure.  The OpenAI SDK already does its own low-level retries
         # (max_retries=2 default) for transient network errors; this is
-        # the Aura Forge-level retry loop that wraps the whole call.  Lower
-        # this to 1 if you use fallback providers and want fast failover
-        # on flaky primaries; raise it if you prefer to tolerate longer
-        # provider hiccups on a single provider.
-        "api_max_retries": 3,
+        # the Aura Forge-level retry loop that wraps the whole call.  The
+        # default (10) matches opencode: gaps of 2s, 4s, 8s, then 10s each
+        # (~84s total) with a live countdown in CLI/TUI/web/desktop, so a
+        # short provider outage recovers inside the turn instead of
+        # surfacing an error.  The wait shown to the user is the same on
+        # every surface.  Lower this to 1 if you use fallback providers and
+        # want fast failover on flaky primaries.
+        "api_max_retries": 10,
         # Empty-response retry guard (NS-503).  The empty-retry loop
         # re-sends the full conversation input at full price on every
         # attempt; these settings stop it from re-billing *deterministic*

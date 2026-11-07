@@ -381,6 +381,33 @@ describe('createGatewayEventHandler', () => {
     }
   })
 
+  it('shows the provider retry countdown on the status line without polluting reasoning', () => {
+    vi.useFakeTimers()
+    const appended: Msg[] = []
+    const onEvent = createGatewayEventHandler(buildCtx(appended))
+
+    try {
+      onEvent({ payload: {}, type: 'message.start' } as any)
+      onEvent({
+        payload: { text: '⏳ Retrying in 8s (attempt 2/10) — rate limited' },
+        type: 'thinking.delta'
+      } as any)
+      vi.runOnlyPendingTimers()
+
+      expect(getUiState().status).toContain('Retrying in 8s')
+      // A wait/retry notice is status, not model reasoning.
+      expect(getTurnState().reasoning).toBe('')
+
+      // Success clears the line (empty delta) so the response takes over.
+      onEvent({ payload: { text: '' }, type: 'thinking.delta' } as any)
+      vi.runOnlyPendingTimers()
+
+      expect(getUiState().status).not.toContain('Retrying')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('ignores late thinking.delta after the turn has already completed', () => {
     vi.useFakeTimers()
     const appended: Msg[] = []

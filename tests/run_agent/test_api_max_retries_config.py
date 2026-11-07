@@ -1,11 +1,17 @@
 """Tests for agent.api_max_retries config surface.
 
-Closes #11616 — make the hardcoded ``max_retries = 3`` in the agent's API
-retry loop user-configurable so fallback-provider setups can fail over
-faster on flaky primaries instead of burning ~3x180s on the same stall.
+Closes #11616 — make the agent's API retry count user-configurable so
+fallback-provider setups can fail over faster on flaky primaries instead of
+burning ~3x180s on the same stall.
+
+The default itself is owned by ``agent.retry_utils.DEFAULT_API_MAX_RETRIES``
+(opencode parity: 10 attempts on the 2s→10s capped schedule). Asserting the
+relationship instead of the literal keeps the default and the schedule from
+drifting apart without freezing a number here.
 """
 from unittest.mock import patch
 
+from agent.retry_utils import DEFAULT_API_MAX_RETRIES
 from run_agent import AIAgent
 
 
@@ -29,10 +35,10 @@ def _make_agent(api_max_retries=None):
         )
 
 
-def test_default_api_max_retries_is_three():
-    """No config override → legacy default of 3 retries preserved."""
+def test_default_api_max_retries_matches_retry_schedule():
+    """No config override → the schedule's designed attempt count."""
     agent = _make_agent()
-    assert agent._api_max_retries == 3
+    assert agent._api_max_retries == DEFAULT_API_MAX_RETRIES
 
 
 def test_api_max_retries_honors_config_override():

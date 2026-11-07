@@ -72,6 +72,15 @@ export const mergeUsageStable = (prev: Usage, patch: Partial<Usage> | undefined)
 
 const statusFromBusy = () => (getUiState().busy ? 'running…' : 'ready')
 
+/** Core wait/retry notices ride `thinking.delta` (the spinner channel). They
+ * explain a stall — "waiting on the provider", "retrying in 8s" — they are NOT
+ * model reasoning, so they must never be appended to the reasoning transcript:
+ * the retry countdown re-publishes once per second and would otherwise flood a
+ * visible reasoning pane with dozens of status lines per retried attempt. */
+const WAIT_NOTICE_RE = /^(?:⏳|⏱\uFE0F?|⚠\uFE0F?|↻)/
+
+export const isWaitNoticeText = (text: string): boolean => WAIT_NOTICE_RE.test(text.trim())
+
 // The last gateway skin, kept so the theme can be re-derived when the OSC-11
 // background answer arrives after (or without) gateway.ready.
 let lastSkin: GatewaySkin | null = null
@@ -813,7 +822,7 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
           const value = String(text)
           scheduleThinkingStatus(value || statusFromBusy())
 
-          if (value) {
+          if (value && !isWaitNoticeText(value)) {
             turnController.recordReasoningDelta(value)
           }
         }

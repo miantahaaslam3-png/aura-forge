@@ -1060,11 +1060,13 @@ agent:
   # build_wait_timeout: 600
 
   # Max app-level retry attempts for API errors (connection drops, provider
-  # timeouts, 5xx, etc.) before the agent surfaces the failure. Lower this
-  # to 1 if you use fallback providers and want fast failover on flaky
-  # primaries (default 3). The OpenAI SDK does its own low-level retries
-  # underneath this wrapper — this is the Hermes-level loop.
-  # api_max_retries: 3
+  # timeouts, 5xx, etc.) before the agent surfaces the failure. The default
+  # is 10 with opencode's cadence: 2s, 4s, 8s, then 10s per gap (~84s total),
+  # shown as a live countdown in CLI/TUI/web/desktop. Lower it to 1 if you use
+  # fallback providers and want fast failover on flaky primaries. The OpenAI
+  # SDK does its own low-level retries underneath this wrapper — this is the
+  # Aura Forge-level loop.
+  # api_max_retries: 10
 
   # After the agent edits code without fresh passing verification, nudge it to
   # verify before finishing. The default "auto" enables it on interactive

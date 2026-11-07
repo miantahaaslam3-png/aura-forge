@@ -41,9 +41,23 @@ export function clearAllProviderWaits(): void {
 }
 
 /** Only the core's explained wait/reconnect frames belong in Desktop's status
- * row. Generic kawaii spinner rewrites remain presentation noise. */
+ * row. Generic kawaii spinner rewrites remain presentation noise.
+ *
+ * `retrying in` is the automatic provider-retry countdown the core publishes
+ * before each backoff attempt (and once per second while it sleeps). Showing
+ * it here is what makes a retried turn read as progress instead of a hang —
+ * the error stays visible with an attempt count while the agent keeps trying,
+ * and a successful attempt clears the row.
+ *
+ * `rate limited` / `provider overloaded` (⏱️) are the older backoff wording,
+ * kept so a Desktop build can still surface waits from a runtime that predates
+ * the countdown format (Desktop and its backend update on separate clocks). */
 export function providerWaitText(text: string): string {
   const value = text.trim()
 
-  return /^(?:⏳|⚠|↻)\s*(?:waiting on|no (?:output|response)|model returned)/i.test(value) ? value : ''
+  return /^(?:⏳|⏱\uFE0F?|⚠\uFE0F?|↻)\s*(?:waiting on|retrying in|no (?:output|response)|model returned|rate limited|provider overloaded)/i.test(
+    value
+  )
+    ? value
+    : ''
 }

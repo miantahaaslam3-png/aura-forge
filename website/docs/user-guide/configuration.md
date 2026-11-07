@@ -1079,12 +1079,14 @@ agent:
   max_turns: none              # Iterations per conversation turn (default: none = unlimited)
                                # Set a positive integer to cap; "none"/"null"/
                                # "unlimited"/"inf"/"infinity"/"infinite"/0/-1 = no limit
-  api_max_retries: 3           # Retries per provider before fallback engages (default: 3)
+  api_max_retries: 10          # Retries per provider before fallback engages (default: 10)
 ```
 
 `agent.max_turns` is **unlimited by default** — the turn cap caused more problems than it solved (silent mid-task truncation), so out of the box Hermes runs a conversation turn to completion. To impose a cap, set a positive integer. To be explicit about "no limit", any of these case-insensitive spellings work: `"none"`, `"null"`, `"unlimited"`, `"infinite"`, `"infinity"`, `"inf"`, `0`, `-1` (they resolve to a `sys.maxsize` sentinel so the loop never exits on a turn count).
 
-`agent.api_max_retries` controls how many times Hermes retries a provider API call on transient errors (rate limits, connection drops, 5xx) **before** fallback-provider switching engages. The default is `3` — four attempts total. If you have [fallback providers](/user-guide/features/fallback-providers) configured and want to fail over faster, drop this to `0` so the first transient error on your primary immediately hands off to the fallback instead of churning retries against the flaky endpoint.
+`agent.api_max_retries` controls how many times Hermes retries a provider API call on transient errors (rate limits, connection drops, 5xx) **before** fallback-provider switching engages. The default is `10`, matching opencode's retry policy: gaps of 2s, 4s, 8s, then 10s for each remaining attempt (~84s of waiting if every attempt fails, 67–101s with jitter). A provider-supplied `Retry-After` is honored as a *minimum* wait, capped at 15 minutes.
+
+While it retries, the error and a live countdown are shown on every surface — the CLI spinner, the TUI status line (and therefore the web dashboard), and the desktop status row — so a run reads as progress instead of a hang. The retry line is published before each wait and once per second while waiting; as soon as an attempt succeeds it is cleared and the model's response continues from there. Messaging platforms suppress this chatter (the failure trace is only shown if every retry is exhausted). If you have [fallback providers](/user-guide/features/fallback-providers) configured and want to fail over faster, drop this to `1` so the first transient error on your primary immediately hands off to the fallback instead of churning retries against the flaky endpoint.
 
 ## Wall-Clock Run Budget
 

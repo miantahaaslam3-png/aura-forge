@@ -93,6 +93,8 @@ from agent.retry_utils import (
     adaptive_rate_limit_backoff,
     is_zai_coding_overload_error,
     jittered_backoff,
+    retry_delay_seconds,
+    retry_status_text,
     zai_coding_overload_retry_ceiling,
 )
 from agent.repetition_guard import is_repetition_dominated
@@ -3510,6 +3512,7 @@ def run_conversation(
                             _retry.restart_with_rebuilt_messages = True
                             break
                         # Terminal — flush buffered retry trace so user sees what happened.
+                        agent._clear_wait_notice()
                         agent._flush_status_buffer()
                         agent._emit_status(f"❌ Max retries ({max_retries}) exceeded for invalid responses. Giving up.")
                         logger.error("%sInvalid API response after %d retries.", agent.log_prefix, max_retries)
@@ -3524,14 +3527,27 @@ def run_conversation(
                             "failed": True  # Mark as failure for filtering
                         }
                     
-                    # Backoff before retry — jittered exponential: 5s base, 120s cap
-                    wait_time = jittered_backoff(retry_count, base_delay=5.0, max_delay=120.0)
+                    # Backoff before retry — same opencode-parity schedule as
+                    # the HTTP-error path (2s, 4s, 8s, then the 10s ceiling).
+                    # The old 5s→120s exponential would become a ~12 minute
+                    # silent wait once the default retry count is 10.
+                    wait_time = retry_delay_seconds(retry_count)
+                    _retry_line = retry_status_text(
+                        attempt=retry_count,
+                        max_attempts=max_retries,
+                        seconds=wait_time,
+                        error=_failure_hint,
+                    )
+                    # Publish live (CLI spinner / TUI / desktop) so an invalid
+                    # response retry is visible progress, not a frozen screen.
+                    agent._emit_wait_notice(_retry_line)
                     agent._buffer_vprint(f"⏳ Retrying in {wait_time:.1f}s ({_failure_hint})...")
                     logger.warning("Invalid API response (retry %d/%d): %s | Provider: %s", retry_count, max_retries, ', '.join(error_details), provider_name)
-                    
+
                     # Sleep in small increments to stay responsive to interrupts
                     sleep_end = time.time() + wait_time
                     _backoff_touch_counter = 0
+                    _last_retry_tick = max(0, int(wait_time))
                     while time.time() < sleep_end:
                         if agent._interrupt_requested:
                             # A redirect uses the interrupt machinery to cancel
@@ -3549,6 +3565,7 @@ def run_conversation(
                             _interrupt_text = f"Operation interrupted during retry ({_failure_hint}, attempt {retry_count}/{max_retries})."
                             close_interrupted_tool_sequence(messages, _interrupt_text)
                             agent._persist_session(messages, conversation_history)
+                            agent._clear_wait_notice()
                             agent.clear_interrupt()
                             return {
                                 "final_response": _interrupt_text,
@@ -3558,6 +3575,20 @@ def run_conversation(
                                 "interrupted": True,
                             }
                         time.sleep(0.2)
+                        # Re-publish once per whole second so the countdown
+                        # ticks on CLI/TUI/desktop.
+                        _remaining = sleep_end - time.time()
+                        _remaining_tick = max(0, int(_remaining))
+                        if _remaining_tick != _last_retry_tick:
+                            _last_retry_tick = _remaining_tick
+                            agent._emit_wait_notice(
+                                retry_status_text(
+                                    attempt=retry_count,
+                                    max_attempts=max_retries,
+                                    seconds=_remaining,
+                                    error=_failure_hint,
+                                )
+                            )
                         # Touch activity every ~30s so the gateway's inactivity
                         # monitor knows we're alive during backoff waits.
                         _backoff_touch_counter += 1
@@ -6222,7 +6253,10 @@ def run_conversation(
                             api_kwargs, reason="non_retryable_client_error", error=api_error,
                         )
                     # Terminal — flush buffered context so the user sees
-                    # what was tried before the abort.
+                    # what was tried before the abort. Clear the live retry
+                    # line first so the failure message is not masked by a
+                    # stale countdown on desktop/TUI.
+                    agent._clear_wait_notice()
                     agent._flush_status_buffer()
                     # Summarize once: Cloudflare/proxy HTML challenge pages and
                     # other raw provider bodies must be collapsed to a short
@@ -6432,6 +6466,7 @@ def run_conversation(
                         _retry.restart_with_rebuilt_messages = True
                         break
                     # Terminal — flush buffered retry/fallback trace.
+                    agent._clear_wait_notice()
                     agent._flush_status_buffer()
                     _final_summary = agent._summarize_api_error(api_error)
                     _billing_guidance = ""
@@ -6644,7 +6679,12 @@ def run_conversation(
                                 _retry_after = min(float(_ra_raw), 600)
                             except (TypeError, ValueError):
                                 pass
-                wait_time = _retry_after if _retry_after else jittered_backoff(retry_count, base_delay=2.0, max_delay=60.0)
+                # ``retry_count`` is already the 1-based attempt number here
+                # (incremented above, before fallback decisions), so it feeds
+                # the schedule directly: attempt 1 waits ~2s, 2 → ~4s, 3 → ~8s,
+                # then the 10s ceiling. A provider ``retry-after`` is a floor on
+                # top of that schedule, not a replacement.
+                wait_time = retry_delay_seconds(retry_count, retry_after=_retry_after)
                 _backoff_policy = None
                 if (is_rate_limited or _is_zai_coding_overload) and not _retry_after:
                     wait_time, _backoff_policy = adaptive_rate_limit_backoff(
@@ -6654,27 +6694,39 @@ def run_conversation(
                         error=api_error,
                         default_wait=wait_time,
                     )
-                if is_rate_limited or _is_zai_coding_overload:
-                    _policy_note = ""
-                    if _backoff_policy == "zai_coding_overload_long":
-                        _policy_note = " (Z.AI Coding overload adaptive long backoff)"
-                    elif _backoff_policy == "zai_coding_overload_short":
-                        _policy_note = " (Z.AI Coding overload short retry)"
-                    _wait_reason = "Provider overloaded" if _is_zai_coding_overload and not is_rate_limited else "Rate limited"
-                    _rate_limit_status = f"⏱️ {_wait_reason}. Waiting {wait_time:.1f}s (attempt {retry_count + 1}/{max_retries}){_policy_note}..."
-                    # Normal retries are buffered to avoid noisy transient chatter. Long
-                    # Z.AI Coding waits are different: they can last minutes, so surface
-                    # progress immediately instead of making the TUI look frozen.
-                    if _backoff_policy == "zai_coding_overload_long":
-                        agent._emit_status(_rate_limit_status)
-                    else:
-                        agent._buffer_status(_rate_limit_status)
-                else:
-                    agent._buffer_status(f"⏳ Retrying in {wait_time:.1f}s (attempt {retry_count}/{max_retries})...")
+                _policy_note = ""
+                if _backoff_policy == "zai_coding_overload_long":
+                    _policy_note = "(Z.AI Coding overload adaptive long backoff)"
+                elif _backoff_policy == "zai_coding_overload_short":
+                    _policy_note = "(Z.AI Coding overload short retry)"
+                _attempt_no = retry_count
+                _retry_error_summary = agent._summarize_api_error(api_error)
+                _retry_line = retry_status_text(
+                    attempt=_attempt_no,
+                    max_attempts=max_retries,
+                    seconds=wait_time,
+                    error=_retry_error_summary,
+                    note=_policy_note,
+                )
+                # Publish the retry progress LIVE on every driver (CLI spinner,
+                # TUI/web status line, desktop status row) and as the gateway
+                # activity description. This is the opencode behavior: the error
+                # stays visible, with a countdown, and once an attempt succeeds
+                # the line is replaced by the response — the turn continues
+                # instead of dying on the first provider hiccup.
+                #
+                # The old code buffered this line, so a 10-retry backoff was
+                # completely invisible: users saw a frozen spinner and then,
+                # minutes later, a terminal error.
+                agent._emit_wait_notice(_retry_line)
+                # Keep the attempt trace for the terminal-failure flush only
+                # (gateway chat platforms suppress this pattern; a successful
+                # recovery drops it).
+                agent._buffer_status(_retry_line)
                 logger.warning(
                     "Retrying API call in %ss (attempt %s/%s) %s policy=%s error=%s",
                     wait_time,
-                    retry_count,
+                    _attempt_no,
                     max_retries,
                     agent._client_log_context(),
                     _backoff_policy or "default",
@@ -6684,6 +6736,9 @@ def run_conversation(
                 # instead of blocking the entire wait_time in one sleep() call
                 sleep_end = time.time() + wait_time
                 _backoff_touch_counter = 0
+                # The line above already announced this second, so skip it in
+                # the tick loop (no duplicate frame on the first poll).
+                _last_retry_tick = max(0, int(wait_time))
                 while time.time() < sleep_end:
                     if agent._interrupt_requested:
                         # Same preserve-redirect rule as the retry-wait above:
@@ -6696,6 +6751,7 @@ def run_conversation(
                         _interrupt_text = f"Operation interrupted: retrying API call after error (retry {retry_count}/{max_retries})."
                         close_interrupted_tool_sequence(messages, _interrupt_text)
                         agent._persist_session(messages, conversation_history)
+                        agent._clear_wait_notice()
                         agent.clear_interrupt()
                         return {
                             "final_response": _interrupt_text,
@@ -6705,12 +6761,29 @@ def run_conversation(
                             "interrupted": True,
                         }
                     time.sleep(0.2)  # Check interrupt every 200ms
+                    # Re-publish the retry line once per whole second so the
+                    # countdown ticks wherever it is rendered (CLI spinner, TUI
+                    # status, desktop status row). Cheap: it is a single status
+                    # string, never a chat message.
+                    _remaining = sleep_end - time.time()
+                    _remaining_tick = max(0, int(_remaining))
+                    if _remaining_tick != _last_retry_tick:
+                        _last_retry_tick = _remaining_tick
+                        agent._emit_wait_notice(
+                            retry_status_text(
+                                attempt=_attempt_no,
+                                max_attempts=max_retries,
+                                seconds=_remaining,
+                                error=_retry_error_summary,
+                                note=_policy_note,
+                            )
+                        )
                     # Touch activity every ~30s so the gateway's inactivity
                     # monitor knows we're alive during backoff waits.
                     _backoff_touch_counter += 1
                     if _backoff_touch_counter % 150 == 0:  # 150 × 0.2s = 30s
                         agent._touch_activity(
-                            f"error retry backoff ({retry_count}/{max_retries}), "
+                            f"error retry backoff ({_attempt_no}/{max_retries}), "
                             f"{int(sleep_end - time.time())}s remaining"
                         )
                 if _retry.restart_with_redirected_messages:
@@ -6808,7 +6881,13 @@ def run_conversation(
             _turn_exit_reason = "all_retries_exhausted_no_response"
             print(f"{agent.log_prefix}❌ All API retries exhausted with no successful response.")
             agent._persist_session(messages, conversation_history)
+            agent._clear_wait_notice()
             break
+
+        # The call returned. Retire the live retry countdown so every surface
+        # stops showing "Retrying in …" and the response can take over — this
+        # is what makes the error "disappear" once an attempt succeeds.
+        agent._clear_wait_notice()
 
         try:
             _transport = agent._get_transport()

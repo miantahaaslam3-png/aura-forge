@@ -714,12 +714,14 @@ context:
 ```yaml
 agent:
   max_turns: 500               # 每次对话轮次的最大迭代次数（默认：500）
-  api_max_retries: 3           # 回退启动前每个 provider 的重试次数（默认：3）
+  api_max_retries: 10          # 回退启动前每个 provider 的重试次数（默认：10）
 ```
 
 当迭代预算完全耗尽时，CLI 向用户显示通知：`⚠ Iteration budget reached (500/500) — response may be incomplete`。
 
-`agent.api_max_retries` 控制 Aura Forge 在回退 provider 切换启动**之前**对瞬时错误（速率限制、连接断开、5xx）重试 provider API 调用的次数。默认为 `3` —— 总共四次尝试。如果您配置了[回退 providers](/user-guide/features/fallback-providers) 并希望更快地故障转移，请将其降至 `0`，这样主 provider 上的第一个瞬时错误会立即切换到回退，而不是对不稳定的端点进行重试。
+`agent.api_max_retries` 控制 Aura Forge 在回退 provider 切换启动**之前**对瞬时错误（速率限制、连接断开、5xx）重试 provider API 调用的次数。默认为 `10`，与 opencode 的重试策略一致：间隔依次为 2 秒、4 秒、8 秒，之后每次间隔 10 秒（若每次尝试都失败，总等待约 84 秒；带抖动为 67–101 秒）。provider 返回的 `Retry-After` 会作为**最小**等待时间被遵守，上限为 15 分钟。
+
+重试期间，错误信息和实时倒计时会显示在所有界面上 —— CLI 的 spinner、TUI 状态行（因此也包括 Web 仪表盘）以及桌面端的状态行 —— 让一次运行看起来是在推进而不是卡死。重试行会在每次等待前发布，并在等待期间每秒更新一次；一旦某次尝试成功，该行即被清除，模型响应从那里继续。消息平台会抑制这类提示（只有在所有重试都耗尽时才显示失败记录）。如果您配置了[回退 providers](/user-guide/features/fallback-providers) 并希望更快地故障转移，请将其降至 `1`，这样主 provider 上的第一个瞬时错误会立即切换到回退，而不是对不稳定的端点进行重试。
 
 ### API 超时
 

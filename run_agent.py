@@ -1141,6 +1141,27 @@ class AIAgent:
             except Exception:
                 logger.debug("thinking_callback error in _emit_wait_notice", exc_info=True)
 
+    def _clear_wait_notice(self) -> None:
+        """Retire a live wait/retry line once the wait is over.
+
+        Counterpart to ``_emit_wait_notice``: after a retry attempt finally
+        succeeds (or the wait is abandoned/terminated) the surfaces must stop
+        showing "⏳ Retrying in …" so the model response takes over. Emits an
+        empty ``thinking_callback`` — every driver already treats "" as
+        "restore the normal busy status" — and deliberately does NOT touch the
+        activity clock (clearing is not activity, and touching it would reset
+        the gateway inactivity timer for free).
+
+        Never raises: clearing a cosmetic line must not break the agent loop.
+        """
+        _thinking_cb = getattr(self, "thinking_callback", None)
+        if not _thinking_cb:
+            return
+        try:
+            _thinking_cb("")
+        except Exception:
+            logger.debug("thinking_callback error in _clear_wait_notice", exc_info=True)
+
     # ── Buffered retry/fallback status ────────────────────────────────────
     # Retry and fallback chains were flooding the CLI/gateway with status
     # noise that users found confusing: a single transient 429 could produce

@@ -36,6 +36,31 @@ describe('provider wait visibility', () => {
     expect($providerWaitSessions.get()).toEqual({})
   })
 
+  it('surfaces the automatic retry countdown and clears it when the retry succeeds', () => {
+    emit('thinking.delta', {
+      text: '⏳ Retrying in 8s (attempt 2/10) — rate limited by provider'
+    })
+    expect($providerWaitSessions.get()).toEqual({
+      [SID]: '⏳ Retrying in 8s (attempt 2/10) — rate limited by provider'
+    })
+
+    // The countdown ticks once per second; the row follows it.
+    emit('thinking.delta', { text: '⏳ Retrying in 7s (attempt 2/10) — rate limited by provider' })
+    expect($providerWaitSessions.get()[SID]).toContain('Retrying in 7s')
+
+    // A successful attempt clears the line (empty thinking delta) so the
+    // response takes over instead of a stale countdown.
+    emit('thinking.delta', { text: '' })
+    expect($providerWaitSessions.get()).toEqual({})
+  })
+
+  it('still surfaces the pre-countdown backoff wording from an older backend', () => {
+    emit('thinking.delta', { text: '⏱️ Provider overloaded. Waiting 30.0s (attempt 2/3)...' })
+    expect($providerWaitSessions.get()).toEqual({
+      [SID]: '⏱️ Provider overloaded. Waiting 30.0s (attempt 2/3)...'
+    })
+  })
+
   it.each(['message.delta', 'reasoning.delta', 'tool.start', 'message.complete', 'error'] as const)(
     'clears the wait when %s proves the turn progressed or ended',
     type => {

@@ -34,6 +34,119 @@ _ZAI_CODING_OVERLOAD_LONG_BACKOFF = (30.0, 60.0, 90.0, 120.0)
 # the two from silently desyncing if the short-retry count is ever tuned.
 _ZAI_CODING_OVERLOAD_SHORT_ATTEMPTS = 3
 
+# ── Default retry schedule (opencode parity) ────────────────────────────────
+# Reference: opencode's `packages/core/src/model-retry.ts`. A transient
+# provider/model failure is retried ten times on a schedule that starts short
+# and settles into a steady cadence: 2s, 4s, 8s, then 10s for each remaining
+# gap (~84s of waiting when every attempt fails, 67-101s with jitter). A
+# provider-supplied `retry-after` is honored as a *minimum* delay (never a
+# shorter wait than asked), capped at 15 minutes so a buggy upstream cannot
+# stall a turn for hours.
+#
+# Why this shape: the old 2s→60s exponential made the first retries snappy but
+# pushed late attempts a full minute apart, so a brief provider blip either
+# recovered fast or felt like a hang. A flat 10s ceiling keeps the whole retry
+# window inside ~1.5 minutes while still backing off enough to let a throttled
+# backend breathe.
+RETRY_BASE_GAP_SECONDS = 2.0
+RETRY_MAX_GAP_SECONDS = 10.0
+RETRY_AFTER_MAX_SECONDS = 900.0
+# Effect's `Schedule.jittered` (used by opencode) scales each gap by ±20%.
+RETRY_JITTER_RATIO = 0.2
+DEFAULT_API_MAX_RETRIES = 10
+
+
+def retry_gap_seconds(
+    attempt: int,
+    *,
+    jitter_ratio: float = RETRY_JITTER_RATIO,
+) -> float:
+    """Gap before one retry of the opencode-style schedule.
+
+    ``attempt`` is 1-based (1 → ~2s, 2 → ~4s, 3 → ~8s, 4+ → ~10s), matching the
+    attempt number shown to the user. The gap is jittered by ``±jitter_ratio``
+    so concurrent sessions hitting the same throttle do not retry in lockstep.
+    """
+    exponent = max(0, attempt - 1)
+    if exponent >= 63 or RETRY_BASE_GAP_SECONDS <= 0:
+        gap = RETRY_MAX_GAP_SECONDS
+    else:
+        gap = min(RETRY_BASE_GAP_SECONDS * (2 ** exponent), RETRY_MAX_GAP_SECONDS)
+
+    if jitter_ratio <= 0:
+        return gap
+
+    global _jitter_counter
+    with _jitter_lock:
+        _jitter_counter += 1
+        tick = _jitter_counter
+
+    seed = (time.time_ns() ^ (tick * 0x9E3779B9)) & 0xFFFFFFFF
+    rng = random.Random(seed)
+
+    return gap * rng.uniform(1.0 - jitter_ratio, 1.0 + jitter_ratio)
+
+
+def retry_delay_seconds(
+    attempt: int,
+    *,
+    retry_after: Optional[float] = None,
+    jitter_ratio: float = RETRY_JITTER_RATIO,
+) -> float:
+    """Total wait before the next attempt, honoring a provider ``retry-after``.
+
+    ``retry_after`` is a floor, not a replacement: if the provider asks for less
+    than the schedule's gap we still wait the gap (so the backoff keeps growing),
+    and if it asks for more we wait what it asked (capped at
+    ``RETRY_AFTER_MAX_SECONDS``). Non-numeric/negative values are ignored.
+    """
+    delay = retry_gap_seconds(attempt, jitter_ratio=jitter_ratio)
+    if retry_after is None:
+        return delay
+    if isinstance(retry_after, bool):
+        return delay
+    try:
+        floor = float(retry_after)
+    except (TypeError, ValueError):
+        return delay
+    if floor <= 0:
+        return delay
+    return max(delay, min(floor, RETRY_AFTER_MAX_SECONDS))
+
+
+_RETRY_ERROR_SUMMARY_MAX_CHARS = 160
+
+
+def retry_status_text(
+    *,
+    attempt: int,
+    max_attempts: int,
+    seconds: float,
+    error: Any = None,
+    note: str = "",
+) -> str:
+    """One-line retry progress shared by every Aura Forge surface.
+
+    Shape: ``⏳ Retrying in 8s (attempt 2/10) — rate limited``.
+
+    This is what the CLI spinner, the TUI status line, and the desktop status
+    row show while a provider error is being retried. It deliberately carries
+    the error summary so the user sees *why* the turn is waiting, and the
+    attempt countdown so the wait reads as progress rather than a hang.
+    """
+    # Floor, not round: the same value feeds the once-per-second countdown, and
+    # a floor never overstates how long the user still has to wait.
+    remaining = max(0, int(float(seconds)))
+    text = f"⏳ Retrying in {remaining}s (attempt {attempt}/{max_attempts})"
+    if note:
+        text += f" {note}"
+    detail = " ".join(str(error or "").split())
+    if detail:
+        if len(detail) > _RETRY_ERROR_SUMMARY_MAX_CHARS:
+            detail = detail[: _RETRY_ERROR_SUMMARY_MAX_CHARS - 1].rstrip() + "…"
+        text += f" — {detail}"
+    return text
+
 
 def parse_retry_after_seconds(value_or_headers: Any) -> Optional[float]:
     """Parse a ``Retry-After`` value into non-negative seconds.
@@ -200,9 +313,12 @@ def zai_coding_overload_retry_ceiling(short_attempts: int = _ZAI_CODING_OVERLOAD
     attempt's backoff is computed — so the ceiling must sit one past the final
     long-backoff entry for every long tier to actually execute.
 
-    With the default ``api_max_retries`` (3) equal to ``short_attempts`` (3),
-    the loop always gave up before reaching the long tier, leaving the whole
-    long-backoff schedule as dead code. Callers extend the ceiling to this
-    value for Z.AI Coding overload 429s so the 30/60/90/120s waits run.
+    With the historical ``api_max_retries`` default (3) equal to
+    ``short_attempts`` (3), the loop always gave up before reaching the long
+    tier, leaving the whole long-backoff schedule as dead code. Callers extend
+    the ceiling to this value for Z.AI Coding overload 429s so the
+    30/60/90/120s waits run. The current default (10) already clears it; the
+    call site keeps the guard so a user who lowers the ceiling still gets the
+    full schedule.
     """
     return short_attempts + len(_ZAI_CODING_OVERLOAD_LONG_BACKOFF) + 1
