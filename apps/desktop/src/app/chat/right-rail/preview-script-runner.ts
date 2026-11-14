@@ -104,7 +104,7 @@ export function missingPreviewPageReason(): string {
   if (tab.target.kind === 'file') {
     return (
       `The active tab is a file preview (${tab.target.label}), which has no page to drive — ` +
-      'read it with read_file. desktop_preview + drive_preview only drive web pages.'
+      'read it with read_file; only web pages can be driven.'
     )
   }
 
