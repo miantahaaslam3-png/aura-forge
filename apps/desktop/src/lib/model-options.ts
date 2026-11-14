@@ -1,4 +1,4 @@
-import { getGlobalModelOptions, type AuraForgeGateway, type ModelOptionsResponse } from '@/auraforge'
+import { type AuraForgeGateway, getGlobalModelOptions, type ModelOptionsResponse } from '@/auraforge'
 import type { ModelOptionProvider } from '@/types/auraforge'
 
 /**

@@ -138,8 +138,10 @@ export async function pollChargeSettlement(
       }
 
     case 'cancelled':
+
     case 'timed_out':
       return timeoutOutcome(observed.status?.ok ? (observed.status.portal_url ?? opts.portalUrl) : opts.portalUrl)
+
     default:
       throw new Error(`Unhandled settlement kind: ${(settlement as any).kind}`)
   }

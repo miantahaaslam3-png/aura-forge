@@ -229,6 +229,7 @@ test('desktop terminal PATH keeps an inherited launcher entry once and adds POSI
 
   assert.equal(entries.filter(entry => entry === '/Users/test/.hermes/bin').length, 1)
   assert.equal(entries[0], '/Users/test/.hermes/bin')
+
   for (const expected of POSIX_SANE_PATH_ENTRIES) {
     assert.ok(entries.includes(expected), `${expected} should be present`)
   }

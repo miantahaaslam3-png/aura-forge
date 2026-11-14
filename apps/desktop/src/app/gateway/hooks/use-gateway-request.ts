@@ -20,9 +20,9 @@ export function useGatewayRequest() {
   const gateway = useStore($gateway) as AuraForgeGateway | null
   const gatewayRef = useRef<AuraForgeGateway | null>(null)
 
-  const connectionRef = useRef<Awaited<ReturnType<NonNullable<typeof window.auraForgeDesktop>['getConnection']>> | null>(
-    null
-  )
+  const connectionRef = useRef<Awaited<
+    ReturnType<NonNullable<typeof window.auraForgeDesktop>['getConnection']>
+  > | null>(null)
 
   const gatewayStateRef = useRef(gatewayState)
   const reconnectingRef = useRef<Promise<AuraForgeGateway | null> | null>(null)

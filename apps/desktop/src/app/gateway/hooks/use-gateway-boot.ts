@@ -1019,9 +1019,11 @@ export function useGatewayBoot({
                 BOOT_WARMUP_TIMEOUT_MS,
                 'Timed out reading the bootstrap state'
               ).catch(() => null),
-              withTimeout(desktop.getBootProgress(), BOOT_WARMUP_TIMEOUT_MS, 'Timed out reading the boot progress').catch(
-                () => null
-              )
+              withTimeout(
+                desktop.getBootProgress(),
+                BOOT_WARMUP_TIMEOUT_MS,
+                'Timed out reading the boot progress'
+              ).catch(() => null)
             ])
 
             if (

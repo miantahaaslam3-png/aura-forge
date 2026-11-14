@@ -1,6 +1,6 @@
 import type { McpCatalogResponse, McpServerSummary } from '@/types/auraforge'
 
-import { capabilityScoped, auraForgeApi, type ProfileScope, profileScoped } from './client'
+import { auraForgeApi, capabilityScoped, type ProfileScope, profileScoped } from './client'
 
 export interface McpTestResult {
   ok: boolean
@@ -137,7 +137,13 @@ export function installMcpCatalogEntry(
   env: Record<string, string> = {},
   profile?: ProfileScope
 ): Promise<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }> {
-  return window.auraForgeDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>({
+  return window.auraForgeDesktop.api<{
+    ok: boolean
+    name?: string
+    pid?: number
+    action?: string
+    background?: boolean
+  }>({
     ...capabilityScoped(profile),
     path: '/api/mcp/catalog/install',
     method: 'POST',

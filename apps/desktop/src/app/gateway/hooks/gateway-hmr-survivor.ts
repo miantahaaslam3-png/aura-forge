@@ -3,8 +3,8 @@
 // self-accept so this module's own reload doesn't reset the cache. Prod strips
 // import.meta.hot → byte-for-byte unchanged live unmount.
 
-import type { HermesConnection } from '@/global'
 import type { AuraForgeGateway } from '@/auraforge'
+import type { HermesConnection } from '@/global'
 
 export interface GatewaySurvivor {
   gateway: AuraForgeGateway

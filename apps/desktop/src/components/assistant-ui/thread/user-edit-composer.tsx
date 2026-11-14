@@ -55,6 +55,7 @@ import {
   partitionDroppedFiles
 } from '@/app/chat/hooks/use-composer-actions'
 import { uploadComposerAttachment } from '@/app/session/hooks/use-prompt-actions'
+import type { AuraForgeGateway } from '@/auraforge'
 import { hermesDirectiveFormatter } from '@/components/assistant-ui/directive-text'
 import {
   StickyHumanMessageContainer,
@@ -64,7 +65,6 @@ import {
   USER_BUBBLE_BASE_CLASS
 } from '@/components/assistant-ui/thread/user-message'
 import { Codicon } from '@/components/ui/codicon'
-import type { AuraForgeGateway } from '@/auraforge'
 import { useI18n } from '@/i18n'
 import { attachmentDisplayText, attachmentId, pathLabel } from '@/lib/chat-runtime'
 import { sanitizeComposerInput } from '@/lib/composer-input-sanitize'
