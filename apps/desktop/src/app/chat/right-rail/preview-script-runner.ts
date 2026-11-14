@@ -19,7 +19,7 @@ export type PreviewScriptRunner = (code: string) => Promise<unknown>
 const runners = new Map<string, PreviewScriptRunner>()
 
 /** How long an action waits for a just-opened tab's pane to register.
- *  `open_preview` returns as soon as the TAB exists; the pane mounts and
+ *  `desktop_preview` returns as soon as the TAB exists; the pane mounts and
  *  registers its runner a beat later. An agent that opens a page and drives it
  *  immediately is the normal case, not a race to blame on the model — but the
  *  wait is bounded, because a tab that will never have a page must fail. */
@@ -98,15 +98,15 @@ export function missingPreviewPageReason(): string {
   const tab = activePreviewTab()
 
   if (!tab) {
-    return 'No live page is open in the in-app browser — open one with open_preview first.'
+    return 'No live page is open in the in-app browser — open one with desktop_preview first.'
   }
 
   if (tab.target.kind === 'file') {
     return (
       `The active tab is a file preview (${tab.target.label}), which has no page to drive — ` +
-      'read it with read_file. open_preview + drive_preview only drive web pages.'
+      'read it with read_file. desktop_preview + drive_preview only drive web pages.'
     )
   }
 
-  return `The "${tab.target.label}" tab has no live page behind it — open a URL with open_preview, then retry.`
+  return `The "${tab.target.label}" tab has no live page behind it — open a URL with desktop_preview, then retry.`
 }

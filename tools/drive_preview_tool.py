@@ -114,7 +114,7 @@ def drive_preview_tool(
     if not raw:
         return tool_error(
             "The action timed out, or no GUI window answered. "
-            "Open a page with open_preview first."
+            "Open a page with desktop_preview first."
         )
 
     # The renderer answers with a JSON object; pass it through, else wrap it.
