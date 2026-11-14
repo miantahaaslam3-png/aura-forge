@@ -10,6 +10,7 @@ import path from 'node:path'
 import { app, ipcMain } from 'electron'
 import nodePty from 'node-pty'
 
+import { buildDesktopTerminalPath } from './backend-env'
 import { resolveTerminalConnectionForSender } from './connection-apply'
 import { ensureSpawnHelperExecutable } from './spawn-helper-perms'
 import { buildInteractiveSshArgs } from './ssh-connection'
@@ -17,6 +18,8 @@ import { buildWindowsInteractiveCommand } from './windows-remote-lifecycle'
 
 export interface TerminalIpcDeps {
   isWindows: boolean
+  /** Aura Forge home (the app's resolved root); the launcher dir lives beside it. */
+  hermesHome?: string
   findOnPath: (command: string) => null | string
   rememberLog: (line: string) => void
   activeSshTerminalTarget: (webContentsId: number) => unknown
@@ -32,6 +35,7 @@ export interface TerminalIpcApi {
 
 export function registerTerminalIpc({
   isWindows,
+  hermesHome,
   findOnPath,
   rememberLog,
   activeSshTerminalTarget,
@@ -153,6 +157,25 @@ export function registerTerminalIpc({
     delete env.NO_COLOR
     delete env.FORCE_COLOR
     delete env.COLORFGBG
+
+    // The launcher dir leads PATH so `auraforge` works in this pane on the FIRST
+    // launch after an install. A GUI app inherits the login-time environment
+    // block, so a PATH entry the installer added afterwards is invisible to it
+    // until the user logs out — which reads as "the CLI never installed".
+    const pathKey = Object.keys(env).find(key => key.toUpperCase() === 'PATH') || 'PATH'
+    env[pathKey] = buildDesktopTerminalPath({
+      currentPath: env[pathKey] || '',
+      hermesHome,
+      platform: process.platform
+    })
+
+    // Same staleness, same fix: pin the home the app already resolved (install.ps1
+    // writes AURA_FORGE_HOME to the registry, which this process may predate), so
+    // a `auraforge` started in the pane reads the config/sessions the app uses.
+    // An explicit value from the user's environment still wins.
+    if (hermesHome && !env.AURA_FORGE_HOME) {
+      env.AURA_FORGE_HOME = hermesHome
+    }
 
     env.COLORTERM = 'truecolor'
     env.LC_CTYPE = env.LC_CTYPE || 'UTF-8'

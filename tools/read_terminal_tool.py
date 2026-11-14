@@ -45,15 +45,35 @@ def read_terminal_tool(
 
     # Desktop answers with a JSON object; pass it through, else wrap the raw text.
     try:
-        return json.dumps(json.loads(raw), ensure_ascii=False)
+        payload = json.loads(raw)
     except (TypeError, ValueError):
         return json.dumps({"text": str(raw)}, ensure_ascii=False)
+
+    if not isinstance(payload, dict):
+        return json.dumps({"text": str(raw)}, ensure_ascii=False)
+
+    # A pane with nothing on screen is the normal state of a shell nobody has
+    # typed into — not evidence that execution is broken. Say it in-band,
+    # because "empty text" otherwise reads as "the terminal is dead" and the
+    # model stops trusting the `terminal` tool's own (successful) results.
+    if not str(payload.get("text") or "").strip():
+        payload.setdefault(
+            "note",
+            "Nothing is on screen in this pane yet. Output from commands run "
+            "with the `terminal` tool is returned by that tool, not here.",
+        )
+
+    return json.dumps(payload, ensure_ascii=False)
 
 
 READ_TERMINAL_SCHEMA = {
     "name": "read_terminal",
     "description": (
-        "Read the in-app terminal pane beside this chat. No args = visible "
+        "Read the terminal pane beside this chat: the user's interactive "
+        "shell, or the read-only tab of one of the agent's background "
+        "processes when that tab is selected. This reads what is *on screen*; "
+        "output from commands you run with the `terminal` tool comes back in "
+        "that tool's result and is not mirrored here. No args = visible "
         "screen + total_lines; page scrollback with start_line (0 = oldest) "
         "+ count. JSON: {total_lines, start, end, viewport_rows, cursor_row, "
         "text}."

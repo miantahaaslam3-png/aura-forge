@@ -7,6 +7,8 @@ import {
   appendUniquePathEntries,
   buildDesktopBackendEnv,
   buildDesktopBackendPath,
+  buildDesktopTerminalPath,
+  hermesLauncherPathEntries,
   hermesManagedNodePathEntries,
   normalizeHermesHomeRoot,
   pathEnvKey,
@@ -188,4 +190,46 @@ test('Windows PATH casing and delimiter are preserved without POSIX sane entries
 
 test('appendUniquePathEntries drops empty entries and keeps first occurrence', () => {
   assert.equal(appendUniquePathEntries([':/a::/b', ['/a', '/c']], { delimiter: ':' }), '/a:/b:/c')
+})
+
+test('the launcher dir is <home>\\bin, never the venv Scripts dir', () => {
+  assert.deepEqual(
+    hermesLauncherPathEntries('C:\\Users\\test\\AppData\\Local\\aura-forge', { pathModule: path.win32 }),
+    ['C:\\Users\\test\\AppData\\Local\\aura-forge\\bin']
+  )
+  assert.deepEqual(hermesLauncherPathEntries(undefined, { pathModule: path.win32 }), [])
+})
+
+test('desktop terminal PATH leads with the launcher dir so a stale login PATH cannot hide the CLI', () => {
+  const entries = buildDesktopTerminalPath({
+    hermesHome: 'C:\\Users\\test\\AppData\\Local\\aura-forge',
+    currentPath: 'C:\\Windows\\System32;C:\\Windows\\bin',
+    platform: 'win32',
+    pathModule: path.win32
+  }).split(';')
+
+  // A GUI app launched from Explorer carries the PATH captured at login; the
+  // installer's entry only lands after a logoff. The pane must resolve it anyway.
+  assert.equal(entries[0], 'C:\\Users\\test\\AppData\\Local\\aura-forge\\bin')
+  assert.deepEqual(entries.slice(1), ['C:\\Windows\\System32', 'C:\\Windows\\bin'])
+  assert.equal(
+    entries.some(entry => /venv[\\/]Scripts/i.test(entry)),
+    false,
+    'never expose venv\\Scripts — it would shadow the user python (#83797)'
+  )
+})
+
+test('desktop terminal PATH keeps an inherited launcher entry once and adds POSIX sane bins', () => {
+  const entries = buildDesktopTerminalPath({
+    hermesHome: '/Users/test/.hermes',
+    currentPath: '/Users/test/.hermes/bin:/usr/bin',
+    platform: 'darwin',
+    pathModule: path.posix
+  }).split(':')
+
+  assert.equal(entries.filter(entry => entry === '/Users/test/.hermes/bin').length, 1)
+  assert.equal(entries[0], '/Users/test/.hermes/bin')
+  for (const expected of POSIX_SANE_PATH_ENTRIES) {
+    assert.ok(entries.includes(expected), `${expected} should be present`)
+  }
 })

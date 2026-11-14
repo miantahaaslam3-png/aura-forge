@@ -88,6 +88,49 @@ function hermesManagedNodePathEntries(
   return platform === 'win32' ? [root, bin] : [bin, root]
 }
 
+/**
+ * The Aura Forge launcher dir, where `auraforge` / `auraforge-acp` resolve from.
+ *
+ * `install.ps1` (and `_install_repair.ensure_windows_bin_launchers`) stage the
+ * launcher copies into `<home>\bin`, next to the managed `uv.exe`, and add that
+ * dir to the User PATH. It is deliberately OUTSIDE the git checkout so an
+ * update's autostash cannot sweep it, and it is the ONLY dir we ever put on a
+ * PATH — never `venv\Scripts`, which would shadow the user's `python` (#83797).
+ *
+ * Mirrors `_install_repair._WINDOWS_BIN_LAUNCHERS`' staging target.
+ */
+function hermesLauncherPathEntries(hermesHome, { pathModule = pathModuleForPlatform(process.platform) }: any = {}) {
+  if (!hermesHome) {
+    return []
+  }
+
+  return [pathModule.join(hermesHome, 'bin')]
+}
+
+/**
+ * PATH for a shell the app spawns for the USER (the embedded terminal).
+ *
+ * Same reasoning as the backend PATH, one rung different: a GUI app launched
+ * from Explorer/Dock inherits the environment block captured at login, so a
+ * launcher dir the installer created afterwards is invisible to it — importing
+ * the app shows `auraforge: command not found` in the very terminal pane that is
+ * supposed to sell the CLI. Prepending the launcher dir (and POSIX's standard
+ * bins, for the same reason the backend does) makes the pane resolve the command
+ * without waiting for a logoff.
+ */
+function buildDesktopTerminalPath({
+  hermesHome,
+  currentPath = '',
+  platform = process.platform,
+  pathModule = pathModuleForPlatform(platform)
+}: any = {}) {
+  const delimiter = delimiterForPlatform(platform)
+  const launchers = hermesLauncherPathEntries(hermesHome, { pathModule })
+  const saneEntries = platform === 'win32' ? [] : POSIX_SANE_PATH_ENTRIES
+
+  return appendUniquePathEntries([launchers, currentPath, saneEntries], { delimiter })
+}
+
 function buildDesktopBackendPath({
   hermesHome,
   venvRoot,
@@ -153,7 +196,9 @@ export {
   appendUniquePathEntries,
   buildDesktopBackendEnv,
   buildDesktopBackendPath,
+  buildDesktopTerminalPath,
   delimiterForPlatform,
+  hermesLauncherPathEntries,
   hermesManagedNodePathEntries,
   normalizeHermesHomeRoot,
   pathEnvKey,

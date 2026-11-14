@@ -34,6 +34,7 @@ import { createMemoizedMathPlugin } from '@/lib/katex-memo'
 import { isComposerChord } from '@/lib/keybinds/chords'
 import { shikiLanguageForFilename } from '@/lib/markdown-code'
 import { normalizeFilePreviewMath } from '@/lib/markdown-preprocess'
+import { decodeTextDataUrl, isMissingReadFileTextHandler } from '@/lib/preview-text-fallback'
 import { cn } from '@/lib/utils'
 import type { PreviewTarget } from '@/store/preview'
 import { setPreviewDirty } from '@/store/preview-edit'
@@ -269,21 +270,17 @@ async function readTextPreview(filePath: string) {
   try {
     return await readDesktopFileText(filePath)
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-
-    if (!message.includes("No handler registered for 'auraforge:readFileText'")) {
+    // Only a shell that predates this IPC gets the fallback; everything else
+    // (permissions, missing file) is a real error and stays one.
+    if (!isMissingReadFileTextHandler(error)) {
       throw error
     }
   }
 
-  // Back-compat for a running Electron process whose preload hasn't been
-  // restarted since readFileText was added. readFileDataUrl already existed.
-  const dataUrl = await window.auraForgeDesktop.readFileDataUrl(filePath)
-  const [, metadata = '', data = ''] = dataUrl.match(/^data:([^,]*),(.*)$/) || []
-  const base64 = metadata.includes(';base64')
-  const mimeType = metadata.replace(/;base64$/, '') || undefined
-  const raw = base64 ? atob(data) : decodeURIComponent(data)
-  const bytes = Uint8Array.from(raw, ch => ch.charCodeAt(0))
+  // Back-compat rung: the same bytes through readFileDataUrl, which older
+  // preloads and every remote gateway already answer. Remote-aware, so this
+  // also covers a remote backend that has no /api/fs/read-text route yet.
+  const { bytes, mimeType } = decodeTextDataUrl(await readDesktopFileDataUrl(filePath))
 
   return {
     binary: looksBinaryBytes(bytes),

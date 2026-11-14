@@ -16925,6 +16925,7 @@ registerGitIpc({ resolveGitBinary, resolveGhBinary })
 // Embedded terminal PTY host (auraforge:terminal:*) — see terminal-ipc.ts.
 const terminalIpc = registerTerminalIpc({
   isWindows: IS_WINDOWS,
+  hermesHome: HERMES_HOME,
   findOnPath,
   rememberLog,
   activeSshTerminalTarget,
