@@ -33,7 +33,11 @@ import { watchInPage } from '@/lib/preview-act/watch-in-page'
 import { clickAt, glideTo, pointerPlaced, pressKey, selectAll, typeText, wheelBy } from './preview-drive'
 import { activePreviewInput, type PreviewInputHandle } from './preview-input'
 import { activePreviewNav, type PreviewNavHandle } from './preview-nav'
-import { activePreviewScriptRunner, type PreviewScriptRunner } from './preview-script-runner'
+import {
+  missingPreviewPageReason,
+  type PreviewScriptRunner,
+  waitForActivePreviewScriptRunner
+} from './preview-script-runner'
 
 /** Verbs the pane owns; a guest page cannot drive its own history. */
 const NAV_ACTIONS: readonly (keyof PreviewNavHandle)[] = ['back', 'forward', 'reload']
@@ -60,8 +64,6 @@ const DRIVEN: readonly string[] = ['click', 'hover', 'press', 'type']
  *  witness can speak to. `press` and `hover` never click, so demanding a witness
  *  from them would report every one of them as a failure. */
 const CLICKS: readonly string[] = ['click', 'type']
-
-const NOTHING_OPEN = 'No live page is open in the in-app browser — open one with open_preview first.'
 
 const NAVIGATED =
   'The page stopped answering right after — it is probably navigating. Call elements to see where you landed.'
@@ -493,7 +495,7 @@ export async function actOnActivePreview(
     const handle = activePreviewNav()
 
     if (!handle) {
-      return { error: NOTHING_OPEN, success: false }
+      return { error: missingPreviewPageReason(), success: false }
     }
 
     handle[nav]()
@@ -503,10 +505,13 @@ export async function actOnActivePreview(
     return { acted: nav, note: 'Page is loading — call elements to see what is on it.', success: true }
   }
 
-  const run = activePreviewScriptRunner()
+  // Bounded wait: `open_preview` returns as soon as the tab exists, and the
+  // pane registers its runner a beat later. Acting immediately is the normal
+  // case, so wait for the page rather than calling it absent.
+  const run = await waitForActivePreviewScriptRunner()
 
   if (!run) {
-    return { error: NOTHING_OPEN, success: false }
+    return { error: missingPreviewPageReason(), success: false }
   }
 
   const typed = action as PreviewActAction

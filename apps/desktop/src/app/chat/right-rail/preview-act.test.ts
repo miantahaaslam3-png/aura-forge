@@ -313,4 +313,36 @@ describe('actOnActivePreview (drive_preview tool)', () => {
   it('reports history verbs with no pane to drive', async () => {
     expect((await actOnActivePreview({ kind: 'reload' })).error).toContain('open_preview')
   })
+
+  it('names a file preview as a file instead of calling the page missing', async () => {
+    openPreview(
+      {
+        kind: 'file',
+        label: 'notes.txt',
+        path: '/Users/dev/notes.txt',
+        previewKind: 'text',
+        source: 'file:///Users/dev/notes.txt',
+        url: 'file:///Users/dev/notes.txt'
+      },
+      'file-browser'
+    )
+
+    const result = await actOnActivePreview({ kind: 'elements' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('file preview')
+    expect(result.error).toContain('read_file')
+  })
+
+  it('waits for a just-opened pane to register instead of reporting it absent', async () => {
+    const tabId = openBrowserTab()
+
+    // `open_preview` returns as soon as the tab exists; the pane registers a
+    // beat later. Driving immediately is the normal case, not a user error.
+    setTimeout(() => {
+      cleanups.push(registerPreviewScriptRunner(tabId, async () => JSON.stringify({ elements: [], success: true })))
+    }, 120)
+
+    expect(await actOnActivePreview({ kind: 'elements' })).toMatchObject({ success: true })
+  })
 })
